@@ -1162,6 +1162,37 @@ Three concrete bugs in [`src/components/home/WelcomeConsultationModal.tsx`](file
    - **Step 4 (Excluded Route `/consult`)**: Cleared `sessionStorage` and visited `/consult` → modal stayed suppressed (`path: "/consult"`, `isOpen: false`).
    - **Step 5 (Mid-Consultation Suppression)**: Set `localStorage.setItem("aapka_active_session_id", "sess_active_999")` on `/` → modal stayed suppressed (`activeSessionId: "sess_active_999"`, `isOpen: false`).
 
+---
+
+## 21. Single-Viewport Popup Restraint Redesign — Before/After & Viewport Height Measurements (September 2026)
+
+### 21.1 Aapka Astro (`src/components/home/WelcomeConsultationModal.tsx`)
+- **Before**: Stacked a 3-bubble simulated chat conversation demo, four consultation topic pills (`Career & Job`, `Kundli Milan`, `Wealth & Business`, `Devta Vastu`), a 4-column trust badge grid (`20+ Yrs`, `BVB Scholar`, `100% Solo`, `Private`), a 3-column per-minute pricing breakdown table, CTA button, dismiss link, and cross-link footer (`~760px+` tall, requiring vertical scrolling on mobile and smaller desktop viewports).
+- **After**: Trimmed to the compact 7-element single-screen hierarchy while preserving the warm temple brand palette (`#7B2D26`, `#E8A33D`, `#FFFDF9`, `#FBF3E7`) and all session/route/auth suppression logic:
+  1. Small brand mark (`<DiyaIcon size={13} />` + `AAPKA ASTRO`)
+  2. Headline: `"50% Off Your First Consultation"`
+  3. One-sentence subtext with live starting rate: `"Consult 1-on-1 with Acharya Niraj Kumar via private chat, call, or video starting at ₹7.5/min."`
+  4. Single-line trust phrase (unboxed): `"20+ years · Certified Jyotish Acharya"`
+  5. Primary CTA button: `"Claim 50% Off & Start Consultation"`
+  6. Small dismiss link: `"No thanks, continue browsing"`
+  7. Final subdued cross-link: `"Curious about learning astrology yourself? Explore courses at Viar.in →"`
+- **Measured Rendered Heights (Headless Chrome CDP)**:
+  - **Desktop (`1280×800` viewport)**: **`448px × 372px`** (`scrollHeight: 368px`, `clientHeight: 368px`, `requiresInternalScroll: false`, `fitsSingleViewport: true` — occupies **46.5%** of viewport height).
+  - **Mobile (`375×667` viewport)**: **`328px × 384px`** (`scrollHeight: 380px`, `clientHeight: 380px`, `requiresInternalScroll: false`, `fitsSingleViewport: true` — occupies **57.6%** of viewport height).
+
+### 21.2 Viar.in (`src/components/WelcomeCohortModal.tsx`)
+- **Before**: Included dual header pills, a full paragraph intro, a boxed instructor card with original/discounted price badges, a 4-item feature grid (`18 Live Classes`, `Recordings Count Identically`, `Starts Oct 3`, `Verifiable Certificate`), a boxed `100% Risk-Free` callout, primary CTA, syllabus link + dismiss row, and Aapka Astro cross-link (`~680px+` tall with `max-h-[90vh] overflow-y-auto`).
+- **After**: Compressed to the single-viewport 6-element hierarchy with zero internal scroll:
+  1. Small brand mark (`<Sparkles />` + `VIAR.IN ACADEMY`)
+  2. Headline naming course & live price: `"Enroll in ‘What is Astrology’ — ₹4,999"`
+  3. One-sentence subtext with live remaining seats: `"Only 12 seats remaining in Batch 1 for our live 9-week Vedic Jyotish cohort with Acharya Niraj Kumar."`
+  4. Primary CTA button: `"Claim Your Seat"`
+  5. Small dismiss link: `"No thanks, continue browsing"`
+  6. Final subdued cross-link: `"Want a personal consultation instead? Visit Aapka Astro →"`
+- **Measured Rendered Heights (Headless Chrome CDP)**:
+  - **Desktop (`1280×800` viewport)**: **`448px × 310px`** (`scrollHeight: 306px`, `clientHeight: 306px`, `requiresInternalScroll: false`, `fitsSingleViewport: true` — occupies **38.8%** of viewport height).
+  - **Mobile (`375×667` viewport)**: **`335px × 334px`** (`scrollHeight: 330px`, `clientHeight: 330px`, `requiresInternalScroll: false`, `fitsSingleViewport: true` — occupies **50.1%** of viewport height).
+
 
 
 
