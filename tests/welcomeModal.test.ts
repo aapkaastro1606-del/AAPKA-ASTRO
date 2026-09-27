@@ -218,12 +218,12 @@ describe("Welcome Consultation Modal Policy & Content Compliance", () => {
     );
   });
 
-  test("includes transparent 50% off pricing breakdown and promo code", () => {
+  test("includes transparent 50% off pricing breakdown, promo code, and subordinate Viar.in course link", () => {
     // Check that FIRST_CONSULTATION_OFFER is wired in
     assert.equal(FIRST_CONSULTATION_OFFER.discountPercentage, 50);
     assert.equal(FIRST_CONSULTATION_OFFER.code, "FIRST50");
 
-    // Pricing calculation check
+    // Pricing calculation check across all 3 tiers (chat, voice, video)
     assert.equal(
       ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate,
       ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute * 0.5
@@ -231,6 +231,33 @@ describe("Welcome Consultation Modal Policy & Content Compliance", () => {
     assert.equal(
       ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate,
       ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute * 0.5
+    );
+    assert.equal(
+      ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate,
+      ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute * 0.5
+    );
+
+    // Ensure modal pulls dynamically from ADMIN_CONFIGURABLE_PRICING (chat, voice, video) & listens to astro_pricing_updated
+    assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.chat\.effectiveFirstTimeRate/);
+    assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.voice\.effectiveFirstTimeRate/);
+    assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.video\.effectiveFirstTimeRate/);
+    assert.match(modalCode, /astro_pricing_updated/);
+
+    // Verify subordinate secondary line linking to Viar.in
+    assert.match(
+      modalCode,
+      /Curious about learning astrology yourself\?/,
+      "Must include subordinate Viar.in course prompt"
+    );
+    assert.match(
+      modalCode,
+      /Explore courses at Viar\.in →/,
+      "Must include exact link text 'Explore courses at Viar.in →'"
+    );
+    assert.match(
+      modalCode,
+      /href="https:\/\/viar\.in"/,
+      "Must link directly to the Viar.in homepage"
     );
   });
 });

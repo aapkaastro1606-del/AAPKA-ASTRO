@@ -126,8 +126,16 @@ export function WelcomeConsultationModal({
 }: WelcomeConsultationModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [, setPricingVersion] = useState(0);
   const pathname = usePathname();
-  const { isAuthenticated, isLoading: isAuthLoading } = useCurrentUserRole();
+  const { isAuthenticated } = useCurrentUserRole();
+
+  // Keep modal per-minute rates synchronized with live AdminStore / ADMIN_CONFIGURABLE_PRICING updates
+  useEffect(() => {
+    const handlePricingUpdated = () => setPricingVersion((v) => v + 1);
+    window.addEventListener("astro_pricing_updated", handlePricingUpdated);
+    return () => window.removeEventListener("astro_pricing_updated", handlePricingUpdated);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -397,19 +405,43 @@ export function WelcomeConsultationModal({
             </div>
           </div>
 
-          {/* Transparent 50% Off First-Time Pricing */}
-          <div className="rounded-xl bg-[#FBF3E7] p-2.5 border border-[#E8D8C3] flex items-center justify-between text-xs font-body">
-            <div className="flex items-center gap-1.5 font-bold text-[#7B2D26]">
-              <span>Special First-Time Rates:</span>
+          {/* Transparent 50% Off First-Time Pricing (Pulled Live from ADMIN_CONFIGURABLE_PRICING) */}
+          <div className="rounded-xl bg-[#FBF3E7] p-3 border border-[#E8D8C3] space-y-1.5 text-xs font-body">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[#7B2D26] text-[11px] uppercase tracking-wider">
+                First-Session Rates ({FIRST_CONSULTATION_OFFER.discountPercentage}% Off)
+              </span>
+              <span className="rounded-md bg-[#7B2D26]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#7B2D26]">
+                Code: {FIRST_CONSULTATION_OFFER.code}
+              </span>
             </div>
-            <div className="flex items-center gap-3 text-[11px] font-medium text-[#3B2A1E]">
+            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E8D8C3]/80 text-[11px] font-medium text-[#3B2A1E] text-center">
               <div>
-                Chat: <span className="font-bold text-[#7B2D26]">₹{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/min</span>{" "}
-                <span className="line-through text-[#6E5545]/70 text-[10px]">₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}</span>
+                Chat:{" "}
+                <span className="font-bold text-[#7B2D26]">
+                  {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/{ADMIN_CONFIGURABLE_PRICING.chat.unit}
+                </span>{" "}
+                <span className="line-through text-[#6E5545]/70 text-[10px]">
+                  {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}
+                </span>
               </div>
-              <div className="border-l border-[#E8D8C3] pl-2">
-                Call: <span className="font-bold text-[#7B2D26]">₹{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/min</span>{" "}
-                <span className="line-through text-[#6E5545]/70 text-[10px]">₹{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}</span>
+              <div className="border-l border-[#E8D8C3] pl-1.5">
+                Call:{" "}
+                <span className="font-bold text-[#7B2D26]">
+                  {ADMIN_CONFIGURABLE_PRICING.voice.currency}{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/{ADMIN_CONFIGURABLE_PRICING.voice.unit}
+                </span>{" "}
+                <span className="line-through text-[#6E5545]/70 text-[10px]">
+                  {ADMIN_CONFIGURABLE_PRICING.voice.currency}{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}
+                </span>
+              </div>
+              <div className="border-l border-[#E8D8C3] pl-1.5">
+                Video:{" "}
+                <span className="font-bold text-[#7B2D26]">
+                  {ADMIN_CONFIGURABLE_PRICING.video.currency}{ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate}/{ADMIN_CONFIGURABLE_PRICING.video.unit}
+                </span>{" "}
+                <span className="line-through text-[#6E5545]/70 text-[10px]">
+                  {ADMIN_CONFIGURABLE_PRICING.video.currency}{ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}
+                </span>
               </div>
             </div>
           </div>
@@ -436,10 +468,23 @@ export function WelcomeConsultationModal({
             </div>
           </div>
 
-          {/* Footer Guarantee */}
-          <div className="flex items-center justify-center gap-1 text-[11px] text-[#6E5545] font-body">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#6B8E5A]" />
-            <span>Promo code {FIRST_CONSULTATION_OFFER.code} auto-applied • Authentic Vedic Ephemeris</span>
+          {/* Subordinate Secondary Education Line & Footer Guarantee */}
+          <div className="border-t border-[#E8D8C3]/80 pt-2.5 space-y-1.5 text-center font-body">
+            <p className="text-[11px] text-[#6E5545]">
+              Curious about learning astrology yourself?{" "}
+              <a
+                href="https://viar.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[#7B2D26] hover:text-[#64221C] underline decoration-[#E8A33D] underline-offset-2 transition-colors"
+              >
+                Explore courses at Viar.in →
+              </a>
+            </p>
+            <div className="flex items-center justify-center gap-1 text-[10px] text-[#6E5545]/80">
+              <ShieldCheck className="h-3 w-3 text-[#6B8E5A]" />
+              <span>Promo code {FIRST_CONSULTATION_OFFER.code} auto-applied • Authentic Vedic Ephemeris</span>
+            </div>
           </div>
         </div>
       </div>

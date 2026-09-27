@@ -74,6 +74,16 @@ export const AdminStore = {
       ADMIN_CONFIGURABLE_PRICING.voice.discountPercentage = updates.discountPercentage;
       ADMIN_CONFIGURABLE_PRICING.video.discountPercentage = updates.discountPercentage;
     }
+    const discountFactor = 1 - memoryPricing.discountPercentage / 100;
+    ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate = Number(
+      (ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute * discountFactor).toFixed(2)
+    );
+    ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate = Number(
+      (ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute * discountFactor).toFixed(2)
+    );
+    ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate = Number(
+      (ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute * discountFactor).toFixed(2)
+    );
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("astro_pricing_updated"));
     }
