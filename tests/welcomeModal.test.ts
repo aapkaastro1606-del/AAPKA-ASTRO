@@ -102,145 +102,63 @@ describe("Welcome Consultation Modal Policy & Content Compliance", () => {
     }
   });
 
-  test("includes verified astrologer photo and avatar presentation", () => {
-    assert.match(
-      modalCode,
-      /PLACEHOLDER_ASTROLOGER\.avatarUrl/,
-      "Must render the astrologer's photo via avatarUrl"
-    );
-    assert.match(
-      modalCode,
-      /<Image\b/,
-      "Must use Next.js Image component for optimized portrait rendering"
-    );
-  });
+  test("enforces compact single-screen restraint: removes chat demo, topic pills, 4-column badge grid, and pricing breakdown table", () => {
+    // Must NOT include the removed bulky sections:
+    assert.doesNotMatch(modalCode, /career stagnation/i, "Must remove 3-bubble chat demo");
+    assert.doesNotMatch(modalCode, /Kundli Milan/i, "Must remove four topic pills");
+    assert.doesNotMatch(modalCode, /Devta Vastu/i, "Must remove four topic pills");
+    assert.doesNotMatch(modalCode, /grid-cols-4/i, "Must remove 4-column trust badge grid");
+    assert.doesNotMatch(modalCode, /grid-cols-3/i, "Must remove 3-column pricing breakdown table");
 
-  test("contains a freshly written, realistic 3-message simulated chat preview", () => {
-    // Fresh Q&A exchange (Bubble 1: Seeker Career Query)
+    // Must include the exact compact elements:
+    assert.match(modalCode, /Aapka Astro/, "Must include small brand mark");
+    assert.match(modalCode, /50% Off Your First Consultation/, "Must include headline");
     assert.match(
       modalCode,
-      /career stagnation|switch jobs or focus on business/i,
-      "Simulated chat must depict a realistic, fresh seeker consultation query"
+      /20\+ years · Certified Jyotish Acharya/,
+      "Must include single-line compressed trust phrase"
     );
-
-    // Bubble 2: Acharya Niraj Kumar Vedic Insight
     assert.match(
       modalCode,
-      /10th lord|Saturn transit|karmic turning point|D1 &amp; D9 charts/i,
-      "Acharya's simulated reply must demonstrate fresh authentic Vedic astrological depth"
+      /Claim 50% Off &amp; Start Consultation/,
+      "Must include primary CTA button"
     );
-
-    // Bubble 3: Seeker Confirmation
     assert.match(
       modalCode,
-      /Ready with my exact birth time and Kundli details/i,
-      "Must show 3-message dialogue completion with seeker confirmation"
+      /No thanks, continue browsing/,
+      "Must include small dismiss link below the button"
     );
-
-    // Consultation topics
-    assert.match(modalCode, /Career &amp; Job|Career & Job/i);
-    assert.match(modalCode, /Kundli Milan/i);
-    assert.match(modalCode, /Devta Vastu/i);
   });
 
   test("strictly avoids Astrotalk-scale marketplace statistics and flagged inconsistent numbers", () => {
-    // 1. Reject Astrotalk marketplace scale stats
     const marketplacePatterns = [
       /5Cr\+?/i,
       /50,?000\+?\s*astrologers/i,
       /thousands of astrologers/i,
       /largest astrology platform/i,
+      /15,000\+/,
+      /35,000\+/,
     ];
 
     for (const pattern of marketplacePatterns) {
       assert.doesNotMatch(
         modalCode,
         pattern,
-        `Modal must strictly avoid Astrotalk marketplace-scale statistic: ${pattern}`
-      );
-    }
-
-    // 2. Reject previously flagged inconsistent numbers (15,000+ vs 35,000+) pending client confirmation
-    const flaggedDiscrepancyNumbers = [
-      /15,000\+/,
-      /35,000\+/,
-    ];
-
-    for (const pattern of flaggedDiscrepancyNumbers) {
-      assert.doesNotMatch(
-        modalCode,
-        pattern,
-        `Modal must not reuse previously flagged inconsistent count: ${pattern}`
+        `Modal must strictly avoid inflated or inconsistent statistic: ${pattern}`
       );
     }
   });
 
-  test("uses honest solo-practitioner credentials and qualitative community trust line with placeholder note", () => {
-    // Practitioner name & lineage
-    assert.match(
-      modalCode,
-      /Acharya Niraj Kumar|PLACEHOLDER_ASTROLOGER\.displayName/,
-      "Must feature Acharya Niraj Kumar as the primary consultant"
-    );
-    assert.match(
-      modalCode,
-      /Baidyanath Dham/,
-      "Must showcase the Baidyanath Dham lineage"
-    );
-
-    // Modest, honest experience & credentials
-    assert.match(
-      modalCode,
-      /20\+\s*Yrs/,
-      "Must highlight honest 20+ years traditional experience"
-    );
-    assert.match(
-      modalCode,
-      /Jyotish Acharya|BVB Scholar/,
-      "Must showcase authentic Jyotish Acharya / BVB certification"
-    );
-    assert.match(
-      modalCode,
-      /100%\s*Solo/,
-      "Must highlight direct 1-on-1 solo practitioner access"
-    );
-
-    // Qualitative trust line clearly marked as placeholder pending client confirmation
-    assert.match(
-      modalCode,
-      /Trusted by a growing community across India/i,
-      "Must feature qualitative trust line"
-    );
-    assert.match(
-      modalCode,
-      /pending client confirmation/i,
-      "Must explicitly note that exact counts are pending client confirmation"
-    );
-  });
-
-  test("includes transparent 50% off pricing breakdown, promo code, and subordinate Viar.in course link", () => {
-    // Check that FIRST_CONSULTATION_OFFER is wired in
+  test("wires live starting rate from ADMIN_CONFIGURABLE_PRICING and includes subordinate Viar.in link as the last line", () => {
     assert.equal(FIRST_CONSULTATION_OFFER.discountPercentage, 50);
     assert.equal(FIRST_CONSULTATION_OFFER.code, "FIRST50");
 
-    // Pricing calculation check across all 3 tiers (chat, voice, video)
     assert.equal(
       ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate,
       ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute * 0.5
     );
-    assert.equal(
-      ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate,
-      ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute * 0.5
-    );
-    assert.equal(
-      ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate,
-      ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute * 0.5
-    );
 
-    // Ensure modal pulls dynamically from ADMIN_CONFIGURABLE_PRICING (chat, voice, video) & listens to astro_pricing_updated
     assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.chat\.effectiveFirstTimeRate/);
-    assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.voice\.effectiveFirstTimeRate/);
-    assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.video\.effectiveFirstTimeRate/);
     assert.match(modalCode, /astro_pricing_updated/);
 
     // Verify subordinate secondary line linking to Viar.in
