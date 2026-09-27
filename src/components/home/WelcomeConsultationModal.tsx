@@ -30,8 +30,48 @@ export function isRouteExcludedFromWelcomeModal(pathname: string | null): boolea
     normalized.startsWith("/admin") ||
     normalized.startsWith("/astrologer") ||
     normalized.startsWith("/account") ||
-    normalized.startsWith("/consult")
+    normalized.startsWith("/consult") ||
+    normalized.startsWith("/login") ||
+    normalized.startsWith("/signup") ||
+    normalized.startsWith("/sso-callback")
   );
+}
+
+/**
+ * Parses a document.cookie string to determine if an active, authenticated
+ * Clerk session exists.
+ *
+ * NOTE: Clerk sets `__client_uat=0` (and `__client_uat_<hash>=0`) for ALL
+ * unauthenticated / logged-out visitors. Checking `.includes("__client_uat")`
+ * without inspecting its value falsely treats `__client_uat=0` as an active
+ * login and suppresses the welcome modal for every visitor.
+ */
+export function hasActiveClerkSessionCookie(cookieStr: string): boolean {
+  if (!cookieStr) return false;
+  const cookies = cookieStr.split(";").map((c) => c.trim());
+
+  for (const cookie of cookies) {
+    const eqIndex = cookie.indexOf("=");
+    if (eqIndex === -1) continue;
+    const name = cookie.slice(0, eqIndex).trim();
+    const value = cookie.slice(eqIndex + 1).trim();
+
+    // Non-empty __session (or suffixed __session_*) JWT token
+    if ((name === "__session" || name.startsWith("__session_")) && value.length > 0) {
+      return true;
+    }
+
+    // __client_uat (or suffixed __client_uat_*) is "0" when logged out,
+    // and a positive Unix timestamp (e.g. "1790427692") when logged in.
+    if (name === "__client_uat" || name.startsWith("__client_uat_")) {
+      const timestamp = Number(value);
+      if (value !== "0" && !Number.isNaN(timestamp) && timestamp > 0) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -61,11 +101,8 @@ export function isUserInActiveSessionOrConsultation(
         return true;
       }
 
-      // Active Clerk auth session cookies
-      if (
-        document.cookie.includes("__session") ||
-        document.cookie.includes("__client_uat")
-      ) {
+      // Active Clerk auth session cookies (must verify __client_uat > 0, not "0")
+      if (hasActiveClerkSessionCookie(document.cookie)) {
         return true;
       }
     } catch {
@@ -100,9 +137,15 @@ export function WelcomeConsultationModal({
       return;
     }
 
-    // 1. Route Check: Suppress on /dashboard/*, /admin/*, /astrologer/*, /account/*, /consult*
+    // 1. Route Check: Suppress on /dashboard/*, /admin/*, /astrologer/*, /account/*, /consult*, /login*, /signup*
     if (isRouteExcludedFromWelcomeModal(pathname)) {
       setIsOpen(false);
+      return;
+    }
+
+    // Wait for Clerk auth state to resolve before scheduling so we know definitively
+    // whether the visitor is signed in or a guest
+    if (isAuthLoading) {
       return;
     }
 
@@ -112,27 +155,16 @@ export function WelcomeConsultationModal({
       return;
     }
 
-    // 3. Visitor Session & Dismissal Check: Show once per visitor per session
+    // 3. Visitor Session Check: Show once per visitor per browser session
     try {
-      // Check if already dismissed permanently
-      const isDismissed = localStorage.getItem(WELCOME_MODAL_STORAGE_KEY);
-      if (isDismissed) {
-        setIsOpen(false);
-        return;
-      }
-
-      // Check if already shown in this visitor session (sessionStorage or session cookie)
+      // Check if already shown or dismissed in this active browsing session (sessionStorage)
       const isSeenInSession = sessionStorage.getItem(WELCOME_MODAL_SESSION_KEY);
-      const hasSessionCookie = document.cookie
-        .split(";")
-        .some((c) => c.trim().startsWith(`${WELCOME_MODAL_COOKIE_NAME}=`));
-
-      if (isSeenInSession || hasSessionCookie) {
+      if (isSeenInSession) {
         setIsOpen(false);
         return;
       }
 
-      // Schedule display for first visit
+      // Schedule display for first visit in this session
       const timer = setTimeout(() => {
         // Double-check conditions before opening
         if (
@@ -152,7 +184,7 @@ export function WelcomeConsultationModal({
 
       return () => clearTimeout(timer);
     } catch {
-      // LocalStorage / sessionStorage not available or blocked
+      // sessionStorage not available or blocked
     }
   }, [delayMs, forceOpen, pathname, isAuthenticated, isAuthLoading]);
 

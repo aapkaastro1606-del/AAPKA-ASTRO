@@ -8,6 +8,7 @@ import {
   WELCOME_MODAL_COOKIE_NAME,
   isRouteExcludedFromWelcomeModal,
   isUserInActiveSessionOrConsultation,
+  hasActiveClerkSessionCookie,
 } from "../src/components/home/WelcomeConsultationModal";
 import {
   PLACEHOLDER_ASTROLOGER,
@@ -324,6 +325,26 @@ describe("Welcome Consultation Modal Behavioral Controls", () => {
       isUserInActiveSessionOrConsultation(false, "/horoscope"),
       false,
       "Must allow guest visitor on public horoscope page"
+    );
+
+    // 4. Clerk cookie verification: __client_uat=0 (set by Clerk for ALL logged-out visitors)
+    // must NEVER be treated as an active session!
+    assert.equal(
+      hasActiveClerkSessionCookie("__client_uat=0; __client_uat_abcd1234=0"),
+      false,
+      "Clerk __client_uat=0 indicates a logged-out visitor and must NOT suppress the modal"
+    );
+
+    // 5. Real signed-in Clerk cookies (__client_uat > 0 or non-empty __session) MUST suppress
+    assert.equal(
+      hasActiveClerkSessionCookie("__client_uat=1790427692; __client_uat_abcd1234=1790427692"),
+      true,
+      "Positive __client_uat timestamp indicates an active signed-in session"
+    );
+    assert.equal(
+      hasActiveClerkSessionCookie("__client_uat=0; __session=eyJhbGciOiJSUzI1NiJ9.payload.sig"),
+      true,
+      "Non-empty __session JWT cookie indicates an active signed-in session"
     );
   });
 
