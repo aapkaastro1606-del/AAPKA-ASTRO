@@ -143,24 +143,21 @@ export function WelcomeConsultationModal({
       return;
     }
 
-    // Wait for Clerk auth state to resolve before scheduling so we know definitively
-    // whether the visitor is signed in or a guest
-    if (isAuthLoading) {
-      return;
-    }
-
     // 2. Active Session / Mid-Consultation Check: Suppress if user is logged in or mid-consultation
     if (isUserInActiveSessionOrConsultation(isAuthenticated, pathname)) {
       setIsOpen(false);
       return;
     }
 
-    // 3. Visitor Session Check: Show once per visitor per browser session
+    // 3. Visitor Session Check: Show once per visitor per browser session.
+    // IMPORTANT: Do NOT block on `isAuthLoading` (window.Clerk.loaded), because Clerk's
+    // third-party scripts can remain in `status: "loading"` on slow connections — the exact
+    // same hydration issue fixed in Navbar's <Show when="signed-out">. And do NOT call
+    // `setIsOpen(false)` when `isSeenInSession` is true, or else any effect re-run after
+    // opening would immediately close the newly opened modal!
     try {
-      // Check if already shown or dismissed in this active browsing session (sessionStorage)
       const isSeenInSession = sessionStorage.getItem(WELCOME_MODAL_SESSION_KEY);
       if (isSeenInSession) {
-        setIsOpen(false);
         return;
       }
 
@@ -186,7 +183,7 @@ export function WelcomeConsultationModal({
     } catch {
       // sessionStorage not available or blocked
     }
-  }, [delayMs, forceOpen, pathname, isAuthenticated, isAuthLoading]);
+  }, [delayMs, forceOpen, pathname, isAuthenticated]);
 
   const handleDismiss = useCallback(() => {
     setIsOpen(false);

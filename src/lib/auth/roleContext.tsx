@@ -51,12 +51,17 @@ export function useCurrentUserRole(): CurrentUserRoleState {
 export const ClerkRoleBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoaded, isSignedIn, user } = useClerkUser();
   const [mounted, setMounted] = useState(false);
+  const [fallbackReady, setFallbackReady] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const timer = setTimeout(() => {
+      setFallbackReady(true);
+    }, 2500);
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!mounted || !isLoaded) {
+  if (!mounted || (!isLoaded && !fallbackReady)) {
     return (
       <RoleContext.Provider value={{ ...defaultRoleState, isLoading: true }}>
         {children}
