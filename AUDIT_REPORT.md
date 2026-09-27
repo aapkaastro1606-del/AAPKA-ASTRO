@@ -1114,6 +1114,54 @@ An investigation of the sibling educational academy platform Viar.in (`c:\Users\
    - **Production Build**: **44 / 44 pages compiled cleanly** (`next build`), with `/login/sso-callback`, `/signup/sso-callback`, and `/sso-callback` statically compiled.
    - **Zero Lint Errors**: Passed `next lint` with 0 warnings/errors.
 
+---
+
+## 20. Welcome Consultation Modal Root-Cause Diagnosis, Content Refresh & Live Incognito Verification (September 2026)
+
+### 20.1 Clean-Incognito Root-Cause Diagnosis
+Before modifying any code, `https://aapka-astroo.vercel.app/` was inspected using a headless Chrome Incognito instance (`--incognito`, zero `localStorage`, zero `sessionStorage`, zero prior cookies) via Chrome DevTools Protocol (`Runtime.evaluate` polling every `1000ms` from `0s` to `10s`).
+
+Three concrete bugs in [`src/components/home/WelcomeConsultationModal.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/WelcomeConsultationModal.tsx) and [`src/lib/auth/roleContext.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/auth/roleContext.tsx) prevented the modal from ever opening—even in a brand-new Incognito window:
+
+1. **Bug #1 — Clerk `__client_uat=0` Unauthenticated Cookie False Positive (`isUserInActiveSessionOrConsultation()`)**:
+   - **What happened**: `isUserInActiveSessionOrConsultation()` checked `document.cookie.includes("__client_uat")` to detect whether a visitor had an active Clerk session cookie.
+   - **Why it broke Incognito visits**: As soon as `<ClerkProvider>` initializes on any page, Clerk sets `__client_uat=0` (and `__client_uat_<instance>=0`) in `document.cookie` for **every unauthenticated visitor** (`0` = signed out; positive Unix timestamp `> 0` = signed in). Because `"__client_uat=0".includes("__client_uat")` evaluated to `true`, `isUserInActiveSessionOrConsultation()` returned `true` for **100% of logged-out visitors**, immediately suppressing the popup even in a fresh Incognito window.
+   - **Fix applied**: Replaced raw `.includes("__client_uat")` substring matching with `hasActiveClerkSessionCookie(cookieHeader: string)` in [`src/components/home/WelcomeConsultationModal.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/WelcomeConsultationModal.tsx), which parses cookie `name=value` pairs and returns `true` **only** when `__client_uat` (or `__client_uat_*`) has a numeric timestamp `> 0` or `__session` has a non-empty token.
+
+2. **Bug #2 — Clerk `isLoaded` Hydration Stall & Self-Closing `useEffect` Race Condition**:
+   - **What happened**:
+     1. Just like the earlier Navbar hydration issue, `WelcomeConsultationModal` gated its mount timer behind `if (isAuthLoading) return;`. During live CDP timeline tracing, Clerk's multi-request handshake to `profound-cicada-9694.clerk.accounts.dev` frequently left `window.Clerk.loaded === false` (`status: "loading"`), keeping `ClerkRoleBridge`'s `isLoading: true` indefinitely and preventing the `1200ms` timer from ever starting.
+     2. Even when `isAuthLoading` transitioned or `pathname` updated, the timer callback wrote `sessionStorage.setItem("aapka_welcome_modal_session_seen", "true")` when opening the modal (`setIsOpen(true)`). Any subsequent `useEffect` re-execution immediately read `isSeenInSession === "true"` and executed `if (isSeenInSession) { setIsOpen(false); return; }`, **instantly closing the modal right after it opened**.
+   - **Fix applied**:
+     - Added a `2500ms` hydration fallback in `ClerkRoleBridge` ([`src/lib/auth/roleContext.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/auth/roleContext.tsx)) so `isLoading` resolves to `false` if Clerk's external handshake stalls.
+     - Decoupled the `WelcomeConsultationModal` trigger effect from `isAuthLoading`, relying on `user` state + `hasActiveClerkSessionCookie(document.cookie)` + `localStorage.getItem("astro_auth_role")` both before scheduling the timer and inside the timer callback.
+     - Removed `setIsOpen(false)` from the `if (isSeenInSession) return;` guard so an already-open modal does not self-close on subsequent effect runs, while still suppressing re-triggers on subsequent route navigations (`pathname` changes).
+
+3. **Bug #3 — Permanent Cross-Session `localStorage` Lockout vs. Per-Session Gate**:
+   - **What happened**: Checking `localStorage.getItem("aapka_welcome_modal_dismissed") === "true"` inside the mount gate permanently locked out any browser profile that had ever dismissed the modal in an earlier session.
+   - **Fix applied**: Scoped the automatic display gate to `sessionStorage.getItem("aapka_welcome_modal_session_seen") === "true"` so the modal shows **once per visitor per browser session** (and never re-triggers on subsequent navigations within that session), while still recording `aapka_welcome_modal_dismissed` in `localStorage` on dismissal for telemetry/audit state compatibility.
+
+### 20.2 Content Refresh & Live Pricing Synchronization
+1. **Confirmed Headline**: Preserved `"50% Off Your First Consultation"` (`data-testid="welcome-modal-title"`) — zero "free consultation" claims anywhere.
+2. **Live Dynamic Pricing Across All 3 Consultation Modes**:
+   - Pulled directly from `ADMIN_CONFIGURABLE_PRICING` ([`src/lib/pricing/config.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/pricing/config.ts)) and subscribed to `window.addEventListener("astro_pricing_updated", ...)` dispatched by `AdminStore.updatePricing()` ([`src/lib/store/adminStore.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/store/adminStore.ts)).
+   - Displays all three real configured tiers side-by-side (`Chat: ₹7.5/min [was ₹15]`, `Call: ₹10/min [was ₹20]`, `Video: ₹12.5/min [was ₹25]`) so the modal never drifts out of sync with `/pricing` or `/admin/pricing`.
+3. **3-Bubble Solo Consultation Preview & Authentic Solo Credentials**:
+   - Retained the custom 3-bubble career/Dashā consultation preview with Acharya Anmol Garg (`20+ Yrs`, `BVB Scholar`, `100% Solo`, `Private`) and qualitative community line (`"Trusted by a growing community across India & abroad"` with `*Exact seeker count and metrics pending client confirmation`).
+4. **Subordinate Secondary Viar.in Link**:
+   - Added a visually subordinate secondary line at the bottom of the modal below the primary CTA and dismissal trigger (`data-testid="welcome-modal-viar-link"`):
+     `"Curious about learning astrology yourself? Explore courses at Viar.in →"` linking to `https://viar.in`.
+
+### 20.3 Live Clean-Incognito CDP Verification & Automated Test Evidence
+1. **Automated Unit & Regression Suite ([`tests/welcomeModal.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/welcomeModal.test.ts))**:
+   - **13 / 13 tests passing**, covering `hasActiveClerkSessionCookie` (`__client_uat=0` vs `__client_uat=1790354000` vs `__session`), live `AdminStore.updatePricing` sync across Chat/Call/Video, excluded route prefix checks (`/dashboard`, `/admin`, `/astrologer`, `/consult`, `/consultation`, `/login`, `/signup`), and presence of the subordinate `https://viar.in` link.
+2. **Live 5-Step Headless Chrome Incognito Verification (`https://aapka-astroo.vercel.app/`)**:
+   - **Step 1 (Fresh Incognito Visit to `/`)**: After `2.5s`, modal mounted automatically (`isOpen: true`, `title: "50% Off Your First Consultation"`, `viarText: true`, `sessionSeen: "true"`, `__client_uat=0` properly ignored).
+   - **Step 2 (`Escape` Key Dismissal)**: Dispatched `KeyboardEvent("keydown", { key: "Escape" })` → modal closed cleanly (`isOpen: false`, `dismissedFlag: "true"`, `sessionSeen: "true"`, `document.body.style.overflow: "visible"` — zero page blocking or layout shift).
+   - **Step 3 (Same-Session Navigation to `/horoscope`)**: Navigated to `/horoscope` within the same Incognito context → modal stayed suppressed (`isOpen: false`, `sessionSeen: "true"`).
+   - **Step 4 (Excluded Route `/consult`)**: Cleared `sessionStorage` and visited `/consult` → modal stayed suppressed (`path: "/consult"`, `isOpen: false`).
+   - **Step 5 (Mid-Consultation Suppression)**: Set `localStorage.setItem("aapka_active_session_id", "sess_active_999")` on `/` → modal stayed suppressed (`activeSessionId: "sess_active_999"`, `isOpen: false`).
+
 
 
 
