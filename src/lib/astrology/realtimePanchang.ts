@@ -384,8 +384,10 @@ export function formatTimeInZone(
     hour12: true,
   }).format(instant);
 
+  const timeHi = timeEn.replace(/\bAM\b/i, "प्रातः").replace(/\bPM\b/i, "सायं");
+
   if (isSameDay) {
-    return { en: timeEn, hi: timeEn, isNextDay: false };
+    return { en: timeEn, hi: timeHi, isNextDay: false };
   }
 
   const shortDateEn = new Intl.DateTimeFormat("en-US", {
@@ -403,14 +405,14 @@ export function formatTimeInZone(
   if (isNextDay) {
     return {
       en: `${timeEn}, ${shortDateEn} (next day)`,
-      hi: `${timeEn}, ${shortDateHi} (अगले दिन)`,
+      hi: `${timeHi}, ${shortDateHi} (अगले दिन)`,
       isNextDay: true,
     };
   }
 
   return {
     en: `${timeEn}, ${shortDateEn} (prev night)`,
-    hi: `${timeEn}, ${shortDateHi} (पूर्व रात्रि)`,
+    hi: `${timeHi}, ${shortDateHi} (पूर्व रात्रि)`,
     isNextDay: false,
   };
 }

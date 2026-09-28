@@ -21,22 +21,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { sign: signId } = await params;
   const horoscope = DailyHoroscopeService.getHoroscope(signId, 0);
   if (!horoscope) {
-    return { title: "Horoscope Not Found | Aapka Astro" };
+    return { title: "राशिफल उपलब्ध नहीं है | Aapka Astro" };
   }
 
   const sign = horoscope.sign;
   return {
-    title: `${sign.englishName} (${sign.sanskritName}) Daily Horoscope — ${sign.hindiName} दैनिक राशिफल | Aapka Astro`,
-    description: `Read today's Vedic Chandra Rashi (Moon Sign) horoscope for ${sign.englishName} (${sign.hindiName}) in English & Hindi. Calculated from real planetary transits (Lahiri Ayanamsa) with Career, Love, Health, Finance, Family, Upay & Mantra.`,
+    title: `${sign.hindiName} राशिफल आज का (${sign.englishName} Daily Horoscope in Hindi) | Aapka Astro`,
+    description: `आज का ${sign.hindiName} (${sign.sanskritName}) वैदिक चन्द्र राशिफल — जानें करियर, प्रेम, स्वास्थ्य, आर्थिक स्थिति, पारिवारिक सुख, शुभ रंग, शुभ समय, वैदिक उपाय एवं बीज मंत्र। चित्रापक्ष लाहिड़ी अयनांश पर आधारित।`,
     keywords: [
-      `${sign.englishName} horoscope today`,
-      `${sign.sanskritName} rashi today`,
       `${sign.hindiName} राशिफल आज का`,
-      "Vedic Moon Sign Horoscope",
+      `आज का ${sign.hindiName} राशिफल`,
+      `${sign.hindiName} दैनिक राशिफल`,
+      `${sign.englishName} rashifal in hindi`,
       "Aapka Astro",
     ],
     alternates: {
-      canonical: `/horoscope/${sign.id}`,
+      canonical: `/hi/horoscope/${sign.id}`,
       languages: {
         "en-IN": `/horoscope/${sign.id}`,
         "hi-IN": `/hi/horoscope/${sign.id}`,
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function SignHoroscopePage({ params }: PageProps) {
+export default async function HindiSignHoroscopePage({ params }: PageProps) {
   const { sign: signId } = await params;
   const yesterday = DailyHoroscopeService.getHoroscope(signId, -1);
   const today = DailyHoroscopeService.getHoroscope(signId, 0);
@@ -62,7 +62,7 @@ export default async function SignHoroscopePage({ params }: PageProps) {
       today={today}
       tomorrow={tomorrow}
       astrologerName={PLACEHOLDER_ASTROLOGER.displayName}
-      defaultLocale="en"
+      defaultLocale="hi"
     />
   );
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { DailyHoroscope, ZODIAC_SIGNS } from "@/lib/astrology/dailyHoroscope";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { MandalaDivider } from "@/components/ui/MandalaDivider";
+import { HOROSCOPE_UI_COPY } from "@/lib/i18n/vedicGlossary";
+import { useLanguage } from "@/context/LanguageContext";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import {
   Heart,
@@ -30,6 +30,7 @@ interface SignHoroscopeViewProps {
   today: DailyHoroscope;
   tomorrow: DailyHoroscope;
   astrologerName: string;
+  defaultLocale?: "en" | "hi";
 }
 
 export function SignHoroscopeView({
@@ -37,9 +38,14 @@ export function SignHoroscopeView({
   today,
   tomorrow,
   astrologerName,
+  defaultLocale = "en",
 }: SignHoroscopeViewProps) {
-  const { lang, setLang } = useLanguage();
-  const isHi = lang === "hi";
+  const { setLang } = useLanguage();
+  const isHi = defaultLocale === "hi";
+
+  useEffect(() => {
+    setLang(defaultLocale);
+  }, [defaultLocale, setLang]);
 
   const [dayTab, setDayTab] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [whyExpanded, setWhyExpanded] = useState<boolean>(false);
@@ -48,19 +54,22 @@ export function SignHoroscopeView({
     dayTab === "yesterday" ? yesterday : dayTab === "tomorrow" ? tomorrow : today;
 
   const { sign, computedFacts } = activeHoroscope;
+  const baseHref = isHi ? "/hi/horoscope" : "/horoscope";
 
   return (
-    <div className="min-h-screen bg-[#FBF3E7] text-[#3B2A1E]">
-      {/* Breadcrumb + Language & Moon Sign Bar */}
+    <div lang={isHi ? "hi" : "en"} className="min-h-screen bg-[#FBF3E7] text-[#3B2A1E]">
+      {/* Breadcrumb + URL Language Switcher & Moon Sign Bar */}
       <div className="border-b border-[#E8D8C3] bg-[#FFFDF9] px-4 py-3 text-xs text-[#6E5545]">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Link
-              href="/horoscope"
+              href={baseHref}
               className="inline-flex items-center gap-1.5 font-bold text-[#7B2D26] hover:text-[#96372E] transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>{isHi ? "सभी १२ चन्द्र राशियाँ" : "All 12 Chandra Rashis"}</span>
+              <span>
+                {isHi ? HOROSCOPE_UI_COPY.all12Rashis.hi : HOROSCOPE_UI_COPY.all12Rashis.en}
+              </span>
             </Link>
             <Link
               href="/calculators/moon-sign"
@@ -69,8 +78,8 @@ export function SignHoroscopeView({
               <HelpCircle className="h-3.5 w-3.5 text-[#C1662F]" />
               <span>
                 {isHi
-                  ? "अपनी चन्द्र राशि नहीं जानते? यहाँ गणना करें →"
-                  : "Don't know your Rashi? Calculate Moon Sign →"}
+                  ? HOROSCOPE_UI_COPY.calculateMoonSignPrompt.hi
+                  : HOROSCOPE_UI_COPY.calculateMoonSignPrompt.en}
               </span>
             </Link>
           </div>
@@ -79,25 +88,26 @@ export function SignHoroscopeView({
             <span className="font-mono text-[#C1662F] font-bold">
               {isHi ? activeHoroscope.formattedDateHindi : activeHoroscope.formattedDate}
             </span>
+            {/* URL-based SEO Language Switcher (/horoscope/[sign] <-> /hi/horoscope/[sign]) */}
             <div className="inline-flex rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] p-0.5">
-              <button
-                type="button"
+              <Link
+                href={`/horoscope/${sign.id}`}
                 onClick={() => setLang("en")}
                 className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
                   !isHi ? "bg-[#7B2D26] text-[#FFFDF9]" : "text-[#6E5545] hover:text-[#3B2A1E]"
                 }`}
               >
-                EN
-              </button>
-              <button
-                type="button"
+                English
+              </Link>
+              <Link
+                href={`/hi/horoscope/${sign.id}`}
                 onClick={() => setLang("hi")}
                 className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors ${
                   isHi ? "bg-[#7B2D26] text-[#FFFDF9]" : "text-[#6E5545] hover:text-[#3B2A1E]"
                 }`}
               >
                 हिन्दी
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -111,8 +121,8 @@ export function SignHoroscopeView({
             <DiyaIcon size={13} />
             <span>
               {isHi
-                ? "वैदिक जन्म चन्द्र राशि (Chandra Rashi / Moon Sign) गोचर राशिफल"
-                : "Vedic Chandra Rashi (Moon Sign) Gochara Horoscope"}
+                ? HOROSCOPE_UI_COPY.vedicMoonSignBadge.hi
+                : HOROSCOPE_UI_COPY.vedicMoonSignBadge.en}
             </span>
           </div>
 
@@ -125,11 +135,11 @@ export function SignHoroscopeView({
           <div className="flex flex-wrap items-center justify-center gap-3">
             <h1 className="font-temple text-3xl sm:text-4xl font-bold text-[#7B2D26]">
               {isHi
-                ? `${sign.hindiName} दैनिक राशिफल (${sign.sanskritName})`
+                ? `${sign.hindiName} दैनिक राशिफल`
                 : `${sign.englishName} (${sign.sanskritName}) Daily Horoscope`}
             </h1>
             <span className="rounded-full bg-[#E8A33D]/25 px-3 py-1 text-sm font-bold text-[#7B2D26]">
-              {isHi ? sign.englishName : sign.hindiName}
+              {isHi ? sign.elementHindi : sign.hindiName}
             </span>
           </div>
 
@@ -155,20 +165,20 @@ export function SignHoroscopeView({
               [
                 {
                   key: "yesterday",
-                  labelEn: "Yesterday",
-                  labelHi: "कल (बीता हुआ)",
+                  labelEn: HOROSCOPE_UI_COPY.yesterdayTab.en,
+                  labelHi: HOROSCOPE_UI_COPY.yesterdayTab.hi,
                   sub: yesterday.date,
                 },
                 {
                   key: "today",
-                  labelEn: "Today",
-                  labelHi: "आज",
+                  labelEn: HOROSCOPE_UI_COPY.todayTab.en,
+                  labelHi: HOROSCOPE_UI_COPY.todayTab.hi,
                   sub: today.date,
                 },
                 {
                   key: "tomorrow",
-                  labelEn: "Tomorrow",
-                  labelHi: "कल (आने वाला)",
+                  labelEn: HOROSCOPE_UI_COPY.tomorrowTab.en,
+                  labelHi: HOROSCOPE_UI_COPY.tomorrowTab.hi,
                   sub: tomorrow.date,
                 },
               ] as const
@@ -211,12 +221,12 @@ export function SignHoroscopeView({
         {/* 1. Overview Section */}
         <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26]">
               <Sparkles className="h-4 w-4 text-[#E8A33D]" />
               <span>
                 {isHi
-                  ? "१. दैनिक सारांश एवं चन्द्र गोचर फल (Overview)"
-                  : "1. Daily Overview & Chandra Gochar Guidance"}
+                  ? HOROSCOPE_UI_COPY.overviewSection.hi
+                  : HOROSCOPE_UI_COPY.overviewSection.en}
               </span>
             </div>
             <span className="rounded-full bg-[#E8A33D]/15 px-3 py-1 text-xs font-bold text-[#7B2D26]">
@@ -235,13 +245,6 @@ export function SignHoroscopeView({
           <p className="text-base sm:text-lg text-[#3B2A1E] leading-relaxed font-medium">
             {isHi ? activeHoroscope.summaryHindi : activeHoroscope.summary}
           </p>
-
-          {/* Secondary language reference line */}
-          <div className="mt-4 pt-3 border-t border-[#E8D8C3]/60">
-            <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed">
-              {isHi ? activeHoroscope.summary : activeHoroscope.summaryHindi}
-            </p>
-          </div>
         </div>
 
         {/* 2. Expandable "Why this reading?" (Traceable Astronomical & Gochara Facts) */}
@@ -256,8 +259,8 @@ export function SignHoroscopeView({
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-[#7B2D26]">
                   {isHi
-                    ? "यह राशिफल कैसे गणना किया गया? (Why this reading? — वास्तविक ग्रह स्पष्ट एवं गोचर तथ्य)"
-                    : "Why this reading? (Computed Astronomical & Vedic Gochara Facts)"}
+                    ? HOROSCOPE_UI_COPY.whyThisReadingTitle.hi
+                    : HOROSCOPE_UI_COPY.whyThisReadingTitle.en}
                 </h2>
                 <p className="text-xs text-[#6E5545]">
                   {isHi
@@ -289,7 +292,7 @@ export function SignHoroscopeView({
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#FBF3E7] text-[#7B2D26] border-b border-[#E8D8C3]">
                     <tr>
-                      <th className="py-2.5 px-3 font-bold">{isHi ? "ग्रह (Graha)" : "Planet (Graha)"}</th>
+                      <th className="py-2.5 px-3 font-bold">{isHi ? "ग्रह" : "Planet (Graha)"}</th>
                       <th className="py-2.5 px-3 font-bold">{isHi ? "गोचर राशि (अंश)" : "Transit Sign (Deg)"}</th>
                       <th className="py-2.5 px-3 font-bold">
                         {isHi ? `${sign.hindiName} से भाव` : `House from ${sign.sanskritName}`}
@@ -302,7 +305,7 @@ export function SignHoroscopeView({
                     {computedFacts.planetTransits.map((pt) => (
                       <tr key={pt.planet} className="hover:bg-[#FBF3E7]/50">
                         <td className="py-2 px-3 font-bold text-[#3B2A1E]">
-                          {isHi ? `${pt.planetHi} (${pt.planet})` : `${pt.planet} (${pt.planetHi})`}
+                          {isHi ? pt.planetHi : `${pt.planet} (${pt.planetHi})`}
                         </td>
                         <td className="py-2 px-3 font-mono">
                           {isHi ? pt.signHi : pt.signEn} ({pt.degreeInSign}°)
@@ -314,12 +317,12 @@ export function SignHoroscopeView({
                           <div className="flex flex-wrap gap-1">
                             {pt.isRetrograde && pt.planet !== "Rahu" && pt.planet !== "Ketu" && (
                               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
-                                {isHi ? "वक्री (Retrograde)" : "Retrograde (Vakri)"}
+                                {isHi ? "वक्री" : "Retrograde (Vakri)"}
                               </span>
                             )}
                             {pt.isCombust && (
                               <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-900">
-                                {isHi ? "अस्त (Combust)" : "Combust (Asta)"}
+                                {isHi ? "अस्त" : "Combust (Asta)"}
                               </span>
                             )}
                             {pt.hasVedha && (
@@ -367,48 +370,43 @@ export function SignHoroscopeView({
 
         {/* 3. Five Life Domains Grid: Career, Love, Health, Finance, Family */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Career */}
           <DomainCard
             icon={<Briefcase className="h-4 w-4" />}
-            titleEn="Career & Profession"
-            titleHi="करियर एवं व्यवसाय (कर्म भाव)"
+            titleEn={HOROSCOPE_UI_COPY.careerSection.en}
+            titleHi={HOROSCOPE_UI_COPY.careerSection.hi}
             domain={activeHoroscope.career}
             isHi={isHi}
           />
 
-          {/* Love & Relationships */}
           <DomainCard
             icon={<Heart className="h-4 w-4" />}
-            titleEn="Love & Relationships"
-            titleHi="प्रेम एवं दांपत्य संबंध"
+            titleEn={HOROSCOPE_UI_COPY.loveSection.en}
+            titleHi={HOROSCOPE_UI_COPY.loveSection.hi}
             domain={activeHoroscope.love}
             isHi={isHi}
           />
 
-          {/* Health & Vitality */}
           <DomainCard
             icon={<Activity className="h-4 w-4" />}
-            titleEn="Health & Vitality"
-            titleHi="स्वास्थ्य एवं शारीरिक ऊर्जा"
+            titleEn={HOROSCOPE_UI_COPY.healthSection.en}
+            titleHi={HOROSCOPE_UI_COPY.healthSection.hi}
             domain={activeHoroscope.health}
             isHi={isHi}
           />
 
-          {/* Finance & Wealth */}
           <DomainCard
             icon={<Coins className="h-4 w-4" />}
-            titleEn="Finance & Wealth"
-            titleHi="आर्थिक स्थिति एवं धन-लाभ"
+            titleEn={HOROSCOPE_UI_COPY.financeSection.en}
+            titleHi={HOROSCOPE_UI_COPY.financeSection.hi}
             domain={activeHoroscope.finance}
             isHi={isHi}
           />
 
-          {/* Family & Domestic Life (Full Width on Desktop) */}
           <div className="md:col-span-2">
             <DomainCard
               icon={<Users className="h-4 w-4" />}
-              titleEn="Family & Domestic Harmony"
-              titleHi="पारिवारिक जीवन एवं गृह-सुख"
+              titleEn={HOROSCOPE_UI_COPY.familySection.en}
+              titleHi={HOROSCOPE_UI_COPY.familySection.hi}
               domain={activeHoroscope.family}
               isHi={isHi}
             />
@@ -418,24 +416,26 @@ export function SignHoroscopeView({
         {/* 4. Lucky Colour, Lucky Number & Favourable Time Window */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
-            <span className="text-[11px] font-bold text-[#6E5545] uppercase">
-              {isHi ? "शुभ रंग (Lucky Colour)" : "Lucky Colour"}
+            <span className="text-[11px] font-bold text-[#6E5545]">
+              {isHi ? HOROSCOPE_UI_COPY.luckyColour.hi : HOROSCOPE_UI_COPY.luckyColour.en}
             </span>
             <p className="mt-1 font-bold text-sm text-[#7B2D26]">
               {isHi ? activeHoroscope.luckyColorHindi : activeHoroscope.luckyColor}
             </p>
           </div>
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
-            <span className="text-[11px] font-bold text-[#6E5545] uppercase">
-              {isHi ? "शुभ अंक (Lucky Number)" : "Lucky Number"}
+            <span className="text-[11px] font-bold text-[#6E5545]">
+              {isHi ? HOROSCOPE_UI_COPY.luckyNumber.hi : HOROSCOPE_UI_COPY.luckyNumber.en}
             </span>
             <p className="mt-1 font-mono font-black text-xl text-[#7B2D26]">
               {activeHoroscope.luckyNumber}
             </p>
           </div>
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
-            <span className="text-[11px] font-bold text-[#6E5545] uppercase">
-              {isHi ? "अनुकूल समय (Favourable Window)" : "Favourable Time Window"}
+            <span className="text-[11px] font-bold text-[#6E5545]">
+              {isHi
+                ? HOROSCOPE_UI_COPY.favourableWindow.hi
+                : HOROSCOPE_UI_COPY.favourableWindow.en}
             </span>
             <p className="mt-1 font-mono font-bold text-xs text-[#6B8E5A]">
               {isHi ? activeHoroscope.auspiciousTimeHindi : activeHoroscope.auspiciousTime}
@@ -448,7 +448,9 @@ export function SignHoroscopeView({
           <div className="rounded-2xl border border-[#E8A33D] bg-[#E8A33D]/10 p-6">
             <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] mb-2">
               <DiyaIcon size={16} />
-              <span>{isHi ? "आज का वैदिक उपाय (Vedic Remedy / Upay)" : "Vedic Remedy (Upay) for Today"}</span>
+              <span>
+                {isHi ? HOROSCOPE_UI_COPY.vedicRemedy.hi : HOROSCOPE_UI_COPY.vedicRemedy.en}
+              </span>
             </div>
             <p className="text-sm text-[#3B2A1E] font-medium leading-relaxed">
               {isHi ? activeHoroscope.remedyHindi : activeHoroscope.remedy}
@@ -458,7 +460,9 @@ export function SignHoroscopeView({
           <div className="rounded-2xl border border-[#7B2D26]/30 bg-[#FFFDF9] p-6">
             <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] mb-2">
               <BookOpen className="h-4 w-4 text-[#C1662F]" />
-              <span>{isHi ? "आज का वैदिक बीज मंत्र (Vedic Mantra)" : "Vedic Mantra for Today"}</span>
+              <span>
+                {isHi ? HOROSCOPE_UI_COPY.vedicMantra.hi : HOROSCOPE_UI_COPY.vedicMantra.en}
+              </span>
             </div>
             <p className="text-sm text-[#7B2D26] font-bold leading-relaxed">
               {isHi ? activeHoroscope.mantraHindi : activeHoroscope.mantra}
@@ -468,14 +472,16 @@ export function SignHoroscopeView({
 
         {/* Quick Switcher to Other 11 Rashis */}
         <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#6E5545] mb-3">
-            {isHi ? "अन्य चन्द्र राशियों का दैनिक राशिफल देखें" : "Switch to Another Chandra Rashi"}
+          <h3 className="text-xs font-bold text-[#6E5545] mb-3">
+            {isHi
+              ? HOROSCOPE_UI_COPY.switchRashiHeading.hi
+              : HOROSCOPE_UI_COPY.switchRashiHeading.en}
           </h3>
           <div className="flex flex-wrap gap-2">
             {ZODIAC_SIGNS.map((s) => (
               <Link
                 key={s.id}
-                href={`/horoscope/${s.id}`}
+                href={`${baseHref}/${s.id}`}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                   s.id === sign.id
                     ? "bg-[#7B2D26] text-[#FFFDF9]"
@@ -493,7 +499,7 @@ export function SignHoroscopeView({
         <div className="rounded-3xl border border-[#7B2D26] bg-[#7B2D26] p-8 text-center text-[#FBF3E7] shadow-xl">
           <h3 className="font-temple text-xl sm:text-2xl font-bold">
             {isHi
-              ? `क्या आप अपनी जन्म कुंडली की महादशा एवं गोचर का व्यक्तिगत विश्लेषण चाहते हैं?`
+              ? `${sign.hindiName} राशि के लिए अपनी जन्म कुंडली की महादशा एवं गोचर का व्यक्तिगत विश्लेषण चाहते हैं?`
               : `Want Personalised Janam Kundli & Mahadasha Analysis for ${sign.englishName}?`}
           </h3>
           <p className="mt-2 text-xs sm:text-sm text-[#FBF3E7]/85 max-w-xl mx-auto leading-relaxed">

@@ -18,6 +18,14 @@ export const metadata: Metadata = {
     "Vedic Horoscope 2026",
     "Rashifal today in Hindi",
   ],
+  alternates: {
+    canonical: "/horoscope",
+    languages: {
+      "en-IN": "/horoscope",
+      "hi-IN": "/hi/horoscope",
+      "x-default": "/horoscope",
+    },
+  },
 };
 
 export default function HoroscopeIndexPage() {
@@ -30,6 +38,7 @@ export default function HoroscopeIndexPage() {
     <HoroscopeIndexView
       items={items}
       astrologerName={PLACEHOLDER_ASTROLOGER.displayName}
+      defaultLocale="en"
     />
   );
 }

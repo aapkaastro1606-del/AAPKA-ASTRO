@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cinzel, Mukta } from "next/font/google";
+import { Cinzel, Mukta, Noto_Serif_Devanagari } from "next/font/google";
 import { AstroClerkProvider as ClerkProvider } from "@/components/auth/ClerkAuthWrapper";
 import "./globals.css";
 import { AstrologerStatusHeader } from "@/components/layout/AstrologerStatusHeader";
@@ -14,6 +14,12 @@ const cinzel = Cinzel({
   variable: "--font-cinzel",
   subsets: ["latin"],
   weight: ["400", "600", "700", "800", "900"],
+});
+
+const notoSerifDevanagari = Noto_Serif_Devanagari({
+  variable: "--font-noto-serif-devanagari",
+  subsets: ["devanagari", "latin"],
+  weight: ["500", "600", "700", "800"],
 });
 
 const mukta = Mukta({
@@ -75,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html
         lang="en"
-        className={`${cinzel.variable} ${mukta.variable} h-full antialiased`}
+        className={`${cinzel.variable} ${notoSerifDevanagari.variable} ${mukta.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col bg-[#FBF3E7] text-[#3B2A1E] font-body selection:bg-[#E8A33D] selection:text-[#3B2A1E]">
           <LanguageProvider>

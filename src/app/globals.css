@@ -28,7 +28,7 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-sage: var(--sage);
   --color-sage-light: var(--sage-light);
-  --font-heading: var(--font-cinzel), serif;
+  --font-heading: var(--font-cinzel), var(--font-noto-serif-devanagari), serif;
   --font-body: var(--font-mukta), sans-serif;
 }
 
@@ -39,8 +39,41 @@ body {
 }
 
 h1, h2, h3, .font-temple {
-  font-family: var(--font-cinzel), Georgia, serif;
+  font-family: var(--font-cinzel), var(--font-noto-serif-devanagari), Georgia, serif;
   letter-spacing: -0.01em;
+}
+
+.font-hindi {
+  font-family: var(--font-mukta), var(--font-noto-serif-devanagari), sans-serif;
+}
+
+/* Devanagari Typography Safeguards (:lang(hi)) — Prevents matra clipping & broken small-caps/tracking */
+:lang(hi),
+:lang(hi) *,
+[lang="hi"],
+[lang="hi"] * {
+  text-transform: none !important;
+  font-variant: normal !important;
+  letter-spacing: 0 !important;
+}
+
+:lang(hi),
+[lang="hi"] {
+  line-height: 1.72;
+}
+
+:lang(hi) h1,
+:lang(hi) h2,
+:lang(hi) h3,
+:lang(hi) .font-temple,
+[lang="hi"] h1,
+[lang="hi"] h2,
+[lang="hi"] h3,
+[lang="hi"] .font-temple {
+  font-family: var(--font-noto-serif-devanagari), var(--font-cinzel), Georgia, serif;
+  line-height: 1.55;
+  padding-top: 0.06em;
+  padding-bottom: 0.06em;
 }
 
 /* Subtle Temple Mandala Watermark Overlay */
