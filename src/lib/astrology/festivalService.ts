@@ -507,3 +507,8 @@ export function getUpcomingFestivals(fromDateStr: string, limit = 5): HinduFesti
     .slice(0, limit);
 }
 
+export function getCuratedFestivalsForDate(dateStr: string): HinduFestival[] {
+  return FESTIVALS_2026.filter((f) => f.date === dateStr);
+}
+
+
