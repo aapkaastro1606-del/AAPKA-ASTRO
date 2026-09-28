@@ -51,6 +51,7 @@ export const PANCHANG_LOCATIONS: PanchangLocation[] = [
   { id: "pune", name: "Pune", nameHindi: "पुणे", state: "Maharashtra", stateHindi: "महाराष्ट्र", lat: 18.5204, lon: 73.8567, timeZone: "Asia/Kolkata" },
   { id: "lucknow", name: "Lucknow", nameHindi: "लखनऊ", state: "Uttar Pradesh", stateHindi: "उत्तर प्रदेश", lat: 26.8467, lon: 80.9462, timeZone: "Asia/Kolkata" },
   { id: "patna", name: "Patna", nameHindi: "पटना", state: "Bihar", stateHindi: "बिहार", lat: 25.5941, lon: 85.1376, timeZone: "Asia/Kolkata" },
+  { id: "deoghar", name: "Deoghar (Baidyanath Dham)", nameHindi: "देवघर (बैद्यनाथ धाम)", state: "Jharkhand", stateHindi: "झारखंड", lat: 24.4852, lon: 86.6947, timeZone: "Asia/Kolkata" },
   { id: "london", name: "London", nameHindi: "लंदन (यू.के.)", state: "United Kingdom", stateHindi: "यूनाइटेड किंगडम", lat: 51.5074, lon: -0.1278, timeZone: "Europe/London" },
   { id: "new_york", name: "New York", nameHindi: "न्यूयॉर्क (यू.एस.ए.)", state: "United States", stateHindi: "संयुक्त राज्य अमेरिका", lat: 40.7128, lon: -74.0060, timeZone: "America/New_York" },
   { id: "toronto", name: "Toronto", nameHindi: "टोरंटो (कनाडा)", state: "Canada", stateHindi: "कनाडा", lat: 43.6532, lon: -79.3832, timeZone: "America/Toronto" },
@@ -1208,6 +1209,19 @@ export function computeRealtimePanchang(
       nextNakshatraHindi: nakNext.hi,
       nextLord: nakNext.lordEn,
       nextLordHindi: nakNext.lordHi,
+      hasTwoTransitionsInDay: nakCross2.endTime < nextSunrise,
+      secondEndsAt:
+        nakCross2.endTime < nextSunrise
+          ? formatTimeInZone(nakCross2.endTime, civilDateStr, timeZone).en
+          : undefined,
+      secondEndsAtHindi:
+        nakCross2.endTime < nextSunrise
+          ? formatTimeInZone(nakCross2.endTime, civilDateStr, timeZone).hi
+          : undefined,
+      thirdNakshatra:
+        nakCross2.endTime < nextSunrise ? NAKSHATRA_DATA[nakCross2.nextIndex].en : undefined,
+      thirdNakshatraHindi:
+        nakCross2.endTime < nextSunrise ? NAKSHATRA_DATA[nakCross2.nextIndex].hi : undefined,
     },
     yoga: {
       name: yogaPrimary.en,
