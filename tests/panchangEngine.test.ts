@@ -73,4 +73,40 @@ describe("Phase 2: High-Precision Drik Ganita Panchang Engine", () => {
       assert.equal(res.location.id, loc);
     }
   });
+
+  test("Phase 6: caches deterministically by date and rounded coordinates (0.01 deg) with on-demand fallback", async () => {
+    const { buildPanchangCacheKey, getPanchangWithCacheMeta } = await import(
+      "../src/lib/store/panchangStore"
+    );
+
+    const locA = {
+      id: "gps-a",
+      name: "Connaught Place",
+      nameHindi: "कनॉट प्लेस",
+      state: "Delhi",
+      stateHindi: "दिल्ली",
+      lat: 28.6139,
+      lon: 77.209,
+      timeZone: "Asia/Kolkata",
+    };
+    const locB = {
+      ...locA,
+      id: "gps-b",
+      lat: 28.6112, // rounds to 28.61
+      lon: 77.2084, // rounds to 77.21
+    };
+
+    const keyA = buildPanchangCacheKey(locA, "2026-10-15");
+    const keyB = buildPanchangCacheKey(locB, "2026-10-15");
+    assert.equal(keyA.cacheKey, "panchang:v2:2026-10-15:28.61:77.21:Asia/Kolkata");
+    assert.equal(keyA.cacheKey, keyB.cacheKey, "Nearby GPS coordinates within 0.01 deg must share cache key");
+
+    const firstCall = getPanchangWithCacheMeta(locA, "2026-10-15");
+    assert.equal(firstCall.cacheStatus, "MISS_COMPUTED_ON_DEMAND");
+
+    const secondCall = getPanchangWithCacheMeta(locB, "2026-10-15");
+    assert.equal(secondCall.cacheStatus, "HIT");
+    assert.equal(secondCall.data.tithi.name, firstCall.data.tithi.name);
+  });
 });
+

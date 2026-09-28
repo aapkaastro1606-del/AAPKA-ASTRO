@@ -520,6 +520,14 @@ export class DailyHoroscopeService {
     if (!sign) return null;
 
     const { civilDateStr, dateObj } = resolveTargetDate(dateOffsetOrDateStr);
+    const cacheKey = `horoscope:v2:${sign.id}:${civilDateStr}`;
+    const existing = horoscopeMemoryCache.get(cacheKey);
+    if (existing && Date.now() - existing.createdAtMs < HOROSCOPE_CACHE_TTL_MS) {
+      horoscopeCacheHits++;
+      return existing.value;
+    }
+    horoscopeCacheMisses++;
+
     const sky = computeDailySkyState(civilDateStr, dateObj);
     const { panchang } = sky;
 
@@ -848,7 +856,7 @@ export class DailyHoroscopeService {
     const planetaryTransitSummaryEn = `Moon in ${moonTransit.signEn} (${moonHouse}${getOrdinalSuffix(moonHouse)} house) • Jupiter in ${jupiterTransit.signEn} (${jupiterTransit.houseFromMoon}${getOrdinalSuffix(jupiterTransit.houseFromMoon)} house) • Saturn in ${saturnTransit.signEn} (${saturnTransit.houseFromMoon}${getOrdinalSuffix(saturnTransit.houseFromMoon)} house)`;
     const planetaryTransitSummaryHi = `चन्द्रमा ${moonTransit.signHi} में (${moonHouse}वां भाव) • गुरु ${jupiterTransit.signHi} में (${jupiterTransit.houseFromMoon}वां भाव) • शनि ${saturnTransit.signHi} में (${saturnTransit.houseFromMoon}वां भाव)`;
 
-    return {
+    const result: DailyHoroscope = {
       sign,
       date: civilDateStr,
       formattedDate,
@@ -936,8 +944,36 @@ export class DailyHoroscopeService {
         factsHi,
       },
     };
+
+    if (horoscopeMemoryCache.size >= MAX_HOROSCOPE_CACHE_ENTRIES) {
+      const oldestKey = horoscopeMemoryCache.keys().next().value;
+      if (oldestKey) horoscopeMemoryCache.delete(oldestKey);
+    }
+    horoscopeMemoryCache.set(cacheKey, {
+      value: result,
+      createdAtMs: Date.now(),
+    });
+
+    return result;
+  }
+
+  static getCacheStats() {
+    return {
+      entriesCount: horoscopeMemoryCache.size,
+      maxEntries: MAX_HOROSCOPE_CACHE_ENTRIES,
+      ttlSeconds: HOROSCOPE_CACHE_TTL_MS / 1000,
+      cacheHits: horoscopeCacheHits,
+      cacheMisses: horoscopeCacheMisses,
+      sampleKeys: Array.from(horoscopeMemoryCache.keys()).slice(0, 8),
+    };
   }
 }
+
+const MAX_HOROSCOPE_CACHE_ENTRIES = 240;
+const HOROSCOPE_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const horoscopeMemoryCache = new Map<string, { value: DailyHoroscope; createdAtMs: number }>();
+let horoscopeCacheHits = 0;
+let horoscopeCacheMisses = 0;
 
 function getOrdinalSuffix(n: number): string {
   const s = ["th", "st", "nd", "rd"];
