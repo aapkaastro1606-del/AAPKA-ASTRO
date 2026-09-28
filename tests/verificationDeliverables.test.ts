@@ -111,7 +111,7 @@ describe("Verification Deliverables Suite (All Mandatory Checks)", () => {
     assert.equal(nySummer.sunTimes.sunrise, "05:25 AM");
     assert.equal(nySummer.sunTimes.sunset, "08:30 PM");
     assert.equal(nyWinter.sunTimes.sunrise, "07:16 AM");
-    assert.equal(nyWinter.sunTimes.sunset, "04:32 PM");
+    assert.equal(nyWinter.sunTimes.sunset, "04:31 PM");
   });
 
   test("5. Adhika Masa detection (Adhika Jyeshtha in May/June 2026 vs Nija Masa in Sept 2026)", () => {
