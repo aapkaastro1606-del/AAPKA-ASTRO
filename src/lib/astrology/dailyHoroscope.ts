@@ -604,7 +604,7 @@ export class DailyHoroscopeService {
         if (obstructingPlanets.length > 0) {
           hasVedha = true;
           vedhaByPlanet = obstructingPlanets[0];
-          vedhaByPlanetHi = GOCHARA_PLANET_RULES[obstructingPlanets[0]].planetHi;
+          vedhaByPlanetHi = GOCHARA_PLANET_RULES[obstructingPlanets[0]].planetHindi;
           baseVerdict = "Mixed"; // Vedha tempers a Favourable transit into Mixed
         }
       }
@@ -632,12 +632,12 @@ export class DailyHoroscopeService {
       const verdictHi =
         finalVerdict === "Favourable" ? "शुभ" : finalVerdict === "Mixed" ? "मिश्रित" : "सावधानी अपेक्षित";
 
-      const summaryEn = `${planet} (${rule.planetHi}) in ${targetSign.sanskritName} (${degreeInSign}°) — ${houseFromMoon}${getOrdinalSuffix(houseFromMoon)} house from ${sign.sanskritName}${stateTagEn ? ` [${stateTagEn}]` : ""}: ${finalVerdict}`;
-      const summaryHi = `${rule.planetHi} ${targetSign.hindiName} राशि (${degreeInSign}°) में — ${sign.hindiName} से ${houseFromMoon}वें भाव में${stateTagHi ? ` [${stateTagHi}]` : ""}: ${verdictHi}`;
+      const summaryEn = `${planet} (${rule.planetHindi}) in ${targetSign.sanskritName} (${degreeInSign}°) — ${houseFromMoon}${getOrdinalSuffix(houseFromMoon)} house from ${sign.sanskritName}${stateTagEn ? ` [${stateTagEn}]` : ""}: ${finalVerdict}`;
+      const summaryHi = `${rule.planetHindi} ${targetSign.hindiName} राशि (${degreeInSign}°) में — ${sign.hindiName} से ${houseFromMoon}वें भाव में${stateTagHi ? ` [${stateTagHi}]` : ""}: ${verdictHi}`;
 
       return {
         planet,
-        planetHi: rule.planetHi,
+        planetHi: rule.planetHindi,
         signIndex,
         signEn: `${targetSign.englishName} (${targetSign.sanskritName})`,
         signHi: targetSign.hindiName,

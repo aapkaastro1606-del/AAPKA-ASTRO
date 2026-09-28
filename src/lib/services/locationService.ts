@@ -451,4 +451,57 @@ export class LocationService {
     // Default to New Delhi if unresolvable
     return GLOBAL_FAST_PATH[0];
   }
+
+  /**
+   * Resolves GPS coordinates (from explicit "Use my location" click) to a LocationResult
+   * using Haversine nearest-city check + tz-lookup timezone resolution.
+   */
+  public static async reverseGeocode(latitude: number, longitude: number): Promise<LocationResult> {
+    const { timezoneId, offset } = resolveTimezone(latitude, longitude);
+
+    // Check if within ~25 km of a known city in GLOBAL_FAST_PATH
+    let nearest = GLOBAL_FAST_PATH[0];
+    let minSqDist = Infinity;
+    for (const c of GLOBAL_FAST_PATH) {
+      const dLat = c.latitude - latitude;
+      const dLon = c.longitude - longitude;
+      const sq = dLat * dLat + dLon * dLon;
+      if (sq < minSqDist) {
+        minSqDist = sq;
+        nearest = c;
+      }
+    }
+
+    if (minSqDist <= 0.08) {
+      return {
+        ...nearest,
+        latitude,
+        longitude,
+        timezoneId,
+        timezone: offset,
+      };
+    }
+
+    if (this.provider.reverse) {
+      try {
+        const rev = await this.provider.reverse(latitude, longitude);
+        if (rev) return rev;
+      } catch {
+        // Fallback below
+      }
+    }
+
+    return {
+      id: `gps-${latitude.toFixed(2)}-${longitude.toFixed(2)}`,
+      name: `${nearest.name} Area (${latitude.toFixed(2)}°N, ${longitude.toFixed(2)}°E)`,
+      displayName: `${nearest.name} Region (${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°)`,
+      state: nearest.state,
+      country: nearest.country,
+      countryCode: nearest.countryCode,
+      latitude,
+      longitude,
+      timezone: offset,
+      timezoneId,
+    };
+  }
 }

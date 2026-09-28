@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
+  Share2,
 } from "lucide-react";
 
 interface SignHoroscopeViewProps {
@@ -56,6 +57,21 @@ export function SignHoroscopeView({
   const { sign, computedFacts } = activeHoroscope;
   const baseHref = isHi ? "/hi/horoscope" : "/horoscope";
 
+  const handleShareWhatsApp = () => {
+    const shareUrl =
+      typeof window !== "undefined"
+        ? window.location.href
+        : `https://aapkaastro.com${baseHref}/${sign.id}`;
+    const text = isHi
+      ? `🙏 *${sign.hindiName} दैनिक चन्द्र राशिफल (${activeHoroscope.formattedDateHindi})*\n\n✨ *गोचर सार:* ${activeHoroscope.summaryHindi}\n🔹 *चन्द्र गोचर:* ${computedFacts.moonHouseNameHi}\n🎨 *शुभ रंग:* ${activeHoroscope.luckyColorHindi} | *शुभ अंक:* ${activeHoroscope.luckyNumber}\n🕉️ *वैदिक उपाय:* ${activeHoroscope.remedyHindi}\n\nसंपूर्ण राशिफल देखें: ${shareUrl}`
+      : `🙏 *${sign.englishName} (${sign.sanskritName}) Vedic Moon Sign Horoscope — ${activeHoroscope.formattedDate}*\n\n✨ *Overview:* ${activeHoroscope.summary}\n🔹 *Chandra Gochar:* ${computedFacts.moonHouseNameEn}\n🎨 *Lucky Colour:* ${activeHoroscope.luckyColor} | *Lucky Number:* ${activeHoroscope.luckyNumber}\n🕉️ *Vedic Remedy:* ${activeHoroscope.remedy}\n\nRead full horoscope: ${shareUrl}`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(text)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
   return (
     <div lang={isHi ? "hi" : "en"} className="min-h-screen bg-[#FBF3E7] text-[#3B2A1E]">
       {/* Breadcrumb + URL Language Switcher & Moon Sign Bar */}
@@ -84,10 +100,22 @@ export function SignHoroscopeView({
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[#C1662F] font-bold">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-[#C1662F] font-bold hidden sm:inline">
               {isHi ? activeHoroscope.formattedDateHindi : activeHoroscope.formattedDate}
             </span>
+            <button
+              type="button"
+              onClick={handleShareWhatsApp}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366]/15 border border-[#25D366]/40 px-2.5 py-1 text-[11px] font-bold text-[#1B6E38] hover:bg-[#25D366]/25 transition-colors"
+            >
+              <Share2 className="h-3 w-3" />
+              <span>
+                {isHi
+                  ? HOROSCOPE_UI_COPY.shareWhatsAppBtn.hi
+                  : HOROSCOPE_UI_COPY.shareWhatsAppBtn.en}
+              </span>
+            </button>
             {/* URL-based SEO Language Switcher (/horoscope/[sign] <-> /hi/horoscope/[sign]) */}
             <div className="inline-flex rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] p-0.5">
               <Link
@@ -468,6 +496,21 @@ export function SignHoroscopeView({
               {isHi ? activeHoroscope.mantraHindi : activeHoroscope.mantra}
             </p>
           </div>
+        </div>
+
+        {/* Soft 50% Off First Consultation Call-to-Action Strip */}
+        <div className="rounded-2xl border border-[#C1662F]/40 bg-[#FFFDF9] px-5 py-3.5 text-center shadow-xs">
+          <Link
+            href="/consult"
+            className="text-xs sm:text-sm font-bold text-[#7B2D26] hover:text-[#96372E] transition-colors inline-flex items-center justify-center gap-2 flex-wrap"
+          >
+            <DiyaIcon size={15} />
+            <span>
+              {isHi
+                ? HOROSCOPE_UI_COPY.softConsultNote.hi
+                : HOROSCOPE_UI_COPY.softConsultNote.en}
+            </span>
+          </Link>
         </div>
 
         {/* Quick Switcher to Other 11 Rashis */}

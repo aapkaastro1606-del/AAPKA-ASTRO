@@ -16,7 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/services/consultation",
     "/blog",
     "/panchang",
+    "/panchang/tomorrow",
     "/hi/panchang",
+    "/hi/panchang/tomorrow",
     "/horoscope",
     "/hi/horoscope",
     "/reels",
@@ -33,10 +35,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: now,
     changeFrequency:
       route === "" ||
-      route === "/panchang" ||
-      route === "/hi/panchang" ||
-      route === "/horoscope" ||
-      route === "/hi/horoscope"
+      route.includes("panchang") ||
+      route.includes("horoscope")
         ? ("daily" as const)
         : ("weekly" as const),
     priority:

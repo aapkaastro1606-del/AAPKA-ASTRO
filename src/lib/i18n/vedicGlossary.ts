@@ -308,6 +308,30 @@ export const PANCHANG_UI_COPY = {
   },
   consultCta: { en: "Consult Acharya Ji Live", hi: "आचार्य जी से परामर्श करें" },
   horoscopeLinkCta: { en: "Read Today's Chandra Rashi Horoscope", hi: "आज का चन्द्र राशिफल पढ़ें" },
+  searchCityPlaceholder: {
+    en: "Search any city or town worldwide...",
+    hi: "किसी भी नगर या कस्बे का नाम खोजें...",
+  },
+  useMyLocationBtn: { en: "Use my location", hi: "मेरा स्थान चुनें" },
+  locatingBtn: { en: "Locating...", hi: "स्थान खोजा जा रहा है..." },
+  tomorrowRouteBtn: { en: "Tomorrow's Panchang →", hi: "कल का पंचांग →" },
+  todayRouteBtn: { en: "Today's Panchang", hi: "आज का पंचांग" },
+  timelineTitle: {
+    en: "24-Hour Vedic Timeline (Sunrise to Next Sunrise)",
+    hi: "चौबीस-घंटे की वैदिक काल-रेखा (सूर्योदय से अगले सूर्योदय तक)",
+  },
+  currentlyActiveLabel: { en: "Currently:", hi: "वर्तमान समय:" },
+  untilLabel: { en: "until", hi: "तक" },
+  nowMarkerLabel: { en: "NOW", hi: "अभी" },
+  shareWhatsAppBtn: { en: "Share on WhatsApp", hi: "व्हाट्सऐप पर साझा करें" },
+  softConsultNote: {
+    en: "Need a personal muhurat for something important? Consult Acharya Ji (50% off first consultation) →",
+    hi: "किसी महत्वपूर्ण कार्य के लिए व्यक्तिगत शुभ मुहूर्त चाहिए? आचार्य जी से परामर्श करें (प्रथम परामर्श पर ५०% की छूट) →",
+  },
+  fallbackErrorNotice: {
+    en: "Showing last verified Panchang data while recalculating.",
+    hi: "गणना में क्षणिक व्यवधान के कारण पूर्व-सत्यापित पंचांग दर्शाया जा रहा है।",
+  },
 } as const;
 
 /**
@@ -347,5 +371,10 @@ export const HOROSCOPE_UI_COPY = {
   switchRashiHeading: {
     en: "Switch to Another Chandra Rashi",
     hi: "अन्य चन्द्र राशियों का दैनिक राशिफल देखें",
+  },
+  shareWhatsAppBtn: { en: "Share on WhatsApp", hi: "व्हाट्सऐप पर साझा करें" },
+  softConsultNote: {
+    en: "Need a personal muhurat or Janam Kundli reading? Consult Acharya Ji (50% off first consultation) →",
+    hi: "किसी महत्वपूर्ण निर्णय हेतु व्यक्तिगत कुंडली या मुहूर्त परामर्श चाहिए? आचार्य जी से परामर्श करें (प्रथम परामर्श पर ५०% की छूट) →",
   },
 } as const;

@@ -221,6 +221,21 @@ export interface ChoghadiyaSlot {
   auspicious: boolean;
   natureEn: string;
   natureHi: string;
+  startMs: number;
+  endMs: number;
+  endTimeEn: string;
+  endTimeHi: string;
+}
+
+export interface CustomPanchangLocation {
+  id?: string;
+  name: string;
+  nameHindi?: string;
+  state?: string;
+  stateHindi?: string;
+  lat: number;
+  lon: number;
+  timeZone: string;
 }
 
 export interface ChandrabalamEntry {
@@ -534,6 +549,10 @@ function computeChoghadiya(
       auspicious: meta.auspicious,
       natureEn: meta.natureEn,
       natureHi: meta.natureHi,
+      startMs: s.getTime(),
+      endMs: e.getTime(),
+      endTimeEn: ef.en,
+      endTimeHi: ef.hi,
     });
   }
 
@@ -555,6 +574,10 @@ function computeChoghadiya(
       auspicious: meta.auspicious,
       natureEn: meta.natureEn,
       natureHi: meta.natureHi,
+      startMs: s.getTime(),
+      endMs: e.getTime(),
+      endTimeEn: ef.en,
+      endTimeHi: ef.hi,
     });
   }
 
@@ -760,11 +783,24 @@ export function detectFestivalsAndVratsForDay(
  * Computes live, real-time Drik Ganita Panchang for any location and civil date.
  */
 export function computeRealtimePanchang(
-  cityId: string = "delhi",
+  cityOrCustom: string | CustomPanchangLocation = "delhi",
   targetDate?: Date | string
 ) {
   const location =
-    PANCHANG_LOCATIONS.find((c) => c.id === cityId.toLowerCase()) || PANCHANG_LOCATIONS[0];
+    typeof cityOrCustom === "string"
+      ? PANCHANG_LOCATIONS.find((c) => c.id === cityOrCustom.toLowerCase()) ||
+        PANCHANG_LOCATIONS.find((c) => c.name.toLowerCase() === cityOrCustom.toLowerCase()) ||
+        PANCHANG_LOCATIONS[0]
+      : {
+          id: cityOrCustom.id || "custom",
+          name: cityOrCustom.name,
+          nameHindi: cityOrCustom.nameHindi || cityOrCustom.name,
+          state: cityOrCustom.state || "",
+          stateHindi: cityOrCustom.stateHindi || cityOrCustom.state || "",
+          lat: cityOrCustom.lat,
+          lon: cityOrCustom.lon,
+          timeZone: cityOrCustom.timeZone || "Asia/Kolkata",
+        };
   const { lat, lon, timeZone } = location;
 
   // Determine civil YYYY-MM-DD in the selected city's timezone
@@ -1265,6 +1301,140 @@ export function computeRealtimePanchang(
     choghadiya,
     chandrabalam,
     festivals,
+    timeline24h: {
+      sunriseMs: sunrise.getTime(),
+      sunsetMs: sunset.getTime(),
+      nextSunriseMs: nextSunrise.getTime(),
+      totalDurationMs: nextSunrise.getTime() - sunrise.getTime(),
+      choghadiyaAll: [...choghadiya.day, ...choghadiya.night].map((slot) => {
+        const totalMs = nextSunrise.getTime() - sunrise.getTime();
+        const startPct = ((slot.startMs - sunrise.getTime()) / totalMs) * 100;
+        const widthPct = ((slot.endMs - slot.startMs) / totalMs) * 100;
+        return {
+          ...slot,
+          startPct: Number(startPct.toFixed(2)),
+          widthPct: Number(widthPct.toFixed(2)),
+        };
+      }),
+      specialPeriods: [
+        {
+          key: "rahuKaal" as const,
+          labelEn: "Rahu Kaal",
+          labelHi: "राहुकाल",
+          periodEn: rahuSpan.en,
+          periodHi: rahuSpan.hi,
+          startMs: sunrise.getTime() + (RAHU_OCTANT[weekday] - 1) * octantMs,
+          endMs: sunrise.getTime() + RAHU_OCTANT[weekday] * octantMs,
+          endTimeEn: formatTimeInZone(
+            new Date(sunrise.getTime() + RAHU_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).en,
+          endTimeHi: formatTimeInZone(
+            new Date(sunrise.getTime() + RAHU_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).hi,
+          startPct: Number(
+            (
+              (((RAHU_OCTANT[weekday] - 1) * octantMs) /
+                (nextSunrise.getTime() - sunrise.getTime())) *
+              100
+            ).toFixed(2)
+          ),
+          widthPct: Number(
+            ((octantMs / (nextSunrise.getTime() - sunrise.getTime())) * 100).toFixed(2)
+          ),
+          isAuspicious: false,
+        },
+        {
+          key: "yamaganda" as const,
+          labelEn: "Yamaganda",
+          labelHi: "यमगण्ड",
+          periodEn: yamaSpan.en,
+          periodHi: yamaSpan.hi,
+          startMs: sunrise.getTime() + (YAMA_OCTANT[weekday] - 1) * octantMs,
+          endMs: sunrise.getTime() + YAMA_OCTANT[weekday] * octantMs,
+          endTimeEn: formatTimeInZone(
+            new Date(sunrise.getTime() + YAMA_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).en,
+          endTimeHi: formatTimeInZone(
+            new Date(sunrise.getTime() + YAMA_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).hi,
+          startPct: Number(
+            (
+              (((YAMA_OCTANT[weekday] - 1) * octantMs) /
+                (nextSunrise.getTime() - sunrise.getTime())) *
+              100
+            ).toFixed(2)
+          ),
+          widthPct: Number(
+            ((octantMs / (nextSunrise.getTime() - sunrise.getTime())) * 100).toFixed(2)
+          ),
+          isAuspicious: false,
+        },
+        {
+          key: "gulikaKaal" as const,
+          labelEn: "Gulika Kaal",
+          labelHi: "गुलिक काल",
+          periodEn: guliSpan.en,
+          periodHi: guliSpan.hi,
+          startMs: sunrise.getTime() + (GULI_OCTANT[weekday] - 1) * octantMs,
+          endMs: sunrise.getTime() + GULI_OCTANT[weekday] * octantMs,
+          endTimeEn: formatTimeInZone(
+            new Date(sunrise.getTime() + GULI_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).en,
+          endTimeHi: formatTimeInZone(
+            new Date(sunrise.getTime() + GULI_OCTANT[weekday] * octantMs),
+            civilDateStr,
+            timeZone
+          ).hi,
+          startPct: Number(
+            (
+              (((GULI_OCTANT[weekday] - 1) * octantMs) /
+                (nextSunrise.getTime() - sunrise.getTime())) *
+              100
+            ).toFixed(2)
+          ),
+          widthPct: Number(
+            ((octantMs / (nextSunrise.getTime() - sunrise.getTime())) * 100).toFixed(2)
+          ),
+          isAuspicious: false,
+        },
+        {
+          key: "abhijitMuhurat" as const,
+          labelEn: "Abhijit Muhurat",
+          labelHi: "अभिजित मुहूर्त",
+          periodEn: abhijitSpan.en,
+          periodHi: abhijitSpan.hi,
+          startMs: sunrise.getTime() + 7 * muhurat15Ms,
+          endMs: sunrise.getTime() + 8 * muhurat15Ms,
+          endTimeEn: formatTimeInZone(
+            new Date(sunrise.getTime() + 8 * muhurat15Ms),
+            civilDateStr,
+            timeZone
+          ).en,
+          endTimeHi: formatTimeInZone(
+            new Date(sunrise.getTime() + 8 * muhurat15Ms),
+            civilDateStr,
+            timeZone
+          ).hi,
+          startPct: Number(
+            (((7 * muhurat15Ms) / (nextSunrise.getTime() - sunrise.getTime())) * 100).toFixed(2)
+          ),
+          widthPct: Number(
+            ((muhurat15Ms / (nextSunrise.getTime() - sunrise.getTime())) * 100).toFixed(2)
+          ),
+          isAuspicious: true,
+        },
+      ],
+    },
     specialSignificance: `Calculated from real planetary positions using the Chitra Paksha Lahiri Ayanamsa (${posAtSunrise.ayanamsa.toFixed(2)}°) for ${location.name}. Moon transits ${moonRashi.en} under ${nakPrimary.en} Nakshatra.`,
     specialSignificanceHindi: `चित्रापक्ष लहिरी अयनांश (${posAtSunrise.ayanamsa.toFixed(2)}°) एवं वास्तविक ग्रह स्पष्ट के आधार पर ${location.nameHindi} हेतु गणित। आज चन्द्रमा ${moonRashi.hi} राशि एवं ${nakPrimary.hi} नक्षत्र में संचरण कर रहे हैं।`,
   };

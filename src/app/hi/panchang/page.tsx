@@ -1,6 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import { PanchangView } from "@/components/panchang/PanchangView";
+import { getPanchangForCity } from "@/lib/store/panchangStore";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default function HindiPanchangPage() {
-  return <PanchangView defaultLocale="hi" />;
+  const initialPanchang = getPanchangForCity("delhi");
+  return <PanchangView defaultLocale="hi" initialPanchang={initialPanchang} />;
 }
+
