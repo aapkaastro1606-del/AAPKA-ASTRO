@@ -85,8 +85,8 @@ export async function GET(req: NextRequest) {
         nakshatraHindi: `${delhiToday.nakshatra.nameHindi} चरण ${delhiToday.nakshatra.pada} (${delhiToday.nakshatra.endsAtHindi} तक)`,
         yoga: delhiToday.yoga.name,
         karana: delhiToday.karana.name,
-        sunrise: delhiToday.sunMoon.sunrise,
-        sunset: delhiToday.sunMoon.sunset,
+        sunrise: delhiToday.sunAndMoon.sunrise,
+        sunset: delhiToday.sunAndMoon.sunset,
       };
 
       for (const cityId of PREWARM_CITIES) {
