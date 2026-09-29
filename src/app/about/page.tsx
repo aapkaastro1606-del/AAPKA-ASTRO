@@ -6,6 +6,7 @@ import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import { PersonJsonLd, LocalBusinessJsonLd } from "@/components/seo/JsonLd";
 import { GallerySection } from "@/components/about/GallerySection";
+import { AboutHeroImageCarousel } from "@/components/about/AboutHeroImageCarousel";
 import { TrustCredentialsSection } from "@/components/home/TrustCredentialsSection";
 import {
   ShieldCheck,
@@ -62,26 +63,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Image & Badges */}
             <div className="lg:col-span-5 flex flex-col items-center">
-              <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-4 border-[#E8D8C3] bg-[#FFFDF9] shadow-xl">
-                <img
-                  src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                  alt={PLACEHOLDER_ASTROLOGER.displayName}
-                  className="w-full h-[460px] object-cover object-top filter contrast-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3B2A1E]/85 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 text-white text-center">
-                  <div className="font-temple text-2xl font-bold text-[#E8A33D]">
-                    {PLACEHOLDER_ASTROLOGER.displayName}
-                  </div>
-                  <p className="text-xs text-white/95 mt-1 font-medium">
-                    Jyotish Acharya &bull; Vastu &amp; Gemstone Consultant
-                  </p>
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#7B2D26]/80 px-3 py-1 text-[11px] border border-[#E8A33D]/40">
-                    <Award className="h-3 w-3 text-[#E8A33D]" />
-                    <span>Bhartiya Vidya Bhawan Certified</span>
-                  </div>
-                </div>
-              </div>
+              <AboutHeroImageCarousel />
 
               {/* Quick Trust Highlights */}
               <div className="mt-6 grid grid-cols-3 gap-3 w-full max-w-md text-center">
