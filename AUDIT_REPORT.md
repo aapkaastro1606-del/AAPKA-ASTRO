@@ -1291,7 +1291,16 @@ The following claims were previously present in invented/placeholder bio copy, b
 - ❌ **Baidyanath Dham, Deoghar Upbringing Narrative** (removed pending biographical confirmation)
 - ❌ **Corporate Leadership Career at Reliance Retail, Metro Cash & Carry, NIF Food, and XLRI** (removed pending documentation)
 
-*Note: If the client provides official certificates, employment letters, or explicit written confirmation for any of the above, they can be reintroduced in future updates.*
+### 23.3 Pricing Model — Confirmed No Change
+- **Confirmed Current Architecture**: The **per-minute wallet-based consultation billing model** remains the correct, active, and unchanged pricing engine across Aapka Astro:
+  - **Live Chat Consultation**: ₹15/min (effective first consultation rate: ₹7.5/min with 50% discount)
+  - **Voice Call Consultation**: ₹20/min (effective first consultation rate: ₹10/min with 50% discount)
+  - **Video Call Consultation**: ₹25/min (effective first consultation rate: ₹12.5/min with 50% discount)
+  - **First-Time Discount**: 50% off first session (`FIRST50`) auto-applied per user.
+- **Clarification on Promotional Creative (₹1,051 Flat Fee)**:
+  - An uploaded promotional creative showing a flat consultation fee of *"₹1,051/- for the first consultation"* was thoroughly reviewed and confirmed to be **old/unrelated promotional material**.
+  - **No flat-fee or package pricing** will be introduced or built based on this ad. The platform strictly maintains the second-by-second wallet debiting engine as specified in the core architecture.
+
 
 
 
