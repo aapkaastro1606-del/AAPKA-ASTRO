@@ -4,6 +4,7 @@ import { AstroClerkProvider as ClerkProvider } from "@/components/auth/ClerkAuth
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { BrandedPreloader } from "@/components/layout/BrandedPreloader";
 import { WelcomeConsultationModal } from "@/components/home/WelcomeConsultationModal";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <body className="min-h-full flex flex-col bg-[#FBF3E7] text-[#3B2A1E] font-body selection:bg-[#E8A33D] selection:text-[#3B2A1E]">
           <LanguageProvider>
+            <BrandedPreloader />
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
