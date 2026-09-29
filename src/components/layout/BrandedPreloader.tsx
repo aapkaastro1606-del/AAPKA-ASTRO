@@ -3,6 +3,15 @@
 import React, { useEffect, useState } from "react";
 
 export const PRELOADER_SESSION_KEY = "aapka_preloader_session_seen";
+export const PRELOADER_MIN_DISPLAY_MS = 1850;
+export const PRELOADER_FADE_DURATION_MS = 550;
+
+declare global {
+  interface Window {
+    __AAPKA_PRELOADER_SEEN_BEFORE_LOAD?: boolean;
+    __AAPKA_PRELOADER_START_TS?: number;
+  }
+}
 
 /**
  * BrandedPreloader
@@ -10,23 +19,30 @@ export const PRELOADER_SESSION_KEY = "aapka_preloader_session_seen";
  * Lightweight, pure CSS/SVG + CSS-3D animated preloader shown ONLY once per browser session
  * on the site's initial cold load (never on internal client-side Next.js route navigations).
  *
- * Performance & TTI guarantees:
- * 1. Does NOT wrap or gate `{children}` — the actual page renders and hydrates underneath
- *    immediately in parallel.
- * 2. Includes a synchronous inline `<script>` that checks `sessionStorage` during HTML parsing
- *    before first paint so repeat visits within the same session never flash the overlay.
- * 3. Uses GPU-composited `transform` and `opacity` animations only (0 KB external dependencies).
- * 4. Automatically releases pointer events (`pointer-events-none`) after 420ms and unmounts cleanly.
+ * Timing & Hydration Architecture:
+ * 1. An inline `<script>` checks `sessionStorage` BEFORE setting the flag and stores the result
+ *    on `window.__AAPKA_PRELOADER_SEEN_BEFORE_LOAD` along with `window.__AAPKA_PRELOADER_START_TS`.
+ *    (Previously, setting `sessionStorage` in the inline script caused React's `useEffect` to see
+ *    `sessionStorage === "1"` upon hydration 200–400ms later and immediately unmount the preloader.)
+ * 2. Guarantees a full `PRELOADER_MIN_DISPLAY_MS` (1850ms) intentional branded moment from initial
+ *    paint (plus Wait-for-Ready up to a 2400ms cap), followed by a smooth 550ms ease-out fade.
  */
 export const BrandedPreloader: React.FC = () => {
   const [phase, setPhase] = useState<"active" | "fading" | "hidden">("active");
 
   useEffect(() => {
     try {
-      if (window.sessionStorage.getItem(PRELOADER_SESSION_KEY) === "1") {
+      const alreadySeenBeforeThisPageLoad =
+        window.__AAPKA_PRELOADER_SEEN_BEFORE_LOAD === true ||
+        (window.__AAPKA_PRELOADER_SEEN_BEFORE_LOAD === undefined &&
+          window.sessionStorage.getItem(PRELOADER_SESSION_KEY) === "1");
+
+      if (alreadySeenBeforeThisPageLoad) {
         setPhase("hidden");
         return;
       }
+
+      // Mark session seen so subsequent navigations or refreshes in this tab skip the preloader
       window.sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
     } catch {
       // Ignore storage errors in restricted private browsing modes
@@ -43,18 +59,43 @@ export const BrandedPreloader: React.FC = () => {
       return;
     }
 
-    // Begin smooth fade-out quickly once initial frame settles (never blocks TTI)
-    const fadeTimer = window.setTimeout(() => {
-      setPhase("fading");
-    }, 520);
+    const startTs =
+      typeof window.__AAPKA_PRELOADER_START_TS === "number"
+        ? window.__AAPKA_PRELOADER_START_TS
+        : performance.now();
+    const elapsedSincePaint = Math.max(0, performance.now() - startTs);
+    const remainingMinDisplayMs = Math.max(400, PRELOADER_MIN_DISPLAY_MS - elapsedSincePaint);
 
-    const unmountTimer = window.setTimeout(() => {
-      setPhase("hidden");
-    }, 920);
+    let fadeTimer: number | undefined;
+    let unmountTimer: number | undefined;
+
+    const triggerFadeOut = () => {
+      setPhase("fading");
+      unmountTimer = window.setTimeout(() => {
+        setPhase("hidden");
+      }, PRELOADER_FADE_DURATION_MS);
+    };
+
+    fadeTimer = window.setTimeout(() => {
+      if (document.readyState === "complete") {
+        triggerFadeOut();
+      } else {
+        // Wait for load event or at most +550ms extra cap so slow assets never trap the user
+        const onLoad = () => {
+          window.clearTimeout(maxCapTimer);
+          triggerFadeOut();
+        };
+        const maxCapTimer = window.setTimeout(() => {
+          window.removeEventListener("load", onLoad);
+          triggerFadeOut();
+        }, 550);
+        window.addEventListener("load", onLoad, { once: true });
+      }
+    }, remainingMinDisplayMs);
 
     return () => {
-      window.clearTimeout(fadeTimer);
-      window.clearTimeout(unmountTimer);
+      if (fadeTimer) window.clearTimeout(fadeTimer);
+      if (unmountTimer) window.clearTimeout(unmountTimer);
     };
   }, []);
 
@@ -81,17 +122,16 @@ export const BrandedPreloader: React.FC = () => {
       role="status"
       aria-live="polite"
       aria-label="Loading Aapka Astro"
-      onClick={() => setPhase("hidden")}
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,#7B2D26_0%,#4A1813_65%,#2A0C09_100%)] px-6 text-[#FBF3E7] transition-opacity duration-400 ease-out ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,#7B2D26_0%,#4A1813_65%,#2A0C09_100%)] px-6 text-[#FBF3E7] transition-all duration-550 ease-in-out ${
         phase === "fading"
-          ? "opacity-0 pointer-events-none"
-          : "opacity-100 pointer-events-none"
+          ? "opacity-0 scale-[1.02] pointer-events-none"
+          : "opacity-100 scale-100 pointer-events-none"
       }`}
     >
-      {/* Synchronous pre-hydration check + independent compositor fade-out so TTI is never delayed */}
+      {/* Synchronous pre-hydration check: records whether sessionStorage already had the key BEFORE hydration */}
       <script
         dangerouslySetInnerHTML={{
-          __html: `try{var k='${PRELOADER_SESSION_KEY}',el=document.getElementById('aapka-branded-preloader');if(sessionStorage.getItem(k)==='1'){if(el){el.style.display='none';}}else{sessionStorage.setItem(k,'1');setTimeout(function(){if(el){el.style.opacity='0';}},600);setTimeout(function(){if(el){el.style.display='none';}},980);}}catch(e){}`,
+          __html: `try{var k='${PRELOADER_SESSION_KEY}',el=document.getElementById('aapka-branded-preloader');if(sessionStorage.getItem(k)==='1'){window.__AAPKA_PRELOADER_SEEN_BEFORE_LOAD=true;if(el){el.style.display='none';}}else{window.__AAPKA_PRELOADER_SEEN_BEFORE_LOAD=false;window.__AAPKA_PRELOADER_START_TS=performance.now();}}catch(e){}`,
         }}
       />
 
@@ -110,11 +150,11 @@ export const BrandedPreloader: React.FC = () => {
         }
         @keyframes aapkaOmPulse {
           0%, 100% { transform: scale(0.96); filter: drop-shadow(0 0 12px rgba(232,163,61,0.55)); }
-          50% { transform: scale(1.05); filter: drop-shadow(0 0 24px rgba(232,163,61,0.95)); }
+          50% { transform: scale(1.06); filter: drop-shadow(0 0 26px rgba(232,163,61,0.98)); }
         }
-        @keyframes aapkaProgressSweep {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+        @keyframes aapkaProgressFill {
+          0% { width: 8%; opacity: 0.7; }
+          100% { width: 100%; opacity: 1; }
         }
       `}</style>
 
@@ -265,11 +305,11 @@ export const BrandedPreloader: React.FC = () => {
           वैदिक ज्योतिष एवं वास्तु &bull; Acharya Niraj Kumar
         </div>
 
-        {/* Delicate Golden Shimmer Progress Bar */}
-        <div className="mx-auto mt-3.5 h-0.5 w-36 sm:w-44 overflow-hidden rounded-full bg-[#FBF3E7]/15">
+        {/* Deliberate 1.85s Golden Progress Bar (Matches Minimum Branded Hold Duration) */}
+        <div className="mx-auto mt-3.5 h-1 w-40 sm:w-48 overflow-hidden rounded-full bg-[#FBF3E7]/15">
           <div
-            className="h-full w-full bg-gradient-to-r from-transparent via-[#E8A33D] to-transparent"
-            style={{ animation: "aapkaProgressSweep 1.1s ease-in-out infinite" }}
+            className="h-full rounded-full bg-gradient-to-r from-[#C1662F] via-[#E8A33D] to-[#FFFDF9] shadow-[0_0_8px_rgba(232,163,61,0.8)]"
+            style={{ animation: "aapkaProgressFill 1.85s cubic-bezier(0.22, 1, 0.36, 1) forwards" }}
           />
         </div>
       </div>
