@@ -337,40 +337,40 @@ export const Navbar: React.FC = () => {
         className="sticky top-0 z-40 border-b border-[#E8D8C3] bg-[#FFFDF9]/95 backdrop-blur-md shadow-[0_2px_10px_rgba(59,42,30,0.05)]"
       >
         {/* Slim Offer-Only Utility Strip (Strictly for the 50% off offer — zero online/availability status duplication) */}
-        <div className="bg-[#7B2D26] px-4 py-1 text-center text-[11px] font-medium text-[#FBF3E7]">
+        <div className="bg-[#7B2D26] px-3 py-1 text-center text-[10px] sm:text-[11px] font-medium text-[#FBF3E7]">
           <Link
             href="/consult"
-            className="inline-flex items-center justify-center gap-1.5 hover:underline"
+            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 hover:underline max-w-full"
           >
-            <span className="font-bold text-[#E8A33D]">
+            <span className="font-bold text-[#E8A33D] shrink-0">
               {isHi ? "प्रथम परामर्श पर 50% छूट:" : "50% Off First Consultation:"}
             </span>
-            <span>
+            <span className="truncate">
               {isHi
-                ? "आचार्य नीरज कुमार जी से सीधा 1-on-1 वैदिक ज्योतिष एवं वास्तु परामर्श"
-                : "Direct 1-on-1 Vedic Jyotish & Vastu guidance with Acharya Niraj Kumar"}
+                ? "आचार्य नीरज कुमार जी से 1-on-1 वैदिक ज्योतिष परामर्श"
+                : "1-on-1 Vedic Jyotish & Vastu with Acharya Niraj Kumar"}
             </span>
-            <span className="font-bold text-[#E8A33D]">&rarr;</span>
+            <span className="font-bold text-[#E8A33D] shrink-0">&rarr;</span>
           </Link>
         </div>
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 gap-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-2.5 py-2.5 sm:px-6 sm:py-3 lg:px-8 gap-1.5 sm:gap-4">
           {/* 1. Left: Brand Identity + Single Compact "Online" Indicator (Shown Once) */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Link href="/" className="flex items-center gap-3 group">
+          <div className="flex items-center shrink-0 min-w-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
               <img
                 src="/images/logo.png"
                 alt="Aapka Astro"
-                className="h-10 w-10 object-contain rounded-xl border border-[#C1662F]/30 bg-[#7B2D26] p-1 shadow-sm group-hover:scale-105 transition-transform"
+                className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain rounded-xl border border-[#C1662F]/30 bg-[#7B2D26] p-1 shadow-sm group-hover:scale-105 transition-transform"
               />
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-temple text-lg sm:text-xl font-bold tracking-wider text-[#7B2D26]">
+              <div className="min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                  <span className="font-temple text-[15px] sm:text-lg xl:text-xl font-bold tracking-wider text-[#7B2D26] leading-tight whitespace-nowrap">
                     AAPKA<span className="text-[#C1662F]">ASTRO</span>
                   </span>
                   {/* Single Compact Online Indicator (Pulsing Dot + "Online" Text — Not Repeated Elsewhere) */}
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                    className={`inline-flex w-fit items-center gap-1 rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold border leading-none ${
                       status === "AVAILABLE"
                         ? "bg-[#6B8E5A]/12 border-[#6B8E5A]/40 text-[#2A4720]"
                         : status === "BUSY"
@@ -385,7 +385,7 @@ export const Navbar: React.FC = () => {
                         : "Acharya Niraj Kumar is currently offline"
                     }
                   >
-                    <span className="relative flex h-2 w-2">
+                    <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                       {status !== "OFFLINE" && (
                         <span
                           className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
@@ -394,7 +394,7 @@ export const Navbar: React.FC = () => {
                         />
                       )}
                       <span
-                        className={`relative inline-flex rounded-full h-2 w-2 ${
+                        className={`relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 ${
                           status === "AVAILABLE"
                             ? "bg-[#6B8E5A]"
                             : status === "BUSY"
@@ -403,7 +403,7 @@ export const Navbar: React.FC = () => {
                         }`}
                       />
                     </span>
-                    <span>
+                    <span className="whitespace-nowrap">
                       {status === "AVAILABLE"
                         ? isHi
                           ? "ऑनलाइन"
@@ -418,17 +418,17 @@ export const Navbar: React.FC = () => {
                     </span>
                   </span>
                 </div>
-                <div className="text-[11px] text-[#6E5545] font-medium tracking-wide">
+                <div className="hidden sm:block text-[11px] text-[#6E5545] font-medium tracking-wide truncate">
                   Acharya Niraj Kumar &bull; Jyotish &amp; Vastu
                 </div>
               </div>
             </Link>
           </div>
 
-          {/* 2. Center: 5 Grouped Top-Level Navigation Items (3 Core Dropdowns + Services Direct Link + Secondary Content Dropdown) */}
+          {/* 2. Center: 5 Grouped Top-Level Navigation Items (Collapsed into Hamburger below xl/1280px) */}
           <nav
             aria-label="Main Navigation"
-            className="hidden lg:flex items-center gap-6 xl:gap-7"
+            className="hidden xl:flex items-center gap-6 2xl:gap-8 shrink-0"
           >
             {/* Group 1: Horoscope (Dropdown) */}
             {renderDesktopDropdown(
@@ -457,7 +457,7 @@ export const Navbar: React.FC = () => {
             {/* Group 4: Services (Direct Link) */}
             <Link
               href="/services"
-              className={`text-sm py-1.5 border-b-2 transition-colors ${
+              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
                 isServicesActive
                   ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
                   : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
@@ -479,16 +479,16 @@ export const Navbar: React.FC = () => {
             )}
           </nav>
 
-          {/* 3. Right Cluster: Small Pill हिंदी Toggle (Just Before Account Controls) + Account Controls + Standalone Consult CTA */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+          {/* 3. Right Cluster: Small Pill हिंदी Toggle + Account Controls + Always-Visible Consult CTA + Mobile Hamburger */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* हिंदी Language Toggle — Small, Clearly-Styled Pill Positioned Consistently Before Account Controls */}
             <button
               type="button"
               onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-              className="inline-flex items-center gap-1 rounded-full border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F5E6D0] hover:border-[#C1662F]/50 px-2.5 py-1 text-xs font-bold text-[#7B2D26] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-full border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F5E6D0] hover:border-[#C1662F]/50 px-1.5 sm:px-2.5 py-1 text-[10px] sm:text-xs font-bold text-[#7B2D26] transition-colors cursor-pointer whitespace-nowrap"
               title="Switch Language (English / हिन्दी)"
             >
-              <Globe className="h-3 w-3 text-[#C1662F]" />
+              <Globe className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[#C1662F] shrink-0" />
               <span className="font-hindi leading-none">
                 {language === "en" ? "हिन्दी" : "EN"}
               </span>
@@ -496,7 +496,7 @@ export const Navbar: React.FC = () => {
 
             {/* STRICT AUTH STATE (Positioned right after Language Pill, before Consult CTA) */}
             {isAuthenticatedUser ? (
-              <div className="flex items-center gap-2.5">
+              <div className="hidden sm:flex items-center gap-2.5">
                 <Link
                   href="/wallet"
                   className="inline-flex items-center gap-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
@@ -509,7 +509,7 @@ export const Navbar: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Link
                     href="/account"
-                    className="hidden xl:inline text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
+                    className="hidden 2xl:inline text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors whitespace-nowrap"
                   >
                     {isHi ? "मेरा खाता" : t("nav_my_account")}
                   </Link>
@@ -525,67 +525,57 @@ export const Navbar: React.FC = () => {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-1.5 py-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
+                className="hidden md:inline-flex items-center px-1.5 py-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors whitespace-nowrap"
               >
                 {isHi ? "लॉग इन" : t("nav_sign_in")}
               </Link>
             )}
 
-            {/* CONSULT — Standalone, Most-Prominent High-Contrast CTA Button (Not a Dropdown) */}
+            {/* CONSULT — Always Visible in Both Desktop and Collapsed Mobile State (Never Buried in Hamburger) */}
             {status !== "OFFLINE" ? (
               <Link
                 href="/consult"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all"
+                data-testid="primary-consult-cta"
+                className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap"
               >
-                <PhoneCall className="h-4 w-4 text-[#E8A33D] shrink-0" />
-                <span>{isHi ? "लाइव परामर्श" : t("nav_live_consult")}</span>
+                <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
+                <span className="sm:hidden">{isHi ? "परामर्श" : "Consult"}</span>
+                <span className="hidden sm:inline">
+                  {isHi ? "लाइव परामर्श" : t("nav_live_consult")}
+                </span>
               </Link>
             ) : (
               <button
                 type="button"
+                data-testid="primary-consult-cta"
                 onClick={() => setCallbackModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap"
               >
-                <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
-                <span>{isHi ? "परामर्श बुक करें" : "Consult Now"}</span>
+                <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
+                <span className="sm:hidden">{isHi ? "परामर्श" : "Consult"}</span>
+                <span className="hidden sm:inline">
+                  {isHi ? "परामर्श बुक करें" : "Consult Now"}
+                </span>
               </button>
             )}
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile/Tablet Hamburger Toggle (< 1280px) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Menu"
-              className="rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] p-2 text-[#3B2A1E] lg:hidden hover:bg-[#E8D8C3]"
+              aria-expanded={mobileMenuOpen}
+              className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] text-[#3B2A1E] xl:hidden hover:bg-[#E8D8C3] transition-colors cursor-pointer shrink-0"
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu Drawer — Tap-to-Open Temple-Styled Dropdown Accordions */}
+        {/* Mobile/Tablet Menu Drawer — Preserves Exact Grouped Structure with Tap-to-Expand Sections */}
         {mobileMenuOpen && (
-          <div className="border-t border-[#E8D8C3] bg-[#FFFDF9] px-4 py-4 lg:hidden max-h-[85vh] overflow-y-auto space-y-3">
-            {/* Standalone Primary Mobile Consult CTA */}
-            <Link
-              href="/consult"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between rounded-xl bg-[#7B2D26] border-2 border-[#E8A33D] px-4 py-3 text-sm font-bold text-[#FFFDF9] shadow-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
-                <span>
-                  {isHi
-                    ? "आचार्य जी से लाइव परामर्श (50% छूट)"
-                    : "Live Consult with Acharya Ji (50% Off)"}
-                </span>
-              </div>
-              <span className="rounded bg-[#E8A33D] px-2 py-0.5 text-[11px] font-bold text-[#3B2A1E]">
-                50% OFF
-              </span>
-            </Link>
-
-            {/* Mobile Tap-to-Expand Temple-Styled Dropdown Groups */}
+          <div className="border-t border-[#E8D8C3] bg-[#FFFDF9] px-4 py-4 xl:hidden max-h-[82vh] overflow-y-auto space-y-2.5 shadow-xl">
+            {/* Expandable Dropdown Groups (1: Horoscope, 2: Kundli & Matching, 3: Panchang & Festivals) */}
             {(
               [
                 {
@@ -603,29 +593,23 @@ export const Navbar: React.FC = () => {
                   title: isHi ? "पंचांग एवं पर्व (Panchang & Festivals)" : "Panchang & Festivals",
                   items: panchangFestivalItems,
                 },
-                {
-                  key: "content" as const,
-                  title: isHi ? "लेख एवं रील्स (Content)" : "Content (Blog & Reels)",
-                  items: contentItems,
-                },
               ]
             ).map((group) => {
               const expanded = mobileAccordion === group.key;
               return (
                 <div
                   key={group.key}
-                  className="rounded-xl border border-[#E8D8C3] bg-[#FBF3E7]/50 overflow-hidden"
+                  className="rounded-xl border border-[#E8D8C3] bg-[#FBF3E7]/55 overflow-hidden"
                 >
                   <button
                     type="button"
-                    onClick={() =>
-                      setMobileAccordion(expanded ? null : group.key)
-                    }
-                    className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs font-bold text-[#3B2A1E] hover:bg-[#FBF3E7]"
+                    onClick={() => setMobileAccordion(expanded ? null : group.key)}
+                    aria-expanded={expanded}
+                    className="flex w-full items-center justify-between px-3.5 py-3 text-left text-xs font-bold text-[#3B2A1E] hover:bg-[#FBF3E7] cursor-pointer"
                   >
                     <span>{group.title}</span>
                     <ChevronDown
-                      className={`h-4 w-4 text-[#7B2D26] transition-transform ${
+                      className={`h-4 w-4 text-[#7B2D26] transition-transform duration-150 ${
                         expanded ? "rotate-180" : ""
                       }`}
                     />
@@ -633,6 +617,65 @@ export const Navbar: React.FC = () => {
                   {expanded && (
                     <div className="border-t border-[#E8D8C3] bg-[#FFFDF9] p-2 space-y-1">
                       {group.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-start gap-2.5 rounded-lg p-2 hover:bg-[#FBF3E7]"
+                          >
+                            <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#FBF3E7] border border-[#E8D8C3] text-[#7B2D26]">
+                              <Icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#3B2A1E]">
+                                {item.label}
+                              </div>
+                              <div className="text-[11px] text-[#6E5545] leading-snug">
+                                {item.desc}
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Group 4: Direct Link — Services */}
+            <Link
+              href="/services"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between rounded-xl border border-[#E8D8C3] bg-[#FBF3E7]/55 px-3.5 py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#FBF3E7]"
+            >
+              <span>{isHi ? "वैदिक सेवाएँ एवं पूजा (Services)" : "Services (Puja, Vastu & Remedies)"}</span>
+              <span className="text-[#7B2D26] font-bold">&rarr;</span>
+            </Link>
+
+            {/* Group 5: Secondary Expandable Section — Content (Blog & Reels) */}
+            {(() => {
+              const expanded = mobileAccordion === "content";
+              return (
+                <div className="rounded-xl border border-[#E8D8C3]/80 bg-[#FFFDF9] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMobileAccordion(expanded ? null : "content")}
+                    aria-expanded={expanded}
+                    className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs font-semibold text-[#6E5545] hover:bg-[#FBF3E7]/50 cursor-pointer"
+                  >
+                    <span>{isHi ? "लेख एवं रील्स (Content)" : "Content (Blog, Reels & Guides)"}</span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-[#8C7565] transition-transform duration-150 ${
+                        expanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {expanded && (
+                    <div className="border-t border-[#E8D8C3] bg-[#FFFDF9] p-2 space-y-1">
+                      {contentItems.map((item) => {
                         const Icon = item.icon;
                         return (
                           <Link
@@ -657,19 +700,9 @@ export const Navbar: React.FC = () => {
                   )}
                 </div>
               );
-            })}
+            })()}
 
-            {/* Direct Link: Services */}
-            <Link
-              href="/services"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] px-3.5 py-2.5 text-xs font-bold text-[#7B2D26]"
-            >
-              <span>{isHi ? "वैदिक सेवाएँ एवं पूजा (Services)" : "Services (Puja, Vastu & Remedies)"}</span>
-              <span>&rarr;</span>
-            </Link>
-
-            {/* Mobile Auth Footer */}
+            {/* Mobile Auth Footer (Strict Guest vs. Signed-In Separation) */}
             <div className="border-t border-[#E8D8C3] pt-3">
               {isAuthenticatedUser ? (
                 <div className="flex items-center justify-between">
