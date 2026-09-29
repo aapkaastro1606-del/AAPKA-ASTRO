@@ -230,6 +230,23 @@ export const TrustCredentialsSection: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Action Row: Direct links to About Us and Contact Us */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+            <Link
+              href="/about"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] border border-[#E8A33D]/40 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
+            >
+              <Award className="h-4 w-4 text-[#E8A33D]" />
+              <span>Read Full Biography &amp; Certificates (About Us) &rarr;</span>
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-[#7B2D26] bg-[#FFFDF9] hover:bg-[#FBF3E7] text-[#7B2D26] px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition-all"
+            >
+              <span>Visit Noida Office or Request Callback (Contact Us) &rarr;</span>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

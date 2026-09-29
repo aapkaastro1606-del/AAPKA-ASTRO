@@ -24,6 +24,8 @@ import {
   Moon,
   Star,
   Flame,
+  Award,
+  MapPin,
 } from "lucide-react";
 import { UserButton, useUser } from "@/components/auth/ClerkAuthWrapper";
 import { useLanguage } from "@/context/LanguageContext";
@@ -240,6 +242,8 @@ export const Navbar: React.FC = () => {
     pathname?.includes("/panchang") || pathname?.startsWith("/festivals");
 
   const isServicesActive = pathname?.startsWith("/services");
+  const isAboutActive = pathname === "/about" || pathname === "/about-us";
+  const isContactActive = pathname === "/contact" || pathname === "/contact-us";
 
   const isContentActive =
     pathname?.startsWith("/blog") ||
@@ -420,10 +424,10 @@ export const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* 2. Center: 5 Grouped Top-Level Navigation Items (Collapsed into Hamburger below xl/1280px) */}
+          {/* 2. Center: Primary Top-Level Navigation Items (Collapsed into Hamburger below xl/1280px) */}
           <nav
             aria-label="Main Navigation"
-            className="hidden xl:flex items-center gap-6 2xl:gap-8 shrink-0"
+            className="hidden xl:flex items-center gap-4 2xl:gap-6 shrink-0"
           >
             {/* Group 1: Horoscope (Dropdown) */}
             {renderDesktopDropdown(
@@ -459,6 +463,30 @@ export const Navbar: React.FC = () => {
               }`}
             >
               {isHi ? "सेवाएँ" : "Services"}
+            </Link>
+
+            {/* Direct Link: About Us */}
+            <Link
+              href="/about"
+              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
+                isAboutActive
+                  ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                  : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
+              }`}
+            >
+              {isHi ? "परिचय (About)" : "About Us"}
+            </Link>
+
+            {/* Direct Link: Contact Us */}
+            <Link
+              href="/contact"
+              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
+                isContactActive
+                  ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                  : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
+              }`}
+            >
+              {isHi ? "संपर्क" : "Contact Us"}
             </Link>
 
             {/* Subtle vertical divider before lightweight Content dropdown */}
@@ -650,6 +678,54 @@ export const Navbar: React.FC = () => {
               <span className="text-[#7B2D26] font-bold">&rarr;</span>
             </Link>
 
+            {/* Direct Link — About Us */}
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between rounded-xl border px-3.5 py-3 text-xs font-bold transition-colors ${
+                isAboutActive
+                  ? "border-[#7B2D26] bg-[#7B2D26]/10 text-[#7B2D26]"
+                  : "border-[#E8D8C3] bg-[#FBF3E7]/55 text-[#3B2A1E] hover:bg-[#FBF3E7]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#FFFDF9] border border-[#E8D8C3] text-[#7B2D26]">
+                  <Award className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div>{isHi ? "हमारे बारे में (About Us)" : "About Us"}</div>
+                  <div className="text-[10px] text-[#6E5545] font-normal">
+                    {isHi ? "प्रमाणपत्र, अनुभव एवं परिचय" : "Verified Credentials & Bio"}
+                  </div>
+                </div>
+              </div>
+              <span className="text-[#7B2D26] font-bold">&rarr;</span>
+            </Link>
+
+            {/* Direct Link — Contact Us */}
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between rounded-xl border px-3.5 py-3 text-xs font-bold transition-colors ${
+                isContactActive
+                  ? "border-[#7B2D26] bg-[#7B2D26]/10 text-[#7B2D26]"
+                  : "border-[#E8D8C3] bg-[#FBF3E7]/55 text-[#3B2A1E] hover:bg-[#FBF3E7]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#FFFDF9] border border-[#E8D8C3] text-[#7B2D26]">
+                  <MapPin className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div>{isHi ? "संपर्क करें (Contact Us)" : "Contact Us"}</div>
+                  <div className="text-[10px] text-[#6E5545] font-normal">
+                    {isHi ? "नोएडा कार्यालय एवं हेल्पलाइन" : "Noida Office & Direct Helpline"}
+                  </div>
+                </div>
+              </div>
+              <span className="text-[#7B2D26] font-bold">&rarr;</span>
+            </Link>
+
             {/* Group 5: Secondary Expandable Section — Content (Blog & Reels) */}
             {(() => {
               const expanded = mobileAccordion === "content";
@@ -696,6 +772,41 @@ export const Navbar: React.FC = () => {
                 </div>
               );
             })()}
+
+            {/* Trust & Legal Quick Links Row */}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2 pb-1 text-[11px] text-[#6E5545]">
+              <Link
+                href="/terms"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-[#7B2D26] underline underline-offset-2 font-medium"
+              >
+                {isHi ? "नियम एवं शर्तें" : "Terms of Service"}
+              </Link>
+              <span>&bull;</span>
+              <Link
+                href="/privacy-policy"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-[#7B2D26] underline underline-offset-2 font-medium"
+              >
+                {isHi ? "गोपनीयता नीति" : "Privacy Policy"}
+              </Link>
+              <span>&bull;</span>
+              <Link
+                href="/refund-policy"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-[#7B2D26]"
+              >
+                {isHi ? "रिफंड नीति" : "Refund Policy"}
+              </Link>
+              <span>&bull;</span>
+              <Link
+                href="/pricing-policy"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hover:text-[#7B2D26]"
+              >
+                {isHi ? "मूल्य निर्धारण" : "Pricing Policy"}
+              </Link>
+            </div>
 
             {/* Mobile Auth Footer (Strict Guest vs. Signed-In Separation) */}
             <div className="border-t border-[#E8D8C3] pt-3">

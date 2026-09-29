@@ -205,45 +205,67 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Trust & Legal Infrastructure */}
-          <div>
-            <h4 className="font-temple text-xs font-bold uppercase tracking-wider text-[#E8A33D] mb-3">
-              Trust &amp; Legal Policies
+          {/* Col 3: Company & Trust (Prominently Styled with Large, Legible Direct Links) */}
+          <div className="rounded-2xl border border-[#FBF3E7]/15 bg-[#64221C]/60 p-4 shadow-sm">
+            <h4 className="font-temple text-xs sm:text-sm font-bold uppercase tracking-wider text-[#E8A33D] mb-3 flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-[#E8A33D]" />
+              <span>Company &amp; Trust</span>
             </h4>
-            <ul className="space-y-2 text-[#FBF3E7]/80 text-[11px]">
+            <ul className="space-y-2.5">
               <li>
-                <Link href="/refund-policy" className="hover:text-[#E8A33D] transition-colors">
+                <Link
+                  href="/about"
+                  className="group flex items-center gap-2 text-xs sm:text-[13px] font-bold text-[#FFFDF9] hover:text-[#E8A33D] transition-colors"
+                >
+                  <span className="text-[#E8A33D] font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  <span>About Us (Acharya Ji Bio)</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="group flex items-center gap-2 text-xs sm:text-[13px] font-bold text-[#FFFDF9] hover:text-[#E8A33D] transition-colors"
+                >
+                  <span className="text-[#E8A33D] font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  <span>Contact Us (Office &amp; Help)</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="group flex items-center gap-2 text-xs sm:text-[13px] font-bold text-[#FFFDF9] hover:text-[#E8A33D] transition-colors"
+                >
+                  <span className="text-[#E8A33D] font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  <span>Terms of Service</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/privacy-policy"
+                  className="group flex items-center gap-2 text-xs sm:text-[13px] font-bold text-[#FFFDF9] hover:text-[#E8A33D] transition-colors"
+                >
+                  <span className="text-[#E8A33D] font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  <span>Privacy &amp; Data Protection</span>
+                </Link>
+              </li>
+              <li className="pt-1.5 border-t border-[#FBF3E7]/15">
+                <Link href="/pricing-policy" className="text-xs text-[#FBF3E7]/85 hover:text-[#E8A33D] transition-colors pl-3.5 block">
+                  Transparent Pricing Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="text-xs text-[#FBF3E7]/85 hover:text-[#E8A33D] transition-colors pl-3.5 block">
                   Refund &amp; Cancellation Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-[#E8A33D] transition-colors">
-                  Terms of Service &amp; Agreement
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="hover:text-[#E8A33D] transition-colors">
-                  Privacy &amp; Data Protection
-                </Link>
-              </li>
-              <li>
-                <Link href="/disclaimer" className="hover:text-[#E8A33D] transition-colors">
-                  Astrology &amp; Vastu Disclaimer
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing-policy" className="hover:text-[#E8A33D] transition-colors">
-                  Transparent Pricing Policy
-                </Link>
-              </li>
-              <li className="pt-1 border-t border-[#FBF3E7]/10">
-                <Link href="/about" className="hover:text-[#E8A33D] transition-colors">
-                  About Niraj Kumar
-                </Link>
-              </li>
-              <li>
-                <Link href="/testimonials" className="hover:text-[#E8A33D] transition-colors">
+                <Link href="/testimonials" className="text-xs text-[#FBF3E7]/85 hover:text-[#E8A33D] transition-colors pl-3.5 block">
                   Verified Seeker Testimonials
+                </Link>
+              </li>
+              <li>
+                <Link href="/disclaimer" className="text-xs text-[#FBF3E7]/85 hover:text-[#E8A33D] transition-colors pl-3.5 block">
+                  Astrology &amp; Vastu Disclaimer
                 </Link>
               </li>
             </ul>
@@ -257,13 +279,13 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2.5 text-[#FBF3E7]/80 text-[11px]">
               <li className="flex items-center gap-2">
                 <Phone className="h-3.5 w-3.5 text-[#E8A33D]" />
-                <a href={`tel:${PLACEHOLDER_CONTACT_INFO.phoneRaw}`} className="hover:text-[#E8A33D] transition-colors">
+                <a href={`tel:${PLACEHOLDER_CONTACT_INFO.phoneRaw}`} className="hover:text-[#E8A33D] transition-colors font-medium">
                   {PLACEHOLDER_CONTACT_INFO.phone}
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-[#E8A33D]" />
-                <a href={`mailto:${PLACEHOLDER_CONTACT_INFO.email}`} className="hover:text-[#E8A33D] transition-colors">
+                <a href={`mailto:${PLACEHOLDER_CONTACT_INFO.email}`} className="hover:text-[#E8A33D] transition-colors font-medium">
                   {PLACEHOLDER_CONTACT_INFO.email}
                 </a>
               </li>
@@ -272,6 +294,16 @@ export const Footer: React.FC = () => {
                 <span>{PLACEHOLDER_CONTACT_INFO.sanctumCity}</span>
               </li>
             </ul>
+
+            <div className="mt-3.5">
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#E8A33D] hover:bg-[#D4922F] text-[#3B2A1E] px-3.5 py-1.5 text-xs font-bold transition-all shadow-sm hover:shadow-md"
+              >
+                <span>Open Contact &amp; Help Desk</span>
+                <span className="font-bold">&rarr;</span>
+              </Link>
+            </div>
 
             <div className="mt-4 rounded-lg border border-[#FBF3E7]/15 bg-[#64221C] p-2.5">
               <div className="text-[10px] text-[#FBF3E7]/70">Secure Payment Gateways:</div>
@@ -290,20 +322,24 @@ export const Footer: React.FC = () => {
         <MandalaDivider className="my-8 opacity-40" />
 
         {/* Copyright & Bottom Legal Bar */}
-        <div className="text-[11px] text-[#FBF3E7]/60 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="text-xs text-[#FBF3E7]/80 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-[#FBF3E7]/10 pt-4">
           <p>
             &copy; {new Date().getFullYear()} Aapka Astro (aapkaastro.com). Preserving authentic Vedic Jyotish &amp; Vastu traditions with complete confidentiality.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/privacy-policy" className="hover:text-[#FBF3E7]">Privacy Policy</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-medium">
+            <Link href="/about" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">About Us</Link>
+            <span className="text-[#E8A33D]">&bull;</span>
+            <Link href="/contact" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Contact Us</Link>
+            <span className="text-[#E8A33D]">&bull;</span>
+            <Link href="/terms" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Terms of Service</Link>
+            <span className="text-[#E8A33D]">&bull;</span>
+            <Link href="/privacy-policy" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Privacy Policy</Link>
             <span>&bull;</span>
-            <Link href="/terms" className="hover:text-[#FBF3E7]">Terms of Service</Link>
+            <Link href="/pricing-policy" className="hover:text-[#E8A33D] text-[#FBF3E7]/80">Pricing Policy</Link>
             <span>&bull;</span>
-            <Link href="/refund-policy" className="hover:text-[#FBF3E7]">Refund Policy</Link>
+            <Link href="/refund-policy" className="hover:text-[#E8A33D] text-[#FBF3E7]/80">Refund Policy</Link>
             <span>&bull;</span>
-            <Link href="/disclaimer" className="hover:text-[#FBF3E7]">Disclaimer</Link>
-            <span>&bull;</span>
-            <Link href="/pricing-policy" className="hover:text-[#FBF3E7]">Pricing Policy</Link>
+            <Link href="/disclaimer" className="hover:text-[#E8A33D] text-[#FBF3E7]/80">Disclaimer</Link>
           </div>
         </div>
       </div>

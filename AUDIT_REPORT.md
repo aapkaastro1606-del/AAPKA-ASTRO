@@ -1301,6 +1301,70 @@ The following claims were previously present in invented/placeholder bio copy, b
   - An uploaded promotional creative showing a flat consultation fee of *"₹1,051/- for the first consultation"* was thoroughly reviewed and confirmed to be **old/unrelated promotional material**.
   - **No flat-fee or package pricing** will be introduced or built based on this ad. The platform strictly maintains the second-by-second wallet debiting engine as specified in the core architecture.
 
+---
+
+## 24. Core Pages Audit & Discoverability Fixes (About Us, Contact Us, Terms of Service, Privacy Policy)
+
+### 24.1 Comprehensive Audit of the Four Core Pages
+An honest, line-by-line audit of the four core pages requested by the client was conducted across the codebase to confirm their existence, integrity, and reachable route paths:
+
+| Page Name | Canonical Route | File Path | Current Status & Audit Summary |
+| :--- | :--- | :--- | :--- |
+| **About Us** | `/about` | [`src/app/about/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/about/page.tsx) | **EXISTS & REACHABLE (200 OK)**<br>Renders confirmed real credentials (Jyotish Acharya from BVB New Delhi, Astro Vastu from jyotishvedanghub, Logical Vastu Expert from DivyVastu), real award photo gallery, testimonials, and consultation CTA. |
+| **Contact Us** | `/contact` | [`src/app/contact/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/contact/page.tsx) | **EXISTS & REACHABLE (200 OK)**<br>Renders confirmed real office address (`Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G.B. Nagar - U.P. 201301`), official helpline (`+91 99990 64166`), email (`care@aapkaastro.com`), operating hours, and interactive callback intake form. |
+| **Terms of Service** | `/terms` | [`src/app/terms/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/terms/page.tsx) | **EXISTS & REACHABLE (200 OK)**<br>Renders 7 comprehensive articles covering platform scope, user eligibility, sacred code of conduct, wallet billing terms, intellectual property, Noida/UP legal jurisdiction, and grievance escalation. |
+| **Privacy Policy** | `/privacy-policy` | [`src/app/privacy-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/privacy-policy/page.tsx) | **EXISTS & REACHABLE (200 OK)**<br>Renders 100% confidentiality pledge, data collection categories (birth coordinates, account credentials, consultation transcripts), SSL encryption safeguards, zero commercial data selling guarantee, and data retention policies. |
+
+### 24.2 Root Cause Analysis: Why Could the Client Not Find Them?
+Although all four pages existed and functioned correctly in the code, they were difficult to locate due to **discoverability deficiencies**:
+1. **Desktop Navbar (`Navbar.tsx`)**:
+   - The desktop navigation bar only displayed Horoscope, Kundli, Panchang, Services, and Content dropdowns. Neither "About Us" nor "Contact Us" was in the top-level navigation.
+2. **Mobile Drawer Menu (`Navbar.tsx`)**:
+   - On mobile/tablet viewports (< 1280px), the hamburger drawer omitted direct buttons for About Us and Contact Us.
+   - Terms of Service and Privacy Policy were completely absent from the mobile navigation drawer.
+3. **Footer Structure (`Footer.tsx`)**:
+   - Column 3 ("Trust & Legal Policies") rendered "About Niraj Kumar" at the very bottom in tiny 11px font under an unnoticeable divider.
+   - Column 4 ("Contact & Office") displayed plain address and phone text, but had **zero clickable link or button** leading to `/contact`.
+   - "Terms of Service" and "Privacy Policy" were crowded in low-contrast 11px text.
+   - The bottom copyright legal strip omitted "About Us" and "Contact Us" entirely.
+
+### 24.3 Discoverability Enhancements Implemented
+To make all four pages **uniquely, instantly, and easily visible across all screen sizes**, the following enhancements were implemented:
+
+1. **Header & Desktop Navigation ([`src/components/layout/Navbar.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/layout/Navbar.tsx))**:
+   - Added direct, top-level navigation links for **"About Us"** (`/about`) and **"Contact Us"** (`/contact`) right alongside "Services", ensuring 1-click accessibility on every desktop view.
+   - Added active state indicators (`isAboutActive`, `isContactActive`) with maroon underline styling when on these routes.
+2. **Mobile Menu Drawer ([`src/components/layout/Navbar.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/layout/Navbar.tsx))**:
+   - Added dedicated, high-contrast tap cards for:
+     - **About Us** (with credential badge and subtitle *"Verified Credentials & Bio"*).
+     - **Contact Us** (with location pin and subtitle *"Noida Office & Direct Helpline"*).
+   - Added a prominent Trust & Legal quick-links row in the mobile drawer footer featuring direct links to **Terms of Service**, **Privacy Policy**, **Refund Policy**, and **Pricing Policy**.
+3. **Footer Redesign ([`src/components/layout/Footer.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/layout/Footer.tsx))**:
+   - Converted Column 3 into a dedicated, high-contrast **"Company & Trust"** section with a glowing header (`<ShieldCheck /> Company & Trust`) and large, bold text links (`text-xs sm:text-[13px] font-bold text-[#FFFDF9]`):
+     - `→ About Us (Acharya Ji Bio)` &rarr; `/about`
+     - `→ Contact Us (Office & Help)` &rarr; `/contact`
+     - `→ Terms of Service` &rarr; `/terms`
+     - `→ Privacy & Data Protection` &rarr; `/privacy-policy`
+     - Transparent Pricing Policy &rarr; `/pricing-policy`
+     - Refund & Cancellation Policy &rarr; `/refund-policy`
+     - Verified Seeker Testimonials &rarr; `/testimonials`
+     - Astrology & Vastu Disclaimer &rarr; `/disclaimer`
+   - Added an interactive gold CTA button in Column 4: **`Open Contact & Help Desk →`** linking directly to `/contact`.
+   - Updated the bottom copyright legal bar with bold, underlined links to **About Us**, **Contact Us**, **Terms of Service**, and **Privacy Policy**.
+4. **Homepage Trust Section Integration ([`src/components/home/TrustCredentialsSection.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/TrustCredentialsSection.tsx))**:
+   - Added an action row below the award photo gallery linking directly to `/about` (*"Read Full Biography & Certificates (About Us) →"*) and `/contact` (*"Visit Noida Office or Request Callback (Contact Us) →"*).
+5. **Permanent 301 Redirects for Common URL Variants ([`next.config.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/next.config.ts))**:
+   - Added permanent HTTP 301 redirects in Next.js config so that any visitor or external search link using alternative URL patterns lands seamlessly on the canonical page:
+     - `/about-us` & `/aboutus` &rarr; `/about`
+     - `/contact-us` & `/contactus` &rarr; `/contact`
+     - `/privacy`, `/privacy-and-policy`, `/privacypolicy` &rarr; `/privacy-policy`
+     - `/terms-of-service`, `/terms-of-use`, `/terms-and-conditions`, `/tos` &rarr; `/terms`
+6. **Automated Verification**:
+   - Created dedicated test suite [`tests/corePagesVisibility.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/corePagesVisibility.test.ts) covering route existence, redirect definitions, navbar links, and footer links.
+   - All 4/4 tests pass (and 212/212 total project tests pass).
+   - Production build compiled successfully (`npm run build` completed with code 0).
+
+
 
 
 
