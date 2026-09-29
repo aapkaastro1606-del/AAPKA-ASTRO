@@ -135,28 +135,94 @@ export const Navbar: React.FC = () => {
         ref={navRef}
         className="sticky top-0 z-40 border-b border-[#E8D8C3] bg-[#FFFDF9]/95 backdrop-blur-md shadow-[0_2px_10px_rgba(59,42,30,0.05)]"
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 gap-4">
-          {/* 1. Left: Brand Identity */}
-          <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <img
-              src="/images/logo.png"
-              alt="Aapka Astro"
-              className="h-10 w-10 object-contain rounded-xl border border-[#C1662F]/30 bg-[#7B2D26] p-1 shadow-sm group-hover:scale-105 transition-transform"
-            />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-temple text-lg sm:text-xl font-bold tracking-wider text-[#7B2D26]">
-                  AAPKA<span className="text-[#C1662F]">ASTRO</span>
-                </span>
-                <span className="rounded bg-[#FBF3E7] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] border border-[#E8D8C3]">
-                  Vedic
-                </span>
-              </div>
-              <div className="text-[11px] text-[#6E5545] font-medium tracking-wide">
-                Acharya Niraj Kumar &bull; Jyotish &amp; Vastu
-              </div>
-            </div>
+        {/* Slim Offer-Only Utility Strip (Strictly for the 50% off offer — zero online/availability status duplication) */}
+        <div className="bg-[#7B2D26] px-4 py-1 text-center text-[11px] font-medium text-[#FBF3E7]">
+          <Link
+            href="/consult"
+            className="inline-flex items-center justify-center gap-1.5 hover:underline"
+          >
+            <span className="font-bold text-[#E8A33D]">
+              {isHi ? "प्रथम परामर्श पर 50% छूट:" : "50% Off First Consultation:"}
+            </span>
+            <span>
+              {isHi
+                ? "आचार्य नीरज कुमार जी से सीधा 1-on-1 वैदिक ज्योतिष एवं वास्तु परामर्श"
+                : "Direct 1-on-1 Vedic Jyotish & Vastu guidance with Acharya Niraj Kumar"}
+            </span>
+            <span className="font-bold text-[#E8A33D]">&rarr;</span>
           </Link>
+        </div>
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8 gap-4">
+          {/* 1. Left: Brand Identity + Single Compact "Online" Indicator (Shown Once) */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link href="/" className="flex items-center gap-3 group">
+              <img
+                src="/images/logo.png"
+                alt="Aapka Astro"
+                className="h-10 w-10 object-contain rounded-xl border border-[#C1662F]/30 bg-[#7B2D26] p-1 shadow-sm group-hover:scale-105 transition-transform"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-temple text-lg sm:text-xl font-bold tracking-wider text-[#7B2D26]">
+                    AAPKA<span className="text-[#C1662F]">ASTRO</span>
+                  </span>
+                  {/* Single Compact Online Indicator (Pulsing Dot + "Online" Text — Not Repeated Elsewhere) */}
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                      status === "AVAILABLE"
+                        ? "bg-[#6B8E5A]/12 border-[#6B8E5A]/40 text-[#2A4720]"
+                        : status === "BUSY"
+                        ? "bg-[#E8A33D]/15 border-[#E8A33D]/40 text-[#7B2D26]"
+                        : "bg-[#E8D8C3]/50 border-[#E8D8C3] text-[#6E5545]"
+                    }`}
+                    title={
+                      status === "AVAILABLE"
+                        ? "Acharya Niraj Kumar is currently online"
+                        : status === "BUSY"
+                        ? "Acharya Niraj Kumar is currently in a consultation"
+                        : "Acharya Niraj Kumar is currently offline"
+                    }
+                  >
+                    <span className="relative flex h-2 w-2">
+                      {status !== "OFFLINE" && (
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                            status === "AVAILABLE" ? "bg-[#6B8E5A]" : "bg-[#E8A33D]"
+                          }`}
+                        />
+                      )}
+                      <span
+                        className={`relative inline-flex rounded-full h-2 w-2 ${
+                          status === "AVAILABLE"
+                            ? "bg-[#6B8E5A]"
+                            : status === "BUSY"
+                            ? "bg-[#E8A33D]"
+                            : "bg-[#8C7565]"
+                        }`}
+                      />
+                    </span>
+                    <span>
+                      {status === "AVAILABLE"
+                        ? isHi
+                          ? "ऑनलाइन"
+                          : "Online"
+                        : status === "BUSY"
+                        ? isHi
+                          ? "परामर्श में"
+                          : "In Session"
+                        : isHi
+                        ? "ऑफलाइन"
+                        : "Offline"}
+                    </span>
+                  </span>
+                </div>
+                <div className="text-[11px] text-[#6E5545] font-medium tracking-wide">
+                  Acharya Niraj Kumar &bull; Jyotish &amp; Vastu
+                </div>
+              </div>
+            </Link>
+          </div>
 
           {/* 2. Center: Grouped, Breathable Top-Level Navigation (4 Pillars) */}
           <nav
@@ -347,29 +413,12 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
-            {/* PRIMARY REVENUE CTA: "Live Consult" with Integrated Single Availability Dot */}
+            {/* PRIMARY REVENUE CTA: "Live Consult" (Clean High-Contrast Button, No Redundant Status Dot) */}
             {status !== "OFFLINE" ? (
               <Link
                 href="/consult"
                 className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] border border-[#E8A33D]/70 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold shadow-sm transition-all"
-                title={
-                  status === "AVAILABLE"
-                    ? "Acharya Ji is Online — Start 1-on-1 Consultation (50% Off First Consult)"
-                    : "Acharya Ji is in a session — Join Queue"
-                }
               >
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      status === "AVAILABLE" ? "bg-[#74C365]" : "bg-[#E8A33D]"
-                    }`}
-                  />
-                  <span
-                    className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                      status === "AVAILABLE" ? "bg-[#74C365]" : "bg-[#E8A33D]"
-                    }`}
-                  />
-                </span>
                 <PhoneCall className="h-3.5 w-3.5 text-[#E8A33D] shrink-0" />
                 <span>{isHi ? "लाइव परामर्श" : t("nav_live_consult")}</span>
               </Link>
@@ -379,7 +428,6 @@ export const Navbar: React.FC = () => {
                 onClick={() => setCallbackModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] border border-[#E8A33D]/70 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
               >
-                <span className="h-2 w-2 rounded-full bg-[#E8A33D]" />
                 <PhoneCall className="h-3.5 w-3.5 text-[#E8A33D]" />
                 <span>{isHi ? "परामर्श बुक करें" : "Book Consult"}</span>
               </button>
@@ -407,10 +455,6 @@ export const Navbar: React.FC = () => {
               className="flex items-center justify-between rounded-xl bg-[#7B2D26] px-4 py-3 text-sm font-bold text-[#FBF3E7] shadow-sm"
             >
               <div className="flex items-center gap-2.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#74C365] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#74C365]" />
-                </span>
                 <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
                 <span>
                   {isHi
@@ -419,7 +463,7 @@ export const Navbar: React.FC = () => {
                 </span>
               </div>
               <span className="rounded bg-[#E8A33D] px-2 py-0.5 text-[11px] font-bold text-[#3B2A1E]">
-                {status === "AVAILABLE" ? "ONLINE" : "QUEUE"}
+                50% OFF
               </span>
             </Link>
 
