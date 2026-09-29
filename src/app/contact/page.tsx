@@ -74,10 +74,10 @@ export default function ContactPage() {
                   Reach Out Directly
                 </span>
                 <h2 className="font-temple text-2xl sm:text-3xl font-bold text-[#7B2D26] mt-1">
-                  Our Sacred Centres
+                  Our Office &amp; Contact Desk
                 </h2>
                 <p className="mt-2 text-xs sm:text-sm text-[#6E5545] leading-relaxed">
-                  Appointments are strictly 1-on-1 to preserve peace and deep astrological focus.
+                  Direct 1-on-1 consultations and Vedic advisory services.
                 </p>
               </div>
 
@@ -85,9 +85,9 @@ export default function ContactPage() {
                 <div className="flex items-start gap-4 rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
                   <MapPin className="h-5 w-5 text-[#7B2D26] shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-[#7B2D26]">Official Office Address</h4>
+                    <h4 className="font-bold text-[#7B2D26]">Office Address</h4>
                     <p className="text-[#6E5545] mt-1 leading-relaxed">
-                      Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G. B. Nagar, U.P. - 201301
+                      Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G.B. Nagar - U.P. 201301
                     </p>
                   </div>
                 </div>

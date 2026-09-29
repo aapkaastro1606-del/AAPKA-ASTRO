@@ -249,10 +249,10 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 4: Sanctum Helpline & Payments */}
+          {/* Col 4: Contact & Office */}
           <div>
             <h4 className="font-temple text-xs font-bold uppercase tracking-wider text-[#E8A33D] mb-3">
-              Sanctum Helpline
+              Contact &amp; Office
             </h4>
             <ul className="space-y-2.5 text-[#FBF3E7]/80 text-[11px]">
               <li className="flex items-center gap-2">

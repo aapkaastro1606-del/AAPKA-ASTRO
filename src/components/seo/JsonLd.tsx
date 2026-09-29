@@ -20,7 +20,7 @@ export function LocalBusinessJsonLd({
   telephone = PLACEHOLDER_CONTACT_INFO.phone,
   address = {
     streetAddress: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75",
-    addressLocality: "Noida, G. B. Nagar",
+    addressLocality: "Noida, G.B. Nagar",
     addressRegion: "Uttar Pradesh",
     postalCode: "201301",
     addressCountry: "IN",

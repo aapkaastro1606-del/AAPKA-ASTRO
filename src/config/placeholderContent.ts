@@ -230,8 +230,8 @@ export const PLACEHOLDER_CONTACT_INFO = {
   phoneRaw: "+919311215564",
   whatsapp: "+91 93112 15564",
   whatsappLink: "https://wa.me/919311215564",
-  sanctumCity: "Sector 75, Noida, Delhi NCR",
-  address: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G. B. Nagar, U.P. - 201301",
+  sanctumCity: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G.B. Nagar - U.P. 201301",
+  address: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G.B. Nagar - U.P. 201301",
   operatingHours: "Monday – Sunday: 7:00 AM – 11:00 PM IST",
 };
 
