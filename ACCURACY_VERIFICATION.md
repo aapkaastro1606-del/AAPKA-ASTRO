@@ -308,5 +308,5 @@ The following 10 real dates spanning different solar months, weekdays, and lunar
 On dates when astronomical conditions are not satisfied, the engine asserts `isActive: false` and explicitly renders `"Not formed today"` / `"आज यह योग नहीं बन रहा है"`. At no point does the engine display synthetic, mock, or approximate placeholders.
 
 ### 6.5 Automated Test Coverage
-All calculations are permanently integrated into the automated test suite under `tests/panchangEngine.test.ts`. Execution of `npm test` confirms 208/208 passing unit and integration tests across the codebase.
+All calculations are permanently integrated into the automated test suite under `tests/panchangEngine.test.ts`. Execution of `npm test` confirms 212/212 passing unit and integration tests across 44 suites in the codebase.
 
