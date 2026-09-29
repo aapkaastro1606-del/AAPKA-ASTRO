@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Cinzel, Mukta, Noto_Serif_Devanagari } from "next/font/google";
 import { AstroClerkProvider as ClerkProvider } from "@/components/auth/ClerkAuthWrapper";
 import "./globals.css";
-import { AstrologerStatusHeader } from "@/components/layout/AstrologerStatusHeader";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WelcomeConsultationModal } from "@/components/home/WelcomeConsultationModal";
@@ -85,7 +84,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <body className="min-h-full flex flex-col bg-[#FBF3E7] text-[#3B2A1E] font-body selection:bg-[#E8A33D] selection:text-[#3B2A1E]">
           <LanguageProvider>
-            <AstrologerStatusHeader />
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
