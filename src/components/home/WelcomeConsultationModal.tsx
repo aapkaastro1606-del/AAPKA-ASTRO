@@ -248,8 +248,8 @@ export function WelcomeConsultationModal({
 
         <div className="px-6 py-5 sm:px-7 sm:py-6 text-center space-y-3">
           {/* 1. Small Logo / Brand Mark */}
-          <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#E8A33D]/50 bg-[#FBF3E7] px-3 py-1 text-[11px] font-bold text-[#7B2D26]">
-            <DiyaIcon size={13} />
+          <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/50 bg-[#FBF3E7] px-3.5 py-1 text-[11px] font-bold text-[#7B2D26]">
+            <img src="/images/logo-icon.png" alt="Aapka Astro" className="h-4 w-4 object-contain" />
             <span className="font-temple tracking-widest uppercase">Aapka Astro</span>
           </div>
 

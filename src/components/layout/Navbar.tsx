@@ -360,64 +360,59 @@ export const Navbar: React.FC = () => {
             <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
               <img
                 src="/images/logo.png"
-                alt="Aapka Astro"
-                className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain rounded-xl border border-[#C1662F]/30 bg-[#7B2D26] p-1 shadow-sm group-hover:scale-105 transition-transform"
+                alt="Aapka Astro - Aligning Your Destiny"
+                className="h-8 sm:h-10 w-auto max-w-[140px] sm:max-w-[170px] object-contain shrink-0 group-hover:scale-[1.02] transition-transform"
               />
-              <div className="min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                  <span className="font-temple text-[15px] sm:text-lg xl:text-xl font-bold tracking-wider text-[#7B2D26] leading-tight whitespace-nowrap">
-                    AAPKA<span className="text-[#C1662F]">ASTRO</span>
-                  </span>
-                  {/* Single Compact Online Indicator (Pulsing Dot + "Online" Text — Not Repeated Elsewhere) */}
-                  <span
-                    className={`inline-flex w-fit items-center gap-1 rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold border leading-none ${
-                      status === "AVAILABLE"
-                        ? "bg-[#6B8E5A]/12 border-[#6B8E5A]/40 text-[#2A4720]"
-                        : status === "BUSY"
-                        ? "bg-[#E8A33D]/15 border-[#E8A33D]/40 text-[#7B2D26]"
-                        : "bg-[#E8D8C3]/50 border-[#E8D8C3] text-[#6E5545]"
-                    }`}
-                    title={
-                      status === "AVAILABLE"
-                        ? "Acharya Niraj Kumar is currently online"
-                        : status === "BUSY"
-                        ? "Acharya Niraj Kumar is currently in a consultation"
-                        : "Acharya Niraj Kumar is currently offline"
-                    }
-                  >
-                    <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                      {status !== "OFFLINE" && (
-                        <span
-                          className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                            status === "AVAILABLE" ? "bg-[#6B8E5A]" : "bg-[#E8A33D]"
-                          }`}
-                        />
-                      )}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                {/* Single Compact Online Indicator (Pulsing Dot + "Online" Text — Not Repeated Elsewhere) */}
+                <span
+                  className={`inline-flex w-fit items-center gap-1 rounded-full px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold border leading-none ${
+                    status === "AVAILABLE"
+                      ? "bg-[#6B8E5A]/12 border-[#6B8E5A]/40 text-[#2A4720]"
+                      : status === "BUSY"
+                      ? "bg-[#E8A33D]/15 border-[#E8A33D]/40 text-[#7B2D26]"
+                      : "bg-[#E8D8C3]/50 border-[#E8D8C3] text-[#6E5545]"
+                  }`}
+                  title={
+                    status === "AVAILABLE"
+                      ? "Acharya Niraj Kumar is currently online"
+                      : status === "BUSY"
+                      ? "Acharya Niraj Kumar is currently in a consultation"
+                      : "Acharya Niraj Kumar is currently offline"
+                  }
+                >
+                  <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                    {status !== "OFFLINE" && (
                       <span
-                        className={`relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 ${
-                          status === "AVAILABLE"
-                            ? "bg-[#6B8E5A]"
-                            : status === "BUSY"
-                            ? "bg-[#E8A33D]"
-                            : "bg-[#8C7565]"
+                        className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          status === "AVAILABLE" ? "bg-[#6B8E5A]" : "bg-[#E8A33D]"
                         }`}
                       />
-                    </span>
-                    <span className="whitespace-nowrap">
-                      {status === "AVAILABLE"
-                        ? isHi
-                          ? "ऑनलाइन"
-                          : "Online"
-                        : status === "BUSY"
-                        ? isHi
-                          ? "परामर्श में"
-                          : "In Session"
-                        : isHi
-                        ? "ऑफलाइन"
-                        : "Offline"}
-                    </span>
+                    )}
+                    <span
+                      className={`relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 ${
+                        status === "AVAILABLE"
+                          ? "bg-[#6B8E5A]"
+                          : status === "BUSY"
+                          ? "bg-[#E8A33D]"
+                          : "bg-[#8C7565]"
+                      }`}
+                    />
                   </span>
-                </div>
+                  <span className="whitespace-nowrap">
+                    {status === "AVAILABLE"
+                      ? isHi
+                        ? "ऑनलाइन"
+                        : "Online"
+                      : status === "BUSY"
+                      ? isHi
+                        ? "परामर्श में"
+                        : "In Session"
+                      : isHi
+                      ? "ऑफलाइन"
+                      : "Offline"}
+                  </span>
+                </span>
                 <div className="hidden sm:block text-[11px] text-[#6E5545] font-medium tracking-wide truncate">
                   Acharya Niraj Kumar &bull; Jyotish &amp; Vastu
                 </div>

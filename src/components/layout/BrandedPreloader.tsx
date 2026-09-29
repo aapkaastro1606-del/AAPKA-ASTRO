@@ -283,11 +283,11 @@ export const BrandedPreloader: React.FC = () => {
       </div>
 
       {/* Brand Title & Vedic Mantra Subtitle */}
-      <div className="mt-5 text-center max-w-[88vw]">
-        <div className="font-temple text-xl sm:text-2xl font-bold tracking-[0.22em] text-[#FBF3E7]">
-          AAPKA <span className="text-[#E8A33D]">ASTRO</span>
+      <div className="mt-5 text-center max-w-[88vw] flex flex-col items-center">
+        <div className="rounded-xl bg-[#FFFDF9]/95 px-3.5 py-1.5 shadow-lg border border-[#E8A33D]/50">
+          <img src="/images/logo.png" alt="Aapka Astro - Aligning Your Destiny" className="h-8 sm:h-10 w-auto object-contain" />
         </div>
-        <div className="mt-1 text-[11px] sm:text-xs font-medium tracking-[0.16em] uppercase text-[#E8A33D]/90">
+        <div className="mt-2 text-[11px] sm:text-xs font-medium tracking-[0.16em] uppercase text-[#E8A33D]/90">
           वैदिक ज्योतिष एवं वास्तु &bull; Acharya Niraj Kumar
         </div>
 

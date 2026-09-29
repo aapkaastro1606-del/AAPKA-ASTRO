@@ -89,16 +89,13 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Col 1: Brand Info & Social Row */}
           <div className="space-y-3 md:col-span-2">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="inline-block rounded-xl bg-[#FFFDF9] px-3.5 py-2 border border-[#E8A33D]/30 shadow-sm hover:shadow-md transition-shadow">
               <img
                 src="/images/logo.png"
-                alt="Aapka Astro"
-                className="h-9 w-9 object-contain rounded-lg bg-[#FAF1E4] p-1 shadow-sm"
+                alt="Aapka Astro - Aligning Your Destiny"
+                className="h-10 sm:h-11 w-auto object-contain"
               />
-              <span className="font-temple text-lg font-bold tracking-wider text-[#FBF3E7]">
-                AAPKA<span className="text-[#E8A33D]">ASTRO</span>
-              </span>
-            </div>
+            </Link>
             <p className="text-xs text-[#FBF3E7]/90 font-semibold font-temple">
               {PLACEHOLDER_ASTROLOGER.tagline}
             </p>
