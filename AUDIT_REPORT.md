@@ -1246,6 +1246,22 @@ Three concrete bugs in [`src/components/home/WelcomeConsultationModal.tsx`](file
 | **Time-to-Interactive Blocking (`pointer-events`)** | `0 ms` | `0 ms` | **`0 ms` (`pointer-events: none`)** |
 | **External JS Bundle Size Added** | `0 KB` | `0 KB` | **`0 KB` (Pure CSS/SVG + CSS 3D)** |
 
+### 22.4 Minimum Display Duration & Dual-Condition Exit Gate Fix (September 2026)
+- **Problem**: On fast/local connections, the preloader was disappearing prematurely in ~200–400ms due to a hydration race condition where the inline pre-script had marked `sessionStorage` before React hydration, causing React to mistake the first load for a repeat visit.
+- **Fix Implemented**:
+  1. **Hard Minimum Display Duration**: Enforced `PRELOADER_MIN_DISPLAY_MS = 1400` (1400ms) started immediately upon component mount.
+  2. **Dual-Condition Exit Gate (`Promise.all([minTimerPromise, contentReadyPromise])`)**:
+     - *Condition A*: 1400ms minimum timer has elapsed.
+     - *Condition B*: Page content and assets are fully loaded (`document.readyState === "complete"` / `window` `load` event).
+     - On fast connections, the preloader holds for the full 1400ms. On slow connections (verified under 350kbps network throttling), the preloader remains visible beyond 1400ms until the page's assets finish loading.
+  3. **Smooth Opacity Transition**: Smooth 380ms CSS opacity and transform fade (`transition: opacity 380ms cubic-bezier(0.4, 0, 0.2, 1), transform 380ms cubic-bezier(0.4, 0, 0.2, 1)`).
+  4. **Full Animation Cycles within 1400ms Window**:
+     - Central `ॐ` medallion pulse/glow: `1.15s` cycle (> 1.2 full luminous cycles).
+     - 3D Navratna gemstone ring orbit: `1.35s` cycle (1 full 360° orbital revolution).
+     - Inner Sri Yantra star ring: `1.35s` cycle (1 full 360° revolution).
+     - Golden progress bar: `1.35s` fill (0% $\rightarrow$ 100%).
+  5. **Session-Once Guarantee**: Verified that internal client-side navigations (e.g. clicking `/panchang` or `/horoscope`) never re-trigger the preloader (`preloaderInDom: false`).
+
 
 
 
