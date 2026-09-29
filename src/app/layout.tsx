@@ -46,13 +46,35 @@ export const metadata: Metadata = {
     "Devta Vastu",
     "Astrotalk alternative",
   ],
+  openGraph: {
+    title: `Aapka Astro | ${PLACEHOLDER_ASTROLOGER.displayName} — Vedic Astrology & Vastu`,
+    description: `Direct 1-on-1 consultations with ${PLACEHOLDER_ASTROLOGER.displayName}. Traditional Vedic sciences, Janam Kundli analysis, Devta & Energy Vastu audits.`,
+    url: "https://aapkaastro.com",
+    siteName: "Aapka Astro",
+    images: [
+      {
+        url: "https://aapkaastro.com/images/logo-white-bg.png",
+        width: 1200,
+        height: 630,
+        alt: "Aapka Astro — align your destiny",
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Aapka Astro | ${PLACEHOLDER_ASTROLOGER.displayName} — Vedic Astrology & Vastu`,
+    description: `Direct 1-on-1 consultations with ${PLACEHOLDER_ASTROLOGER.displayName}. Traditional Vedic sciences, Janam Kundli analysis, Devta & Energy Vastu audits.`,
+    images: ["https://aapkaastro.com/images/logo-white-bg.png"],
+  },
   icons: {
     icon: [
-      { url: "/favicon.ico?v=2", sizes: "32x32" },
-      { url: "/icon.png?v=2", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico?v=3", sizes: "32x32" },
+      { url: "/icon.png?v=3", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-icon.png?v=2", sizes: "180x180", type: "image/png" },
+      { url: "/apple-icon.png?v=3", sizes: "180x180", type: "image/png" },
     ],
   },
 };
