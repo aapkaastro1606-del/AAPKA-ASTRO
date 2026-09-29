@@ -260,6 +260,26 @@ export interface FestivalOrVratItem {
   descriptionHindi: string;
 }
 
+export type AuspiciousYogaId =
+  | "sarvartha_siddhi"
+  | "ravi_yog"
+  | "amrit_yog"
+  | "amrit_siddhi"
+  | "guru_pushya";
+
+export interface AuspiciousYogaItem {
+  id: AuspiciousYogaId;
+  nameEn: string;
+  nameHi: string;
+  isActive: boolean;
+  timingEn: string;
+  timingHi: string;
+  descriptionEn: string;
+  descriptionHi: string;
+  ruleEn: string;
+  ruleHi: string;
+}
+
 export function normalize360(deg: number): number {
   return ((deg % 360) + 360) % 360;
 }
@@ -781,6 +801,244 @@ export function detectFestivalsAndVratsForDay(
 }
 
 /**
+ * Classical Muhurta Chintamani Sarvartha Siddhi Yoga Table (Weekday -> Nakshatra indices 0..26)
+ */
+export const SARVARTHA_SIDDHI_MAP: Record<number, number[]> = {
+  0: [12, 18, 11, 20, 25, 0, 7], // Sunday: Hasta, Mula, U.Phalguni, U.Ashadha, U.Bhadrapada, Ashwini, Pushya
+  1: [21, 3, 4, 7, 16],          // Monday: Shravana, Rohini, Mrigashira, Pushya, Anuradha
+  2: [0, 2, 8, 25],              // Tuesday: Ashwini, Krittika, Ashlesha, U.Bhadrapada
+  3: [3, 16, 12, 2, 4],          // Wednesday: Rohini, Anuradha, Hasta, Krittika, Mrigashira
+  4: [26, 16, 0, 6, 7],          // Thursday: Revati, Anuradha, Ashwini, Punarvasu, Pushya
+  5: [26, 16, 0, 6, 21],         // Friday: Revati, Anuradha, Ashwini, Punarvasu, Shravana
+  6: [21, 3, 14],                // Saturday: Shravana, Rohini, Swati
+};
+
+/**
+ * Classical Muhurta Chintamani Amrit Siddhi Yoga Table (Weekday -> Nakshatra index 0..26)
+ */
+export const AMRIT_SIDDHI_MAP: Record<number, number> = {
+  0: 12, // Sunday: Hasta
+  1: 4,  // Monday: Mrigashira
+  2: 0,  // Tuesday: Ashwini
+  3: 16, // Wednesday: Anuradha
+  4: 7,  // Thursday: Pushya
+  5: 26, // Friday: Revati
+  6: 3,  // Saturday: Rohini
+};
+
+/**
+ * Classical 28 Anandadi Yoga cycle: Yoga #21 ("Amrita" / अमृत योग)
+ */
+export const AMRIT_YOGA_MAP: Record<number, number> = {
+  0: 20, // Sunday: U.Ashadha
+  1: 23, // Monday: Shatabhisha
+  2: 0,  // Tuesday: Ashwini
+  3: 4,  // Wednesday: Mrigashira
+  4: 8,  // Thursday: Ashlesha
+  5: 12, // Friday: Hasta
+  6: 16, // Saturday: Anuradha
+};
+
+/**
+ * Classical Ravi Yoga Nakshatra distance (inclusive forward count from Sun's Nakshatra to Moon's Nakshatra)
+ */
+export const RAVI_YOG_COUNTS = [4, 6, 9, 10, 13, 20];
+
+export interface NakshatraInterval {
+  nakIndex: number;
+  start: Date;
+  end: Date;
+}
+
+function mergeAdjacentSpans(spans: { start: Date; end: Date }[]): { start: Date; end: Date }[] {
+  if (spans.length === 0) return [];
+  const merged: { start: Date; end: Date }[] = [];
+  let cur = { start: spans[0].start, end: spans[0].end };
+  for (let i = 1; i < spans.length; i++) {
+    const next = spans[i];
+    if (Math.abs(next.start.getTime() - cur.end.getTime()) <= 65000) {
+      cur.end = next.end;
+    } else {
+      merged.push(cur);
+      cur = { start: next.start, end: next.end };
+    }
+  }
+  merged.push(cur);
+  return merged;
+}
+
+function formatYogaTiming(
+  spans: { start: Date; end: Date }[],
+  sunrise: Date,
+  nextSunrise: Date,
+  civilDateStr: string,
+  timeZone: string
+): { timingEn: string; timingHi: string; isActive: boolean } {
+  if (spans.length === 0) {
+    return {
+      isActive: false,
+      timingEn: "Not formed today",
+      timingHi: "आज यह योग नहीं बन रहा है",
+    };
+  }
+
+  const enParts: string[] = [];
+  const hiParts: string[] = [];
+
+  for (const span of spans) {
+    const isAtSunrise = Math.abs(span.start.getTime() - sunrise.getTime()) < 60000;
+    const isAtNextSunrise = Math.abs(span.end.getTime() - nextSunrise.getTime()) < 60000;
+
+    const startFmt = formatTimeInZone(span.start, civilDateStr, timeZone);
+    const endFmt = formatTimeInZone(span.end, civilDateStr, timeZone);
+
+    if (isAtSunrise && isAtNextSunrise) {
+      enParts.push(`Full Day (${startFmt.en} to ${endFmt.en})`);
+      hiParts.push(`सम्पूर्ण दिन (${startFmt.hi} से ${endFmt.hi})`);
+    } else {
+      enParts.push(`${startFmt.en} to ${endFmt.en}`);
+      hiParts.push(`${startFmt.hi} से ${endFmt.hi} तक`);
+    }
+  }
+
+  return {
+    isActive: true,
+    timingEn: enParts.join(" • "),
+    timingHi: hiParts.join(" • "),
+  };
+}
+
+export function computeAuspiciousYogas(
+  sunrise: Date,
+  nextSunrise: Date,
+  weekday: number,
+  nakIntervals: NakshatraInterval[],
+  civilDateStr: string,
+  timeZone: string
+): AuspiciousYogaItem[] {
+  const nakStep = 360 / 27;
+
+  // 1. Sarvartha Siddhi Yog
+  const ssValid = SARVARTHA_SIDDHI_MAP[weekday] || [];
+  const ssSpans = mergeAdjacentSpans(
+    nakIntervals.filter((inv) => ssValid.includes(inv.nakIndex))
+  );
+  const ssFmt = formatYogaTiming(ssSpans, sunrise, nextSunrise, civilDateStr, timeZone);
+
+  // 2. Ravi Yog
+  const ryIntervals = nakIntervals.filter((inv) => {
+    const midTime = new Date(0.5 * (inv.start.getTime() + inv.end.getTime()));
+    const p = getSunMoonSiderealAt(midTime);
+    const sunNak = Math.floor(p.sunSid / nakStep) % 27;
+    const count = ((inv.nakIndex - sunNak + 27) % 27) + 1;
+    return RAVI_YOG_COUNTS.includes(count);
+  });
+  const rySpans = mergeAdjacentSpans(ryIntervals);
+  const ryFmt = formatYogaTiming(rySpans, sunrise, nextSunrise, civilDateStr, timeZone);
+
+  // 3. Amrit Yog (28 Anandadi Yoga #21 Amrita)
+  const ayTargetNak = AMRIT_YOGA_MAP[weekday];
+  const aySpans = mergeAdjacentSpans(
+    nakIntervals.filter((inv) => inv.nakIndex === ayTargetNak)
+  );
+  const ayFmt = formatYogaTiming(aySpans, sunrise, nextSunrise, civilDateStr, timeZone);
+
+  // 4. Amrit Siddhi Yog
+  const asTargetNak = AMRIT_SIDDHI_MAP[weekday];
+  const asSpans = mergeAdjacentSpans(
+    nakIntervals.filter((inv) => inv.nakIndex === asTargetNak)
+  );
+  const asFmt = formatYogaTiming(asSpans, sunrise, nextSunrise, civilDateStr, timeZone);
+
+  // 5. Guru Pushya Yog (Thursday + Pushya Nakshatra index 7)
+  const gpSpans = mergeAdjacentSpans(
+    nakIntervals.filter((inv) => weekday === 4 && inv.nakIndex === 7)
+  );
+  const gpFmt = formatYogaTiming(gpSpans, sunrise, nextSunrise, civilDateStr, timeZone);
+
+  return [
+    {
+      id: "sarvartha_siddhi",
+      nameEn: "Sarvartha Siddhi Yog",
+      nameHi: "सर्वार्थ सिद्धि योग",
+      isActive: ssFmt.isActive,
+      timingEn: ssFmt.timingEn,
+      timingHi: ssFmt.timingHi,
+      descriptionEn:
+        "Signifying the 'fulfillment of all objectives', this classical yoga neutralizes numerous astrological doshas and grants success in education, property deals, business launches, and auspicious endeavors.",
+      descriptionHi:
+        "समस्त मनोरथों को सिद्ध करने वाला महायोग। यह अनेक ज्योतिषीय दोषों का निवारण कर नवीन व्यापार, वाहन/भवन क्रय, अनुबंध एवं अभीष्ट कार्यों में निर्विघ्न सफलता दिलाता है।",
+      ruleEn:
+        "Formed under classical Muhurta Chintamani weekday and nakshatra alignment tables.",
+      ruleHi: "मुहूर्त चिंतामणि के अनुसार वार एवं विशिष्ट नक्षत्रों के शुभ संयोग द्वारा निर्मित।",
+    },
+    {
+      id: "ravi_yog",
+      nameEn: "Ravi Yog",
+      nameHi: "रवि योग",
+      isActive: ryFmt.isActive,
+      timingEn: ryFmt.timingEn,
+      timingHi: ryFmt.timingHi,
+      descriptionEn:
+        "Endowed with the radiant energy of Lord Surya, Ravi Yog destroys thousands of inauspicious planetary combinations and clears the path for triumph, healing, and prosperity.",
+      descriptionHi:
+        "भगवान सूर्य देव के दिव्य तेज से युक्त यह योग सहस्रों दुर्योगों व बाधाओं को भस्म करने में समर्थ माना गया है। यह विजय, स्वास्थ्य लाभ एवं महत्वपूर्ण कार्यों हेतु विशेष फलदायी है।",
+      ruleEn:
+        "Formed when the Moon's Nakshatra is the 4th, 6th, 9th, 10th, 13th, or 20th counted inclusively from the Sun's Nakshatra.",
+      ruleHi:
+        "सूर्य के वर्तमान नक्षत्र से चंद्रमा के नक्षत्र की गणना करने पर 4, 6, 9, 10, 13 अथवा 20वाँ नक्षत्र होने पर।",
+    },
+    {
+      id: "amrit_yog",
+      nameEn: "Amrit Yog",
+      nameHi: "अमृत योग",
+      isActive: ayFmt.isActive,
+      timingEn: ayFmt.timingEn,
+      timingHi: ayFmt.timingHi,
+      descriptionEn:
+        "The 21st yoga in the classical 28 Anandadi Yoga cycle, bestowing longevity, nectar-like vitality, and auspicious protection for beginning long-term projects.",
+      descriptionHi:
+        "वैदिक मुहूर्त शास्त्र के 28 आनंदादि योगों में 21वाँ 'अमृत' योग। यह अमृत तुल्य जीवन-ऊर्जा, आरोग्य तथा दीर्घकालिक मांगलिक कार्यों को स्थायित्व प्रदान करता है।",
+      ruleEn:
+        "21st yoga in the 28 Anandadi cycle calculated from the weekday's base nakshatra (Sunday+Uttara Ashadha, Monday+Shatabhisha, Tuesday+Ashwini, Wednesday+Mrigashira, Thursday+Ashlesha, Friday+Hasta, Saturday+Anuradha).",
+      ruleHi:
+        "वार के आधार नक्षत्र से गणना करने पर 28 आनंदादि योगों का 21वाँ अमृत योग (रवि+उत्तराषाढ़ा, सोम+शतभिषा, मंगल+अश्विनी, बुध+मृगशिरा, गुरु+आश्लेषा, शुक्र+हस्त, शनि+अनुराधा)।",
+    },
+    {
+      id: "amrit_siddhi",
+      nameEn: "Amrit Siddhi Yog",
+      nameHi: "अमृत सिद्धि योग",
+      isActive: asFmt.isActive,
+      timingEn: asFmt.timingEn,
+      timingHi: asFmt.timingHi,
+      descriptionEn:
+        "A premier Siddhi yoga from Muhurta Chintamani that converts efforts into everlasting positive fruits. Highly propitious for signing agreements, purchasing gold/jewelry, investments, and sacred rites.",
+      descriptionHi:
+        "मुहूर्त चिंतामणि का अत्यंत प्रभावशाली सिद्धि योग, जिसमें किए गए कार्य अमृत के समान अक्षय फल प्रदान करते हैं। व्यापारिक अनुबंध, स्वर्ण आभूषण क्रय, नए पदभार एवं धार्मिक अनुष्ठान हेतु उत्तम।",
+      ruleEn:
+        "Formed by specific weekday and nakshatra pairs: Sunday+Hasta, Monday+Mrigashira, Tuesday+Ashwini, Wednesday+Anuradha, Thursday+Pushya, Friday+Revati, Saturday+Rohini.",
+      ruleHi:
+        "वार एवं नक्षत्र का सिद्ध संयोग: रवि+हस्त, सोम+मृगशिरा, मंगल+अश्विनी, बुध+अनुराधा, गुरु+पुष्य, शुक्र+रेवती, शनि+रोहिणी।",
+    },
+    {
+      id: "guru_pushya",
+      nameEn: "Guru Pushya Yog",
+      nameHi: "गुरु पुष्य योग",
+      isActive: gpFmt.isActive,
+      timingEn: gpFmt.timingEn,
+      timingHi: gpFmt.timingHi,
+      descriptionEn:
+        "The king of auspicious muhurats (Gurupushyamrut Yoga), formed when Thursday coincides with the king of constellations, Pushya Nakshatra. Highest recommendation for gold purchase, new establishments, and wealth rituals.",
+      descriptionHi:
+        "समस्त मुहूर्तों का मुकुटमणि 'गुरुपुष्यामृत योग'। जब गुरुवार के दिन नक्षत्रराज पुष्य का शुभ संयोग होता है, तब यह महायोग बनता है। स्वर्ण, भूमि, वाहन, प्रतिष्ठान उद्घाटन एवं श्री महालक्ष्मी साधना हेतु सर्वश्रेष्ठ।",
+      ruleEn:
+        "Formed exclusively when Thursday (Guruvara) coincides with the Moon transiting Pushya Nakshatra.",
+      ruleHi: "गुरुवार (बृहस्पतिवार) के दिन चंद्रमा के पुष्य नक्षत्र में संचरण करने पर निर्मित।",
+    },
+  ];
+}
+
+/**
  * Computes live, real-time Drik Ganita Panchang for any location and civil date.
  */
 export function computeRealtimePanchang(
@@ -1134,6 +1392,29 @@ export function computeRealtimePanchang(
     posAtNextSunrise.sunSid
   );
 
+  // 12. FIVE AUSPICIOUS YOGAS (Sarvartha Siddhi, Ravi Yog, Amrit Yog, Amrit Siddhi, Guru Pushya)
+  const nakIntervals: NakshatraInterval[] = [];
+  if (nakCross.endTime >= nextSunrise) {
+    nakIntervals.push({ nakIndex: nakCross.currentIndex, start: sunrise, end: nextSunrise });
+  } else {
+    nakIntervals.push({ nakIndex: nakCross.currentIndex, start: sunrise, end: nakCross.endTime });
+    if (nakCross2.endTime >= nextSunrise) {
+      nakIntervals.push({ nakIndex: nakCross.nextIndex, start: nakCross.endTime, end: nextSunrise });
+    } else {
+      nakIntervals.push({ nakIndex: nakCross.nextIndex, start: nakCross.endTime, end: nakCross2.endTime });
+      nakIntervals.push({ nakIndex: nakCross2.nextIndex, start: nakCross2.endTime, end: nextSunrise });
+    }
+  }
+
+  const auspiciousYogas = computeAuspiciousYogas(
+    sunrise,
+    nextSunrise,
+    weekday,
+    nakIntervals,
+    civilDateStr,
+    timeZone
+  );
+
   const dateFormattedEn = new Intl.DateTimeFormat("en-IN", {
     timeZone,
     weekday: "long",
@@ -1315,6 +1596,8 @@ export function computeRealtimePanchang(
     choghadiya,
     chandrabalam,
     festivals,
+    auspiciousYogas,
+    activeAuspiciousYogasCount: auspiciousYogas.filter((y) => y.isActive).length,
     timeline24h: {
       sunriseMs: sunrise.getTime(),
       sunsetMs: sunset.getTime(),

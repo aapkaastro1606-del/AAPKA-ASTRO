@@ -332,6 +332,18 @@ export const PANCHANG_UI_COPY = {
     en: "Showing last verified Panchang data while recalculating.",
     hi: "गणना में क्षणिक व्यवधान के कारण पूर्व-सत्यापित पंचांग दर्शाया जा रहा है।",
   },
+  auspiciousYogasTitle: {
+    en: "Auspicious Yogas (Shubh Yogas)",
+    hi: "दैनिक शुभ योग",
+  },
+  auspiciousYogasSub: {
+    en: "Calculated from genuine astronomical positions of the Sun and Moon under classical Muhurta Chintamani and Anandadi rules.",
+    hi: "सूर्य एवं चंद्रमा के वास्तविक खगोलीय स्पष्ट तथा मुहूर्त चिंतामणि व आनंदादि सूत्रों के आधार पर सटीक दैनिक गणना।",
+  },
+  activeTodayBadge: { en: "Active Today", hi: "आज सक्रिय" },
+  notFormedBadge: { en: "Not Formed Today", hi: "आज अनुपस्थित" },
+  auspiciousTimingLabel: { en: "Auspicious Timing", hi: "शुभ समयावधि" },
+  formationRuleLabel: { en: "Astrological Rule", hi: "शास्त्रीय योग विधान" },
 } as const;
 
 /**

@@ -536,6 +536,36 @@ export function PanchangView({
             </Link>
           </div>
 
+          {/* Active Auspicious Yogas Quick Strip */}
+          {panchang.auspiciousYogas && panchang.activeAuspiciousYogasCount > 0 && (
+            <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-amber-500/10 p-4 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8A33D]/25 text-[#7B2D26]">
+                    <Sparkles className="h-5 w-5 text-[#C1662F]" />
+                  </span>
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#C1662F]">
+                      {isHi ? "आज के सक्रिय शुभ योग" : "Active Auspicious Yogas Today"}
+                    </span>
+                    <div className="text-sm font-bold text-[#7B2D26]">
+                      {panchang.auspiciousYogas
+                        .filter((y) => y.isActive)
+                        .map((y) => (isHi ? y.nameHi : y.nameEn))
+                        .join(" • ")}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href="#shubh-yogas"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-colors"
+                >
+                  <span>{isHi ? "समय व विवरण देखें ↓" : "View Timings & Details ↓"}</span>
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* 3. 24-HOUR HORIZONTAL VEDIC TIMELINE BAR (Pure CSS/SVG) */}
           {panchang.timeline24h && timelineState && (
             <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-xs">
@@ -851,6 +881,109 @@ export function PanchangView({
               </div>
             </div>
           </div>
+
+          {/* Auspicious Yogas (शुभ योग) Section */}
+          {panchang.auspiciousYogas && (
+            <div id="shubh-yogas" className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-xs scroll-mt-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                <div>
+                  <h2 className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26] flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-[#E8A33D]" />
+                    <span>{t("auspiciousYogasTitle")}</span>
+                  </h2>
+                  <p className="text-xs text-[#6E5545] mt-1 max-w-2xl">
+                    {t("auspiciousYogasSub")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${
+                      panchang.activeAuspiciousYogasCount > 0
+                        ? "bg-[#6B8E5A]/15 text-[#4B6B3B] border-[#6B8E5A]/30"
+                        : "bg-[#6E5545]/10 text-[#6E5545] border-[#E8D8C3]"
+                    }`}
+                  >
+                    {panchang.activeAuspiciousYogasCount > 0 && (
+                      <span className="h-2 w-2 rounded-full bg-[#6B8E5A] animate-pulse" />
+                    )}
+                    {panchang.activeAuspiciousYogasCount}{" "}
+                    {isHi ? "योग आज सक्रिय" : "Active Today"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
+                {panchang.auspiciousYogas.map((yoga) => (
+                  <div
+                    key={yoga.id}
+                    className={`rounded-2xl border p-5 transition-all flex flex-col justify-between ${
+                      yoga.isActive
+                        ? "border-[#6B8E5A] bg-gradient-to-b from-[#EDF3EB] to-[#FFFDF9] shadow-xs ring-1 ring-[#6B8E5A]/40"
+                        : "border-[#E8D8C3] bg-[#FBF3E7]/50 opacity-90 hover:opacity-100"
+                    }`}
+                  >
+                    <div>
+                      {/* Header: Title & Status Badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="text-[11px] font-bold text-[#C1662F]">
+                            {isHi ? yoga.nameEn : yoga.nameHi}
+                          </div>
+                          <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
+                            {isHi ? yoga.nameHi : yoga.nameEn}
+                          </h3>
+                        </div>
+                        {yoga.isActive ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#6B8E5A] px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs whitespace-nowrap">
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>{t("activeTodayBadge")}</span>
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-[#6E5545]/10 px-2 py-0.5 text-[11px] font-medium text-[#6E5545] whitespace-nowrap">
+                            {t("notFormedBadge")}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Formed Time Window */}
+                      <div
+                        className={`mt-3.5 rounded-xl border p-3 text-xs ${
+                          yoga.isActive
+                            ? "border-[#6B8E5A]/40 bg-white"
+                            : "border-[#E8D8C3] bg-white/70"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 font-bold text-[#6E5545] mb-1">
+                          <Clock className="h-3.5 w-3.5 text-[#C1662F]" />
+                          <span>{t("auspiciousTimingLabel")}:</span>
+                        </div>
+                        <div
+                          className={`font-mono text-xs sm:text-sm font-bold ${
+                            yoga.isActive ? "text-[#4B6B3B]" : "text-[#8C7A6B]"
+                          }`}
+                        >
+                          {isHi ? yoga.timingHi : yoga.timingEn}
+                        </div>
+                      </div>
+
+                      {/* Rule */}
+                      <div className="mt-3 text-[11px] text-[#6E5545] leading-relaxed">
+                        <strong className="text-[#3B2A1E]">
+                          {t("formationRuleLabel")}:{" "}
+                        </strong>
+                        {isHi ? yoga.ruleHi : yoga.ruleEn}
+                      </div>
+                    </div>
+
+                    {/* Astrological Significance */}
+                    <p className="mt-3.5 pt-3 border-t border-[#E8D8C3]/60 text-xs text-[#3B2A1E]/90 leading-relaxed">
+                      {isHi ? yoga.descriptionHi : yoga.descriptionEn}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Auspicious & Inauspicious Timings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

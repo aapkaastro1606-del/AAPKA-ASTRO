@@ -6,6 +6,8 @@ import {
   ChoghadiyaSlot,
   ChandrabalamEntry,
   FestivalOrVratItem,
+  AuspiciousYogaItem,
+  AuspiciousYogaId,
 } from "@/lib/astrology/realtimePanchang";
 
 export type DailyPanchang = ReturnType<typeof computeRealtimePanchang>;
@@ -16,6 +18,8 @@ export type {
   ChoghadiyaSlot,
   ChandrabalamEntry,
   FestivalOrVratItem,
+  AuspiciousYogaItem,
+  AuspiciousYogaId,
 };
 
 export const CITIES_LIST: PanchangLocation[] = PANCHANG_LOCATIONS;

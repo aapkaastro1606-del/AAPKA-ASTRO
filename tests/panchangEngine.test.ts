@@ -108,5 +108,70 @@ describe("Phase 2: High-Precision Drik Ganita Panchang Engine", () => {
     assert.equal(secondCall.cacheStatus, "HIT");
     assert.equal(secondCall.data.tithi.name, firstCall.data.tithi.name);
   });
+
+  test("calculates the 5 classical Auspicious Yogas accurately with genuine ephemeris verification", () => {
+    // 1. April 23, 2026 (Thursday): Guru Pushya Yog & Amrit Siddhi formed from 08:57 PM to next sunrise
+    const apr23 = computeRealtimePanchang("delhi", "2026-04-23");
+    assert.equal(apr23.auspiciousYogas.length, 5);
+    const gpApr23 = apr23.auspiciousYogas.find((y) => y.id === "guru_pushya")!;
+    const asApr23 = apr23.auspiciousYogas.find((y) => y.id === "amrit_siddhi")!;
+    const ssApr23 = apr23.auspiciousYogas.find((y) => y.id === "sarvartha_siddhi")!;
+    assert.equal(gpApr23.isActive, true);
+    assert.match(gpApr23.timingEn, /08:57\sPM/);
+    assert.equal(asApr23.isActive, true);
+    assert.match(asApr23.timingEn, /08:57\sPM/);
+    assert.equal(ssApr23.isActive, true);
+    assert.match(ssApr23.timingEn, /Full Day/i);
+
+    // 2. May 21, 2026 (Thursday): Guru Pushya Yog from Sunrise (05:27 AM) to 02:49 AM next day
+    const may21 = computeRealtimePanchang("delhi", "2026-05-21");
+    const gpMay21 = may21.auspiciousYogas.find((y) => y.id === "guru_pushya")!;
+    assert.equal(gpMay21.isActive, true);
+    assert.match(gpMay21.timingEn, /05:27\sAM.*02:49\sAM/);
+
+    // 3. June 18, 2026 (Thursday): Guru Pushya Yog from Sunrise (05:23 AM) to 11:32 AM
+    const jun18 = computeRealtimePanchang("delhi", "2026-06-18");
+    const gpJun18 = jun18.auspiciousYogas.find((y) => y.id === "guru_pushya")!;
+    assert.equal(gpJun18.isActive, true);
+    assert.match(gpJun18.timingEn, /05:23\sAM.*11:32\sAM/);
+
+    // 4. January 14, 2026 (Wednesday): Amrit Siddhi & Sarvartha Siddhi (Anuradha Nakshatra)
+    const jan14 = computeRealtimePanchang("delhi", "2026-01-14");
+    const asJan14 = jan14.auspiciousYogas.find((y) => y.id === "amrit_siddhi")!;
+    const ssJan14 = jan14.auspiciousYogas.find((y) => y.id === "sarvartha_siddhi")!;
+    assert.equal(asJan14.isActive, true);
+    assert.match(asJan14.timingEn, /07:15\sAM.*03:03\sAM/);
+    assert.equal(ssJan14.isActive, true);
+    assert.match(ssJan14.timingEn, /07:15\sAM.*03:03\sAM/);
+
+    // 5. January 1, 2026 (Thursday): Ravi Yog from 10:48 PM to Next Sunrise
+    const jan01 = computeRealtimePanchang("delhi", "2026-01-01");
+    const ryJan01 = jan01.auspiciousYogas.find((y) => y.id === "ravi_yog")!;
+    assert.equal(ryJan01.isActive, true);
+    assert.match(ryJan01.timingEn, /10:48\sPM.*07:14\sAM/);
+
+    // 6. January 4, 2026 (Sunday): Sarvartha Siddhi starts at 03:11 PM
+    const jan04 = computeRealtimePanchang("delhi", "2026-01-04");
+    const ssJan04 = jan04.auspiciousYogas.find((y) => y.id === "sarvartha_siddhi")!;
+    assert.equal(ssJan04.isActive, true);
+    assert.match(ssJan04.timingEn, /03:11\sPM/);
+
+    // 7. January 5, 2026 (Monday): Sarvartha Siddhi from Sunrise to 01:24 PM
+    const jan05 = computeRealtimePanchang("delhi", "2026-01-05");
+    const ssJan05 = jan05.auspiciousYogas.find((y) => y.id === "sarvartha_siddhi")!;
+    assert.equal(ssJan05.isActive, true);
+    assert.match(ssJan05.timingEn, /07:14\sAM.*01:24\sPM/);
+
+    // 8. April 4, 2026 (Saturday): Sarvartha Siddhi from Sunrise to 09:35 PM
+    const apr04 = computeRealtimePanchang("delhi", "2026-04-04");
+    const ssApr04 = apr04.auspiciousYogas.find((y) => y.id === "sarvartha_siddhi")!;
+    assert.equal(ssApr04.isActive, true);
+    assert.match(ssApr04.timingEn, /06:08\sAM.*09:35\sPM/);
+
+    // 9. When a yoga is inactive, isActive is false and never reports false active timings
+    assert.equal(jan01.auspiciousYogas.find((y) => y.id === "guru_pushya")!.isActive, false);
+    assert.equal(jan04.auspiciousYogas.find((y) => y.id === "guru_pushya")!.isActive, false);
+  });
 });
+
 
