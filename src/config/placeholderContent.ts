@@ -9,28 +9,23 @@
 
 export const PLACEHOLDER_ASTROLOGER = {
   rawName: "Niraj Kumar",
-  displayName: "Acharya Niraj Kumar",
-  experienceYears: "20+",
-  experienceText: "Over 20+ Years of Traditional Vedic & Vastu Mastery",
-  followersCount: "15,000+ Consultations",
-  tagline: "Where Spiritual Science Meets Corporate Insight",
-  bio: "Aapka Astro is led by Acharya Niraj Kumar, a practitioner who brings together deep traditional learning and rare real-world experience. Raised in the spiritually rich ecosystem of Baidyanath Dham, Deoghar, his journey into astrology and Vastu began early, shaped by both curiosity and disciplined guidance. Over the last two decades, he has studied, practiced, and refined his approach across more than 15,000 chart analyses and numerous Vastu consultations. Trained under Late Guru Shri B. B. Tiwari, he holds a Jyotish Acharya from Bhartiya Vidya Bhawan (K.N. Rao Institute), M.A. in Jyotish, Nadi Parveen (ICAS), and Jyotish Prabhakar under Dr. Pawan Sinha. With over two decades in senior corporate leadership roles including Vice President and Business Head at Reliance Retail and Metro Cash & Carry, he translates Vedic wisdom and Vastu from theory into actionable life strategy.",
+  displayName: "Niraj Kumar",
+  experienceYears: "Certified",
+  experienceText: "Certified Jyotish Acharya & Logical Vastu Expert",
+  followersCount: "Certified Astrologer & Vastu Consultant",
+  tagline: "Certified Jyotish Acharya & Logical Vastu Expert",
+  bio: "Aapka Astro is led by Niraj Kumar, a certified Jyotish Acharya and Logical Vastu Expert. He earned his title of Jyotish Acharya from the Institute of Astrology, Bharatiya Vidya Bhawan, Kasturba Gandhi Marg, New Delhi (Examination December 2023, Certified July 2024). He is also certified as a Logical Vastu Expert by DivyVastu (Alchemy Vastu Pvt. Ltd., ISO 9001:2015 certified) and has completed specialized Astro Vastu training via jyotishvedanghub. His guidance brings together rigorous classical Vedic astrology calculations with practical, non-destructive Vastu solutions.",
   avatarUrl: "/images/Acharya_Niraj_Kumar.jpg",
-  lineage: "Late Guru Shri B. B. Tiwari • Bhartiya Vidya Bhawan (K.N. Rao Institute) • Dr. Pawan Sinha (IRIW)",
+  lineage: "Institute of Astrology, Bharatiya Vidya Bhawan • DivyVastu • jyotishvedanghub",
   academicQualifications: [
-    "B.Sc. (Hons.) in Physics",
-    "PGDBM in International Business & Marketing",
-    "Leadership Development & Change Management certification from XLRI",
-    "Former Vice President & Business Head at Reliance Retail, Metro Cash & Carry, NIF Food",
+    "Certified Jyotish Acharya (Bharatiya Vidya Bhawan, New Delhi)",
+    "Certified Logical Vastu™ Expert (DivyVastu / Alchemy Vastu Pvt. Ltd.)",
+    "Certified Astro Vastu Specialist (jyotishvedanghub)",
   ],
   jyotishCertifications: [
-    "Jyotish Acharya from Bhartiya Vidya Bhawan (K.N. Rao Institute)",
-    "M.A. in Jyotish (IGNOU, 2024)",
-    "Trained under Late Guru Shri B. B. Tiwari",
-    "Jyotish Prabhakar (IRIW under Dr. Pawan Sinha)",
-    "Nadi Parveen (ICAS - Indian Council of Astrological Sciences)",
-    "Jyotish Visharad & Jyotish Mani (Bharat Jyotish Vidyapith)",
-    "Advanced Devta Vastu, Energy Vastu & AstroVastu from Divya Vastu and Vaastu Just For You",
+    "Jyotish Acharya — Institute of Astrology, Bharatiya Vidya Bhawan, Kasturba Gandhi Marg, New Delhi (Promoting Sanskrit & Sanskriti Since 1938), Second Division, Exam December 2023, Certified 13 July 2024, Roll No. OH21011",
+    "Astro Vastu Course — Completed via jyotishvedanghub (August 22, 2022)",
+    "Logical Vastu™ Expert — Certified by DivyVastu (Issued on behalf of Alchemy Vastu Pvt. Ltd., ISO 9001:2015 certified Vastu Consulting and Education services firm, June 2025)",
   ],
 };
 
@@ -196,7 +191,7 @@ export const PLACEHOLDER_TESTIMONIALS = [
     city: "Managing Director, Gurgaon",
     service: "Commercial Vastu Consultancy",
     stars: 5,
-    text: "What makes Acharya Niraj Kumar uniquely effective is his corporate leadership background. He understood our enterprise bottlenecks immediately and applied Devta Vastu micro-zone corrections without breaking a single wall. Productivity and cash flows improved remarkably.",
+    text: "What makes Niraj Kumar uniquely effective is his logical, scientific approach to Vastu. He understood our layout bottlenecks immediately and applied micro-zone corrections without breaking a single wall. Productivity and flow improved remarkably.",
     verified: true,
   },
   {
@@ -205,7 +200,7 @@ export const PLACEHOLDER_TESTIMONIALS = [
     city: "Senior Architect, Mumbai",
     service: "AstroVastu & Residential Audit",
     stars: 5,
-    text: "Acharya Niraj Kumar's expertise in Devta Vastu and Energy Vastu goes far beyond conventional directional advice. Grounded in pure science and mathematical precision, zero superstition. An absolute master.",
+    text: "Niraj Kumar's expertise in Logical Vastu and Astro Vastu goes far beyond conventional directional advice. Grounded in pure calculation and space balancing, zero superstition. Truly insightful guidance.",
     verified: true,
   },
   {
@@ -235,8 +230,8 @@ export const PLACEHOLDER_CONTACT_INFO = {
   phoneRaw: "+919311215564",
   whatsapp: "+91 93112 15564",
   whatsappLink: "https://wa.me/919311215564",
-  sanctumCity: "New Delhi NCR & Baidyanath Dham, Deoghar",
-  address: "Aapka Astro Consultation Sanctum, New Delhi NCR, India",
+  sanctumCity: "Sector 75, Noida, Delhi NCR",
+  address: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G. B. Nagar, U.P. - 201301",
   operatingHours: "Monday – Sunday: 7:00 AM – 11:00 PM IST",
 };
 

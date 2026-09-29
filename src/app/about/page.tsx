@@ -43,7 +43,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#E8A33D]/30 bg-[#64221C] px-4 py-1 text-xs font-bold text-[#E8A33D] mb-4">
             <DiyaIcon size={14} />
-            <span>WHERE SPIRITUAL SCIENCE MEETS CORPORATE INSIGHT</span>
+            <span>CERTIFIED JYOTISH ACHARYA &amp; LOGICAL VASTU EXPERT</span>
           </div>
 
           <h1 className="font-temple text-3xl sm:text-5xl font-bold tracking-tight text-[#FBF3E7]">
@@ -108,15 +108,15 @@ export default function AboutPage() {
               </div>
 
               <h2 className="font-temple text-2xl sm:text-4xl font-bold text-[#7B2D26] leading-snug">
-                Vedic Wisdom Grounded in Mathematical Rigor &amp; Practical Life Strategy
+                Classical Vedic Astrology &amp; Certified Logical Vastu Guidance
               </h2>
 
               <p className="text-sm sm:text-base text-[#3B2A1E]/90 leading-relaxed font-body">
-                Aapka Astro is led by <strong>Acharya Niraj Kumar</strong>, a practitioner who uniquely brings together deep traditional Vedic learning and rare executive-level corporate experience. Raised in the spiritually vibrant sanctuary of <strong>Baidyanath Dham, Deoghar</strong>, his astrological and Vastu journey began under the sacred discipleship of <strong>Late Guru Shri B. B. Tiwari</strong>.
+                Aapka Astro is led by <strong>Niraj Kumar</strong>, a formally certified <strong>Jyotish Acharya</strong> from the prestigious <strong>Institute of Astrology, Bharatiya Vidya Bhawan</strong>, Kasturba Gandhi Marg, New Delhi. He is also certified as a <strong>Logical Vastu™ Expert</strong> by DivyVastu (Alchemy Vastu Pvt. Ltd.) and has completed specialized Astro Vastu training through jyotishvedanghub.
               </p>
 
               <p className="text-sm sm:text-base text-[#3B2A1E]/85 leading-relaxed font-body">
-                Over the last two decades, Acharya Ji has studied, practiced, and refined his methodology across more than <strong>15,000 chart analyses</strong> and extensive residential, commercial, and industrial Vastu consultations. Alongside his formal Vedic degrees as a <strong>Jyotish Acharya from Bhartiya Vidya Bhawan (K.N. Rao Institute)</strong>, he spent over two decades serving in senior executive leadership as <strong>Vice President and Business Head at Reliance Retail and Metro Cash &amp; Carry</strong>.
+                With formal examination and credentials, Niraj Kumar specializes in classical Parashari chart analysis, accurate planetary dasha timing, and scientific, non-destructive Vastu solutions for homes and workplaces. Every reading is grounded in authentic Vedic principles with no fear tactics, false promises, or superstition.
               </p>
 
               <div className="rounded-2xl border border-[#E8A33D]/40 bg-[#FAF1E4] p-5">
@@ -124,7 +124,7 @@ export default function AboutPage() {
                   The Core Philosophy
                 </h4>
                 <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed italic">
-                  &ldquo;Astrology is not fear-mongering or passive fatalism. It is cosmic illumination. When combined with clear executive diagnostics and satvik remedies, your Janam Kundli becomes a roadmap for decisive action and lasting peace.&rdquo;
+                  &ldquo;Astrology is not fear-mongering or passive fatalism. It is cosmic illumination. When combined with clear diagnostics and practical, non-destructive remedies, your Janam Kundli becomes a roadmap for decisive action and lasting peace.&rdquo;
                 </p>
               </div>
 
@@ -134,7 +134,7 @@ export default function AboutPage() {
                   className="flex items-center gap-2 rounded-xl bg-[#7B2D26] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md"
                 >
                   <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
-                  <span>Consult Acharya Ji (From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)</span>
+                  <span>Consult Niraj Kumar (From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)</span>
                 </Link>
                 <Link
                   href="/services"
@@ -148,58 +148,24 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 3. Dual Pillars: Corporate Leadership + Vedic Lineage */}
+      {/* 3. Verified Pillars: Jyotish Acharya + Logical Vastu */}
       <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF1E4] border-y border-[#E8D8C3]">
         <div className="mx-auto max-w-6xl">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-1 text-xs font-bold text-[#7B2D26] mb-3">
               <Compass className="h-4 w-4 text-[#C1662F]" />
-              <span>THE DUAL FOUNDATION</span>
+              <span>VERIFIED EXPERTISE</span>
             </div>
             <h2 className="font-temple text-3xl sm:text-4xl font-bold text-[#7B2D26] tracking-tight">
-              A Rare Synthesis of Mind &amp; Soul
+              Credentials &amp; Certified Specializations
             </h2>
             <p className="mt-3 text-xs sm:text-sm text-[#6E5545] font-body">
-              How two distinct worlds converge to deliver unambiguous, transformative guidance.
+              Authentic, certificate-backed qualifications in classical Vedic Jyotish and modern Logical Vastu.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Pillar 1: Corporate & Academic */}
-            <div className="rounded-3xl border-2 border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26]">
-                  <Briefcase className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-temple text-xl font-bold text-[#7B2D26]">
-                    Corporate &amp; Academic Foundation
-                  </h3>
-                  <span className="text-xs text-[#C1662F] font-semibold">
-                    Physics, Strategic Leadership &amp; Global Operations
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed mb-6 font-body">
-                Before dedicating his full energy to sacred consultations, Acharya Niraj Kumar had an illustrious executive career spanning over two decades at the highest levels of Indian retail and commerce:
-              </p>
-
-              <ul className="space-y-3 text-xs sm:text-sm text-[#3B2A1E]">
-                {PLACEHOLDER_ASTROLOGER.academicQualifications.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-6 rounded-2xl bg-[#FBF3E7] p-4 text-xs text-[#6E5545] leading-relaxed">
-                <strong className="text-[#7B2D26]">The Practical Advantage:</strong> Whether guiding an entrepreneur through cash-flow bottlenecks or an executive through a high-stakes career pivot, Acharya Ji speaks the language of real-world enterprise with zero ambiguity.
-              </div>
-            </div>
-
-            {/* Pillar 2: Vedic Lineage & Jyotish Mastery */}
+            {/* Pillar 1: Bharatiya Vidya Bhawan */}
             <div className="rounded-3xl border-2 border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26]">
@@ -207,29 +173,71 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <h3 className="font-temple text-xl font-bold text-[#7B2D26]">
-                    Vedic Lineage &amp; Jyotish Mastery
+                    Bharatiya Vidya Bhawan
                   </h3>
                   <span className="text-xs text-[#C1662F] font-semibold">
-                    Baidyanath Dham, Classical Samhitas &amp; Devta Vastu
+                    Institute of Astrology, New Delhi
                   </span>
                 </div>
               </div>
 
               <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed mb-6 font-body">
-                Initiated into classical Parashari, Jaimini, and Nadi Jyotish by leading masters of India, Acharya Ji holds extensive formal credentials:
+                Conferred the prestigious title of <strong>Jyotish Acharya</strong> by the Institute of Astrology, Bharatiya Vidya Bhawan, Kasturba Gandhi Marg, New Delhi (promoting Sanskrit &amp; Sanskriti since 1938):
               </p>
 
-              <ul className="space-y-2.5 text-xs sm:text-sm text-[#3B2A1E]">
-                {PLACEHOLDER_ASTROLOGER.jyotishCertifications.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-[#C1662F] shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
+              <ul className="space-y-3 text-xs sm:text-sm text-[#3B2A1E]">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
+                  <span>Title Conferred: <strong>Jyotish Acharya</strong> (Second Division)</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
+                  <span>Examination Session: <strong>December 2023</strong> (Roll No. OH21011)</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
+                  <span>Certificate Issued: <strong>13 July 2024</strong></span>
+                </li>
               </ul>
 
               <div className="mt-6 rounded-2xl bg-[#FBF3E7] p-4 text-xs text-[#6E5545] leading-relaxed">
-                <strong className="text-[#7B2D26]">Non-Demolition Vastu Mastery:</strong> Specialized in Devta Vastu and Energy Vastu, correcting residential and commercial spaces without structural demolition.
+                <strong className="text-[#7B2D26]">Academic Rigor:</strong> Rigorous examination covering mathematical astronomy, planetary dashas, Gochara transits, and classical Vedic interpretive methods.
+              </div>
+            </div>
+
+            {/* Pillar 2: Vastu Certifications */}
+            <div className="rounded-3xl border-2 border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26]">
+                  <Award className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-temple text-xl font-bold text-[#7B2D26]">
+                    Vastu Certifications
+                  </h3>
+                  <span className="text-xs text-[#C1662F] font-semibold">
+                    DivyVastu &amp; Jyotishvedanghub
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed mb-6 font-body">
+                Certified in scientific, non-demolition space balancing and Astro Vastu applications:
+              </p>
+
+              <ul className="space-y-3 text-xs sm:text-sm text-[#3B2A1E]">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-[#C1662F] shrink-0 mt-0.5" />
+                  <span><strong>Logical Vastu™ Expert</strong> — Certified by DivyVastu (Alchemy Vastu Pvt. Ltd., ISO 9001:2015 certified, June 2025)</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="h-4 w-4 text-[#C1662F] shrink-0 mt-0.5" />
+                  <span><strong>Astro Vastu Course</strong> — Completed via jyotishvedanghub (August 2022)</span>
+                </li>
+              </ul>
+
+              <div className="mt-6 rounded-2xl bg-[#FBF3E7] p-4 text-xs text-[#6E5545] leading-relaxed">
+                <strong className="text-[#7B2D26]">Non-Demolition Solutions:</strong> Correcting spatial energies and elemental imbalances through micro-zoning, elemental balancing, and color/metallic remedies without structural alterations.
               </div>
             </div>
           </div>
@@ -356,10 +364,10 @@ export default function AboutPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#7B2D26] text-[#FBF3E7]">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-temple text-3xl sm:text-4xl font-bold tracking-tight">
-            Ready to Connect with Acharya Niraj Kumar?
+            Ready to Connect with Niraj Kumar?
           </h2>
           <p className="mt-3 text-xs sm:text-sm text-[#FBF3E7]/80 max-w-xl mx-auto">
-            Experience live 1-on-1 counsel backed by 20+ years of Vedic sadhana and senior corporate wisdom. First session is 50% off.
+            Experience live 1-on-1 counsel backed by formal Jyotish Acharya qualifications and certified Logical Vastu expertise. First session is 50% off.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link

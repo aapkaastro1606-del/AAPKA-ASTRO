@@ -183,7 +183,7 @@ export const Hero: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-[#6E5545] leading-relaxed line-clamp-3 font-body">
-                  Rooted in Baidyanath Dham (Deoghar), disciple of Late Guru Shri B. B. Tiwari with 20+ years of corporate leadership (former VP at Reliance Retail &amp; Metro Cash &amp; Carry). Over 15,000+ chart analyses combining spiritual science with strategic life counsel.
+                  Certified Jyotish Acharya from the Institute of Astrology, Bharatiya Vidya Bhawan, New Delhi, and certified Logical Vastu™ Expert by DivyVastu. Direct, practical Vedic astrology and non-demolition space remedies.
                 </p>
 
                 {/* Core Specialties Badges */}

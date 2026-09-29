@@ -12,6 +12,7 @@ import {
   Users,
   CheckCircle2,
   Tv,
+  Compass,
 } from "lucide-react";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 
@@ -31,7 +32,7 @@ export const TrustCredentialsSection: React.FC = () => {
           </h2>
 
           <p className="mt-3 text-sm text-[#6E5545] leading-relaxed">
-            Unlike anonymous marketplace platforms with thousands of unvetted profiles, Aapka Astro provides direct 1-on-1 access to a distinguished scholar blending classical Parashari Jyotish with boardroom-level strategic acumen.
+            Aapka Astro provides direct 1-on-1 access to a formally certified Jyotish Acharya and Logical Vastu Expert, blending classical Parashari Jyotish with verified, non-destructive space balancing techniques.
           </p>
 
           <div className="flex justify-center my-4">
@@ -84,55 +85,55 @@ export const TrustCredentialsSection: React.FC = () => {
 
         {/* 4 Pillars of Authority */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Pillar 1 */}
+          {/* Pillar 1: Bharatiya Vidya Bhawan */}
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs hover:border-[#C1662F] transition-colors">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26] mb-4">
               <Award className="h-6 w-6" />
             </div>
             <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
-              20+ Years &amp; 15,000+ Charts
+              Bharatiya Vidya Bhawan
             </h3>
             <p className="mt-2 text-xs text-[#6E5545] leading-relaxed">
-              Two decades of exhaustive natal chart reading across 32 countries, deciphering intricate planetary dashas and Gochara transits with surgical precision.
+              Formally earned <em>Jyotish Acharya</em> title (Second Division, Exam Dec 2023, Roll No. OH21011) from the Institute of Astrology, New Delhi.
             </p>
           </div>
 
-          {/* Pillar 2 */}
+          {/* Pillar 2: DivyVastu Certified */}
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs hover:border-[#C1662F] transition-colors">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8A33D]/15 text-[#C1662F] mb-4">
               <BookOpen className="h-6 w-6" />
             </div>
             <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
-              Bhartiya Vidya Bhawan
+              Logical Vastu™ Expert
             </h3>
             <p className="mt-2 text-xs text-[#6E5545] leading-relaxed">
-              Formally earned <em>Jyotish Acharya</em> degree from the prestigious K.N. Rao Institute, complemented by M.A. in Jyotish and ICAS Nadi Parveen honors.
+              Certified by DivyVastu (on behalf of Alchemy Vastu Pvt. Ltd., an ISO 9001:2015 certified Vastu Consulting and Education services firm, June 2025).
             </p>
           </div>
 
-          {/* Pillar 3 */}
+          {/* Pillar 3: Astro Vastu Specialist */}
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs hover:border-[#C1662F] transition-colors">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6B8E5A]/15 text-[#6B8E5A] mb-4">
-              <Briefcase className="h-6 w-6" />
+              <Compass className="h-6 w-6" />
             </div>
             <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
-              Fortune-50 Corporate VP
+              Astro Vastu Certified
             </h3>
             <p className="mt-2 text-xs text-[#6E5545] leading-relaxed">
-              Former Vice President at Reliance Retail &amp; Metro Cash &amp; Carry; XLRI alumnus. Unique capacity to guide CXOs, founders, and professionals on career crossroads.
+              Completed specialized Astro Vastu coursework via jyotishvedanghub (2022), integrating spatial layout analysis with planetary placements.
             </p>
           </div>
 
-          {/* Pillar 4 */}
+          {/* Pillar 4: Direct Non-Destructive Counsel */}
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs hover:border-[#C1662F] transition-colors">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26] mb-4">
               <DiyaIcon size={24} />
             </div>
             <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
-              Baidyanath Dham Lineage
+              Non-Demolition Remedies
             </h3>
             <p className="mt-2 text-xs text-[#6E5545] leading-relaxed">
-              Born in sacred Deoghar and initiated under Late Guru Shri B. B. Tiwari. Authentic Vedic spiritual remedies with zero fear-mongering or commercial rituals.
+              Authentic Vedic astrological guidance and non-destructive Vastu space balancing with zero fear tactics, false promises, or commercial rituals.
             </p>
           </div>
         </div>

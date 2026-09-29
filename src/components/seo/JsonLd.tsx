@@ -19,10 +19,10 @@ export function LocalBusinessJsonLd({
   name = "Aapka Astro — Vedic Astrology, Vastu & Gemstone Wisdom",
   telephone = PLACEHOLDER_CONTACT_INFO.phone,
   address = {
-    streetAddress: "Aapka Astro Consultation Sanctum, Sector 44",
-    addressLocality: "Noida / New Delhi NCR",
-    addressRegion: "Delhi NCR",
-    postalCode: "201303",
+    streetAddress: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75",
+    addressLocality: "Noida, G. B. Nagar",
+    addressRegion: "Uttar Pradesh",
+    postalCode: "201301",
     addressCountry: "IN",
   },
 }: LocalBusinessJsonLdProps) {

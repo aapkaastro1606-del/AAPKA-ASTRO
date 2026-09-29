@@ -238,7 +238,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="pt-1 border-t border-[#FBF3E7]/10">
                 <Link href="/about" className="hover:text-[#E8A33D] transition-colors">
-                  About Acharya Niraj Kumar
+                  About Niraj Kumar
                 </Link>
               </li>
               <li>

@@ -1262,6 +1262,38 @@ Three concrete bugs in [`src/components/home/WelcomeConsultationModal.tsx`](file
      - Golden progress bar: `1.35s` fill (0% $\rightarrow$ 100%).
   5. **Session-Once Guarantee**: Verified that internal client-side navigations (e.g. clicking `/panchang` or `/horoscope`) never re-trigger the preloader (`preloaderInDom: false`).
 
+---
+
+## 23. Real Credentials Audit & Unconfirmed Content Removal (September 2026)
+
+### 23.1 Confirmed Real Credentials (Retained & Documented)
+The client provided certified documentation and official marketing collateral. Only the claims backed directly by these documents are published on the site:
+
+1. **Jyotish Acharya**: Conferred by the **Institute of Astrology, Bharatiya Vidya Bhawan**, Kasturba Gandhi Marg, New Delhi (promoting Sanskrit & Sanskriti since 1938).
+   - Division: **Second Division**
+   - Examination Date: **December 2023**
+   - Certificate Date: **13 July 2024**
+   - Roll No.: **OH21011**
+   - Signatories: K. N. Rao (Advisor), Controller of Examination, Principal
+2. **Astro Vastu Course**: Completed online via **jyotishvedanghub** on **August 22, 2022**.
+3. **Logical Vastu™ Expert**: Certified by **DivyVastu** on behalf of **Alchemy Vastu Pvt. Ltd.** (ISO 9001:2015 certified Vastu Consulting and Education services firm), **June 2025** (issued to *Nieraj Kumaar Sinha*).
+4. **Official Office Address**: Confirmed from official marketing creatives:
+   - `Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G. B. Nagar, U.P. - 201301`.
+5. **Primary Display Name**: **Niraj Kumar** (matching the majority of certificates, including Bharatiya Vidya Bhawan).
+
+### 23.2 Content Removed Pending Client Confirmation
+The following claims were previously present in invented/placeholder bio copy, but are **not currently backed by any provided certificate or document**. They have been removed across all user-facing pages and components pending formal client documentation:
+
+- ❌ **M.A. in Jyotish** (removed pending certificate)
+- ❌ **Nadi Parveen (ICAS - Indian Council of Astrological Sciences)** (removed pending certificate)
+- ❌ **Jyotish Prabhakar under Dr. Pawan Sinha (IRIW)** (removed pending certificate)
+- ❌ **Late Guru Shri B. B. Tiwari Discipleship** (removed pending lineage documentation)
+- ❌ **Baidyanath Dham, Deoghar Upbringing Narrative** (removed pending biographical confirmation)
+- ❌ **Corporate Leadership Career at Reliance Retail, Metro Cash & Carry, NIF Food, and XLRI** (removed pending documentation)
+
+*Note: If the client provides official certificates, employment letters, or explicit written confirmation for any of the above, they can be reintroduced in future updates.*
+
+
 
 
 

@@ -288,7 +288,7 @@ export const BrandedPreloader: React.FC = () => {
           <img src="/images/logo.png" alt="Aapka Astro - Aligning Your Destiny" className="h-8 sm:h-10 w-auto object-contain" />
         </div>
         <div className="mt-2 text-[11px] sm:text-xs font-medium tracking-[0.16em] uppercase text-[#E8A33D]/90">
-          वैदिक ज्योतिष एवं वास्तु &bull; Acharya Niraj Kumar
+          वैदिक ज्योतिष एवं वास्तु &bull; Niraj Kumar
         </div>
 
         {/* Deliberate 1.35s Golden Progress Bar (Reaches 100% inside the 1400ms minimum window) */}

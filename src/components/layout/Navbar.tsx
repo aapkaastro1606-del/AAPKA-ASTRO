@@ -347,8 +347,8 @@ export const Navbar: React.FC = () => {
             </span>
             <span className="truncate">
               {isHi
-                ? "आचार्य नीरज कुमार जी से 1-on-1 वैदिक ज्योतिष परामर्श"
-                : "1-on-1 Vedic Jyotish & Vastu with Acharya Niraj Kumar"}
+                ? "नीरज कुमार जी से 1-on-1 वैदिक ज्योतिष परामर्श"
+                : "1-on-1 Vedic Jyotish & Vastu with Niraj Kumar"}
             </span>
             <span className="font-bold text-[#E8A33D] shrink-0">&rarr;</span>
           </Link>
@@ -375,10 +375,10 @@ export const Navbar: React.FC = () => {
                   }`}
                   title={
                     status === "AVAILABLE"
-                      ? "Acharya Niraj Kumar is currently online"
+                      ? "Niraj Kumar is currently online"
                       : status === "BUSY"
-                      ? "Acharya Niraj Kumar is currently in a consultation"
-                      : "Acharya Niraj Kumar is currently offline"
+                      ? "Niraj Kumar is currently in a consultation"
+                      : "Niraj Kumar is currently offline"
                   }
                 >
                   <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
@@ -414,7 +414,7 @@ export const Navbar: React.FC = () => {
                   </span>
                 </span>
                 <div className="hidden sm:block text-[11px] text-[#6E5545] font-medium tracking-wide truncate">
-                  Acharya Niraj Kumar &bull; Jyotish &amp; Vastu
+                  Niraj Kumar &bull; Jyotish Acharya &amp; Vastu
                 </div>
               </div>
             </Link>

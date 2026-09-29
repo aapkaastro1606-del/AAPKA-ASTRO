@@ -28,7 +28,7 @@ export const GallerySection: React.FC = () => {
             Official Certificates &amp; Lineage Gallery
           </h2>
           <p className="mt-3 text-[#6E5545] text-sm sm:text-base font-body">
-            Formal Jyotish Acharya degrees, Vastu certifications, guru lineage moments, and national recognition awards earned by Acharya Niraj Kumar.
+            Formal Jyotish Acharya title, Vastu certifications, and recognition certificates earned by Niraj Kumar.
           </p>
 
           {/* Category Filter Pills */}
