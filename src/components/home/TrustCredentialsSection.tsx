@@ -164,43 +164,71 @@ export const TrustCredentialsSection: React.FC = () => {
             </Link>
           </div>
 
-          {/* PLACEHOLDER: replace with real content - Media press badges to be replaced with verified video links / article clippings once provided by client */}
-          {/* Media Badges Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E8D8C3]/80 bg-[#FBF3E7]/60 p-4 text-center">
-              <span className="font-serif text-lg font-bold text-[#7B2D26] tracking-wider">
-                AAJ TAK
-              </span>
-              <span className="text-[10px] text-[#6E5545] mt-1">Solar Eclipse Discourse</span>
+          {/* Real Award & Recognition Photo Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="overflow-hidden rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7]/60 shadow-xs">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-[#7B2D26]/5">
+                <img
+                  src="/gallery/felicitation_pashupati_award.jpg"
+                  alt="Felicitation Ceremony & Plaque Presentation"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-3">
+                <div className="font-temple text-xs font-bold text-[#7B2D26]">Plaque Felicitation</div>
+                <p className="text-[11px] text-[#6E5545] mt-1 leading-snug">
+                  Felicitation ceremony and plaque presentation with dignitaries.
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E8D8C3]/80 bg-[#FBF3E7]/60 p-4 text-center">
-              <span className="font-serif text-lg font-bold text-[#7B2D26] tracking-wider">
-                ZEE NEWS
-              </span>
-              <span className="text-[10px] text-[#6E5545] mt-1">Vedic Panchang Panel</span>
+            <div className="overflow-hidden rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7]/60 shadow-xs">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-[#7B2D26]/5">
+                <img
+                  src="/gallery/best_astrologer_award.jpg"
+                  alt="Best Astrologer Recognition Certificate"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-3">
+                <div className="font-temple text-xs font-bold text-[#7B2D26]">Best Astrologer Recognition</div>
+                <p className="text-[11px] text-[#6E5545] mt-1 leading-snug">
+                  Certificate presented at public astrology conclave.
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E8D8C3]/80 bg-[#FBF3E7]/60 p-4 text-center">
-              <span className="font-serif text-lg font-bold text-[#7B2D26] tracking-wider">
-                HINDUSTAN TIMES
-              </span>
-              <span className="text-[10px] text-[#6E5545] mt-1">Devta Vastu Editorial</span>
+            <div className="overflow-hidden rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7]/60 shadow-xs">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-[#7B2D26]/5">
+                <img
+                  src="/gallery/dignitary_greeting.jpg"
+                  alt="Floral Greeting from Dignitary"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-3">
+                <div className="font-temple text-xs font-bold text-[#7B2D26]">Floral Felicitation</div>
+                <p className="text-[11px] text-[#6E5545] mt-1 leading-snug">
+                  Floral greeting and warm welcome from senior dignitary.
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E8D8C3]/80 bg-[#FBF3E7]/60 p-4 text-center">
-              <span className="font-serif text-lg font-bold text-[#7B2D26] tracking-wider">
-                DAINIK JAGRAN
-              </span>
-              <span className="text-[10px] text-[#6E5545] mt-1">Annual Horoscope Column</span>
+            <div className="overflow-hidden rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7]/60 shadow-xs">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-[#7B2D26]/5">
+                <img
+                  src="/gallery/with_spiritual_guide.jpg"
+                  alt="With Spiritual Guide"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-3">
+                <div className="font-temple text-xs font-bold text-[#7B2D26]">Spiritual Mentor</div>
+                <p className="text-[11px] text-[#6E5545] mt-1 leading-snug">
+                  With spiritual guide in traditional ashram setting.
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Subtle Disclaimer as requested by spec */}
-          <div className="mt-4 text-center">
-            <span className="text-[10px] text-[#6E5545]/70 italic">
-              * Media citations represent Acharya Ji&apos;s television discourses and published astrological panels.
-            </span>
           </div>
         </div>
       </div>

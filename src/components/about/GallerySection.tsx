@@ -8,7 +8,7 @@ export const GallerySection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeImage, setActiveImage] = useState<typeof OFFICIAL_GALLERY_IMAGES[0] | null>(null);
 
-  const categories = ["All", "Credentials", "Heritage", "Awards", "Achievements"];
+  const categories = ["All", "Credentials", "Awards", "Recognition", "Heritage"];
 
   const filteredImages = OFFICIAL_GALLERY_IMAGES.filter((img) => {
     if (selectedCategory === "All") return true;

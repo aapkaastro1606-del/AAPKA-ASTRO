@@ -29,49 +29,43 @@ export const PLACEHOLDER_ASTROLOGER = {
   ],
 };
 
-// Official Gallery Images & Certificates from https://aapkaastro.com/
+// Official Gallery Images & Certificates backed by verified client documents
 export const OFFICIAL_GALLERY_IMAGES = [
   {
-    src: "/gallery/with_guruji.jpg",
-    alt: "With Guruji",
-    caption: "A cherished moment with Guruji — the foundation of our spiritual lineage",
+    src: "/gallery/with_spiritual_guide.jpg",
+    alt: "With Spiritual Guide",
+    caption: "With his spiritual guide in a traditional ashram setting",
     category: "Heritage",
+  },
+  {
+    src: "/gallery/felicitation_pashupati_award.jpg",
+    alt: "Felicitation Plaque Presentation",
+    caption: "Felicitation ceremony and plaque presentation with dignitaries",
+    category: "Awards",
+  },
+  {
+    src: "/gallery/dignitary_greeting.jpg",
+    alt: "Felicitation & Greeting",
+    caption: "Receiving floral greeting and felicitation from a dignitary",
+    category: "Recognition",
+  },
+  {
+    src: "/gallery/best_astrologer_award.jpg",
+    alt: "Best Astrologer Recognition",
+    caption: "Best Astrologer recognition certificate presented at a public astrology conclave",
+    category: "Awards",
   },
   {
     src: "/gallery/Jyotish_Acharya_Certificate.png",
     alt: "Jyotish Acharya Certificate",
-    caption: "Jyotish Acharya — certified by Bhartiya Vidya Bhawan (K.N. Rao Institute)",
+    caption: "Jyotish Acharya — Institute of Astrology, Bharatiya Vidya Bhawan, New Delhi (Roll No. OH21011)",
     category: "Credentials",
   },
   {
     src: "/gallery/Vastu_Expert_Certificate.png",
-    alt: "Vastu Expert Certificate",
-    caption: "Certified Vastu expertise — a mark of formal training and mastery",
+    alt: "Logical Vastu Expert Certificate",
+    caption: "Logical Vastu™ Expert — DivyVastu (Alchemy Vastu Pvt. Ltd., ISO 9001:2015 certified)",
     category: "Credentials",
-  },
-  {
-    src: "/gallery/Awards_Receiving.jpg",
-    alt: "Awards Receiving",
-    caption: "Honoured with prestigious recognition for excellence in Vastu & Astrology",
-    category: "Awards",
-  },
-  {
-    src: "/gallery/Getting_Awards.jpg",
-    alt: "Getting Awards",
-    caption: "Celebrating milestones of dedication and practice",
-    category: "Awards",
-  },
-  {
-    src: "/gallery/Getting_Certificates.jpg",
-    alt: "Getting Certificates",
-    caption: "Receiving certification for advanced proficiency in Jyotish sciences",
-    category: "Achievements",
-  },
-  {
-    src: "/gallery/Recognition_Awards.jpg",
-    alt: "Recognition Awards",
-    caption: "Recognised for impactful contributions to Vastu and Astrology practice",
-    category: "Awards",
   },
 ];
 
