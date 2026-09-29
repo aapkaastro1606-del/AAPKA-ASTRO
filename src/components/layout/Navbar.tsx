@@ -224,17 +224,17 @@ export const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* 2. Center: Grouped, Breathable Top-Level Navigation (4 Pillars) */}
+          {/* 2. Center: Grouped, Breathable Top-Level Navigation (Plain Text Links, Lighter Weight) */}
           <nav
             aria-label="Main Navigation"
-            className="hidden lg:flex items-center gap-6 xl:gap-8"
+            className="hidden lg:flex items-center gap-7 xl:gap-9"
           >
             <Link
               href={panchangHref}
-              className={`text-sm font-bold transition-colors py-1.5 border-b-2 ${
+              className={`text-sm transition-colors py-1.5 border-b-2 ${
                 pathname?.includes("/panchang")
-                  ? "border-[#7B2D26] text-[#7B2D26]"
-                  : "border-transparent text-[#3B2A1E] hover:text-[#7B2D26]"
+                  ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                  : "border-transparent font-medium text-[#5A4332] hover:text-[#7B2D26]"
               }`}
             >
               {isHi ? "दैनिक पंचांग" : t("nav_panchang")}
@@ -242,10 +242,10 @@ export const Navbar: React.FC = () => {
 
             <Link
               href={horoscopeHref}
-              className={`text-sm font-bold transition-colors py-1.5 border-b-2 ${
+              className={`text-sm transition-colors py-1.5 border-b-2 ${
                 pathname?.includes("/horoscope")
-                  ? "border-[#7B2D26] text-[#7B2D26]"
-                  : "border-transparent text-[#3B2A1E] hover:text-[#7B2D26]"
+                  ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                  : "border-transparent font-medium text-[#5A4332] hover:text-[#7B2D26]"
               }`}
             >
               {isHi ? "दैनिक राशिफल" : t("nav_horoscope")}
@@ -261,16 +261,16 @@ export const Navbar: React.FC = () => {
                 type="button"
                 onClick={() => setOpenDropdown(openDropdown === "tools" ? null : "tools")}
                 aria-expanded={openDropdown === "tools"}
-                className={`flex items-center gap-1 text-sm font-bold transition-colors py-1.5 border-b-2 cursor-pointer ${
+                className={`flex items-center gap-1 text-sm transition-colors py-1.5 border-b-2 cursor-pointer ${
                   isToolsActive || openDropdown === "tools"
-                    ? "border-[#7B2D26] text-[#7B2D26]"
-                    : "border-transparent text-[#3B2A1E] hover:text-[#7B2D26]"
+                    ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                    : "border-transparent font-medium text-[#5A4332] hover:text-[#7B2D26]"
                 }`}
               >
                 <span>{isHi ? "कुंडली एवं गणना" : "Kundli & Tools"}</span>
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform duration-150 ${
-                    openDropdown === "tools" ? "rotate-180 text-[#7B2D26]" : "text-[#6E5545]"
+                    openDropdown === "tools" ? "rotate-180 text-[#7B2D26]" : "text-[#8C7565]"
                   }`}
                 />
               </button>
@@ -290,7 +290,7 @@ export const Navbar: React.FC = () => {
                             <Icon className="h-4 w-4" />
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-[#3B2A1E] group-hover:text-[#7B2D26]">
+                            <div className="text-xs font-semibold text-[#3B2A1E] group-hover:text-[#7B2D26]">
                               {item.label}
                             </div>
                             <div className="text-[11px] text-[#6E5545] leading-snug mt-0.5">
@@ -315,16 +315,16 @@ export const Navbar: React.FC = () => {
                 type="button"
                 onClick={() => setOpenDropdown(openDropdown === "explore" ? null : "explore")}
                 aria-expanded={openDropdown === "explore"}
-                className={`flex items-center gap-1 text-sm font-bold transition-colors py-1.5 border-b-2 cursor-pointer ${
+                className={`flex items-center gap-1 text-sm transition-colors py-1.5 border-b-2 cursor-pointer ${
                   isExploreActive || openDropdown === "explore"
-                    ? "border-[#7B2D26] text-[#7B2D26]"
-                    : "border-transparent text-[#3B2A1E] hover:text-[#7B2D26]"
+                    ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
+                    : "border-transparent font-medium text-[#5A4332] hover:text-[#7B2D26]"
                 }`}
               >
                 <span>{isHi ? "सेवाएँ एवं ज्ञान" : "Services & More"}</span>
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform duration-150 ${
-                    openDropdown === "explore" ? "rotate-180 text-[#7B2D26]" : "text-[#6E5545]"
+                    openDropdown === "explore" ? "rotate-180 text-[#7B2D26]" : "text-[#8C7565]"
                   }`}
                 />
               </button>
@@ -344,7 +344,7 @@ export const Navbar: React.FC = () => {
                             <Icon className="h-4 w-4" />
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-[#3B2A1E] group-hover:text-[#7B2D26]">
+                            <div className="text-xs font-semibold text-[#3B2A1E] group-hover:text-[#7B2D26]">
                               {item.label}
                             </div>
                             <div className="text-[11px] text-[#6E5545] leading-snug mt-0.5">
@@ -360,45 +360,42 @@ export const Navbar: React.FC = () => {
             </div>
           </nav>
 
-          {/* 3. Right Cluster: Language Toggle, Auth/Wallet (Strict Guest vs Logged-In), and Primary Revenue CTA */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            {/* Language Toggle */}
+          {/* 3. Right Cluster: Quiet Secondary Controls + Unmissable Primary Conversion CTA */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Quiet Plain-Text Language Switch */}
             <button
               type="button"
               onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-              className="flex items-center gap-1.5 rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] px-2.5 py-1.5 text-xs font-bold text-[#7B2D26] hover:bg-[#E8D8C3]/60 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium text-[#6E5545] hover:text-[#7B2D26] transition-colors cursor-pointer"
               title="Toggle Language (English / हिन्दी)"
             >
-              <Globe className="h-3.5 w-3.5 text-[#C1662F]" />
+              <Globe className="h-3.5 w-3.5 text-[#8C7565]" />
               <span className="font-hindi">{language === "en" ? "हिन्दी" : "EN"}</span>
             </button>
 
-            {/* STRICT AUTH STATE:
-                - Guest (signed-out): Only a clean "Sign In" link. NEVER show Wallet balance, "My Account" text, or extra avatar icon.
-                - Logged-In (signed-in): Show Wallet balance + ONE unified Account pill with Clerk UserButton.
-            */}
+            {/* STRICT AUTH STATE (Quiet text/avatar so nothing competes with the primary CTA) */}
             {isAuthenticatedUser ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Link
                   href="/wallet"
-                  className="flex items-center gap-1.5 rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] px-2.5 py-1.5 text-xs font-bold text-[#3B2A1E] hover:border-[#C1662F] transition-all"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
                   title="Your Aapka Astro Wallet Balance"
                 >
                   <Wallet className="h-3.5 w-3.5 text-[#C1662F]" />
-                  <span className="font-mono font-black text-[#7B2D26]">₹{walletBalance}</span>
+                  <span className="font-mono font-semibold text-[#7B2D26]">₹{walletBalance}</span>
                 </Link>
 
-                <div className="flex items-center gap-2 rounded-lg border border-[#E8D8C3] bg-[#FFFDF9] pl-2.5 pr-1.5 py-1">
+                <div className="flex items-center gap-2">
                   <Link
                     href="/account"
-                    className="hidden xl:inline text-xs font-bold text-[#3B2A1E] hover:text-[#7B2D26] transition-colors"
+                    className="hidden xl:inline text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
                   >
                     {isHi ? "मेरा खाता" : t("nav_my_account")}
                   </Link>
                   <UserButton
                     appearance={{
                       elements: {
-                        avatarBox: "h-6 w-6 rounded-full border border-[#E8D8C3]",
+                        avatarBox: "h-7 w-7 rounded-full border border-[#E8D8C3]",
                       },
                     }}
                   />
@@ -407,29 +404,29 @@ export const Navbar: React.FC = () => {
             ) : (
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-bold text-[#7B2D26] hover:bg-[#7B2D26]/10 transition-colors"
+                className="hidden sm:inline-flex items-center px-1.5 py-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
               >
                 {isHi ? "लॉग इन" : t("nav_sign_in")}
               </Link>
             )}
 
-            {/* PRIMARY REVENUE CTA: "Live Consult" (Clean High-Contrast Button, No Redundant Status Dot) */}
+            {/* PRIMARY CONVERSION ACTION: Solid High-Contrast Filled Button (Single Most Prominent Element) */}
             {status !== "OFFLINE" ? (
               <Link
                 href="/consult"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] border border-[#E8A33D]/70 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold shadow-sm transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all"
               >
-                <PhoneCall className="h-3.5 w-3.5 text-[#E8A33D] shrink-0" />
+                <PhoneCall className="h-4 w-4 text-[#E8A33D] shrink-0" />
                 <span>{isHi ? "लाइव परामर्श" : t("nav_live_consult")}</span>
               </Link>
             ) : (
               <button
                 type="button"
                 onClick={() => setCallbackModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] border border-[#E8A33D]/70 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer"
               >
-                <PhoneCall className="h-3.5 w-3.5 text-[#E8A33D]" />
-                <span>{isHi ? "परामर्श बुक करें" : "Book Consult"}</span>
+                <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
+                <span>{isHi ? "परामर्श बुक करें" : "Consult Now"}</span>
               </button>
             )}
 
