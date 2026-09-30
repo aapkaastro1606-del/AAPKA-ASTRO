@@ -251,55 +251,90 @@ export function WelcomeConsultationModal({
         <button
           type="button"
           onClick={handleDismiss}
-          className="absolute right-3.5 top-3.5 z-20 rounded-full bg-[#FBF3E7] p-1.5 text-[#6E5545] hover:bg-[#E8D8C3] hover:text-[#7B2D26] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] cursor-pointer"
+          className="absolute right-3.5 top-3.5 z-20 rounded-full bg-[#FBF3E7]/90 backdrop-blur-xs p-1.5 text-[#6E5545] hover:bg-[#E8D8C3] hover:text-[#7B2D26] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] cursor-pointer shadow-xs"
           aria-label="Close welcome offer modal"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="px-6 py-5 sm:px-7 sm:py-6 text-center space-y-3">
-          {/* 1. Small Logo / Brand Mark */}
-          <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/50 bg-[#FBF3E7] px-3.5 py-1 text-[11px] font-bold text-[#7B2D26]">
-            <img src="/images/logo-icon.png" alt="Aapka Astro" className="h-4 w-4 object-contain" />
-            <span className="font-temple tracking-widest uppercase">Aapka Astro</span>
+        {/* Ambient Warm Golden Aura Glow in Background */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 h-44 w-72 rounded-full bg-gradient-to-b from-[#E8A33D]/25 via-[#E8A33D]/10 to-transparent blur-2xl"
+        />
+
+        <div className="relative px-6 py-6 sm:px-8 sm:py-7 text-center space-y-3.5">
+          {/* 1. Small Logo / Brand Mark with Golden Ornamental Flankers */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="h-px w-6 bg-gradient-to-r from-transparent to-[#E8A33D]" aria-hidden="true" />
+            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/60 bg-gradient-to-r from-[#FBF3E7] via-[#FFFDF9] to-[#FBF3E7] px-3.5 py-1 text-[11px] font-bold text-[#7B2D26] shadow-xs">
+              <img src="/images/logo-icon.png" alt="Aapka Astro" className="h-4 w-4 object-contain" />
+              <span className="font-temple tracking-widest uppercase">Aapka Astro</span>
+            </div>
+            <span className="h-px w-6 bg-gradient-to-l from-transparent to-[#E8A33D]" aria-hidden="true" />
+          </div>
+
+          {/* Acharya Niraj Kumar Visual Portrait Anchor & Auspicious Emblem */}
+          <div className="relative mx-auto flex items-center justify-center pt-1">
+            <div className="relative h-18 w-18 rounded-full p-0.5 bg-gradient-to-tr from-[#7B2D26] via-[#E8A33D] to-[#7B2D26] shadow-md">
+              <div className="relative h-full w-full rounded-full overflow-hidden border-2 border-[#FFFDF9] bg-[#FBF3E7]">
+                <img
+                  src={PLACEHOLDER_ASTROLOGER.avatarUrl}
+                  alt={PLACEHOLDER_ASTROLOGER.displayName}
+                  className="h-full w-full object-cover object-top"
+                />
+              </div>
+            </div>
+            {/* Auspicious Diya Accent Tag */}
+            <div
+              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#7B2D26] to-[#96372E] border border-[#E8A33D] shadow-sm"
+              title="Auspicious Guidance"
+            >
+              <DiyaIcon size={13} className="text-[#E8A33D]" />
+            </div>
           </div>
 
           {/* 2. Headline */}
           <h2
             id="welcome-modal-title"
             data-testid="welcome-modal-title"
-            className="font-temple text-xl sm:text-2xl font-extrabold text-[#7B2D26] tracking-tight leading-snug"
+            className="font-temple text-xl sm:text-2xl font-black text-[#7B2D26] tracking-tight leading-snug drop-shadow-xs"
           >
             50% Off Your First Consultation
           </h2>
 
           {/* 3. One Short Line of Subtext (One Sentence) */}
-          <p className="text-xs sm:text-sm text-[#3B2A1E]/85 font-body leading-snug">
+          <p className="text-xs sm:text-sm text-[#3B2A1E]/90 font-body leading-relaxed max-w-sm mx-auto">
             Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video for Flat {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate} (Regular ₹2,100).
           </p>
 
           {/* 4. Single Small Line of Trust Phrase (Not a Boxed Section) */}
           <p
             data-testid="welcome-modal-trust-line"
-            className="text-xs font-semibold text-[#6E5545] font-body"
+            className="text-xs font-semibold text-[#6E5545] font-body tracking-wide"
           >
             20+ years · Certified Jyotish Acharya
           </p>
 
-          {/* 5. One Primary CTA Button */}
-          <div className="pt-1">
+          {/* 5. One Primary CTA Button with Radiant Temple Styling */}
+          <div className="pt-1.5">
             <Link
               href={`/consult?offer=${FIRST_CONSULTATION_OFFER.code}`}
               onClick={handleDismiss}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] py-3 px-5 text-sm font-bold text-[#FFFDF9] shadow-md hover:shadow-lg border border-[#E8A33D]/40 transition-all focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#7B2D26] via-[#8D342C] to-[#7B2D26] hover:from-[#6B241E] hover:to-[#6B241E] py-3.5 px-5 text-sm font-bold text-[#FFFDF9] shadow-md hover:shadow-xl border border-[#E8A33D]/60 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
             >
-              <span>Claim 50% Off &amp; Start Consultation</span>
-              <ArrowRight className="h-4 w-4 text-[#E8A33D]" />
+              {/* Shimmer sweep effect */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              />
+              <span className="relative z-10 tracking-wide">Claim 50% Off &amp; Start Consultation</span>
+              <ArrowRight className="relative z-10 h-4 w-4 text-[#E8A33D] group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
           {/* 6. One Small Dismiss Link Below the Button */}
-          <div>
+          <div className="pt-0.5">
             <button
               type="button"
               onClick={handleDismiss}
@@ -312,7 +347,7 @@ export function WelcomeConsultationModal({
           {/* 7. Small Cross-Link to Viar.in as the Very Last Line in Small Subdued Text */}
           <p
             data-testid="welcome-modal-viar-link"
-            className="pt-1 text-[11px] text-[#6E5545]/75 font-body"
+            className="pt-1.5 text-[11px] text-[#6E5545]/80 font-body border-t border-[#E8D8C3]/60"
           >
             Curious about learning astrology yourself?{" "}
             <a

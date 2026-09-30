@@ -171,40 +171,58 @@ export function NavratriPromotionalModal({
         <button
           type="button"
           onClick={handleDismiss}
-          className="absolute right-3.5 top-3.5 z-20 rounded-full bg-[#FBF3E7] p-1.5 text-[#6E5545] hover:bg-[#E8D8C3] hover:text-[#7B2D26] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] cursor-pointer"
+          className="absolute right-3.5 top-3.5 z-20 rounded-full bg-[#FBF3E7]/90 backdrop-blur-xs p-1.5 text-[#6E5545] hover:bg-[#E8D8C3] hover:text-[#7B2D26] transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] cursor-pointer shadow-xs"
           aria-label="Close festive offer popup"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="px-6 py-6 sm:px-8 sm:py-7 text-center space-y-4">
-          {/* Festive Badge */}
-          <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/60 bg-[#FBF3E7] px-4 py-1 text-[11px] font-bold text-[#7B2D26] shadow-xs">
-            <Flame className="h-3.5 w-3.5 text-[#E8A33D] fill-[#E8A33D]" />
-            <span className="font-temple tracking-wider uppercase">
-              Navratri Mahotsav • Sacred Festive Gift
-            </span>
-            <Sparkles className="h-3.5 w-3.5 text-[#E8A33D]" />
+        {/* Ambient Warm Golden Aura Glow in Background */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 h-52 w-80 rounded-full bg-gradient-to-b from-[#E8A33D]/30 via-[#E8A33D]/10 to-transparent blur-2xl"
+        />
+
+        <div className="relative px-6 py-6 sm:px-8 sm:py-7 text-center space-y-4">
+          {/* Festive Badge with Golden Flankers */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="h-px w-5 bg-gradient-to-r from-transparent to-[#E8A33D]" aria-hidden="true" />
+            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/70 bg-gradient-to-r from-[#FBF3E7] via-[#FFFDF9] to-[#FBF3E7] px-4 py-1.5 text-[11px] font-bold text-[#7B2D26] shadow-xs">
+              <Flame className="h-3.5 w-3.5 text-[#E8A33D] fill-[#E8A33D]" />
+              <span className="font-temple tracking-wider uppercase">
+                Navratri Mahotsav • Sacred Festive Gift
+              </span>
+              <Sparkles className="h-3.5 w-3.5 text-[#E8A33D]" />
+            </div>
+            <span className="h-px w-5 bg-gradient-to-l from-transparent to-[#E8A33D]" aria-hidden="true" />
           </div>
 
-          {/* Sacred Rudraksh Visual Anchor */}
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#7B2D26] via-[#96372E] to-[#E8A33D] text-[#FFFDF9] shadow-md border-2 border-[#E8A33D]/40">
-            <span className="font-temple text-2xl font-black tracking-wider text-[#FFFDF9]">
-              ॐ
-            </span>
+          {/* Sacred Rudraksh Visual Anchor with Glowing Double Ring & Diya accents */}
+          <div className="relative mx-auto flex items-center justify-center">
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#7B2D26] via-[#96372E] to-[#E8A33D] text-[#FFFDF9] shadow-lg border-2 border-[#E8A33D]/70 ring-4 ring-[#E8A33D]/20">
+              <div className="absolute inset-1 rounded-full border border-[#E8A33D]/40 border-dashed" />
+              <span className="font-temple text-3xl font-black tracking-wider text-[#FFFDF9] drop-shadow-sm">
+                ॐ
+              </span>
+            </div>
+            {/* Auspicious Consecrated Tag */}
+            <div className="absolute -bottom-2 inline-flex items-center gap-1 rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold text-[#E8A33D] border border-[#E8A33D] shadow-xs">
+              <ShieldCheck className="h-3 w-3 text-[#E8A33D]" />
+              <span>Abhimantrit</span>
+            </div>
           </div>
 
           {/* Headline - verbatim per client prompt */}
           <h2
             id="navratri-promo-title"
             data-testid="navratri-promo-title"
-            className="font-temple text-xl sm:text-2xl font-black text-[#7B2D26] tracking-tight leading-snug px-1"
+            className="font-temple text-xl sm:text-2xl font-black text-[#7B2D26] tracking-tight leading-snug px-1 drop-shadow-xs pt-1"
           >
             {headline}
           </h2>
 
           {/* Subheadline & Festive Description */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 max-w-md mx-auto">
             <p className="text-xs font-bold text-[#96372E] uppercase tracking-wide">
               {subheadline}
             </p>
@@ -216,15 +234,15 @@ export function NavratriPromotionalModal({
           {/* Applicability Card */}
           <div
             data-testid="navratri-promo-applicability"
-            className="rounded-xl border border-[#E8A33D]/40 bg-[#FBF3E7] p-3.5 text-left text-xs text-[#3B2A1E] space-y-2 shadow-xs"
+            className="rounded-xl border border-[#E8A33D]/50 bg-[#FBF3E7]/90 p-4 text-left text-xs text-[#3B2A1E] space-y-2.5 shadow-xs"
           >
             <div className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
-              <p className="font-semibold text-[#7B2D26] leading-tight">
+              <p className="font-bold text-[#7B2D26] leading-tight">
                 {applicabilityNote}
               </p>
             </div>
-            <ul className="text-[11px] text-[#6E5545] space-y-1 pl-6 list-disc">
+            <ul className="text-[11px] text-[#6E5545] space-y-1.5 pl-6 list-disc">
               <li>
                 <strong>Vedic Astro Consultation:</strong> ₹1,051 first-time rate (₹2,100 standard).
               </li>
@@ -237,21 +255,26 @@ export function NavratriPromotionalModal({
             </ul>
           </div>
 
-          {/* Primary CTA */}
-          <div className="pt-2">
+          {/* Primary CTA with Shimmer & Radiant Gradient */}
+          <div className="pt-1.5">
             <Link
               href="/consult"
               data-testid="navratri-promo-cta"
               onClick={handleDismiss}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] py-3.5 px-6 text-sm font-bold text-[#FFFDF9] shadow-md hover:shadow-lg border border-[#E8A33D]/50 transition-all focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#7B2D26] via-[#8D342C] to-[#7B2D26] hover:from-[#6B241E] hover:to-[#6B241E] py-3.5 px-6 text-sm font-bold text-[#FFFDF9] shadow-md hover:shadow-xl border border-[#E8A33D]/60 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
             >
-              <span>{ctaText}</span>
-              <ArrowRight className="h-4 w-4 text-[#E8A33D]" />
+              {/* Shimmer sweep effect */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              />
+              <span className="relative z-10 tracking-wide">{ctaText}</span>
+              <ArrowRight className="relative z-10 h-4 w-4 text-[#E8A33D] group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
           {/* Dismiss Action */}
-          <div>
+          <div className="pt-0.5">
             <button
               type="button"
               onClick={handleDismiss}
@@ -262,7 +285,7 @@ export function NavratriPromotionalModal({
           </div>
 
           {/* Credential Reassurance */}
-          <p className="text-[11px] text-[#6E5545]/80 font-body">
+          <p className="pt-1 text-[11px] text-[#6E5545]/80 font-body border-t border-[#E8D8C3]/60">
             Conducted by Acharya Niraj Kumar · 20+ Years Lineage · 15,000+ Consultations
           </p>
         </div>
