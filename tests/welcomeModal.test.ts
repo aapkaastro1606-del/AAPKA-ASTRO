@@ -151,11 +151,11 @@ describe("Welcome Consultation Modal Policy & Content Compliance", () => {
 
   test("wires live starting rate from ADMIN_CONFIGURABLE_PRICING and includes subordinate Viar.in link as the last line", () => {
     assert.equal(FIRST_CONSULTATION_OFFER.discountPercentage, 50);
-    assert.equal(FIRST_CONSULTATION_OFFER.code, "FIRST50");
+    assert.equal(FIRST_CONSULTATION_OFFER.code, "FIRST1051");
 
     assert.equal(
       ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate,
-      ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute * 0.5
+      1051
     );
 
     assert.match(modalCode, /ADMIN_CONFIGURABLE_PRICING\.chat\.effectiveFirstTimeRate/);

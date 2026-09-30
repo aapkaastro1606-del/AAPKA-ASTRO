@@ -4,13 +4,12 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AstrologerStateStore } from "@/lib/store/astrologerStore";
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
-import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING } from "@/config/placeholderContent";
+import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import {
   User,
-  Wallet,
   PhoneCall,
   Sparkles,
   FileText,
@@ -94,25 +93,25 @@ export default function ClientAccountDashboard() {
             </div>
           </div>
 
-          {/* Quick Wallet Box */}
+          {/* 1-on-1 Consultation Quick Card */}
           <div className="flex items-center gap-4 w-full md:w-auto bg-[#FBF3E7] p-4 rounded-2xl border border-[#E8D8C3]">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
-                Available Wallet Balance
+                1-on-1 Vedic Consultation
               </span>
               <div className="font-mono text-2xl font-black text-[#7B2D26]">
-                ₹{wallet}
+                Flat ₹1,051/-
               </div>
               <span className="text-[10px] text-[#6B8E5A] font-semibold">
-                ~{Math.floor(wallet / ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute)} mins talktime
+                Special 50% Off First Session (Reg. ₹2,100)
               </span>
             </div>
 
             <Link
-              href="/account/wallet"
-              className="rounded-xl bg-[#E8A33D] px-4 py-2.5 text-xs font-bold text-[#3B2A1E] hover:bg-[#F6CF86] transition-all shadow-sm shrink-0"
+              href="/consult?offer=FIRST1051"
+              className="rounded-xl bg-[#7B2D26] px-4 py-2.5 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-sm shrink-0"
             >
-              + Recharge
+              Book Now
             </Link>
           </div>
         </div>
@@ -207,10 +206,10 @@ export default function ClientAccountDashboard() {
             </div>
             <div>
               <h4 className="font-temple text-sm sm:text-base font-bold text-[#7B2D26]">
-                Invite Friends &amp; Earn ₹100 Wallet Credit
+                Share Aapka Astro &amp; Gift ₹1,051 Promotional Consultation
               </h4>
               <p className="text-xs text-[#6E5545] mt-0.5">
-                Give your friends ₹50 free welcome balance. Earn ₹100 after their first consultation.
+                Invite friends and family to consult Acharya Ji with 50% off (Flat ₹1,051/- instead of ₹2,100).
               </p>
             </div>
           </div>
@@ -218,7 +217,7 @@ export default function ClientAccountDashboard() {
             href="/account/referral"
             className="shrink-0 rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-[#FBF3E7] hover:bg-[#64221C] transition-all shadow-xs flex items-center gap-1.5"
           >
-            <span>Invite &amp; Earn</span>
+            <span>Share Offer</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

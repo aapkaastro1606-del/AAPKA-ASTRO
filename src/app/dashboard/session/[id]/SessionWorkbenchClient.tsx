@@ -28,7 +28,6 @@ import {
   ArrowLeft,
   Clock,
   CheckCircle2,
-  AlertTriangle,
 } from "lucide-react";
 
 interface SessionWorkbenchClientProps {
@@ -49,7 +48,6 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
   const [chartType, setChartType] = useState<"north" | "south">("north");
   const [activeTab, setActiveTab] = useState<"chart" | "planets" | "dasha">("chart");
   const [clientKundli, setClientKundli] = useState<KundliData | null>(null);
-  const [clientBalance, setClientBalance] = useState(250);
 
   useEffect(() => {
     const storedSess = AstrologerStateStore.getActiveSession();
@@ -102,14 +100,8 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
     }
     setMessages(AstrologerStateStore.getMessages(sess.id));
 
-    const syncWalletAndSession = () => {
-      const liveBalance = AstrologerStateStore.getWalletBalance();
-      setClientBalance(liveBalance);
-    };
-
     const timer = setInterval(() => {
       setSessionSeconds((prev) => prev + 1);
-      syncWalletAndSession();
     }, 1000);
 
     return () => clearInterval(timer);
@@ -143,7 +135,7 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
           date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
           duration: `${Math.max(1, Math.ceil(sessionSeconds / 60))} Minutes`,
           mode: activeSession.type === "chat" ? "Chat" : activeSession.type === "voice" ? "Voice Call" : "Video Call",
-          amount: `₹${totalBilled}`,
+          amount: "₹1,051",
           astrologer: PLACEHOLDER_ASTROLOGER.displayName,
           topic: activeSession.concern || "Vedic Astrological Guidance",
           remedy: remedyText || "Personalized satvik remedies and mantra chanting as prescribed during consultation.",
@@ -161,10 +153,6 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
     const remainder = secs % 60;
     return `${mins.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
   };
-
-  const totalBilled = activeSession
-    ? Math.max(activeSession.ratePerMin, Math.ceil((sessionSeconds / 60) * activeSession.ratePerMin))
-    : 0;
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-6 px-4 sm:px-6 lg:px-8">
@@ -194,15 +182,15 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
             </div>
           </div>
 
-          {/* Timer & Billing */}
+          {/* Timer & Booking Status */}
           <div className="flex items-center gap-4">
             <div className="rounded-xl bg-[#FBF3E7] px-3.5 py-1.5 border border-[#E8D8C3] text-right">
               <div className="font-mono text-xs font-black text-[#7B2D26] flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-[#C1662F]" />
                 <span>{formatTime(sessionSeconds)}</span>
               </div>
-              <span className="text-[10px] text-[#6E5545]">
-                Accrued: ₹{totalBilled} (@ ₹{activeSession?.ratePerMin}/m)
+              <span className="text-[10px] font-semibold text-[#6B8E5A]">
+                Paid Consultation (Flat ₹1,051)
               </span>
             </div>
 
@@ -216,24 +204,6 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
             </button>
           </div>
         </div>
-
-        {/* Low Balance Advisory Alert for Astrologer */}
-        {clientBalance < (activeSession?.ratePerMin || 20) && (
-          <div className="rounded-2xl bg-amber-500/15 border border-amber-500/40 p-3.5 flex items-center justify-between text-xs text-[#7B2D26]">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 animate-pulse shrink-0" />
-              <span className="font-bold">
-                Client Wallet Depletion Alert: Remaining client balance is ₹{clientBalance.toFixed(2)} (&lt; 1 min).
-              </span>
-              <span className="text-[#6E5545] hidden sm:inline">
-                Please begin summarizing remedial insights and conclude guidance gracefully.
-              </span>
-            </div>
-            <span className="font-mono font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-lg border border-amber-200">
-              Graceful Auto-End Armed
-            </span>
-          </div>
-        )}
 
         {/* Workbench Split Screen */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

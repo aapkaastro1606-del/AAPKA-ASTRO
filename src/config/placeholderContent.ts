@@ -100,7 +100,7 @@ export const FIRST_CONSULTATION_OFFER = {
   standardFee: 2100,
   promotionalFee: 1051,
   discountPercentage: 50,
-  code: "FIRST50",
+  code: "FIRST1051",
   promoCode: "FIRST1051",
   description: "Astro Consultation: Flat ₹1,051/- for first consultation (Regular ₹2,100)",
 };
@@ -127,7 +127,7 @@ export const ADMIN_CONFIGURABLE_PRICING: Record<"chat" | "voice" | "video", Pric
     standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
-    effectiveFirstTimeRate: 7.5, // 50% off for first consultation
+    effectiveFirstTimeRate: 1051, // Flat ₹1,051 first-time promotional fee
     unit: "session",
   },
   voice: {
@@ -138,7 +138,7 @@ export const ADMIN_CONFIGURABLE_PRICING: Record<"chat" | "voice" | "video", Pric
     standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
-    effectiveFirstTimeRate: 10, // 50% off for first consultation
+    effectiveFirstTimeRate: 1051, // Flat ₹1,051 first-time promotional fee
     unit: "session",
   },
   video: {
@@ -149,7 +149,7 @@ export const ADMIN_CONFIGURABLE_PRICING: Record<"chat" | "voice" | "video", Pric
     standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
-    effectiveFirstTimeRate: 12.5, // 50% off for first consultation
+    effectiveFirstTimeRate: 1051, // Flat ₹1,051 first-time promotional fee
     unit: "session",
   },
 };

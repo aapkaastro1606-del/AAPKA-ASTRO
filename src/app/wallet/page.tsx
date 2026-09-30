@@ -1,274 +1,195 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { AstrologerStateStore } from "@/lib/store/astrologerStore";
 import {
-  Wallet,
   ShieldCheck,
   PhoneCall,
+  CheckCircle2,
+  FileText,
+  ArrowRight,
   Clock,
-  QrCode,
-  FileDown,
+  Sparkles,
+  Receipt,
+  HelpCircle,
 } from "lucide-react";
-import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING } from "@/config/placeholderContent";
+import { PLACEHOLDER_ASTROLOGER, FLAT_CONSULTATION_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
+import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 
-const WalletPage: React.FC = () => {
-  const [balance, setBalance] = useState(0);
-  const [selectedPack, setSelectedPack] = useState<number>(499);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showQRModal, setShowQRModal] = useState(false);
+export default function WalletPage() {
+  const consultations = ClientAccountStore.getConsultationHistory();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const packs = [
-    {
-      amount: 199,
-      talktime: "~10 Mins",
-      bonus: 0,
-      totalCredits: 199,
-      tag: "Starter",
-      popular: false,
-    },
-    {
-      amount: 499,
-      talktime: "~28 Mins",
-      bonus: 50,
-      totalCredits: 549,
-      tag: "Best Value",
-      popular: true,
-    },
-    {
-      amount: 999,
-      talktime: "~60 Mins",
-      bonus: 200,
-      totalCredits: 1199,
-      tag: "+₹200 Free",
-      popular: false,
-    },
-    {
-      amount: 2499,
-      talktime: "~160 Mins",
-      bonus: 600,
-      totalCredits: 3099,
-      tag: "+₹600 Free",
-      popular: false,
-    },
-  ];
-
-  const sync = () => {
-    setBalance(AstrologerStateStore.getWalletBalance());
-  };
-
-  useEffect(() => {
-    sync();
-    window.addEventListener("astro_state_changed", sync);
-    fetch("/api/auth/sync")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.user?.walletBalance !== undefined) {
-          setBalance(data.user.walletBalance);
-          AstrologerStateStore.setWalletBalance(data.user.walletBalance);
-        }
-      })
-      .catch(() => {});
-    return () => window.removeEventListener("astro_state_changed", sync);
-  }, []);
-
-  const handleRecharge = (pack: (typeof packs)[0]) => {
-    setIsProcessing(true);
+  const handleDownloadInvoice = (id: string) => {
+    setDownloadingId(id);
     setTimeout(() => {
-      AstrologerStateStore.addWalletBalance(pack.totalCredits);
-      setIsProcessing(false);
-      setShowQRModal(false);
-      alert(`₹${pack.totalCredits} successfully credited to your Aapka Astro Wallet! You have ~${Math.floor((balance + pack.totalCredits) / 19)} mins of talktime.`);
-    }, 1200);
+      setDownloadingId(null);
+      alert(`Consultation invoice #${id} downloaded successfully.`);
+    }, 800);
   };
 
   return (
     <div className="bg-[#FBF3E7] py-8 lg:py-16 min-h-screen text-[#3B2A1E]">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-1 text-xs font-semibold text-[#7B2D26] shadow-sm mb-3 font-temple">
-            <Wallet className="h-3.5 w-3.5 text-[#C1662F]" />
-            <span>SECURE VEDIC CONSULTATION WALLET</span>
+            <Receipt className="h-3.5 w-3.5 text-[#C1662F]" />
+            <span>TRANSPARENT PAY-PER-BOOKING BILLING</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold font-temple text-[#7B2D26] tracking-tight">
-            Consultation Balance &amp; Recharge
+            Consultation Bookings &amp; Invoices
           </h1>
           <p className="mt-2 text-[#7D6B5D] text-xs sm:text-sm font-body">
-            Top up your balance using UPI or Cards. Deductions occur second-by-second only during active consultations.
+            All consultations are billed on a fixed, flat-fee basis. Pay directly per session with zero per-minute debits, zero wallet recharge minimums, and full upfront transparency.
           </p>
         </div>
 
-        {/* Current Balance Card */}
-        <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm mb-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#7D6B5D] block font-temple">
-                Available Wallet Balance
-              </span>
-              <div className="text-4xl sm:text-5xl font-bold font-temple text-[#7B2D26] mt-1">
-                ₹{balance.toLocaleString("en-IN")}
+        {/* Pricing Notice Card */}
+        <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6B8E5A]/15 text-[#2A4720] text-xs font-bold">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A]" />
+                <span>Pay-Per-Booking Consultation Model</span>
               </div>
-              {/* PLACEHOLDER: replace with real content */}
-              <div className="text-xs text-[#6B5A4E] mt-2 flex items-center gap-2 font-body">
-                <Clock className="h-4 w-4 text-[#6B8E5A]" />
-                <span>
-                  Valid for ~<strong>{Math.floor(balance / ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute)} Minutes</strong> of Live Consultation (@ ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)
+              <h2 className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26]">
+                Flat ₹1,051/- for First Consultation
+              </h2>
+              <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed">
+                Enjoy complete 1-on-1 private guidance with {PLACEHOLDER_ASTROLOGER.displayName} across Voice Call, Video Call, or Live Chat at a single flat fee (Standard ₹2,100 — 50% promotional discount).
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-[#6E5545] pt-2">
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
+                  <span>No hidden per-minute debits</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
+                  <span>Direct UPI / Card checkout</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
+                  <span>Instant GST invoice provided</span>
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="/api/wallet/statement"
-                download
-                className="shrink-0 rounded-2xl border border-[#D4C3B3] bg-[#FAF5EE] px-4 py-3.5 text-xs font-bold text-[#3B2A1E] hover:bg-[#F3E7D3] shadow-sm flex items-center gap-2 transition-all"
-              >
-                <FileDown className="h-4 w-4 text-[#7B2D26]" />
-                <span>Download Statement (CSV)</span>
-              </a>
-
+            <div className="w-full md:w-auto shrink-0 flex flex-col items-center sm:items-end gap-3">
+              <div className="text-right">
+                <span className="text-xs text-[#6E5545] line-through block">Regular ₹2,100</span>
+                <span className="font-mono text-3xl font-black text-[#7B2D26]">₹1,051</span>
+                <span className="text-[10px] text-[#6B8E5A] font-bold block">50% First-Time Savings</span>
+              </div>
               <Link
-                href="/consult"
-                className="shrink-0 rounded-2xl bg-[#7B2D26] px-6 py-3.5 text-xs font-bold text-white hover:bg-[#64231D] shadow-md flex items-center gap-2 transition-all"
+                href="/consult?offer=FIRST1051"
+                className="w-full sm:w-auto rounded-xl bg-[#7B2D26] hover:bg-[#64221C] px-6 py-3 text-xs sm:text-sm font-bold text-[#FFFDF9] shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
-                <span>Use Balance &amp; Consult Now</span>
+                <span>Book Consultation (₹1,051)</span>
+                <ArrowRight className="h-4 w-4 text-[#E8A33D]" />
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Recharge Packs */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold font-temple text-[#7B2D26]">Select Recharge Pack</h3>
-            <span className="rounded-full bg-[#6B8E5A]/15 px-3 py-0.5 text-xs font-bold text-[#6B8E5A] border border-[#6B8E5A]/30">
-              Special Intro Offer: Up to ₹600 Free Talktime
-            </span>
+        {/* Consultation Receipts / Invoices Table */}
+        <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-temple text-lg font-bold text-[#7B2D26] flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[#C1662F]" />
+                <span>Your Consultation Receipts &amp; Invoices</span>
+              </h3>
+              <p className="text-xs text-[#6E5545] mt-0.5">
+                Download tax receipts and booking confirmations for your consultations.
+              </p>
+            </div>
+            <Link
+              href="/account/consult"
+              className="text-xs font-bold text-[#7B2D26] hover:underline flex items-center gap-1"
+            >
+              <span>Manage active bookings</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {packs.map((pack) => {
-              const isSelected = selectedPack === pack.amount;
-              return (
-                <div
-                  key={pack.amount}
-                  onClick={() => setSelectedPack(pack.amount)}
-                  className={`cursor-pointer rounded-2xl border p-6 flex flex-col justify-between transition-all relative overflow-hidden ${
-                    isSelected
-                      ? "border-2 border-[#7B2D26] bg-[#FFFDF9] shadow-md ring-2 ring-[#7B2D26]/10"
-                      : "border-[#E8D8C3] bg-[#FFFDF9] hover:border-[#D4C3B3] shadow-sm"
-                  }`}
-                >
-                  {pack.popular && (
-                    <div className="absolute top-0 right-0 bg-[#E8A33D] px-3 py-0.5 text-[10px] font-bold text-[#3B2A1E] rounded-bl-lg font-temple">
-                      MOST POPULAR
-                    </div>
-                  )}
-
-                  <div>
-                    <span className="rounded bg-[#FAF1E4] px-2 py-0.5 text-[10px] font-bold text-[#7B2D26] border border-[#E8D8C3]">
-                      {pack.tag}
-                    </span>
-
-                    <div className="text-3xl font-bold font-temple text-[#3B2A1E] mt-3">
-                      ₹{pack.amount}
-                    </div>
-
-                    <div className="text-xs text-[#C1662F] font-bold mt-1">
-                      Get ₹{pack.totalCredits} Balance
-                    </div>
-
-                    <div className="text-[11px] text-[#7D6B5D] mt-0.5 font-body">
-                      Talktime: {pack.talktime}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowQRModal(true);
-                    }}
-                    className={`mt-6 w-full rounded-xl py-2.5 text-xs font-bold transition-all ${
-                      isSelected
-                        ? "bg-[#7B2D26] text-white hover:bg-[#64231D] shadow-sm"
-                        : "border border-[#D4C3B3] bg-[#FAF5EE] text-[#3B2A1E] hover:bg-[#F3E7D3]"
-                    }`}
-                  >
-                    Recharge ₹{pack.amount}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          {consultations.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FBF3E7] p-8 text-center space-y-3">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFFDF9] text-[#6E5545] shadow-xs">
+                <Receipt className="h-6 w-6 text-[#C1662F]" />
+              </div>
+              <h4 className="font-temple text-base font-bold text-[#7B2D26]">No Prior Invoices</h4>
+              <p className="text-xs text-[#6E5545] max-w-sm mx-auto">
+                You haven&apos;t booked a consultation yet. Book your first session with Acharya Ji at the promotional flat rate of ₹1,051/-.
+              </p>
+              <Link
+                href="/consult?offer=FIRST1051"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all"
+              >
+                <span>Book First Consultation</span>
+                <ArrowRight className="h-3.5 w-3.5 text-[#E8A33D]" />
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#E8D8C3] text-[11px] font-bold text-[#6E5545] uppercase tracking-wider">
+                    <th className="pb-3 pl-2">Session ID &amp; Date</th>
+                    <th className="pb-3">Consultation Mode</th>
+                    <th className="pb-3">Topic</th>
+                    <th className="pb-3 text-right">Fee Paid</th>
+                    <th className="pb-3 text-right pr-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E8D8C3]/50">
+                  {consultations.map((sess) => (
+                    <tr key={sess.id} className="hover:bg-[#FBF3E7]/60 transition-colors">
+                      <td className="py-3.5 pl-2">
+                        <span className="font-mono font-bold text-[#7B2D26] block">#{sess.id}</span>
+                        <span className="text-[10px] text-[#6E5545]">{sess.date}</span>
+                      </td>
+                      <td className="py-3.5">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF1E4] px-2 py-0.5 font-bold text-[#7B2D26] text-[11px]">
+                          <PhoneCall className="h-3 w-3 text-[#C1662F]" />
+                          <span>{sess.mode}</span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-[#3B2A1E] font-medium max-w-xs truncate">
+                        {sess.topic}
+                      </td>
+                      <td className="py-3.5 text-right font-mono font-bold text-[#2A4720]">
+                        {sess.amount || "₹1,051"}
+                      </td>
+                      <td className="py-3.5 text-right pr-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadInvoice(sess.id)}
+                          disabled={downloadingId === sess.id}
+                          className="rounded-lg border border-[#E8D8C3] bg-[#FFFDF9] px-3 py-1 text-[11px] font-bold text-[#7B2D26] hover:bg-[#FAF1E4] transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {downloadingId === sess.id ? "Preparing..." : "Invoice PDF"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        {/* UPI Payment Flow Simulation Modal */}
-        {showQRModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3B2A1E]/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-sm rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 text-center shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-3 mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7B2D26] font-temple">
-                  Instant UPI Payment
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowQRModal(false)}
-                  className="text-[#7D6B5D] hover:text-[#3B2A1E] text-lg font-bold"
-                >
-                  &times;
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-[#D4C3B3] bg-white p-4 mx-auto w-48 h-48 flex items-center justify-center mb-4 shadow-sm">
-                <div className="flex flex-col items-center justify-center text-[#3B2A1E]">
-                  <QrCode className="h-32 w-32 text-[#7B2D26]" />
-                  <span className="text-[10px] font-mono font-bold mt-1 text-[#7D6B5D]">Scan via GPay / PhonePe / Paytm</span>
-                </div>
-              </div>
-
-              <div className="text-sm font-bold font-temple text-[#3B2A1E] mb-1">
-                Paying: ₹{selectedPack} (Total Credits: ₹{packs.find(p => p.amount === selectedPack)?.totalCredits})
-              </div>
-              <div className="text-xs text-[#7D6B5D] mb-6 font-body">UPI ID: aapkaastro@icici (Verified Merchant)</div>
-
-              <button
-                type="button"
-                disabled={isProcessing}
-                onClick={() => {
-                  const p = packs.find(pk => pk.amount === selectedPack)!;
-                  handleRecharge(p);
-                }}
-                className="w-full rounded-xl bg-[#7B2D26] py-3 text-xs font-bold text-white hover:bg-[#64231D] transition-all flex items-center justify-center gap-2 shadow-sm"
-              >
-                {isProcessing ? (
-                  <span>Verifying UPI Transaction...</span>
-                ) : (
-                  <span>Simulate Successful Payment (Instant Credit)</span>
-                )}
-              </button>
-            </div>
+        {/* Statutory Policy & Transition Note */}
+        <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF1E4] p-5 text-xs text-[#6E5545] space-y-2">
+          <div className="flex items-center gap-2 font-bold text-[#7B2D26]">
+            <HelpCircle className="h-4 w-4 text-[#C1662F]" />
+            <span>Notice Regarding Legacy Per-Minute Wallet Debits</span>
           </div>
-        )}
-
-        {/* Trust & Guarantee Notes */}
-        <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 text-xs text-[#6B5A4E] shadow-sm">
-          <div className="flex items-center gap-2 font-bold font-temple text-[#7B2D26] mb-2">
-            <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
-            <span>Aapka Astro Consumer Trust Guarantee</span>
-          </div>
-          <ul className="space-y-1.5 text-[#7D6B5D] list-disc list-inside font-body">
-            <li>Unused wallet balance carries lifetime validity with zero expiry date.</li>
-            <li>If a call drops prematurely or cannot connect, 100% of your credits are immediately restored.</li>
-            <li>Instant 1-click refunds available upon request through our Varanasi desk.</li>
-          </ul>
+          <p className="leading-relaxed text-[11px]">
+            In accordance with client operational guidelines, Aapka Astro operates exclusively on a transparent flat-fee pay-per-booking model. Second-by-second wallet deductions and wallet recharge packs have been retired. All consultations are paid directly per booking without recurring debits. Historical wallet transactions remain archived for statutory tax and reconciliation purposes.
+          </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default WalletPage;
+}

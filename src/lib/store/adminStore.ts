@@ -3,12 +3,12 @@ import { ADMIN_CONFIGURABLE_PRICING, PricingTier, FLAT_CONSULTATION_PRICING, FIR
 export interface PricingSettings {
   flatStandardFee: number;
   flatFirstConsultationFee: number;
-  chatRate: number;
-  voiceRate: number;
-  videoRate: number;
   discountPercentage: number;
-  minimumRechargeAmount: number;
-  firstTimeFreeMinutes: number;
+  chatRate?: number;
+  voiceRate?: number;
+  videoRate?: number;
+  minimumRechargeAmount?: number;
+  firstTimeFreeMinutes?: number;
 }
 
 export interface PlatformAnalytics {
@@ -26,10 +26,10 @@ export interface PlatformAnalytics {
 let memoryPricing: PricingSettings = {
   flatStandardFee: FLAT_CONSULTATION_PRICING.standardFee,
   flatFirstConsultationFee: FLAT_CONSULTATION_PRICING.firstConsultationFee,
-  chatRate: ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute,
-  voiceRate: ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute,
-  videoRate: ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute,
   discountPercentage: 50,
+  chatRate: 15,
+  voiceRate: 20,
+  videoRate: 25,
   minimumRechargeAmount: 100,
   firstTimeFreeMinutes: 0,
 };
@@ -72,29 +72,25 @@ export const AdminStore = {
     if (updates.flatStandardFee !== undefined) {
       FLAT_CONSULTATION_PRICING.standardFee = updates.flatStandardFee;
       FIRST_CONSULTATION_OFFER.standardFee = updates.flatStandardFee;
+      ADMIN_CONFIGURABLE_PRICING.chat.standardFee = updates.flatStandardFee;
+      ADMIN_CONFIGURABLE_PRICING.voice.standardFee = updates.flatStandardFee;
+      ADMIN_CONFIGURABLE_PRICING.video.standardFee = updates.flatStandardFee;
     }
     if (updates.flatFirstConsultationFee !== undefined) {
       FLAT_CONSULTATION_PRICING.firstConsultationFee = updates.flatFirstConsultationFee;
       FIRST_CONSULTATION_OFFER.promotionalFee = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.chat.flatFee = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.voice.flatFee = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.video.flatFee = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
+      ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
     }
-    if (updates.chatRate !== undefined) ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute = updates.chatRate;
-    if (updates.voiceRate !== undefined) ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute = updates.voiceRate;
-    if (updates.videoRate !== undefined) ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute = updates.videoRate;
     if (updates.discountPercentage !== undefined) {
       ADMIN_CONFIGURABLE_PRICING.chat.discountPercentage = updates.discountPercentage;
       ADMIN_CONFIGURABLE_PRICING.voice.discountPercentage = updates.discountPercentage;
       ADMIN_CONFIGURABLE_PRICING.video.discountPercentage = updates.discountPercentage;
     }
-    const discountFactor = 1 - memoryPricing.discountPercentage / 100;
-    ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate = Number(
-      (ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute * discountFactor).toFixed(2)
-    );
-    ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate = Number(
-      (ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute * discountFactor).toFixed(2)
-    );
-    ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate = Number(
-      (ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute * discountFactor).toFixed(2)
-    );
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("astro_pricing_updated"));
     }

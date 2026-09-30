@@ -193,7 +193,7 @@ npm test
   ✔ Case 4: Amitabh Bachchan matches published Vedic chart positions
   ✔ Case 5: Dr. APJ Abdul Kalam matches published Vedic chart positions
   ✔ Panchang computes authentic astronomical limbs for known historical and current dates
-▶ ConsultationBillingEngine (8/8 pass)
+▶ ConsultationSessionTracker & ConsultationBookingService (11/11 pass)
 ▶ Vedic Daily Horoscope Service (5/5 pass)
 ▶ Internationalization (i18n) Formatters (5/5 pass)
 ▶ SlidingWindowRateLimiter (4/4 pass)

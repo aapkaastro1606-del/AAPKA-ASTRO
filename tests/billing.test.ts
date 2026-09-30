@@ -1,124 +1,127 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { ConsultationBillingEngine } from "../src/lib/services/consultationBilling";
+import {
+  ConsultationSessionTracker,
+  ConsultationBookingService,
+} from "../src/lib/services/consultationBilling";
 
-describe("ConsultationBillingEngine", () => {
-  test("initializes with accurate rate and balance", () => {
-    const engine = new ConsultationBillingEngine("sess_test_1", 20, 200);
-    const state = engine.getState();
+describe("ConsultationSessionTracker (Pay-Per-Booking Live Session Manager)", () => {
+  test("initializes with active state, zero seconds, clean format, and booking reference", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_1", "Voice Call", "book_123");
+    const state = tracker.getState();
 
     assert.equal(state.sessionId, "sess_test_1");
-    assert.equal(state.ratePerMin, 20);
-    assert.equal(state.walletBalance, 200);
+    assert.equal(state.bookingId, "book_123");
+    assert.equal(state.format, "Voice Call");
     assert.equal(state.sessionSeconds, 0);
-    assert.equal(state.isLowBalance, false);
+    assert.equal(state.status, "active");
     assert.equal(state.isGracePeriod, false);
-    assert.equal(state.isTerminated, false);
+    assert.equal(state.graceSecondsRemaining, 60);
+    assert.deepEqual(state.remedies, []);
   });
 
-  test("deducts per-second equivalent rate on tick", () => {
-    // ₹60/min = ₹1 per second
-    const engine = new ConsultationBillingEngine("sess_test_2", 60, 100);
+  test("increments session seconds on tick without any financial/wallet deductions", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_2", "Live Chat");
 
-    for (let i = 0; i < 10; i++) {
-      engine.tick();
+    for (let i = 0; i < 15; i++) {
+      tracker.tick();
     }
 
-    const state = engine.getState();
-    assert.equal(state.sessionSeconds, 10);
-    assert.equal(state.walletBalance, 90);
-    assert.equal(state.billedAmount, 10);
+    const state = tracker.getState();
+    assert.equal(state.sessionSeconds, 15);
+    assert.equal(state.status, "active");
+    // No wallet balances or per-minute tariffs exist on tracker
+    assert.equal((state as any).walletBalance, undefined);
+    assert.equal((state as any).ratePerMin, undefined);
   });
 
-  test("flags low-balance warning when <= 60 seconds remain", () => {
-    // ₹60/min = ₹1/sec. Balance ₹50 means 50 seconds remain (<= 60s)
-    const engine = new ConsultationBillingEngine("sess_test_3", 60, 50);
-    const state = engine.tick();
+  test("enters disconnect grace period of 60 seconds on network disconnect", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_3", "Video Call");
+    tracker.tick();
+    tracker.tick();
 
-    assert.equal(state.isLowBalance, true);
-    assert.equal(state.secondsRemaining, 49);
+    tracker.notifyDisconnect();
+    const state = tracker.getState();
+
+    assert.equal(state.isGracePeriod, true);
+    assert.equal(state.graceSecondsRemaining, 60);
+    assert.equal(state.sessionSeconds, 2);
   });
 
-  test("terminates gracefully when wallet reaches zero", () => {
-    // ₹60/min = ₹1/sec. Balance ₹2. After 2 ticks balance is 0
-    const engine = new ConsultationBillingEngine("sess_test_4", 60, 2);
+  test("pauses session seconds during disconnect grace period while grace timer counts down", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_4", "Voice Call");
 
-    engine.tick(); // balance 1
-    const finalState = engine.tick(); // balance 0 -> terminated
+    for (let i = 0; i < 5; i++) tracker.tick();
+    assert.equal(tracker.getState().sessionSeconds, 5);
 
-    assert.equal(finalState.walletBalance, 0);
-    assert.equal(finalState.isTerminated, true);
-    assert.equal(finalState.terminationReason, "zero_balance");
+    tracker.notifyDisconnect();
+
+    // 10 ticks during grace period
+    for (let i = 0; i < 10; i++) tracker.tick();
+
+    const state = tracker.getState();
+    assert.equal(state.isGracePeriod, true);
+    assert.equal(state.sessionSeconds, 5); // Session timer paused!
+    assert.equal(state.graceSecondsRemaining, 50); // Grace countdown decremented
   });
 
-  test("pauses billing during disconnect grace window and counts down", () => {
-    // ₹60/min = ₹1/sec. Initial balance ₹100
-    const engine = new ConsultationBillingEngine("sess_test_5", 60, 100);
+  test("resumes active session cleanly when client reconnects within grace period", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_5", "Live Chat");
+    tracker.notifyDisconnect();
+    for (let i = 0; i < 5; i++) tracker.tick();
 
-    // Run 5 active seconds
-    for (let i = 0; i < 5; i++) engine.tick();
-    assert.equal(engine.getState().walletBalance, 95);
+    // Reconnect
+    tracker.notifyReconnect();
+    const reconnectedState = tracker.getState();
+    assert.equal(reconnectedState.isGracePeriod, false);
+    assert.equal(reconnectedState.graceSecondsRemaining, 60);
 
-    // Trigger network disconnect
-    engine.notifyDisconnect();
-    const disconnectState = engine.getState();
-    assert.equal(disconnectState.isGracePeriod, true);
-    assert.equal(disconnectState.graceSecondsRemaining, 60);
-
-    // Tick 10 seconds during grace period -> wallet balance MUST NOT decrease
-    for (let i = 0; i < 10; i++) engine.tick();
-    const graceState = engine.getState();
-    assert.equal(graceState.walletBalance, 95); // Billing was paused!
-    assert.equal(graceState.sessionSeconds, 5); // Session duration did not advance
-    assert.equal(graceState.graceSecondsRemaining, 50); // Grace timer counted down
-  });
-
-  test("resumes billing smoothly when client reconnects within grace window", () => {
-    const engine = new ConsultationBillingEngine("sess_test_6", 60, 100);
-
-    engine.notifyDisconnect();
-    assert.equal(engine.getState().isGracePeriod, true);
-
-    // 5 seconds pass disconnected
-    for (let i = 0; i < 5; i++) engine.tick();
-
-    // Client reconnects
-    engine.notifyReconnect();
-    assert.equal(engine.getState().isGracePeriod, false);
-
-    // Subsequent tick resumes active billing
-    engine.tick();
-    assert.equal(engine.getState().sessionSeconds, 1);
-    assert.equal(engine.getState().walletBalance, 99);
+    // Active ticks resume
+    tracker.tick();
+    assert.equal(tracker.getState().sessionSeconds, 1);
   });
 
   test("terminates session when disconnect grace period of 60s expires", () => {
-    const engine = new ConsultationBillingEngine("sess_test_7", 60, 100);
-    engine.notifyDisconnect();
+    const tracker = new ConsultationSessionTracker("sess_test_6", "Video Call");
+    tracker.notifyDisconnect();
 
     for (let i = 0; i < 60; i++) {
-      engine.tick();
+      tracker.tick();
     }
 
-    const state = engine.getState();
-    assert.equal(state.isTerminated, true);
-    assert.equal(state.terminationReason, "grace_expired");
+    const state = tracker.getState();
+    assert.equal(state.status, "completed");
+    assert.equal(state.terminatedReason, "grace_expired");
   });
 
-  test("allows adding funds dynamically during consultation", () => {
-    const engine = new ConsultationBillingEngine("sess_test_8", 60, 30);
-    assert.equal(engine.getState().isLowBalance, true);
+  test("attaches remedies and consultation notes to active session state", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_7", "Voice Call");
+    tracker.setNotes("Analyzed Rahu Mahadasha transition in 10th house.");
+    tracker.addRemedy("Chant Om Namah Shivaya 108 times daily.");
+    tracker.addRemedy("Wear 5-mukhi certified Rudraksha.");
 
-    engine.addFunds(200);
-    const state = engine.getState();
-    assert.equal(state.walletBalance, 230);
-    assert.equal(state.isLowBalance, false); // No longer low balance
+    const state = tracker.getState();
+    assert.equal(state.notes, "Analyzed Rahu Mahadasha transition in 10th house.");
+    assert.equal(state.remedies?.length, 2);
+    assert.equal(state.remedies?.[0], "Chant Om Namah Shivaya 108 times daily.");
+  });
+
+  test("manually completes consultation cleanly with termination reason", () => {
+    const tracker = new ConsultationSessionTracker("sess_test_8", "Live Chat");
+    for (let i = 0; i < 30; i++) tracker.tick();
+
+    const finalState = tracker.completeSession("completed_normally");
+    assert.equal(finalState.status, "completed");
+    assert.equal(finalState.terminatedReason, "completed_normally");
+    assert.equal(finalState.sessionSeconds, 30);
+
+    // Subsequent ticks do not advance timer
+    tracker.tick();
+    assert.equal(tracker.getState().sessionSeconds, 30);
   });
 });
 
 describe("ConsultationBookingService (Flat-Fee Pay-Per-Booking Model)", () => {
-  const { ConsultationBookingService } = require("../src/lib/services/consultationBilling");
-
   test("calculates first-time promotional consultation fee accurately (Flat ₹1,051)", () => {
     const feeInfo = ConsultationBookingService.calculateFee(true);
     assert.equal(feeInfo.standardFee, 2100);

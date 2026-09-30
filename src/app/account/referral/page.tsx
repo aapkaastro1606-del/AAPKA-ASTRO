@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
-import { DiyaIcon } from "@/components/ui/DiyaIcon";
+import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import {
   Gift,
   Share2,
   Copy,
   Check,
   Users,
-  Wallet,
+  Tag,
   ArrowRight,
   ShieldCheck,
   Sparkles,
@@ -22,8 +22,8 @@ export default function ReferralPage() {
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
   const [claimLoading, setClaimLoading] = useState(false);
 
-  const referralCode = "NIRAJ100";
-  const referralLink = `https://aapkaastro.com/signup?ref=${referralCode}`;
+  const referralCode = "ASTRO1051";
+  const referralLink = `https://aapkaastro.com/consult?ref=${referralCode}&offer=FIRST1051`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -55,7 +55,7 @@ export default function ReferralPage() {
         setClaimStatus(`Notice: ${data.message}`);
       }
     } catch {
-      setClaimStatus("Success! ₹50 referral credit added to your wallet.");
+      setClaimStatus("Success! Promotional code FIRST1051 activated for your next consultation.");
       setFriendCode("");
     } finally {
       setClaimLoading(false);
@@ -63,7 +63,7 @@ export default function ReferralPage() {
   };
 
   const whatsappMessage = encodeURIComponent(
-    `Namaste! I get my Vedic astrology and Kundli guidance from Acharya Niraj Kumar on Aapka Astro. Use my invite link to get ₹50 free wallet balance for your first consultation: ${referralLink}`
+    `Namaste! I get my Vedic astrology and Kundli guidance from ${PLACEHOLDER_ASTROLOGER.displayName} on Aapka Astro. Use my invite link to claim a special 50% discount (Flat ₹1,051/- instead of ₹2,100) for your 1-on-1 consultation: ${referralLink}`
   );
 
   return (
@@ -75,10 +75,10 @@ export default function ReferralPage() {
             <Gift className="h-7 w-7" />
           </div>
           <h1 className="font-temple text-3xl sm:text-4xl font-bold text-[#7B2D26]">
-            Invite Friends &amp; Earn Free Consultations
+            Invite Friends &amp; Gift 50% Off Consultations
           </h1>
           <p className="mt-2 text-sm text-[#6E5545] max-w-xl mx-auto leading-relaxed">
-            Share the light of authentic Vedic astrology. When your friends sign up, they get ₹50 bonus wallet credit, and you earn ₹100 once they complete their first consultation!
+            Share the light of authentic Vedic astrology. When your friends book with your code, they get the promotional flat rate of ₹1,051/- (Regular ₹2,100), and you receive a ₹500 discount voucher on your next session!
           </p>
           <div className="flex justify-center my-3">
             <MandalaDivider className="w-24 text-[#C1662F]" />
@@ -94,15 +94,15 @@ export default function ReferralPage() {
           </div>
 
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs">
-            <span className="text-xs font-bold uppercase text-[#6E5545]">Referral Earnings</span>
-            <p className="mt-2 font-mono text-3xl font-black text-[#6B8E5A]">₹200</p>
-            <span className="text-[11px] text-[#6E5545]">Credited directly to wallet</span>
+            <span className="text-xs font-bold uppercase text-[#6E5545]">Consultations Gifted</span>
+            <p className="mt-2 font-mono text-3xl font-black text-[#6B8E5A]">2</p>
+            <span className="text-[11px] text-[#6E5545]">Claimed at Flat ₹1,051</span>
           </div>
 
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs">
-            <span className="text-xs font-bold uppercase text-[#6E5545]">Free Minutes Earned</span>
-            <p className="mt-2 font-mono text-3xl font-black text-[#C1662F]">~20 mins</p>
-            <span className="text-[11px] text-[#6E5545]">Live chat with Acharya Ji</span>
+            <span className="text-xs font-bold uppercase text-[#6E5545]">Your Vouchers</span>
+            <p className="mt-2 font-mono text-3xl font-black text-[#C1662F]">2 Active</p>
+            <span className="text-[11px] text-[#6E5545]">Applied at session checkout</span>
           </div>
         </div>
 
@@ -150,7 +150,7 @@ export default function ReferralPage() {
             Were You Referred by a Friend?
           </h2>
           <p className="text-xs text-[#6E5545] mt-1">
-            Enter their referral code below to receive ₹50 welcome credit into your Aapka Astro wallet immediately.
+            Enter their referral or promo code below to verify your Flat ₹1,051 consultation offer.
           </p>
 
           <form onSubmit={handleClaim} className="mt-4 flex flex-col sm:flex-row items-center gap-3">
@@ -158,7 +158,7 @@ export default function ReferralPage() {
               type="text"
               value={friendCode}
               onChange={(e) => setFriendCode(e.target.value)}
-              placeholder="e.g. NIRAJ100 or ASTRO50"
+              placeholder="e.g. FIRST1051 or friend's invite code"
               className="w-full rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] px-4 py-2.5 text-xs text-[#3B2A1E] uppercase font-mono placeholder:normal-case focus:border-[#7B2D26] focus:outline-none"
             />
             <button
@@ -166,7 +166,7 @@ export default function ReferralPage() {
               disabled={claimLoading}
               className="w-full sm:w-auto shrink-0 rounded-xl bg-[#C1662F] px-6 py-2.5 text-xs font-bold text-[#FBF3E7] hover:bg-[#A85324] transition-all shadow-xs disabled:opacity-50"
             >
-              {claimLoading ? "Checking..." : "Claim ₹50 Credit"}
+              {claimLoading ? "Checking..." : "Apply Code"}
             </button>
           </form>
 
@@ -188,23 +188,23 @@ export default function ReferralPage() {
               <span className="font-mono font-bold text-sm text-[#7B2D26]">Step 1</span>
               <p className="font-bold text-[#3B2A1E]">Share Your Invite</p>
               <p className="leading-relaxed">
-                Send your unique link to family or colleagues seeking authentic Vedic guidance.
+                Send your unique link to family or friends seeking authentic Vedic guidance.
               </p>
             </div>
 
             <div className="space-y-1.5">
               <span className="font-mono font-bold text-sm text-[#C1662F]">Step 2</span>
-              <p className="font-bold text-[#3B2A1E]">They Get ₹50 Free</p>
+              <p className="font-bold text-[#3B2A1E]">They Get 50% Off</p>
               <p className="leading-relaxed">
-                Your friend receives ₹50 bonus wallet balance applied immediately upon registration.
+                Your friend gets the promotional flat rate of ₹1,051/- (Regular ₹2,100) on their session.
               </p>
             </div>
 
             <div className="space-y-1.5">
               <span className="font-mono font-bold text-sm text-[#6B8E5A]">Step 3</span>
-              <p className="font-bold text-[#3B2A1E]">You Earn ₹100</p>
+              <p className="font-bold text-[#3B2A1E]">You Save ₹500</p>
               <p className="leading-relaxed">
-                Once they complete their first consultation, ₹100 is credited to your wallet for free calls!
+                Once their consultation completes, you unlock a ₹500 discount voucher on your next session.
               </p>
             </div>
           </div>

@@ -1,113 +1,109 @@
 /**
  * ============================================================================
- * CONSULTATION BILLING & DISCONNECT RESILIENCE ENGINE
+ * CONSULTATION SESSION TRACKER & DISCONNECT RESILIENCE
  * ============================================================================
- * Handles second-by-second wallet deductions, 1-minute low-balance countdown,
- * graceful zero-balance termination, and 60-second network disconnect grace windows.
+ * Manages live consultation duration and network disconnect grace windows for
+ * flat-fee, pay-per-booking consultations.
+ * Eliminates all second-by-second wallet debits and low-balance auto-termination.
  */
 
-export interface BillingState {
+export interface SessionTrackerState {
   sessionId: string;
-  ratePerMin: number;
-  walletBalance: number;
+  bookingId?: string;
   sessionSeconds: number;
-  billedAmount: number;
-  isLowBalance: boolean;
-  secondsRemaining: number;
+  format: "Voice Call" | "Video Call" | "Live Chat";
+  status: "active" | "completed" | "cancelled";
   isGracePeriod: boolean;
   graceSecondsRemaining: number;
-  isTerminated: boolean;
-  terminationReason?: "user_ended" | "zero_balance" | "grace_expired";
+  notes?: string;
+  remedies?: string[];
+  terminatedReason?: "completed_normally" | "grace_expired" | "user_cancelled";
 }
 
-export class ConsultationBillingEngine {
+export class ConsultationSessionTracker {
   private sessionId: string;
-  private ratePerMin: number;
-  private walletBalance: number;
+  private bookingId?: string;
+  private format: "Voice Call" | "Video Call" | "Live Chat";
   private sessionSeconds: number = 0;
+  private status: "active" | "completed" | "cancelled" = "active";
   private isGracePeriod: boolean = false;
   private graceSecondsRemaining: number = 60;
-  private isTerminated: boolean = false;
-  private terminationReason?: "user_ended" | "zero_balance" | "grace_expired";
+  private notes: string = "";
+  private remedies: string[] = [];
+  private terminatedReason?: "completed_normally" | "grace_expired" | "user_cancelled";
 
-  constructor(sessionId: string, ratePerMin: number, initialBalance: number) {
+  constructor(
+    sessionId: string,
+    format: "Voice Call" | "Video Call" | "Live Chat" = "Live Chat",
+    bookingId?: string
+  ) {
     this.sessionId = sessionId;
-    this.ratePerMin = Math.max(1, ratePerMin);
-    this.walletBalance = initialBalance;
+    this.format = format;
+    this.bookingId = bookingId;
   }
 
-  public tick(): BillingState {
-    if (this.isTerminated) {
+  public tick(): SessionTrackerState {
+    if (this.status !== "active") {
       return this.getState();
     }
 
-    // If in disconnect grace period, billing is paused; only grace timer counts down
     if (this.isGracePeriod) {
       this.graceSecondsRemaining -= 1;
       if (this.graceSecondsRemaining <= 0) {
-        this.isTerminated = true;
-        this.terminationReason = "grace_expired";
+        this.status = "completed";
+        this.terminatedReason = "grace_expired";
       }
       return this.getState();
     }
 
-    // Active session billing increment
     this.sessionSeconds += 1;
-
-    // Deduct per minute equivalent second-by-second
-    const perSecondRate = this.ratePerMin / 60;
-    this.walletBalance = Math.max(0, this.walletBalance - perSecondRate);
-
-    // Auto-terminate gracefully if balance completely depleted
-    if (this.walletBalance <= 0) {
-      this.isTerminated = true;
-      this.terminationReason = "zero_balance";
-    }
-
     return this.getState();
   }
 
   public notifyDisconnect(): void {
-    if (!this.isTerminated) {
+    if (this.status === "active") {
       this.isGracePeriod = true;
-      this.graceSecondsRemaining = 60; // 60s grace window to reconnect
+      this.graceSecondsRemaining = 60; // 60s network reconnect grace window
     }
   }
 
   public notifyReconnect(): void {
-    if (!this.isTerminated && this.isGracePeriod) {
+    if (this.status === "active" && this.isGracePeriod) {
       this.isGracePeriod = false;
       this.graceSecondsRemaining = 60;
     }
   }
 
-  public addFunds(amount: number): void {
-    this.walletBalance += amount;
+  public addRemedy(remedy: string): void {
+    if (remedy && remedy.trim()) {
+      this.remedies.push(remedy.trim());
+    }
   }
 
-  public terminate(reason: "user_ended" = "user_ended"): BillingState {
-    this.isTerminated = true;
-    this.terminationReason = reason;
+  public setNotes(notes: string): void {
+    this.notes = notes;
+  }
+
+  public completeSession(
+    reason: "completed_normally" | "user_cancelled" = "completed_normally"
+  ): SessionTrackerState {
+    this.status = reason === "user_cancelled" ? "cancelled" : "completed";
+    this.terminatedReason = reason;
     return this.getState();
   }
 
-  public getState(): BillingState {
-    const ratePerSec = this.ratePerMin / 60;
-    const secondsRemaining = Math.floor(this.walletBalance / ratePerSec);
-    const billedAmount = Math.ceil((this.sessionSeconds / 60) * this.ratePerMin);
-
+  public getState(): SessionTrackerState {
     return {
       sessionId: this.sessionId,
-      ratePerMin: this.ratePerMin,
-      walletBalance: Math.round(this.walletBalance * 100) / 100,
+      bookingId: this.bookingId,
       sessionSeconds: this.sessionSeconds,
-      billedAmount,
-      isLowBalance: secondsRemaining <= 60 && !this.isTerminated,
-      secondsRemaining: Math.max(0, secondsRemaining),
+      format: this.format,
+      status: this.status,
       isGracePeriod: this.isGracePeriod,
       graceSecondsRemaining: this.graceSecondsRemaining,
-      isTerminated: this.isTerminated,
-      terminationReason: this.terminationReason,
+      notes: this.notes,
+      remedies: [...this.remedies],
+      terminatedReason: this.terminatedReason,
     };
   }
 }
@@ -201,4 +197,3 @@ export class ConsultationBookingService {
     };
   }
 }
-

@@ -1470,6 +1470,70 @@ export const FIRST_CONSULTATION_OFFER = {
   - All existing billing engine resilience, signature verification, and welcome modal tests remain 100% passing.
 - **Production Build**: Clean compilation of all App Router routes with zero TypeScript or Turbopack errors.
 
+---
+
+## 26. Complete Elimination of Per-Minute Wallet Billing & Database Archival Strategy
+
+### 26.1 Mandate & Context
+Per client directive:
+> "CONTEXT — THIS IS A BUSINESS MODEL CHANGE, NOT A CONTENT UPDATE  
+> The client has changed the pricing model from per-minute wallet billing to flat-fee, pay-per-booking consultations, matching the confirmed real promotional pricing shown in his actual marketing creatives. This requires removing a meaningful amount of previously-built infrastructure, not just changing displayed numbers. Treat this prompt as the primary source of truth for pricing going forward, superseding all earlier per-minute billing specifications.  
+> REMOVE THE PER-MINUTE WALLET BILLING SYSTEM ENTIRELY  
+> Remove or fully repurpose:  
+> 1. The wallet balance display, top-up/recharge flow, and any '₹X remaining, ~Y mins talktime' messaging.  
+> 2. The per-minute billing engine (ConsultationBillingEngine or equivalent) that deducts wallet balance second-by-second during a live session.  
+> 3. The low-balance warning and auto-end-session-at-zero-balance logic.  
+> 4. The FIRST50 per-minute-discount coupon logic — this is being replaced by a new, differently-structured first-time discount.  
+> 5. Per-minute rate fields (₹15/₹20/₹25 per minute for chat/voice/video) from the admin pricing panel.  
+> Do not leave dead code or orphaned wallet references — if wallet data exists in the database from real or test usage, decide with a clear migration note in AUDIT_REPORT.md whether to archive or drop it, rather than leaving it silently unused."
+
+### 26.2 Structural Actions & Infrastructure Purged
+
+1. **Per-Minute Billing Engine Replaced with Session Tracker**:
+   - `ConsultationBillingEngine` and `BillingState` have been completely removed from [`src/lib/services/consultationBilling.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/services/consultationBilling.ts).
+   - Replaced by `ConsultationSessionTracker` which focuses exclusively on live session management: session duration timer, 60-second disconnect grace windows for network reconnects, consultation notes, and Vedic remedy attachments. All second-by-second financial debit calculations, balance subtraction ticks, and zero-balance abort sequences were eliminated.
+   - Updated [`tests/billing.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/billing.test.ts): All 8 legacy tests were rewritten to test `ConsultationSessionTracker` and `ConsultationBookingService` (11/11 passing).
+
+2. **Offer Code Updated from FIRST50 to FIRST1051**:
+   - In [`src/config/placeholderContent.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts), `FIRST_CONSULTATION_OFFER.code` was transitioned from `"FIRST50"` to `"FIRST1051"`, and `ADMIN_CONFIGURABLE_PRICING` starting rates were unified to flat ₹1,051/- per session across chat, voice, and video.
+   - In [`tests/welcomeModal.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/welcomeModal.test.ts), assertions were updated to verify `FIRST1051` and flat ₹1,051 fee (11/11 passing).
+
+3. **Low-Balance Alerts & Mid-Session Cutoffs Purged**:
+   - In [`src/app/dashboard/session/[id]/SessionWorkbenchClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/dashboard/session/[id]/SessionWorkbenchClient.tsx):
+     - Removed `clientBalance` state and `syncWalletAndSession` timer ticks.
+     - Removed `Client Wallet Depletion Alert` banner and auto-end armed warnings.
+     - Removed `Accrued: ₹.../m` per-minute meters. Replaced with `Paid Consultation (Flat ₹1,051)` and clean session timer.
+   - In [`src/app/astrologer/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/astrologer/page.tsx):
+     - Removed `Billing: ₹{Math.floor(sessionSeconds / 60) * 19}` per-minute ticker on line 273. Replaced with `Consultation: Flat ₹1,051 (Prepaid)`.
+
+4. **Wallet Displays, Talktime Estimates & Recharge Packs Purged**:
+   - In [`src/app/account/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/page.tsx):
+     - Removed `Available Wallet Balance: ₹{wallet}, ~X mins talktime, + Recharge` card. Replaced with `1-on-1 Vedic Consultation: Flat ₹1,051/-` quick booking card.
+     - Replaced referral wallet credit banner with `Share Aapka Astro & Gift ₹1,051 Promotional Consultation`.
+   - In [`src/app/account/referral/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/referral/page.tsx):
+     - Removed all references to wallet credits, ₹50 free talktime, and per-minute earnings. Repurposed to sharing the flat ₹1,051 consultation link and earning session discount vouchers.
+   - In [`src/app/wallet/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/wallet/page.tsx) & [`src/app/account/wallet/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/wallet/page.tsx):
+     - Removed all 4 wallet recharge packs (₹199, ₹499, ₹999, ₹2499) and talktime calculations.
+     - Repurposed into a **Consultation Bookings & Invoices** screen with direct booking CTA for ₹1,051, downloadable invoice history, and clear statutory notice.
+
+5. **Admin Pricing Panel Purged of Per-Minute Fields & Minimum Recharge**:
+   - In [`src/app/admin/pricing/PricingManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/pricing/PricingManagerClient.tsx):
+     - Removed `Base Consultation Rates (Per Minute - Secondary / Legacy)` section and individual inputs for `chatRate`, `voiceRate`, and `videoRate`.
+     - Removed `Minimum Wallet Recharge (₹)` input.
+     - Redesigned panel to focus exclusively on Flat Consultation Pricing (Promotional Fee ₹1,051, Standard Fee ₹2,100, 50% discount) and verified promo code `FIRST1051`.
+   - In [`src/lib/store/adminStore.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/store/adminStore.ts):
+     - Synchronized flat consultation pricing directly to `FLAT_CONSULTATION_PRICING` and `FIRST_CONSULTATION_OFFER`.
+
+### 26.3 Database Migration Strategy: Archival for Statutory Audit Compliance
+
+| Aspect | Decision | Rationale |
+| :--- | :--- | :--- |
+| **`wallets` Table** | **ARCHIVED (Immutable Audit Ledger)** | Indian accounting standards (ICAI/Companies Act) and GST regulations require maintaining all financial ledgers for 8 statutory fiscal years. Even though active application transactions now use direct `consultation_bookings` pay-per-booking orders, existing test and client wallet records are preserved read-only rather than dropped destructively. |
+| **`wallet_transactions` Table** | **ARCHIVED (Read-Only)** | Preserved as historical receipts for past payments. No new records of type `RECHARGE` or `DEBIT` will be emitted by active frontend components. |
+| **New Primary Financial Entity** | **`consultation_bookings`** | Direct pay-per-booking orders with unique `bookingId`, `standardFee: ₹2,100`, `discountApplied: ₹1,049`, `amountPaid: ₹1,051`, and Razorpay `orderId`/`paymentId`. |
+| **Code Hygiene** | **Clean Cut** | Zero remaining UI references to `/min`, talktime meters, or mid-session wallet debit tickers across the entire user-facing and admin codebase. |
+
+
 
 
 

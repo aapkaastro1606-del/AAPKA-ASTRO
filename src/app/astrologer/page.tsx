@@ -270,7 +270,7 @@ export default function AstrologerCockpitPage() {
 
               <div className="flex items-center gap-4">
                 <div className="font-mono text-xs text-[#7B2D26] font-bold bg-[#FFFDF9] px-3 py-1.5 rounded-lg border border-[#E8D8C3]">
-                  Timer: {Math.floor(sessionSeconds / 60)}m {sessionSeconds % 60}s &bull; Billing: ₹{Math.floor(sessionSeconds / 60) * 19}
+                  Timer: {Math.floor(sessionSeconds / 60)}m {sessionSeconds % 60}s &bull; Consultation: Flat ₹1,051 (Prepaid)
                 </div>
                 <button
                   type="button"

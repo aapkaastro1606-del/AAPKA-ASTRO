@@ -9,12 +9,10 @@ import {
   Save,
   CheckCircle2,
   Percent,
-  Sliders,
-  PhoneCall,
-  Video,
-  MessageSquare,
   Lock,
   AlertCircle,
+  ShieldCheck,
+  Tag,
 } from "lucide-react";
 
 interface PricingManagerClientProps {
@@ -82,10 +80,10 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
                 )}
               </div>
               <h1 className="font-temple text-2xl sm:text-3xl font-bold text-[#7B2D26]">
-                Consultation Pricing &amp; Discount Rules
+                Consultation Pricing &amp; Promotional Rules
               </h1>
               <p className="text-xs sm:text-sm text-[#6E5545] mt-1">
-                Update live per-minute consultation rates, intro discounts, and minimum recharge limits in real-time.
+                Configure live flat-fee consultation rates and promotional first-session pricing in real-time.
               </p>
             </div>
           </div>
@@ -98,7 +96,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
             <div>
               <p className="font-bold">Staff Read-Only View Active</p>
               <p className="mt-0.5 text-amber-800">
-                You have active <strong>VIEW</strong> permissions for platform pricing. Modifying rates, discounts, or wallet recharge limits requires <strong>MANAGE</strong> access granted by the Platform Owner.
+                You have active <strong>VIEW</strong> permissions for platform pricing. Modifying flat rates or promotional discounts requires <strong>MANAGE</strong> access granted by the Platform Owner.
               </p>
             </div>
           </div>
@@ -108,7 +106,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
           <div className="rounded-2xl border border-[#6B8E5A]/40 bg-[#F4F9F2] p-4 text-xs font-bold text-[#2A4720] flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-[#6B8E5A]" />
             <span>
-              Rates updated successfully! All platform banners, booking meters, and timers now reflect new pricing.
+              Pricing rules updated successfully! All platform banners, booking checkout, and modals now reflect new pricing.
             </span>
           </div>
         )}
@@ -127,7 +125,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
               <span>Flat-Fee Consultation Pricing (Pay-Per-Booking)</span>
             </h3>
             <p className="text-xs text-[#6E5545] font-body">
-              Configure the primary flat fees shown sitewide for 1-on-1 personal consultations with Acharya Niraj Kumar.
+              Configure the primary flat consultation fees shown sitewide for 1-on-1 personal consultations across Voice Call, Video Call, and Live Chat.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -155,7 +153,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
                   />
                 </div>
                 <span className="mt-2 block text-[10px] text-[#6E5545]">
-                  Published promotional creative rate: Flat ₹1,051/-
+                  Confirmed promotional creative rate: Flat ₹1,051/-
                 </span>
               </div>
 
@@ -189,111 +187,11 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
             </div>
           </div>
 
-          {/* Per-minute Rates Box */}
-          <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm space-y-6">
-            <h3 className="font-temple text-lg font-bold text-[#7B2D26] flex items-center gap-2">
-              <Sliders className="h-5 w-5 text-[#C1662F]" />
-              <span>Base Consultation Rates (Per Minute - Secondary / Legacy)</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {/* Chat Rate */}
-              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] mb-3">
-                  <MessageSquare className="h-4 w-4 text-[#C1662F]" />
-                  <span>Live Chat</span>
-                </div>
-                <label className="block text-[11px] text-[#6E5545] mb-1">
-                  Rate per minute (₹)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#7B2D26]">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min={5}
-                    max={200}
-                    disabled={!canManage}
-                    value={pricing.chatRate}
-                    onChange={(e) =>
-                      setPricing({ ...pricing, chatRate: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
-                  />
-                </div>
-                <span className="mt-2 block text-[10px] text-[#6E5545]">
-                  With {pricing.discountPercentage}% off: ₹{(pricing.chatRate * (1 - pricing.discountPercentage / 100)).toFixed(1)}/min
-                </span>
-              </div>
-
-              {/* Voice Rate */}
-              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] mb-3">
-                  <PhoneCall className="h-4 w-4 text-[#6B8E5A]" />
-                  <span>Voice Call</span>
-                </div>
-                <label className="block text-[11px] text-[#6E5545] mb-1">
-                  Rate per minute (₹)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#7B2D26]">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min={5}
-                    max={250}
-                    disabled={!canManage}
-                    value={pricing.voiceRate}
-                    onChange={(e) =>
-                      setPricing({ ...pricing, voiceRate: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
-                  />
-                </div>
-                <span className="mt-2 block text-[10px] text-[#6E5545]">
-                  With {pricing.discountPercentage}% off: ₹{(pricing.voiceRate * (1 - pricing.discountPercentage / 100)).toFixed(1)}/min
-                </span>
-              </div>
-
-              {/* Video Rate */}
-              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#7B2D26] mb-3">
-                  <Video className="h-4 w-4 text-[#E8A33D]" />
-                  <span>Video Call</span>
-                </div>
-                <label className="block text-[11px] text-[#6E5545] mb-1">
-                  Rate per minute (₹)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#7B2D26]">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min={5}
-                    max={300}
-                    disabled={!canManage}
-                    value={pricing.videoRate}
-                    onChange={(e) =>
-                      setPricing({ ...pricing, videoRate: Number(e.target.value) })
-                    }
-                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
-                  />
-                </div>
-                <span className="mt-2 block text-[10px] text-[#6E5545]">
-                  With {pricing.discountPercentage}% off: ₹{(pricing.videoRate * (1 - pricing.discountPercentage / 100)).toFixed(1)}/min
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Promotional Rules */}
+          {/* Promotional Offer & Discount Rules */}
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm space-y-6">
             <h3 className="font-temple text-lg font-bold text-[#7B2D26] flex items-center gap-2">
               <Percent className="h-5 w-5 text-[#E8A33D]" />
-              <span>Promotional &amp; Wallet Thresholds</span>
+              <span>Promotional Offer &amp; Coupon Rules</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
@@ -313,26 +211,23 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
                   className="w-full rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] p-3 font-mono text-sm font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
                 />
                 <span className="text-[11px] text-[#6E5545] mt-1 block">
-                  Automatically applied once per verified client account.
+                  Automatically applied once per verified client account on first booking.
                 </span>
               </div>
 
               <div>
                 <label className="block font-bold text-[#3B2A1E] mb-1">
-                  Minimum Wallet Recharge (₹)
+                  Active First-Time Promo Code
                 </label>
-                <input
-                  type="number"
-                  min={50}
-                  disabled={!canManage}
-                  value={pricing.minimumRechargeAmount}
-                  onChange={(e) =>
-                    setPricing({ ...pricing, minimumRechargeAmount: Number(e.target.value) })
-                  }
-                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] p-3 font-mono text-sm font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
-                />
+                <div className="flex items-center rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] p-3">
+                  <Tag className="h-4 w-4 text-[#C1662F] mr-2 shrink-0" />
+                  <span className="font-mono text-sm font-bold text-[#7B2D26]">FIRST1051</span>
+                  <span className="ml-auto text-[10px] font-bold text-[#6B8E5A] bg-[#6B8E5A]/15 px-2 py-0.5 rounded-full">
+                    ACTIVE
+                  </span>
+                </div>
                 <span className="text-[11px] text-[#6E5545] mt-1 block">
-                  Prevents sub-optimal payment gateway transaction charges.
+                  Promotional code verified across all marketing campaigns and welcome banners.
                 </span>
               </div>
             </div>
@@ -342,7 +237,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
             {canManage ? (
               <button
                 type="submit"
-                className="rounded-xl bg-[#7B2D26] px-8 py-3 text-xs sm:text-sm font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md flex items-center gap-2"
+                className="rounded-xl bg-[#7B2D26] px-8 py-3 text-xs sm:text-sm font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <Save className="h-4 w-4 text-[#E8A33D]" />
                 <span>Save &amp; Apply Pricing Rules</span>
