@@ -122,12 +122,16 @@ export interface ConsultationBooking {
   userId: string;
   clientName: string;
   phone: string;
-  format: "Voice Call" | "Video Call" | "Live Chat";
+  productId: "astro" | "vaastu";
+  productName: string;
+  format: string;
   topic: string;
   preferredSlot: string;
   dateOfBirth?: string;
   timeOfBirth?: string;
   placeOfBirth?: string;
+  propertyType?: string;
+  propertyLocation?: string;
   standardFee: number;
   discountApplied: number;
   amountPaid: number;
@@ -140,7 +144,12 @@ export interface ConsultationBooking {
 }
 
 export class ConsultationBookingService {
-  public static calculateFee(isFirstTime: boolean = true): {
+  public static calculateFee(
+    productIdOrIsFirstTime: "astro" | "vaastu" | boolean = "astro",
+    isFirstTimeParam: boolean = true
+  ): {
+    productId: "astro" | "vaastu";
+    productName: string;
     standardFee: number;
     discountAmount: number;
     amountToPay: number;
@@ -148,11 +157,40 @@ export class ConsultationBookingService {
     isFirstTime: boolean;
     promoCode: string;
   } {
+    let productId: "astro" | "vaastu" = "astro";
+    let isFirstTime = true;
+
+    if (typeof productIdOrIsFirstTime === "boolean") {
+      productId = "astro";
+      isFirstTime = productIdOrIsFirstTime;
+    } else {
+      productId = productIdOrIsFirstTime === "vaastu" ? "vaastu" : "astro";
+      isFirstTime = isFirstTimeParam;
+    }
+
+    if (productId === "vaastu") {
+      const standardFee = 25000;
+      const amountToPay = 15000;
+      const discountAmount = 10000;
+      return {
+        productId: "vaastu",
+        productName: "Vaastu Consultation",
+        standardFee,
+        discountAmount,
+        amountToPay,
+        currency: "₹",
+        isFirstTime: false,
+        promoCode: "VAASTU15K",
+      };
+    }
+
     const standardFee = 2100;
     const amountToPay = isFirstTime ? 1051 : 2100;
     const discountAmount = standardFee - amountToPay;
 
     return {
+      productId: "astro",
+      productName: "Astro Consultation",
       standardFee,
       discountAmount,
       amountToPay,
@@ -166,15 +204,19 @@ export class ConsultationBookingService {
     userId: string;
     clientName: string;
     phone: string;
-    format: "Voice Call" | "Video Call" | "Live Chat";
+    productId?: "astro" | "vaastu";
+    format: string;
     topic: string;
     preferredSlot: string;
     dateOfBirth?: string;
     timeOfBirth?: string;
     placeOfBirth?: string;
+    propertyType?: string;
+    propertyLocation?: string;
     isFirstTime?: boolean;
   }): ConsultationBooking {
-    const pricing = this.calculateFee(params.isFirstTime ?? true);
+    const productId = params.productId || "astro";
+    const pricing = this.calculateFee(productId, params.isFirstTime ?? true);
     const bookingId = `book_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     return {
@@ -182,12 +224,16 @@ export class ConsultationBookingService {
       userId: params.userId,
       clientName: params.clientName,
       phone: params.phone,
+      productId,
+      productName: pricing.productName,
       format: params.format,
       topic: params.topic,
       preferredSlot: params.preferredSlot,
       dateOfBirth: params.dateOfBirth,
       timeOfBirth: params.timeOfBirth,
       placeOfBirth: params.placeOfBirth,
+      propertyType: params.propertyType,
+      propertyLocation: params.propertyLocation,
       standardFee: pricing.standardFee,
       discountApplied: pricing.discountAmount,
       amountPaid: pricing.amountToPay,

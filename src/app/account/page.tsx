@@ -26,6 +26,7 @@ import {
 export default function ClientAccountDashboard() {
   const { user, isLoaded } = useUser();
   const [wallet, setWallet] = useState(0);
+  const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
   const profile = ClientAccountStore.getProfile();
   const savedKundlis = ClientAccountStore.getSavedKundlis();
   const consultations = ClientAccountStore.getConsultationHistory();
@@ -42,8 +43,12 @@ export default function ClientAccountDashboard() {
 
   useEffect(() => {
     setWallet(AstrologerStateStore.getWalletBalance());
-    const sync = () => setWallet(AstrologerStateStore.getWalletBalance());
+    const sync = () => {
+      setWallet(AstrologerStateStore.getWalletBalance());
+      setActiveBooking(ClientAccountStore.getActiveBooking());
+    };
     window.addEventListener("astro_state_changed", sync);
+    window.addEventListener("aapka_booking_updated", sync);
 
     if (isLoaded && user) {
       fetch("/api/auth/sync")
@@ -57,14 +62,17 @@ export default function ClientAccountDashboard() {
         .catch(() => {});
     }
 
-    return () => window.removeEventListener("astro_state_changed", sync);
+    return () => {
+      window.removeEventListener("astro_state_changed", sync);
+      window.removeEventListener("aapka_booking_updated", sync);
+    };
   }, [isLoaded, user]);
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Top Profile Banner */}
-        <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#7B2D26] text-[#E8A33D] font-temple text-2xl font-bold shadow-md">
               {user?.imageUrl ? (
@@ -93,28 +101,84 @@ export default function ClientAccountDashboard() {
             </div>
           </div>
 
-          {/* 1-on-1 Consultation Quick Card */}
-          <div className="flex items-center gap-4 w-full md:w-auto bg-[#FBF3E7] p-4 rounded-2xl border border-[#E8D8C3]">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
-                1-on-1 Vedic Consultation
-              </span>
-              <div className="font-mono text-2xl font-black text-[#7B2D26]">
-                Flat ₹1,051/-
+          {/* Pay-Per-Booking Consultation Quick Cards */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            {/* Astro Consultation */}
+            <div className="flex items-center gap-3 bg-[#FBF3E7] p-3.5 rounded-2xl border border-[#E8D8C3] w-full sm:w-auto justify-between sm:justify-start">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
+                  Astro Consultation
+                </span>
+                <div className="font-mono text-xl font-black text-[#7B2D26]">
+                  Flat ₹1,051/-
+                </div>
+                <span className="text-[9px] text-[#6B8E5A] font-semibold block">
+                  50% Off First Session (Reg. ₹2,100)
+                </span>
               </div>
-              <span className="text-[10px] text-[#6B8E5A] font-semibold">
-                Special 50% Off First Session (Reg. ₹2,100)
-              </span>
+              <Link
+                href="/consult?product=astro&offer=FIRST1051"
+                className="rounded-xl bg-[#7B2D26] px-3.5 py-2 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-sm shrink-0"
+              >
+                Book
+              </Link>
             </div>
 
-            <Link
-              href="/consult?offer=FIRST1051"
-              className="rounded-xl bg-[#7B2D26] px-4 py-2.5 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-sm shrink-0"
-            >
-              Book Now
-            </Link>
+            {/* Vaastu Consultation */}
+            <div className="flex items-center gap-3 bg-[#FBF3E7] p-3.5 rounded-2xl border border-[#E8D8C3] w-full sm:w-auto justify-between sm:justify-start">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
+                  Vaastu Consultation
+                </span>
+                <div className="font-mono text-xl font-black text-[#7B2D26]">
+                  Flat ₹15,000/-
+                </div>
+                <span className="text-[9px] text-[#6B8E5A] font-semibold block">
+                  ₹10,000 Off (Reg. ₹25,000)
+                </span>
+              </div>
+              <Link
+                href="/consult?product=vaastu"
+                className="rounded-xl bg-[#6B8E5A] px-3.5 py-2 text-xs font-bold text-[#FFFDF9] hover:bg-[#587749] transition-all shadow-sm shrink-0"
+              >
+                Book
+              </Link>
+            </div>
           </div>
         </div>
+
+        {/* Pending Active Consultation Banner */}
+        {activeBooking && activeBooking.status === "CONFIRMED" && (
+          <div className="rounded-3xl border-2 border-[#7B2D26] bg-[#FFFDF9] p-6 sm:p-7 shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FAF1E4] text-[#7B2D26] border border-[#E8D8C3] shrink-0">
+                  <Clock className="h-7 w-7 text-[#C1662F] animate-spin" />
+                </div>
+                <div>
+                  <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
+                    BOOKING CONFIRMED &bull; PAYMENT RECEIVED
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26] mt-1">
+                    Consultation booked: {activeBooking.productName || (activeBooking.productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}, session pending
+                  </h2>
+                  <p className="text-xs text-[#6E5545] mt-1 font-body">
+                    Format: <strong>{activeBooking.format}</strong> &bull; Amount Paid: <strong>Flat ₹{activeBooking.amountPaid.toLocaleString("en-IN")}</strong> &bull; Astrologer status: <span className="font-bold text-[#6B8E5A]">{astrologerStatus}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <Link
+                  href="/consult"
+                  className="flex-1 sm:flex-none rounded-xl bg-[#7B2D26] px-5 py-3 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-md text-center flex items-center justify-center gap-1.5"
+                >
+                  <span>Open Consultation Room</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Actions Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

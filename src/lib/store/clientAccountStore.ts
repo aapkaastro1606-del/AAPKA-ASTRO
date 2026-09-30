@@ -1,5 +1,6 @@
 // PLACEHOLDER: replace with real content
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
+import { ConsultationBooking } from "@/lib/services/consultationBilling";
 
 export interface SavedKundli {
   id: string;
@@ -152,5 +153,28 @@ export const ClientAccountStore = {
     };
     memoryCallbacks.unshift(newReq);
     return newReq;
+  },
+
+  getActiveBooking: (): ConsultationBooking | null => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("aapka_active_booking");
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return null;
+  },
+
+  setActiveBooking: (booking: ConsultationBooking | null) => {
+    if (typeof window !== "undefined") {
+      try {
+        if (booking) {
+          localStorage.setItem("aapka_active_booking", JSON.stringify(booking));
+        } else {
+          localStorage.removeItem("aapka_active_booking");
+        }
+        window.dispatchEvent(new Event("aapka_booking_updated"));
+      } catch {}
+    }
   },
 };

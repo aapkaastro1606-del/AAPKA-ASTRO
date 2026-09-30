@@ -5,9 +5,10 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId") || "usr_client_demo";
-    const type = (searchParams.get("type") as "chat" | "voice" | "video") || "chat";
+    const productId = (searchParams.get("product") as "astro" | "vaastu") || "astro";
+    const type = searchParams.get("type") || "voice";
 
-    const calculation = await calculateUserConsultationRate(userId, type);
+    const calculation = await calculateUserConsultationRate(userId, productId, type);
 
     return NextResponse.json({
       success: true,

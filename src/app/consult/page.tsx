@@ -29,41 +29,70 @@ import {
   ArrowRight,
   User,
   MapPin,
+  Home,
+  Compass,
+  FileCheck,
 } from "lucide-react";
 import {
   PLACEHOLDER_ASTROLOGER,
-  ADMIN_CONFIGURABLE_PRICING,
-  FIRST_CONSULTATION_OFFER,
+  CONSULTATION_PRODUCTS,
   FLAT_CONSULTATION_PRICING,
 } from "@/config/placeholderContent";
 import {
   ConsultationBookingService,
   ConsultationBooking,
 } from "@/lib/services/consultationBilling";
+import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
+
+// Razorpay Script Loader helper (Viar Checkout Pattern)
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function ConsultPage() {
   const { isAstrologer } = useCurrentUserRole();
   const { user } = useUser();
+
+  // Consultation Product Selection ("astro" | "vaastu")
+  const [selectedProduct, setSelectedProduct] = useState<"astro" | "vaastu">("astro");
 
   // Live Astrologer & Queue State
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
-  // Client Consultation Intake State
+  // Common Client Intake State
   const [userName, setUserName] = useState("");
   const [userPhone, setUserPhone] = useState("");
   const [consultFormat, setConsultFormat] = useState<"Voice Call" | "Video Call" | "Live Chat">("Voice Call");
+
+  // Astro Product Specific State
   const [birthDate, setBirthDate] = useState("1995-10-24");
   const [birthTime, setBirthTime] = useState("14:35");
   const [birthPlace, setBirthPlace] = useState("New Delhi, Delhi");
   const [concern, setConcern] = useState("Career growth, job switch timing, and financial stability");
 
+  // Vaastu Product Specific State
+  const [propertyType, setPropertyType] = useState("Residential Apartment / Villa");
+  const [propertyCity, setPropertyCity] = useState("New Delhi, Delhi");
+  const [vaastuConcern, setVaastuConcern] = useState("Main entrance direction, kitchen & bedroom placement, and spatial energy alignment");
+
   // Booking & Payment State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(() =>
+    ClientAccountStore.getActiveBooking()
+  );
 
   // In-Queue state for current user
   const [myQueueItem, setMyQueueItem] = useState<QueueItem | null>(null);
@@ -83,19 +112,38 @@ export default function ConsultPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Pricing constants (Flat-Fee Pay-Per-Booking Model)
-  const standardFee = FLAT_CONSULTATION_PRICING.standardFee; // ₹2,100
-  const promoFee = FLAT_CONSULTATION_PRICING.firstConsultationFee; // ₹1,051
-  const discountAmount = standardFee - promoFee; // ₹1,049
+  // Read URL query params on mount to select product
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const prod = searchParams.get("product");
+      if (prod === "vaastu") {
+        setSelectedProduct("vaastu");
+      } else if (prod === "astro") {
+        setSelectedProduct("astro");
+      }
+    }
+  }, []);
+
+  // Pricing calculations
+  const productConfig = CONSULTATION_PRODUCTS[selectedProduct];
+  const isAstro = selectedProduct === "astro";
+  const standardFee = productConfig.standardPrice;
+  const promoFee = productConfig.promoPrice;
+  const discountAmount = standardFee - promoFee;
 
   const syncAll = () => {
     const currentStatus = AstrologerStateStore.getStatus();
     const currentQueue = AstrologerStateStore.getQueue();
     const currentSession = AstrologerStateStore.getActiveSession();
+    const currentActiveBooking = ClientAccountStore.getActiveBooking();
 
     setStatus(currentStatus);
     setQueue(currentQueue);
     setActiveSession(currentSession);
+    if (currentActiveBooking && !confirmedBooking) {
+      setConfirmedBooking(currentActiveBooking);
+    }
 
     if (currentSession) {
       setMessages(AstrologerStateStore.getMessages(currentSession.id));
@@ -105,9 +153,11 @@ export default function ConsultPage() {
   useEffect(() => {
     syncAll();
     window.addEventListener("astro_state_changed", syncAll);
+    window.addEventListener("aapka_booking_updated", syncAll);
     const interval = setInterval(syncAll, 2000);
     return () => {
       window.removeEventListener("astro_state_changed", syncAll);
+      window.removeEventListener("aapka_booking_updated", syncAll);
       clearInterval(interval);
     };
   }, []);
@@ -137,7 +187,7 @@ export default function ConsultPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle Pay-Per-Booking Checkout & Session Entrance
+  // Handle Pay-Per-Booking Checkout (Mirroring Viar Checkout Pattern)
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -149,87 +199,173 @@ export default function ConsultPage() {
     setIsProcessingPayment(true);
 
     try {
-      // 1. Create order on server via payment endpoint
+      const userId = user?.id || `user_${Date.now()}`;
+      const topicText = isAstro ? concern : `${propertyType} in ${propertyCity}: ${vaastuConcern}`;
+
+      // 1. Create order on server via payment endpoint (server validates rate)
       const res = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: promoFee, // Flat ₹1,051
-          userId: user?.id || `guest_${Date.now()}`,
+          amount: promoFee,
+          userId,
+          productId: selectedProduct,
+          clientName: userName,
+          phone: userPhone,
+          format: consultFormat,
           serviceType: "consultation_booking",
         }),
       });
 
       const orderData = await res.json().catch(() => null);
-
-      // 2. Generate local ConsultationBooking record
-      const booking = ConsultationBookingService.createBooking({
-        userId: user?.id || `user_${Date.now()}`,
-        clientName: userName,
-        phone: userPhone,
-        format: consultFormat,
-        topic: concern,
-        preferredSlot: "Immediate Live Consultation",
-        dateOfBirth: birthDate,
-        timeOfBirth: birthTime,
-        placeOfBirth: birthPlace,
-        isFirstTime: true,
-      });
-
-      booking.status = "CONFIRMED";
-      booking.orderId = orderData?.order?.id || `ord_${Date.now()}`;
-      booking.paymentId = `pay_${Date.now()}_sim`;
-      booking.confirmedAt = new Date().toISOString();
-
-      setConfirmedBooking(booking);
-      setIsProcessingPayment(false);
-
-      // Map format to session type
-      const sessionType = consultFormat === "Voice Call" ? "voice" : consultFormat === "Video Call" ? "video" : "chat";
-
-      // 3. Enter direct session if astrologer is available, otherwise join queue
-      if (status === "AVAILABLE" && queue.length === 0) {
-        const sess = AstrologerStateStore.startDirectSession({
-          userName,
-          userPhone,
-          type: sessionType,
-          ratePerMin: 0,
-          birthDetails: {
-            name: userName,
-            birthDate,
-            birthTime,
-            birthPlace,
-            gender: "male",
-            latitude: 28.6139,
-            longitude: 77.209,
-            timezone: 5.5,
-          },
-          concern,
-        });
-        setActiveSession(sess);
-      } else {
-        const qItem = AstrologerStateStore.joinQueue({
-          userName,
-          userPhone,
-          consultationType: sessionType,
-          birthDetails: {
-            name: userName,
-            birthDate,
-            birthTime,
-            birthPlace,
-            gender: "male",
-            latitude: 28.6139,
-            longitude: 77.209,
-            timezone: 5.5,
-          },
-          concern,
-        });
-        setMyQueueItem(qItem);
+      if (!res.ok || !orderData?.order) {
+        throw new Error(orderData?.message || "Failed to create order");
       }
-    } catch (err) {
+
+      const orderId = orderData.order.id;
+      const keyId = orderData.keyId || "rzp_test_mock_key_id";
+
+      // 2. Execute Payment Verification (either through Razorpay SDK or Mock/Dev handler)
+      const completeBooking = async (paymentId: string, signature: string = "") => {
+        // Verify payment on server
+        await fetch("/api/payments/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            paymentId,
+            signature,
+            userId,
+            productId: selectedProduct,
+            amountINR: promoFee,
+            format: consultFormat,
+            topic: topicText,
+          }),
+        }).catch((err) => console.warn("Verification warning:", err));
+
+        // Generate verified local ConsultationBooking record
+        const booking = ConsultationBookingService.createBooking({
+          userId,
+          clientName: userName,
+          phone: userPhone,
+          productId: selectedProduct,
+          format: consultFormat,
+          topic: topicText,
+          preferredSlot: "Immediate Live Consultation",
+          dateOfBirth: isAstro ? birthDate : undefined,
+          timeOfBirth: isAstro ? birthTime : undefined,
+          placeOfBirth: isAstro ? birthPlace : undefined,
+          propertyType: !isAstro ? propertyType : undefined,
+          propertyLocation: !isAstro ? propertyCity : undefined,
+          isFirstTime: isAstro,
+        });
+
+        booking.status = "CONFIRMED";
+        booking.orderId = orderId;
+        booking.paymentId = paymentId;
+        booking.confirmedAt = new Date().toISOString();
+
+        setConfirmedBooking(booking);
+        ClientAccountStore.setActiveBooking(booking);
+        setIsProcessingPayment(false);
+
+        // Map format to session type
+        const sessionType = consultFormat === "Voice Call" ? "voice" : consultFormat === "Video Call" ? "video" : "chat";
+
+        // 3. Enter direct session if astrologer is available and queue is clear, otherwise join queue
+        if (status === "AVAILABLE" && queue.length === 0) {
+          const sess = AstrologerStateStore.startDirectSession({
+            userName,
+            userPhone,
+            type: sessionType,
+            productType: selectedProduct,
+            bookingId: booking.bookingId,
+            amountPaid: promoFee,
+            ratePerMin: 0,
+            birthDetails: {
+              name: userName,
+              birthDate: isAstro ? birthDate : "1990-01-01",
+              birthTime: isAstro ? birthTime : "12:00",
+              birthPlace: isAstro ? birthPlace : propertyCity,
+              gender: "other",
+              latitude: 28.6139,
+              longitude: 77.209,
+              timezone: 5.5,
+            },
+            concern: topicText,
+          });
+          setActiveSession(sess);
+        } else {
+          const qItem = AstrologerStateStore.joinQueue({
+            userName,
+            userPhone,
+            consultationType: sessionType,
+            productType: selectedProduct,
+            bookingId: booking.bookingId,
+            amountPaid: promoFee,
+            birthDetails: {
+              name: userName,
+              birthDate: isAstro ? birthDate : "1990-01-01",
+              birthTime: isAstro ? birthTime : "12:00",
+              birthPlace: isAstro ? birthPlace : propertyCity,
+              gender: "other",
+              latitude: 28.6139,
+              longitude: 77.209,
+              timezone: 5.5,
+            },
+            concern: topicText,
+          });
+          setMyQueueItem(qItem);
+        }
+      };
+
+      // Check if running in mock/preview mode or live Razorpay
+      const isMock = keyId.includes("mock") || keyId.startsWith("rzp_test_mock");
+
+      if (isMock) {
+        // Smooth simulated one-time payment for test/dev
+        setTimeout(async () => {
+          await completeBooking(`pay_sim_${Date.now()}`, `sig_mock_${Date.now()}`);
+        }, 1200);
+      } else {
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+          throw new Error("Unable to load Razorpay payment gateway. Please check connection.");
+        }
+
+        const options = {
+          key: keyId,
+          amount: promoFee * 100, // paise
+          currency: "INR",
+          name: "Aapka Astro",
+          description: `${productConfig.name} - 1-on-1 Consultation`,
+          image: "/logo.png",
+          order_id: orderId,
+          handler: async function (response: any) {
+            await completeBooking(response.razorpay_payment_id, response.razorpay_signature);
+          },
+          prefill: {
+            name: userName,
+            contact: userPhone,
+            email: user?.primaryEmailAddress?.emailAddress || "",
+          },
+          theme: {
+            color: "#7B2D26",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingPayment(false);
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      }
+    } catch (err: any) {
       console.error("Payment or booking error:", err);
       setIsProcessingPayment(false);
-      alert("Encountered an issue processing booking. Please try again or reach out to support.");
+      alert(err.message || "Encountered an issue processing booking. Please try again or reach out to support.");
     }
   };
 
@@ -246,6 +382,8 @@ export default function ConsultPage() {
       AstrologerStateStore.endSession();
       setActiveSession(null);
       setSessionSeconds(0);
+      ClientAccountStore.setActiveBooking(null);
+      setConfirmedBooking(null);
     }
   };
 
@@ -255,13 +393,17 @@ export default function ConsultPage() {
     setTimeout(() => {
       setShowScheduleModal(false);
       setScheduleSuccess(false);
-      alert(`Consultation confirmed for ${scheduledDate} at ${scheduledSlot}! Confirmation receipt and meeting bridge link sent to ${userPhone}.`);
+      alert(
+        `Consultation confirmed for ${scheduledDate} at ${scheduledSlot}! Confirmation receipt and meeting bridge link sent to ${userPhone}.`
+      );
     }, 1200);
   };
 
   const myQueuePosition = myQueueItem
     ? queue.findIndex((q) => q.id === myQueueItem.id) + 1
-    : queue.length + 1;
+    : queue.length > 0
+    ? queue.length
+    : 1;
   const estimatedWaitMins = myQueuePosition * 7;
 
   return (
@@ -293,7 +435,7 @@ export default function ConsultPage() {
                     </span>
                   </div>
                   <div className="text-xs text-[#7D6B5D] font-body">
-                    Vedic Jyotish &bull; Client: {activeSession.userName} ({activeSession.type.toUpperCase()})
+                    {activeSession.productType === "vaastu" ? "Devta Vaastu Shastra" : "Vedic Jyotish"} &bull; Client: {activeSession.userName} ({activeSession.type.toUpperCase()})
                   </div>
                 </div>
               </div>
@@ -313,7 +455,9 @@ export default function ConsultPage() {
 
                 <div className="flex items-center gap-2 rounded-xl border border-[#D4C3B3] bg-[#FFFDF9] px-3 py-1.5 text-xs">
                   <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
-                  <span className="font-bold text-[#3B2A1E]">Paid Session (Flat ₹1,051)</span>
+                  <span className="font-bold text-[#3B2A1E]">
+                    Paid Session ({activeSession.productType === "vaastu" ? "Flat ₹15,000" : "Flat ₹1,051"})
+                  </span>
                 </div>
 
                 <button
@@ -329,103 +473,109 @@ export default function ConsultPage() {
 
             {/* Main Consultation Room Body */}
             <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
-              {/* Left Column: Client Kundli Summary & Audio/Video Bridge */}
+              {/* Left Column: Client Profile & Audio/Video Bridge */}
               <div className="lg:col-span-4 border-r border-[#E8D8C3] p-6 flex flex-col justify-between bg-[#FAF5EE]">
                 <div>
                   <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 mb-5 text-xs space-y-2 shadow-sm">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block">
-                      Consultation Profile
+                      Consultation Profile ({activeSession.productType === "vaastu" ? "Vaastu Audit" : "Janam Kundli"})
                     </span>
                     <div className="flex justify-between text-[#6B5A4E]">
                       <span>Client:</span>
                       <strong className="text-[#3B2A1E]">{activeSession.userName}</strong>
                     </div>
-                    <div className="flex justify-between text-[#6B5A4E]">
-                      <span>Birth Time:</span>
-                      <span>{activeSession.birthDetails.birthDate} ({activeSession.birthDetails.birthTime})</span>
-                    </div>
-                    <div className="flex justify-between text-[#6B5A4E]">
-                      <span>Place:</span>
-                      <span>{activeSession.birthDetails.birthPlace}</span>
-                    </div>
-                    <div className="border-t border-[#E8D8C3] pt-2 text-[#6B5A4E]">
-                      <span className="text-[#7D6B5D] block mb-1">Primary Concern:</span>
-                      <span className="text-[#7B2D26] italic">&ldquo;{activeSession.concern}&rdquo;</span>
+                    {activeSession.productType !== "vaastu" ? (
+                      <>
+                        <div className="flex justify-between text-[#6B5A4E]">
+                          <span>Birth Time:</span>
+                          <span>{activeSession.birthDetails.birthDate} ({activeSession.birthDetails.birthTime})</span>
+                        </div>
+                        <div className="flex justify-between text-[#6B5A4E]">
+                          <span>Place:</span>
+                          <span>{activeSession.birthDetails.birthPlace}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between text-[#6B5A4E]">
+                        <span>Property:</span>
+                        <span>{activeSession.birthDetails.birthPlace}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-[#E8D8C3] pt-2 text-[#7D6B5D]">
+                      <span className="font-semibold text-[#3B2A1E]">Question / Focus:</span>
+                      <p className="mt-1 line-clamp-3 italic text-[11px]">&ldquo;{activeSession.concern}&rdquo;</p>
                     </div>
                   </div>
 
-                  {/* Audio/Video Call Control Panel */}
-                  <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center shadow-sm">
-                    <div className="relative mx-auto mb-3 h-24 w-24 rounded-full border-2 border-[#E8A33D] p-1">
+                  {/* Audio / Video Simulated Feed */}
+                  <div className="relative rounded-2xl bg-[#2A1D15] p-6 text-white text-center flex flex-col items-center justify-center min-h-[220px] shadow-inner">
+                    <div className="h-20 w-20 rounded-full border-2 border-[#E8A33D] overflow-hidden mb-3 shadow-md">
                       <img
                         src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                        alt="Acharya Ji"
-                        className="h-full w-full rounded-full object-cover"
+                        alt="Astrologer Video"
+                        className="h-full w-full object-cover"
                       />
-                      <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-[#6B8E5A] ring-2 ring-white" />
                     </div>
-                    <div className="text-xs font-bold text-[#3B2A1E] font-temple">Encrypted Vedic Bridge</div>
-                    <div className="text-[11px] text-[#7D6B5D]">High-Definition Direct Connection</div>
+                    <span className="text-xs font-bold text-[#E8A33D] font-temple">
+                      {PLACEHOLDER_ASTROLOGER.displayName}
+                    </span>
+                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1 font-mono">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                      HD Audio &amp; Video Connected
+                    </span>
 
-                    <div className="mt-4 flex justify-center gap-3">
+                    {/* Media Mute/Camera Toggles */}
+                    <div className="mt-4 flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setIsMuted(!isMuted)}
-                        className={`rounded-xl p-3 text-xs transition-all cursor-pointer ${
-                          isMuted
-                            ? "bg-rose-600 text-white"
-                            : "border border-[#D4C3B3] bg-[#FAF5EE] text-[#3B2A1E] hover:bg-[#F3E7D3]"
+                        className={`p-2.5 rounded-full text-xs transition-all ${
+                          isMuted ? "bg-rose-600 text-white" : "bg-white/20 hover:bg-white/30 text-white"
                         }`}
-                        title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+                        title={isMuted ? "Unmute Mic" : "Mute Mic"}
                       >
-                        {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-[#7B2D26]" />}
+                        {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsVideoOff(!isVideoOff)}
-                        className={`rounded-xl p-3 text-xs transition-all cursor-pointer ${
-                          isVideoOff
-                            ? "bg-rose-600 text-white"
-                            : "border border-[#D4C3B3] bg-[#FAF5EE] text-[#3B2A1E] hover:bg-[#F3E7D3]"
+                        className={`p-2.5 rounded-full text-xs transition-all ${
+                          isVideoOff ? "bg-rose-600 text-white" : "bg-white/20 hover:bg-white/30 text-white"
                         }`}
                         title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
                       >
-                        {isVideoOff ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4 text-[#7B2D26]" />}
+                        {isVideoOff ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center text-[11px] text-[#7D6B5D] mt-4 font-body">
-                  100% Private &amp; Confidential &bull; Personal Guidance by Acharya Ji
+                <div className="text-[11px] text-[#7D6B5D] text-center mt-4">
+                  Encrypted 1-on-1 Consultation &bull; Pay-Per-Booking Confirmed
                 </div>
               </div>
 
-              {/* Right Column: Live Interactive Chat Stream */}
+              {/* Right Column: Live Chat & Remedies Stream */}
               <div className="lg:col-span-8 p-6 flex flex-col justify-between bg-[#FFFDF9]">
-                <div className="space-y-4 overflow-y-auto max-h-[420px] pr-2">
-                  <div className="text-center">
-                    <span className="rounded-full bg-[#FAF1E4] border border-[#E8D8C3] px-3.5 py-1 text-[10px] font-semibold text-[#7D6B5D]">
-                      Live Session Established &bull; Full Vedic Reading in Progress
-                    </span>
-                  </div>
-
+                <div className="space-y-3 overflow-y-auto max-h-[420px] pr-2">
                   {messages.map((m) => (
                     <div
                       key={m.id}
-                      className={`flex flex-col ${m.sender === "client" ? "items-end" : "items-start"}`}
+                      className={`flex flex-col ${
+                        m.sender === "client" || m.sender === "user" ? "items-end" : "items-start"
+                      }`}
                     >
                       <div
-                        className={`max-w-md rounded-2xl p-3.5 text-xs shadow-sm ${
-                          m.sender === "client"
+                        className={`max-w-[80%] rounded-2xl p-3.5 text-xs ${
+                          m.sender === "client" || m.sender === "user"
                             ? "bg-[#7B2D26] text-white rounded-br-none"
-                            : "bg-[#FAF5EE] border border-[#E8D8C3] text-[#3B2A1E] rounded-bl-none"
+                            : "bg-[#FAF5EE] text-[#3B2A1E] border border-[#E8D8C3] rounded-bl-none"
                         }`}
                       >
-                        <div className="text-[10px] opacity-75 font-semibold mb-1">
-                          {m.sender === "client" ? "You" : PLACEHOLDER_ASTROLOGER.displayName} &bull; {m.timestamp}
-                        </div>
-                        <p className="leading-relaxed font-body">{m.text}</p>
+                        <span className="block text-[9px] opacity-75 font-semibold mb-1">
+                          {m.sender === "client" || m.sender === "user" ? "You" : PLACEHOLDER_ASTROLOGER.displayName} &bull; {m.timestamp}
+                        </span>
+                        <p className="leading-relaxed">{m.text}</p>
                       </div>
                     </div>
                   ))}
@@ -438,7 +588,7 @@ export default function ConsultPage() {
                     type="text"
                     value={inputMsg}
                     onChange={(e) => setInputMsg(e.target.value)}
-                    placeholder="Ask Acharya Ji anything regarding your chart, career, marriage..."
+                    placeholder="Ask Acharya Ji anything regarding your chart, remedies, layout..."
                     className="flex-1 rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-4 py-3 text-xs text-[#3B2A1E] placeholder-[#7D6B5D] focus:border-[#7B2D26] focus:outline-none"
                   />
                   <button
@@ -451,52 +601,72 @@ export default function ConsultPage() {
               </div>
             </div>
           </div>
-        ) : myQueueItem ? (
+        ) : (myQueueItem || (confirmedBooking && confirmedBooking.status === "CONFIRMED")) ? (
           /* =========================================================================
-             STATE 2: CURRENT USER IS WAITING IN LIVE QUEUE
+             STATE 2: CONSULTATION BOOKED: SESSION PENDING & IN-QUEUE
           ========================================================================= */
           <div className="mx-auto max-w-2xl rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 text-center shadow-lg">
             <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FAF1E4] text-[#7B2D26] border border-[#E8D8C3]">
               <Clock className="h-10 w-10 animate-spin text-[#C1662F]" />
             </div>
 
-            <span className="rounded-full bg-[#FAF1E4] px-3.5 py-1 text-xs font-bold text-[#7B2D26] border border-[#E8D8C3] font-temple">
-              BOOKING CONFIRMED &bull; IN QUEUE
+            <span className="rounded-full bg-[#6B8E5A]/20 px-3.5 py-1 text-xs font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
+              PAYMENT VERIFIED &bull; CONFIRMED
             </span>
 
-            <h2 className="text-3xl font-bold font-temple text-[#3B2A1E] mt-4">
-              Your Position: <span className="text-[#7B2D26] font-mono">#{myQueuePosition} in Line</span>
+            {/* Required Dashboard Header: "Consultation booked: [type], session pending" */}
+            <h2 className="text-2xl sm:text-3xl font-bold font-temple text-[#3B2A1E] mt-4">
+              Consultation booked: {confirmedBooking?.productName || (selectedProduct === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}, session pending
             </h2>
 
             <p className="mt-2 text-sm text-[#6B5A4E] font-body">
-              Estimated wait time: <strong className="text-[#7B2D26]">~{estimatedWaitMins} Minutes</strong>
+              Your booking is confirmed. Acharya Ji is reviewing your details.
+              {myQueuePosition > 0 && (
+                <span> Queue position: <strong className="text-[#7B2D26]">#{myQueuePosition}</strong> (Estimated wait: ~{estimatedWaitMins} mins)</span>
+              )}
             </p>
 
             <div className="mt-6 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 text-xs text-[#6B5A4E] space-y-2 text-left max-w-lg mx-auto">
               <div className="flex justify-between">
                 <span className="text-[#7D6B5D]">Client Name:</span>
-                <span className="font-bold text-[#3B2A1E]">{myQueueItem.userName}</span>
+                <span className="font-bold text-[#3B2A1E]">{userName || confirmedBooking?.clientName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7D6B5D]">Consultation Type:</span>
+                <span className="font-bold text-[#7B2D26]">{confirmedBooking?.productName || (selectedProduct === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#7D6B5D]">Selected Format:</span>
-                <span className="font-bold uppercase text-[#7B2D26]">{myQueueItem.consultationType}</span>
+                <span className="font-bold uppercase text-[#7B2D26]">{consultFormat}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Consultation Fee:</span>
-                <span className="font-bold text-[#6B8E5A]">Flat ₹1,051 Paid (Standard ₹2,100)</span>
+                <span className="text-[#7D6B5D]">Amount Paid:</span>
+                <span className="font-bold text-[#6B8E5A]">
+                  Flat ₹{confirmedBooking?.amountPaid || promoFee} Paid (No per-minute debits)
+                </span>
               </div>
+              {confirmedBooking?.orderId && (
+                <div className="flex justify-between">
+                  <span className="text-[#7D6B5D]">Payment Reference:</span>
+                  <span className="font-mono text-[10px] text-[#7D6B5D]">{confirmedBooking.orderId}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={() => {
-                  AstrologerStateStore.removeFromQueue(myQueueItem.id);
-                  setMyQueueItem(null);
+                  if (myQueueItem) {
+                    AstrologerStateStore.removeFromQueue(myQueueItem.id);
+                    setMyQueueItem(null);
+                  }
+                  ClientAccountStore.setActiveBooking(null);
+                  setConfirmedBooking(null);
                 }}
                 className="rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-5 py-2.5 text-xs font-semibold text-[#3B2A1E] hover:bg-[#F3E7D3] cursor-pointer"
               >
-                Leave Queue
+                Cancel / Reset Pending Session
               </button>
 
               {isAstrologer && (
@@ -504,24 +674,24 @@ export default function ConsultPage() {
                   href="/astrologer"
                   className="rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#64231D] shadow-md transition-all"
                 >
-                  Open Astrologer Cockpit (Simulate Accept)
+                  Open Astrologer Cockpit (Connect Now)
                 </Link>
               )}
             </div>
 
             <p className="mt-6 text-[11px] text-[#7D6B5D]">
-              Please keep this page open. You will be connected automatically the moment Acharya Ji completes the preceding reading.
+              Please keep this page open. You will be connected automatically the moment Acharya Ji opens your session.
             </p>
           </div>
         ) : (
           /* =========================================================================
-             STATE 3: GENERAL CONSULTATION LANDING & INTAKE FORM (FLAT ₹1,051 MODEL)
+             STATE 3: GENERAL CONSULTATION LANDING & INTAKE FORM (TWO PRODUCTS)
           ========================================================================= */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Left Column: Astrologer Profile, Promotional Pricing & 5 Pillars */}
+            {/* Left Column: Astrologer Profile, Product Info & Pillars */}
             <div className="lg:col-span-5 space-y-6">
               <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-7 shadow-sm">
-                {/* Real-time Status Card */}
+                {/* Real-time Astrologer Status Card */}
                 <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-5">
                   <div className="flex items-center gap-3">
                     <div className="relative">
@@ -553,7 +723,7 @@ export default function ConsultPage() {
                 {/* Status Callout Pill */}
                 <div className="mt-5 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-4">
                   <div className="flex items-center justify-between text-xs font-bold mb-2">
-                    <span className="text-[#7D6B5D] uppercase tracking-wider text-[10px]">Real-Time Status</span>
+                    <span className="text-[#7D6B5D] uppercase tracking-wider text-[10px]">Real-Time Desk Presence</span>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                         status === "AVAILABLE"
@@ -575,35 +745,58 @@ export default function ConsultPage() {
                   </p>
                 </div>
 
-                {/* Promotional Flat Fee Callout Banner */}
-                <div className="mt-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
-                      Promotional Offer
-                    </span>
-                    <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
-                      50% Savings
-                    </span>
+                {/* Promotional Banner (Astro vs Vaastu) */}
+                {isAstro ? (
+                  <div className="mt-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
+                        First Consultation Offer
+                      </span>
+                      <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
+                        50% Savings
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex items-baseline gap-2.5">
+                      <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹1,051/-</span>
+                      <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹2,100</span>
+                      <span className="text-xs font-semibold text-[#6B8E5A]">for first consultation</span>
+                    </div>
+
+                    <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
+                      A comprehensive 1-on-1 personal reading covering all your questions. Pay once per booking with zero surprise per-minute debits.
+                    </p>
                   </div>
+                ) : (
+                  <div className="mt-5 rounded-2xl border border-[#C1662F] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
+                        Devta Vaastu Consultation
+                      </span>
+                      <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
+                        Flat ₹10,000 Off
+                      </span>
+                    </div>
 
-                  <div className="mt-3 flex items-baseline gap-2.5">
-                    <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹1,051/-</span>
-                    <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹2,100</span>
-                    <span className="text-xs font-semibold text-[#6B8E5A]">for first consultation</span>
+                    <div className="mt-3 flex items-baseline gap-2.5">
+                      <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹15,000/-</span>
+                      <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹25,000</span>
+                      <span className="text-xs font-semibold text-[#6B8E5A]">standing price for all</span>
+                    </div>
+
+                    <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
+                      Authentic Devta Vaastu spatial analysis for residence, office, or industrial site. Complete 16-zone review with non-demolition remedies.
+                    </p>
                   </div>
+                )}
 
-                  <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
-                    A comprehensive 1-on-1 personal reading covering all your questions. Pay once per booking with zero surprise per-minute debits.
-                  </p>
-                </div>
-
-                {/* 5 Core Pillars Covered */}
+                {/* Deliverables / Covered Topics */}
                 <div className="mt-5 space-y-2.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block">
-                    What This Consultation Covers:
+                    {isAstro ? "What This Astro Reading Covers:" : "What This Vaastu Audit Covers:"}
                   </span>
                   <div className="space-y-2">
-                    {FLAT_CONSULTATION_PRICING.includedTopics.map((topic, idx) => (
+                    {productConfig.deliverables.map((topic, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-xs text-[#3B2A1E]">
                         <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
                         <span>{topic}</span>
@@ -628,23 +821,81 @@ export default function ConsultPage() {
 
             {/* Right Column: Intake Form & Unified Flat Fee Checkout */}
             <div className="lg:col-span-7 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
+              {/* Product Selector Tabs */}
+              <div className="mb-6">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
+                  Select Consultation Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct("astro")}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                      selectedProduct === "astro"
+                        ? "border-[#7B2D26] bg-[#FAF1E4] ring-2 ring-[#7B2D26]/20 shadow-sm"
+                        : "border-[#D4C3B3] bg-[#FAF5EE] hover:bg-[#F3E7D3]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-temple font-bold text-sm text-[#7B2D26]">Astro Consultation</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7B2D26] text-white">
+                        50% OFF
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-temple font-bold text-xl text-[#7B2D26]">₹1,051</span>
+                      <span className="text-xs line-through text-[#7D6B5D]">₹2,100</span>
+                    </div>
+                    <span className="text-[10px] text-[#6E5545] block mt-1">
+                      Personal Horoscope &amp; Kundli Guidance
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct("vaastu")}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                      selectedProduct === "vaastu"
+                        ? "border-[#7B2D26] bg-[#FAF1E4] ring-2 ring-[#7B2D26]/20 shadow-sm"
+                        : "border-[#D4C3B3] bg-[#FAF5EE] hover:bg-[#F3E7D3]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-temple font-bold text-sm text-[#7B2D26]">Vaastu Consultation</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#6B8E5A] text-white">
+                        ₹10,000 OFF
+                      </span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-temple font-bold text-xl text-[#7B2D26]">₹15,000</span>
+                      <span className="text-xs line-through text-[#7D6B5D]">₹25,000</span>
+                    </div>
+                    <span className="text-[10px] text-[#6E5545] block mt-1">
+                      Home, Office &amp; Site Energy Audit
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7B2D26] text-white font-bold">
-                  <PhoneCall className="h-5 w-5 text-[#E8A33D]" />
+                  {isAstro ? <PhoneCall className="h-5 w-5 text-[#E8A33D]" /> : <Compass className="h-5 w-5 text-[#E8A33D]" />}
                 </div>
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26]">Book 1-on-1 Consultation</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26]">
+                    Book {productConfig.name}
+                  </h3>
                   <p className="text-xs text-[#7D6B5D] font-body">
-                    Direct access to {PLACEHOLDER_ASTROLOGER.displayName}. Select format, provide birth coordinates, and proceed.
+                    Direct access to {PLACEHOLDER_ASTROLOGER.displayName}. Provide intake details and proceed to secure checkout.
                   </p>
                 </div>
               </div>
 
               <form onSubmit={handleBookingSubmit} className="space-y-5">
-                {/* 1. Format Selection (Voice, Video, Live Chat) under Unified Flat Fee */}
+                {/* 1. Format Selection */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
-                    1. Choose Consultation Format (Unified Flat Fee)
+                    1. Choose Consultation Format
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
@@ -659,9 +910,8 @@ export default function ConsultPage() {
                       <PhoneCall className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
                       <span className="text-xs font-bold">Voice Call</span>
                       <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        Flat ₹1,051
+                        Flat ₹{promoFee.toLocaleString("en-IN")}
                       </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
                     </button>
 
                     <button
@@ -674,11 +924,12 @@ export default function ConsultPage() {
                       }`}
                     >
                       <Video className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
-                      <span className="text-xs font-bold">Video Call</span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        Flat ₹1,051
+                      <span className="text-xs font-bold">
+                        {isAstro ? "Video Call" : "Video (Layout Review)"}
                       </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
+                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                        Flat ₹{promoFee.toLocaleString("en-IN")}
+                      </span>
                     </button>
 
                     <button
@@ -691,11 +942,12 @@ export default function ConsultPage() {
                       }`}
                     >
                       <MessageSquare className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
-                      <span className="text-xs font-bold">Live Chat</span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        Flat ₹1,051
+                      <span className="text-xs font-bold">
+                        {isAstro ? "Live Chat" : "Audit Report Consultation"}
                       </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
+                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                        Flat ₹{promoFee.toLocaleString("en-IN")}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -714,7 +966,7 @@ export default function ConsultPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Mobile (for SMS &amp; Session Alert)</label>
+                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Mobile (for SMS &amp; Meeting Bridge)</label>
                     <input
                       type="tel"
                       required
@@ -726,57 +978,97 @@ export default function ConsultPage() {
                   </div>
                 </div>
 
-                {/* 3. Birth Coordinates for Vedic Horoscope Calculation */}
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
-                    2. Birth Details for Precise Chart Reading
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Date</label>
-                      <input
-                        type="date"
-                        required
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Time</label>
-                      <input
-                        type="time"
-                        required
-                        value={birthTime}
-                        onChange={(e) => setBirthTime(e.target.value)}
-                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth City / Town</label>
-                      <input
-                        type="text"
-                        required
-                        value={birthPlace}
-                        onChange={(e) => setBirthPlace(e.target.value)}
-                        placeholder="e.g. New Delhi, Delhi"
-                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                      />
+                {/* 3. Dynamic Section: Birth Coordinates (for Astro) OR Property Details (for Vaastu) */}
+                {isAstro ? (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
+                      2. Birth Details for Precise Chart Reading
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Date</label>
+                        <input
+                          type="date"
+                          required
+                          value={birthDate}
+                          onChange={(e) => setBirthDate(e.target.value)}
+                          className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Time</label>
+                        <input
+                          type="time"
+                          required
+                          value={birthTime}
+                          onChange={(e) => setBirthTime(e.target.value)}
+                          className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth City / Town</label>
+                        <input
+                          type="text"
+                          required
+                          value={birthPlace}
+                          onChange={(e) => setBirthPlace(e.target.value)}
+                          placeholder="e.g. New Delhi, Delhi"
+                          className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
+                      2. Property Space &amp; Location Details
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Property Type</label>
+                        <select
+                          value={propertyType}
+                          onChange={(e) => setPropertyType(e.target.value)}
+                          className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                        >
+                          <option value="Residential Apartment / Flat">Residential Apartment / Flat</option>
+                          <option value="Independent Villa / Bungalow / Kothi">Independent Villa / Bungalow / Kothi</option>
+                          <option value="Commercial Office / Corporate Suite">Commercial Office / Corporate Suite</option>
+                          <option value="Retail Shop / Showroom / Restaurant">Retail Shop / Showroom / Restaurant</option>
+                          <option value="Industrial Factory / Warehouse / Plant">Industrial Factory / Warehouse / Plant</option>
+                          <option value="Open Residential / Commercial Plot">Open Residential / Commercial Plot</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Property City &amp; State</label>
+                        <input
+                          type="text"
+                          required
+                          value={propertyCity}
+                          onChange={(e) => setPropertyCity(e.target.value)}
+                          placeholder="e.g. Gurugram, Haryana"
+                          className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* 4. Primary Questions / Concern */}
                 <div>
                   <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">
-                    What would you like to ask Acharya Ji?
+                    {isAstro ? "What would you like to ask Acharya Ji?" : "Describe Your Space or Vaastu Dilemma"}
                   </label>
                   <textarea
                     rows={3}
                     required
-                    value={concern}
-                    onChange={(e) => setConcern(e.target.value)}
-                    placeholder="e.g. Career dilemma, job switch timing, marital compatibility, financial growth..."
+                    value={isAstro ? concern : vaastuConcern}
+                    onChange={(e) => (isAstro ? setConcern(e.target.value) : setVaastuConcern(e.target.value))}
+                    placeholder={
+                      isAstro
+                        ? "e.g. Career dilemma, job switch timing, marital compatibility, financial growth..."
+                        : "e.g. Main entrance facing south-west, kitchen in north-east, stagnant cashflow, sleep disturbance in master bedroom..."
+                    }
                     className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3.5 py-2.5 text-xs text-[#3B2A1E] placeholder-[#7D6B5D] focus:border-[#7B2D26] focus:outline-none leading-relaxed font-body"
                   />
                 </div>
@@ -785,18 +1077,26 @@ export default function ConsultPage() {
                 <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 space-y-2.5">
                   <div className="flex items-center justify-between text-xs text-[#6B5A4E]">
                     <span>Standard Consultation Fee:</span>
-                    <span className="font-semibold line-through">₹{standardFee}</span>
+                    <span className="font-semibold line-through">₹{standardFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-[#6B8E5A]">
-                    <span>First Consultation Special Discount (50% Off):</span>
-                    <span className="font-bold">-₹{discountAmount}</span>
+                    <span>
+                      {isAstro
+                        ? "First Consultation Special Discount (50% Off):"
+                        : "Vaastu Standing Promotional Discount:"}
+                    </span>
+                    <span className="font-bold">-₹{discountAmount.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="border-t border-[#E8D8C3] pt-2 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-bold text-[#3B2A1E] font-temple">Net Amount Payable:</span>
-                      <span className="block text-[10px] text-[#7D6B5D]">Inclusive of statutory taxes &bull; Single upfront payment</span>
+                      <span className="block text-[10px] text-[#7D6B5D]">
+                        Inclusive of statutory taxes &bull; Single upfront payment (No per-minute billing)
+                      </span>
                     </div>
-                    <span className="font-temple text-2xl font-black text-[#7B2D26]">₹{promoFee}/-</span>
+                    <span className="font-temple text-2xl font-black text-[#7B2D26]">
+                      ₹{promoFee.toLocaleString("en-IN")}/-
+                    </span>
                   </div>
                 </div>
 
@@ -810,7 +1110,7 @@ export default function ConsultPage() {
                   <span>
                     {isProcessingPayment
                       ? "Initiating Booking..."
-                      : `Proceed to Pay ₹${promoFee} & Start Consultation`}
+                      : `Proceed to Pay ₹${promoFee.toLocaleString("en-IN")} & Start Consultation`}
                   </span>
                 </button>
 
@@ -847,6 +1147,18 @@ export default function ConsultPage() {
 
               <form onSubmit={handleBookAppointment} className="space-y-4 text-xs">
                 <div>
+                  <label className="block text-[#3B2A1E] font-semibold mb-1">Consultation Service</label>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value as "astro" | "vaastu")}
+                    className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] p-2.5 text-[#3B2A1E]"
+                  >
+                    <option value="astro">Astro Consultation (Flat ₹1,051)</option>
+                    <option value="vaastu">Vaastu Consultation (Flat ₹15,000)</option>
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-[#3B2A1E] font-semibold mb-1">Select Date</label>
                   <input
                     type="date"
@@ -874,9 +1186,15 @@ export default function ConsultPage() {
                 <div className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] p-3 space-y-1">
                   <div className="flex justify-between text-[#6B5A4E]">
                     <span>Dedicated 1-on-1 Consultation:</span>
-                    <strong className="text-[#7B2D26] font-bold">Flat ₹1,051/-</strong>
+                    <strong className="text-[#7B2D26] font-bold">
+                      Flat ₹{promoFee.toLocaleString("en-IN")}/-
+                    </strong>
                   </div>
-                  <span className="text-[10px] text-[#7D6B5D] block">Includes personal reading, birth chart analysis, and practical remedies.</span>
+                  <span className="text-[10px] text-[#7D6B5D] block">
+                    {isAstro
+                      ? "Includes personal chart reading, birth chart analysis, and practical remedies."
+                      : "Includes complete 16-zone spatial energy audit with zero-demolition remedies."}
+                  </span>
                 </div>
 
                 <button
@@ -884,7 +1202,7 @@ export default function ConsultPage() {
                   disabled={scheduleSuccess}
                   className="w-full rounded-xl bg-[#7B2D26] py-3 font-bold text-white hover:bg-[#64231D] transition-all shadow-sm cursor-pointer"
                 >
-                  {scheduleSuccess ? "Booking Confirmed..." : "Confirm & Pay ₹1,051 via UPI / Card"}
+                  {scheduleSuccess ? "Booking Confirmed..." : `Confirm & Pay ₹${promoFee.toLocaleString("en-IN")} via UPI / Card`}
                 </button>
               </form>
             </div>

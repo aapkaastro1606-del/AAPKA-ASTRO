@@ -1,9 +1,23 @@
-import { ADMIN_CONFIGURABLE_PRICING, PricingTier, FLAT_CONSULTATION_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
+import {
+  ADMIN_CONFIGURABLE_PRICING,
+  PricingTier,
+  FLAT_CONSULTATION_PRICING,
+  FIRST_CONSULTATION_OFFER,
+  CONSULTATION_PRODUCTS,
+} from "@/config/placeholderContent";
 
 export interface PricingSettings {
+  // Product 1: Astro Consultation
   flatStandardFee: number;
   flatFirstConsultationFee: number;
   discountPercentage: number;
+
+  // Product 2: Vaastu Consultation
+  vaastuStandardFee: number;
+  vaastuPromoFee: number;
+  vaastuDiscountPercentage?: number;
+
+  // Optional legacy fields for backward compatibility
   chatRate?: number;
   voiceRate?: number;
   videoRate?: number;
@@ -27,6 +41,9 @@ let memoryPricing: PricingSettings = {
   flatStandardFee: FLAT_CONSULTATION_PRICING.standardFee,
   flatFirstConsultationFee: FLAT_CONSULTATION_PRICING.firstConsultationFee,
   discountPercentage: 50,
+  vaastuStandardFee: 25000,
+  vaastuPromoFee: 15000,
+  vaastuDiscountPercentage: 40,
   chatRate: 15,
   voiceRate: 20,
   videoRate: 25,
@@ -72,6 +89,7 @@ export const AdminStore = {
     if (updates.flatStandardFee !== undefined) {
       FLAT_CONSULTATION_PRICING.standardFee = updates.flatStandardFee;
       FIRST_CONSULTATION_OFFER.standardFee = updates.flatStandardFee;
+      CONSULTATION_PRODUCTS.astro.standardPrice = updates.flatStandardFee;
       ADMIN_CONFIGURABLE_PRICING.chat.standardFee = updates.flatStandardFee;
       ADMIN_CONFIGURABLE_PRICING.voice.standardFee = updates.flatStandardFee;
       ADMIN_CONFIGURABLE_PRICING.video.standardFee = updates.flatStandardFee;
@@ -79,12 +97,19 @@ export const AdminStore = {
     if (updates.flatFirstConsultationFee !== undefined) {
       FLAT_CONSULTATION_PRICING.firstConsultationFee = updates.flatFirstConsultationFee;
       FIRST_CONSULTATION_OFFER.promotionalFee = updates.flatFirstConsultationFee;
+      CONSULTATION_PRODUCTS.astro.promoPrice = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.chat.flatFee = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.voice.flatFee = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.video.flatFee = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
       ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate = updates.flatFirstConsultationFee;
+    }
+    if (updates.vaastuStandardFee !== undefined) {
+      CONSULTATION_PRODUCTS.vaastu.standardPrice = updates.vaastuStandardFee;
+    }
+    if (updates.vaastuPromoFee !== undefined) {
+      CONSULTATION_PRODUCTS.vaastu.promoPrice = updates.vaastuPromoFee;
     }
     if (updates.discountPercentage !== undefined) {
       ADMIN_CONFIGURABLE_PRICING.chat.discountPercentage = updates.discountPercentage;

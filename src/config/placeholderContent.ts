@@ -69,6 +69,60 @@ export const OFFICIAL_GALLERY_IMAGES = [
   },
 ];
 
+// Two Flat-Fee Pay-Per-Booking Consultation Products (mirroring Viar one-time checkout pattern)
+export interface ConsultationProductConfig {
+  id: "astro" | "vaastu";
+  name: string;
+  tagline: string;
+  badge: string;
+  standardPrice: number;
+  promoPrice: number;
+  firstTimeOnly: boolean;
+  currency: string;
+  description: string;
+  deliverables: string[];
+  formats: string[];
+}
+
+export const CONSULTATION_PRODUCTS: Record<"astro" | "vaastu", ConsultationProductConfig> = {
+  astro: {
+    id: "astro",
+    name: "Astro Consultation",
+    tagline: "Comprehensive 1-on-1 Personal Vedic Jyotish Consultation",
+    badge: "50% Off First Consultation",
+    standardPrice: 2100,
+    promoPrice: 1051,
+    firstTimeOnly: true, // Gated per user ID server-side, one-time only
+    currency: "₹",
+    description: "Detailed birth chart examination, planetary transits, dasha analysis, and customized Vedic remedies with Acharya Abhishek Bhardwaj.",
+    deliverables: [
+      "Full Janam Kundli & D10/D9 chart analysis",
+      "Career, business, marriage, and health predictions",
+      "Dasha timeline & current Sade Sati/Rahu impacts",
+      "Non-destructive remedial guidance & mantras",
+    ],
+    formats: ["Voice Call", "Video Call", "Live Chat"],
+  },
+  vaastu: {
+    id: "vaastu",
+    name: "Vaastu Consultation",
+    tagline: "Authentic Devta Vaastu Architectural & Spatial Energy Alignment",
+    badge: "Standing Offer: Flat ₹10,000 Off",
+    standardPrice: 25000,
+    promoPrice: 15000,
+    firstTimeOnly: false, // Standing price for everyone, NOT gated by first-time check
+    currency: "₹",
+    description: "In-depth spatial and architectural evaluation of your residence, commercial office, or industrial site according to classical Devta Vaastu sans demolition.",
+    deliverables: [
+      "16-zone directional energy mapping",
+      "Entrance, kitchen, bedroom, and workspace layout analysis",
+      "Elemental balancing (Earth, Water, Fire, Air, Space)",
+      "Zero-demolition remedial treatments & energy stabilizers",
+    ],
+    formats: ["Video Call (Floorplan Review)", "Voice Call", "Digital Report Consultation"],
+  },
+};
+
 // Flat-Fee Pay-Per-Booking Consultation Configuration (Source of Truth: Confirmed Promotional Creative)
 export interface FlatConsultationPricing {
   standardFee: number;

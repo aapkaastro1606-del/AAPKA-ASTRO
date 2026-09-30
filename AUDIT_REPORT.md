@@ -1533,6 +1533,97 @@ Per client directive:
 | **New Primary Financial Entity** | **`consultation_bookings`** | Direct pay-per-booking orders with unique `bookingId`, `standardFee: ₹2,100`, `discountApplied: ₹1,049`, `amountPaid: ₹1,051`, and Razorpay `orderId`/`paymentId`. |
 | **Code Hygiene** | **Clean Cut** | Zero remaining UI references to `/min`, talktime meters, or mid-session wallet debit tickers across the entire user-facing and admin codebase. |
 
+---
+
+## 27. Implementation of Two Flat-Fee Products & Viar One-Time Checkout Pattern
+
+### 27.1 Product Architecture: Astro & Vaastu Consultations
+The pay-per-booking consultation infrastructure has been expanded to support the two confirmed core consultation offerings:
+
+1. **Astro Consultation**:
+   - **Standard Price**: ₹2,100/-
+   - **First-Time Promotional Price**: Flat ₹1,051/- (50% Off / ₹1,049 Savings)
+   - **Gating Mechanism**: Server-side anti-abuse verification (`calculateUserConsultationRate`). Inquiries to `prisma.session.count` check if the user has completed prior sessions. First-time seekers receive ₹1,051; returning seekers pay the standard ₹2,100.
+   - **Deliverables**: Personal Janam Kundli analysis, career/business timing, marriage compatibility, dasha timeline, and non-destructive Vedic remedies.
+   - **Intake**: Client name, phone number, format (Voice / Video / Live Chat), birth coordinates (date, time, city), and specific concern.
+
+2. **Vaastu Consultation**:
+   - **Standard Price**: ₹25,000/-
+   - **Standing Promotional Price**: Flat ₹15,000/- (Flat ₹10,000 Off)
+   - **Gating Mechanism**: **UNRESTRICTED**. Available to all clients (both first-time and returning) without any account history gating (`firstTimeOnlyGated: false`).
+   - **Deliverables**: Comprehensive Devta Vaastu spatial analysis for residential, commercial, or industrial properties. 16-zone directional energy mapping, elemental balancing, and zero-demolition remedial treatments.
+   - **Intake**: Client name, phone number, format (Video Layout Review / Voice / Digital Audit), property type (Residential Apartment, Villa, Commercial Office, Industrial Factory, Plot), property city/state, and spatial layout dilemmas.
+
+---
+
+### 27.2 Viar One-Time Checkout & Scheduling Pattern
+The checkout workflow mirrors Viar's one-time enrollment flow:
+1. **Server-Side Order Generation**:
+   - Client submits intake form on [`/consult`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/consult/page.tsx).
+   - Client calls `POST /api/payments/create-order` passing `{ productId, clientName, phone, format, ... }`.
+   - The server calculates the exact payable amount based on user identity and product configuration, eliminating any client-side price tampering.
+2. **Razorpay Modal Checkout**:
+   - Loads official `https://checkout.razorpay.com/v1/checkout.js` asynchronously.
+   - Opens checkout modal configured with theme color `#7B2D26`, logo, and verified order ID.
+   - In preview/test environments (`keyId.includes("mock")`), executes smooth simulated payment confirmation without blocking QA workflows.
+3. **Server Verification & State Persistence**:
+   - Calls `POST /api/payments/verify` with `orderId`, `paymentId`, and `signature`.
+   - Records transaction in PostgreSQL and generates confirmed `ConsultationBooking` record with unique `bookingId`.
+   - Stores booking in `ClientAccountStore.setActiveBooking(booking)` with `localStorage` and `aapka_booking_updated` event broadcasting.
+4. **Queue & Desk Integration**:
+   - If astrologer is `AVAILABLE` and queue is empty, immediately starts live direct session with `ratePerMin: 0` and product context (`productType: "astro" | "vaastu"`).
+   - If astrologer is `BUSY`, in `BREAK`, or queue has waiting seekers, enters seeker into live queue with position tracker.
+
+---
+
+### 27.3 Consultation Pending State Requirement
+Per explicit specification:
+> *"The consultation dashboard should now show 'Consultation booked: [type], session pending' rather than a running wallet balance."*
+
+Implemented in both:
+1. **Live Consultation Screen ([`src/app/consult/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/consult/page.tsx))**:
+   - When payment is confirmed and the astrologer is occupied, renders a high-contrast pending card:
+     ```tsx
+     <h2 className="text-2xl sm:text-3xl font-bold font-temple text-[#3B2A1E] mt-4">
+       Consultation booked: {confirmedBooking?.productName}, session pending
+     </h2>
+     ```
+   - Displays real-time queue position (`#X in Line`), estimated wait time, client name, format, amount paid, and live desk status.
+2. **Seeker Account Dashboard ([`src/app/account/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/page.tsx))**:
+   - Prominently displays:
+     ```tsx
+     <h2 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26] mt-1">
+       Consultation booked: {activeBooking.productName}, session pending
+     </h2>
+     ```
+   - Features direct 1-click action to enter the consultation room immediately.
+   - Replaces single consultation banner with dual quick-booking cards for both **Astro Consultation (Flat ₹1,051)** and **Vaastu Consultation (Flat ₹15,000)**.
+
+---
+
+### 27.4 Admin Pricing Panel Rebuilt ([`src/app/admin/pricing/PricingManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/pricing/PricingManagerClient.tsx))
+The admin pricing screen now features dedicated management cards for both flat-fee consultation products:
+- **Card 1: Astro Consultation**:
+  - First Consultation Promotional Fee (editable, default ₹1,051)
+  - Standard Consultation Fee (editable, default ₹2,100)
+  - First-time discount percentage (editable, default 50%)
+  - Active promo code display: `FIRST1051`
+- **Card 2: Vaastu Consultation**:
+  - Standing Promotional Fee (editable, default ₹15,000)
+  - Standard Consultation Fee (editable, default ₹25,000)
+  - Standing savings calculation (Flat ₹10,000 Off)
+  - Standing promo code display: `VAASTU15K`
+- **State Synchronization**:
+  - Updates persist to `AdminStore` and broadcast via `astro_pricing_updated` events.
+
+---
+
+### 27.5 Verification & QA Summary
+- **Unit & Integration Test Suite**: **217 / 217 tests passing** across 45 suites (`npx tsx --test` / `npm test`).
+  - Added test cases in `tests/billing.test.ts` for Vaastu standing pricing (₹15,000 / ₹25,000), Astro first-time gating (₹1,051 vs ₹2,100), and property details validation.
+- **Production Build**: 100% clean compilation via Next.js Turbopack across all 99 routes (`npm run build`).
+
+
 
 
 

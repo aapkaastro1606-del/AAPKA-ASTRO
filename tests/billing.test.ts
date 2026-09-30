@@ -140,6 +140,42 @@ describe("ConsultationBookingService (Flat-Fee Pay-Per-Booking Model)", () => {
     assert.equal(feeInfo.isFirstTime, false);
   });
 
+  test("calculates Vaastu Consultation standing promotional fee (Flat ₹15,000, Reg. ₹25,000)", () => {
+    // Vaastu is not gated behind first-time client check
+    const feeInfoFirst = ConsultationBookingService.calculateFee("vaastu", true);
+    assert.equal(feeInfoFirst.productId, "vaastu");
+    assert.equal(feeInfoFirst.productName, "Vaastu Consultation");
+    assert.equal(feeInfoFirst.standardFee, 25000);
+    assert.equal(feeInfoFirst.amountToPay, 15000);
+    assert.equal(feeInfoFirst.discountAmount, 10000);
+
+    const feeInfoReturning = ConsultationBookingService.calculateFee("vaastu", false);
+    assert.equal(feeInfoReturning.productId, "vaastu");
+    assert.equal(feeInfoReturning.amountToPay, 15000);
+  });
+
+  test("creates valid Vaastu consultation booking with property details", () => {
+    const booking = ConsultationBookingService.createBooking({
+      userId: "user_vaastu_1",
+      clientName: "Ananya Iyer",
+      phone: "+919876543299",
+      productId: "vaastu",
+      format: "Video Call",
+      topic: "New home layout and south-west entry audit",
+      preferredSlot: "Scheduled Slot",
+      propertyType: "Residential Apartment",
+      propertyLocation: "Bengaluru, Karnataka",
+    });
+
+    assert.equal(booking.productId, "vaastu");
+    assert.equal(booking.productName, "Vaastu Consultation");
+    assert.equal(booking.standardFee, 25000);
+    assert.equal(booking.amountPaid, 15000);
+    assert.equal(booking.propertyType, "Residential Apartment");
+    assert.equal(booking.propertyLocation, "Bengaluru, Karnataka");
+    assert.equal(booking.status, "PENDING_PAYMENT");
+  });
+
   test("creates valid consultation booking across Voice Call, Video Call, and Live Chat", () => {
     const formats: Array<"Voice Call" | "Video Call" | "Live Chat"> = [
       "Voice Call",
@@ -152,6 +188,7 @@ describe("ConsultationBookingService (Flat-Fee Pay-Per-Booking Model)", () => {
         userId: "user_test_123",
         clientName: "Rohan Sharma",
         phone: "+919876543210",
+        productId: "astro",
         format,
         topic: "Career guidance and marriage timing",
         preferredSlot: "Immediate",
@@ -162,6 +199,7 @@ describe("ConsultationBookingService (Flat-Fee Pay-Per-Booking Model)", () => {
       assert.equal(booking.userId, "user_test_123");
       assert.equal(booking.clientName, "Rohan Sharma");
       assert.equal(booking.phone, "+919876543210");
+      assert.equal(booking.productId, "astro");
       assert.equal(booking.format, format);
       assert.equal(booking.standardFee, 2100);
       assert.equal(booking.discountApplied, 1049);

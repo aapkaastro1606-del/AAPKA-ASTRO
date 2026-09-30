@@ -9,6 +9,9 @@ export interface QueueItem {
   userName: string;
   userPhone: string;
   consultationType: "chat" | "call" | "voice" | "video";
+  productType?: "astro" | "vaastu";
+  bookingId?: string;
+  amountPaid?: number;
   birthDetails: {
     name: string;
     gender: "male" | "female" | "other";
@@ -40,6 +43,9 @@ export interface ActiveSession {
   userName: string;
   userPhone: string;
   type: "chat" | "call" | "voice" | "video";
+  productType?: "astro" | "vaastu";
+  bookingId?: string;
+  amountPaid?: number;
   startedAt: string;
   ratePerMin: number;
   elapsedSeconds: number;
@@ -207,8 +213,11 @@ export class AstrologerStateStore {
       userName: item.userName,
       userPhone: item.userPhone,
       type: item.consultationType,
+      productType: item.productType || "astro",
+      bookingId: item.bookingId,
+      amountPaid: item.amountPaid,
       startedAt: new Date().toISOString(),
-      ratePerMin: 19,
+      ratePerMin: 0,
       elapsedSeconds: 0,
       status: "active",
       birthDetails: item.birthDetails,
@@ -232,6 +241,9 @@ export class AstrologerStateStore {
     userName: string;
     userPhone: string;
     type: "chat" | "call" | "voice" | "video";
+    productType?: "astro" | "vaastu";
+    bookingId?: string;
+    amountPaid?: number;
     birthDetails: QueueItem["birthDetails"];
     concern: string;
     ratePerMin?: number;
@@ -242,8 +254,11 @@ export class AstrologerStateStore {
       userName: item.userName,
       userPhone: item.userPhone,
       type: item.type,
+      productType: item.productType || "astro",
+      bookingId: item.bookingId,
+      amountPaid: item.amountPaid,
       startedAt: new Date().toISOString(),
-      ratePerMin: item.ratePerMin || 15,
+      ratePerMin: 0,
       elapsedSeconds: 0,
       status: "active",
       birthDetails: item.birthDetails,
