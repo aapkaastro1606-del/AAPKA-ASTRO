@@ -65,7 +65,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Account &amp; Contact Credentials:</strong> Phone Number, Email Address, and encrypted authentication tokens.
               </li>
               <li>
-                <strong>Billing &amp; Transaction Details:</strong> Order IDs, wallet recharges, consultation duration, and transaction references provided by our payment gateway (Razorpay). <em>Note: We never view or store sensitive debit/credit card numbers or UPI PINs.</em>
+                <strong>Billing &amp; Transaction Details:</strong> Order IDs, consultation bookings, report purchases, and transaction references provided by our payment gateway (Razorpay). <em>Note: We never view or store sensitive debit/credit card numbers or UPI PINs.</em>
               </li>
               <li>
                 <strong>Consultation Content:</strong> Written notes, charts, or query submissions uploaded for Acharya Ji&apos;s review during live chat or scheduled sessions.
@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Live Consultations:</strong> Permitting Acharya Niraj Kumar to prepare prior to your call, examine your running Mahadasha, and prescribe remedial solutions.
               </li>
               <li>
-                <strong>Account Management:</strong> Crediting wallet top-ups, sending appointment reminders via SMS/WhatsApp, and delivering invoices.
+                <strong>Account Management:</strong> Processing consultation bookings, unlocking paid Kundli reports, sending appointment reminders via SMS/WhatsApp, and delivering invoices.
               </li>
               <li>
                 <strong>Platform Security:</strong> Detecting suspicious logins, fraud prevention, and maintaining server reliability.

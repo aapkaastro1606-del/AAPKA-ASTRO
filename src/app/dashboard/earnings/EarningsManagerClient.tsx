@@ -47,7 +47,7 @@ export default function EarningsManagerClient({ canManage }: EarningsManagerClie
                 )}
               </div>
               <p className="text-xs sm:text-sm text-[#6E5545]">
-                Transparent revenue ledger broken down by time period, consultation modality, and direct client recharge.
+                Transparent revenue ledger broken down by time period, consultation modality, and direct client booking checkout.
               </p>
             </div>
 

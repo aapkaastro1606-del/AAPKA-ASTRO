@@ -180,7 +180,7 @@ export default function AstrologerDashboardPage() {
                   Active with {activeSession.userName} ({activeSession.type.toUpperCase()})
                 </h3>
                 <p className="text-xs text-[#4F6D40]">
-                  Session ID: {activeSession.id} • Rate: ₹{activeSession.ratePerMin}/min
+                  Session ID: {activeSession.id} • Consultation: Flat Pre-Paid (No per-minute debits)
                 </p>
               </div>
             </div>

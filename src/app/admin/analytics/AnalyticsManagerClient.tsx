@@ -84,7 +84,7 @@ export default function AnalyticsManagerClient() {
 
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
-              Total Recharges Processed
+              Total Consultations Booked
             </span>
             <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
               {analytics.totalRecharges.toLocaleString("en-IN")}
@@ -155,7 +155,7 @@ export default function AnalyticsManagerClient() {
               <div className="rounded-2xl border border-[#6B8E5A]/40 bg-[#F4F9F2] p-4 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-[#2A4720] block">Step 4: Paid Consultation Session</span>
-                  <span className="text-[#4F6D40]">Wallet recharge &amp; 1-on-1 session</span>
+                  <span className="text-[#4F6D40]">One-time booking checkout &amp; 1-on-1 session</span>
                 </div>
                 <span className="font-mono text-base font-black text-[#2A4720]">1,290 (28.3%)</span>
               </div>

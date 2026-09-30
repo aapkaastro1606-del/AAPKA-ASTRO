@@ -130,7 +130,7 @@ export function WelcomeConsultationModal({
   const pathname = usePathname();
   const { isAuthenticated } = useCurrentUserRole();
 
-  // Keep modal per-minute rate synchronized with live AdminStore / ADMIN_CONFIGURABLE_PRICING updates
+  // Keep modal rate synchronized with live AdminStore / ADMIN_CONFIGURABLE_PRICING updates
   useEffect(() => {
     const handlePricingUpdated = () => setPricingVersion((v) => v + 1);
     window.addEventListener("astro_pricing_updated", handlePricingUpdated);
@@ -275,7 +275,7 @@ export function WelcomeConsultationModal({
 
           {/* 3. One Short Line of Subtext (One Sentence) */}
           <p className="text-xs sm:text-sm text-[#3B2A1E]/85 font-body leading-snug">
-            Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video starting at {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/{ADMIN_CONFIGURABLE_PRICING.chat.unit}.
+            Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video for Flat {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate} (Regular ₹2,100).
           </p>
 
           {/* 4. Single Small Line of Trust Phrase (Not a Boxed Section) */}

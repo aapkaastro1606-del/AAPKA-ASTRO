@@ -6,6 +6,7 @@ import {
   CONSULTATION_PRODUCTS,
   NavratriPromoConfig,
   DEFAULT_NAVRATRI_PROMO_CONFIG,
+  KUNDLI_PDF_PRODUCT,
 } from "@/config/placeholderContent";
 
 export interface PricingSettings {
@@ -18,6 +19,9 @@ export interface PricingSettings {
   vaastuStandardFee: number;
   vaastuPromoFee: number;
   vaastuDiscountPercentage?: number;
+
+  // Product 3: Kundli Full PDF Report
+  kundliPdfFee?: number;
 
   // Festive Campaign: Navratri Rudraksh Promotion
   navratriPromo?: NavratriPromoConfig;
@@ -49,6 +53,7 @@ let memoryPricing: PricingSettings = {
   vaastuStandardFee: 25000,
   vaastuPromoFee: 15000,
   vaastuDiscountPercentage: 40,
+  kundliPdfFee: KUNDLI_PDF_PRODUCT.price,
   navratriPromo: { ...DEFAULT_NAVRATRI_PROMO_CONFIG },
   chatRate: 15,
   voiceRate: 20,
@@ -116,6 +121,9 @@ export const AdminStore = {
     }
     if (updates.vaastuPromoFee !== undefined) {
       CONSULTATION_PRODUCTS.vaastu.promoPrice = updates.vaastuPromoFee;
+    }
+    if (updates.kundliPdfFee !== undefined) {
+      KUNDLI_PDF_PRODUCT.price = updates.kundliPdfFee;
     }
     if (updates.discountPercentage !== undefined) {
       ADMIN_CONFIGURABLE_PRICING.chat.discountPercentage = updates.discountPercentage;

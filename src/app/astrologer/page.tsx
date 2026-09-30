@@ -477,7 +477,7 @@ export default function AstrologerCockpitPage() {
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
                     <span>
-                      Billing automatically counts second-by-second and charges the client&apos;s wallet balance in real-time.
+                      Consultations are prepaid flat-fee bookings. Clients pay upfront per booking with zero per-minute meter stress.
                     </span>
                   </li>
                 </ul>

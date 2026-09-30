@@ -18,6 +18,7 @@ import {
   Calendar,
   Flame,
   Gift,
+  FileText,
 } from "lucide-react";
 import {
   DEFAULT_NAVRATRI_PROMO_CONFIG,
@@ -378,6 +379,66 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
               <span className="text-[10px] font-bold text-[#6B8E5A] bg-[#6B8E5A]/15 px-2 py-0.5 rounded-full">
                 UNRESTRICTED
               </span>
+            </div>
+          </div>
+
+          {/* PRODUCT 3: KUNDLI FULL PDF REPORT */}
+          <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-5">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#E8A33D]/15 text-[#7B2D26] flex items-center justify-center font-bold">
+                  <FileText className="h-5 w-5 text-[#E8A33D]" />
+                </div>
+                <div>
+                  <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
+                    Product 3: Kundli Full PDF Report
+                  </h3>
+                  <p className="text-xs text-[#6E5545]">
+                    Detailed Vedic Kundli dossier download. (Free online chart generation remains 100% complimentary).
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-[#6B8E5A] bg-[#6B8E5A]/10 border border-[#6B8E5A]/25 px-3 py-1 rounded-full w-fit">
+                DIGITAL PRODUCT
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#6E5545] mb-1.5">
+                  PDF Download Unlock Fee (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[#6E5545]">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="100"
+                    max="5000"
+                    step="1"
+                    disabled={!canManage}
+                    value={pricing.kundliPdfFee ?? 501}
+                    onChange={(e) =>
+                      setPricing({ ...pricing, kundliPdfFee: Number(e.target.value) })
+                    }
+                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                  />
+                </div>
+                <span className="mt-2 block text-[10px] text-[#6E5545]">
+                  Instant unlocked PDF generation upon successful Razorpay payment.
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FAF5EE] p-4 flex flex-col justify-center text-xs text-[#6E5545] space-y-2">
+                <div className="flex items-center gap-2 text-stone-800 font-bold">
+                  <CheckCircle2 className="h-4 w-4 text-[#6B8E5A]" />
+                  <span>Free Online Tool Unchanged</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-[#6E5545]">
+                  Visitors can generate, view, and analyze basic birth charts, planetary positions, and lagna details online for ₹0. The ₹{pricing.kundliPdfFee ?? 501} fee strictly applies to the high-res printable PDF dossier export.
+                </p>
+              </div>
             </div>
           </div>
 

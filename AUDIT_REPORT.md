@@ -1803,6 +1803,49 @@ Key architectural and business requirements:
 - **All Automated Tests**: **241 / 241 tests passing** across **50 test suites** (`npm test`).
 - **Production Build**: **99 / 99 routes successfully compiled** (`npm run build`).
 
+---
+
+## 31. Comprehensive Pricing-Dependent Surfaces Audit & Flat-Fee Migration
+
+### 31.1 Architecture & Business Model Truth
+Following the complete decommission of per-minute wallet billing, the entire user-facing surface, legal policies, administrative controls, and search engine structured data have been audited and updated to reflect the 3 official flat-fee offerings:
+1. **Astro Consultation**:
+   - Flat ₹2,100 standard fee.
+   - Flat ₹1,051 first-time promotional fee (50% discount, enforced server-side per verified user account).
+2. **Vaastu Consultation**:
+   - Flat ₹15,000 standing promotional fee (discounted from ₹25,000 standard rate, unrestricted for all clients).
+3. **Kundli Full PDF Report**:
+   - Flat ₹501 one-time fee for unlocking and downloading the high-res printable Vedic birth dossier.
+   - Free online Kundli chart generator, lagna, and planetary calculations remain 100% complimentary at ₹0.
+
+### 31.2 Surfaces Audited and Refactored
+1. **Homepage & Modals**:
+   - [`src/components/home/WelcomeConsultationModal.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/WelcomeConsultationModal.tsx): Updated to emphasize direct flat-fee consultation (`Flat ₹1,051 (Regular ₹2,100)`), eliminating all per-minute talktime language.
+   - [`src/app/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/page.tsx): Mounted `<ConsultationServicesJsonLd />` containing machine-readable Schema.org `Product` and `Offer` definitions for search engine rich results.
+2. **Services Hub & Detail Routes**:
+   - [`src/app/services/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/services/page.tsx): Replaced second-by-second billing with upfront flat-fee booking messaging and mounted SEO structured data.
+   - [`src/app/services/[slug]/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/services/[slug]/page.tsx): Replaced per-minute rates with Flat ₹1,051 first-session promotional offer.
+3. **Legal & Compliance Policies**:
+   - [`src/app/pricing-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/pricing-policy/page.tsx): Full overhaul detailing all three flat-fee products, first-time user validation, refund guarantees, and zero hidden per-minute charges.
+   - [`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx): Replaced automated per-minute wallet debits with session continuity protection and 100% full money-back guarantees for interrupted sessions or defective digital reports.
+   - [`src/app/terms/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/terms/page.tsx): Rewrote Article 4 to codify pay-per-booking consultations and paid digital dossier delivery.
+   - [`src/app/privacy-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/privacy-policy/page.tsx): Updated transaction data disclosures to reference booking checkout and report unlocking rather than wallet top-ups.
+4. **Astrologer & Operational Dashboards**:
+   - [`src/app/astrologer/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/astrologer/page.tsx): Onboarding guidelines updated to reflect prepaid flat-fee consultations with zero per-minute meter pressure.
+   - [`src/app/dashboard/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/dashboard/page.tsx): Active session card updated to show `Consultation: Flat Pre-Paid (No per-minute debits)`.
+   - [`src/app/dashboard/earnings/EarningsManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/dashboard/earnings/EarningsManagerClient.tsx): Renamed client recharge references to client booking checkout.
+   - [`src/app/admin/analytics/AnalyticsManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/analytics/AnalyticsManagerClient.tsx): Metric card updated from `Total Recharges Processed` to `Total Consultations Booked`.
+5. **Administrative Pricing Console**:
+   - [`src/app/admin/pricing/PricingManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/pricing/PricingManagerClient.tsx): Added Product 3 card for Kundli Full PDF Report (₹501) with live editable controls, alongside Astro Consultation and Vaastu Consultation.
+   - [`src/lib/store/adminStore.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/store/adminStore.ts): Added `kundliPdfFee` to `PricingSettings` and synced with `KUNDLI_PDF_PRODUCT.price`.
+6. **Structured Data / Schema.org**:
+   - [`src/components/seo/JsonLd.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/seo/JsonLd.tsx): Enhanced `LocalBusinessJsonLd` with `hasOfferCatalog` listing exact INR prices, and implemented `ConsultationServicesJsonLd` for Google Rich Snippets across `/`, `/services`, and `/consult`.
+
+### 31.3 Quality Assurance & Verification
+- **Automated Test Suite**: 241 / 241 tests passing across 50 test suites (`npm test`).
+- **Production Compilation**: 99 / 99 routes built successfully without errors (`npm run build`).
+
+
 
 
 

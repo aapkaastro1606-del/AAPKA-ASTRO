@@ -69,7 +69,7 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     id: "earnings",
     name: "Revenue & Earnings",
     path: "/dashboard/earnings",
-    description: "View consultation minutes billed, earnings breakdown, and balances.",
+    description: "View consultations delivered, earnings breakdown, and settled revenue.",
   },
   {
     id: "consultations",
@@ -81,7 +81,7 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     id: "pricing",
     name: "Pricing & Coupons",
     path: "/admin/pricing",
-    description: "Configure per-minute consultation rates, discounts, and recharge minimums.",
+    description: "Configure flat-fee consultation products, festive promotions, and promotional pricing.",
   },
   {
     id: "analytics",

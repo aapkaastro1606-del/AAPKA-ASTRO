@@ -33,7 +33,7 @@ export default function TermsOfServicePage() {
             Terms of Service &amp; Consultation
           </h1>
           <p className="text-xs text-[#6E5545] mt-2">
-            Last Updated: March 2026 &bull; Governing all website access, wallet recharges, and live sessions
+            Last Updated: March 2026 &bull; Governing all website access, consultation bookings, and live sessions
           </p>
         </header>
 
@@ -69,7 +69,7 @@ export default function TermsOfServicePage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                You must be at least 18 years of age (or have explicit parental/guardian supervision) to book paid astrological consultations or transact via the wallet system.
+                You must be at least 18 years of age (or have explicit parental/guardian supervision) to book paid astrological consultations, purchase reports, or transact via the platform.
               </li>
               <li>
                 You agree to provide true, accurate, current, and complete birth coordinates (Exact Date of Birth, Exact Time of Birth, and Specific Town/City of Birth). You acknowledge that astrological mathematical algorithms (Lagna, Bhava Chalit, Navamsha, and Dasha calculations) are intrinsically sensitive to input accuracy.
@@ -111,10 +111,16 @@ export default function TermsOfServicePage() {
                 All monetary transactions on Aapka Astro are processed securely through certified PCI-DSS compliant payment aggregators (Razorpay / UPI / Net Banking).
               </li>
               <li>
-                Consultations operate on a transparent flat-fee, pay-per-booking model. First-time seekers are eligible for our promotional flat fee of ₹1,051/- (Regular ₹2,100). The unified flat fee applies across all formats: Voice Call, Video Call, and Live Chat.
+                <strong>Pay-Per-Booking Model:</strong> All consultations operate on a transparent flat-fee, pay-per-booking model with zero hidden charges and zero per-minute debits.
               </li>
               <li>
-                Full reading scope covers Career, Financial Growth, Relationship Harmony, Health Diagnostics, and Non-Destructive Vedic/Vastu Remedies. Consultations are conducted directly and personally with Acharya Niraj Kumar.
+                <strong>Astro Consultation:</strong> First-time seekers are eligible for our introductory offer of Flat ₹1,051/- (Regular ₹2,100). The unified flat fee applies across all formats: Voice Call, Video Call, and Live Chat.
+              </li>
+              <li>
+                <strong>Vaastu Consultation:</strong> Flat ₹15,000/- (discounted from ₹25,000) is the standing promotional fee for all residential, commercial, and industrial property audits.
+              </li>
+              <li>
+                <strong>Kundli PDF Report:</strong> Free online chart generation remains 100% complimentary. Full downloadable formatted PDF reports are available for a one-time charge of Flat ₹501/-.
               </li>
               <li>
                 Promotional discounts, special booking vouchers, and introductory offers are non-transferable and valid for one consultation booking per verified user.

@@ -62,6 +62,33 @@ export function LocalBusinessJsonLd({
       PLACEHOLDER_SOCIAL_LINKS.facebook.url,
       PLACEHOLDER_SOCIAL_LINKS.youtube.url,
     ],
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Vedic Astrology & Vastu Consultation Products",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          name: "1-on-1 Vedic Astrology Consultation",
+          price: "1051",
+          priceCurrency: "INR",
+          description: "Flat ₹1,051 first-time promotional fee (Regular ₹2,100).",
+        },
+        {
+          "@type": "Offer",
+          name: "Vedic & Devta Vaastu Consultation",
+          price: "15000",
+          priceCurrency: "INR",
+          description: "Standing promotional fee of Flat ₹15,000 (Regular ₹25,000).",
+        },
+        {
+          "@type": "Offer",
+          name: "Janam Kundli Full PDF Report",
+          price: "501",
+          priceCurrency: "INR",
+          description: "Downloadable high-precision formatted PDF report for Flat ₹501.",
+        },
+      ],
+    },
   };
 
   return (
@@ -122,6 +149,71 @@ export function BreadcrumbJsonLd({
       name: item.name,
       item: item.url,
     })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+export function ConsultationServicesJsonLd() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Aapka Astro Consultation Products & Services",
+    itemListElement: [
+      {
+        "@type": "Product",
+        name: "1-on-1 Vedic Astrology Consultation",
+        description:
+          "Comprehensive 1-on-1 personal Vedic horoscope reading with Acharya Niraj Kumar across Voice, Video, or Live Chat.",
+        image: "https://aapkaastro.com/images/logo.png",
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "INR",
+          price: "1051",
+          priceValidUntil: "2027-12-31",
+          availability: "https://schema.org/InStock",
+          url: "https://aapkaastro.com/consult",
+          description: "Flat ₹1,051 introductory promotional fee for first-time clients (Standard rate ₹2,100).",
+        },
+      },
+      {
+        "@type": "Product",
+        name: "Vedic & Devta Vaastu Consultation",
+        description:
+          "Comprehensive Devta Vaastu and Energy Vaastu spatial audit for residential, commercial, or industrial properties.",
+        image: "https://aapkaastro.com/images/logo.png",
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "INR",
+          price: "15000",
+          priceValidUntil: "2027-12-31",
+          availability: "https://schema.org/InStock",
+          url: "https://aapkaastro.com/consult?product=vaastu",
+          description: "Standing promotional fee of Flat ₹15,000 for all clients (Discounted from ₹25,000).",
+        },
+      },
+      {
+        "@type": "Product",
+        name: "Comprehensive Janam Kundli PDF Report",
+        description:
+          "Full formatted, multi-page downloadable PDF Vedic astrological dossier calculated from verified Swiss Ephemeris.",
+        image: "https://aapkaastro.com/images/logo.png",
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "INR",
+          price: "501",
+          priceValidUntil: "2027-12-31",
+          availability: "https://schema.org/InStock",
+          url: "https://aapkaastro.com/kundli",
+          description: "Download Full Formatted PDF Report for Flat ₹501 (Free online chart viewing permanently complimentary).",
+        },
+      },
+    ],
   };
 
   return (

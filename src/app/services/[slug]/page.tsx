@@ -379,7 +379,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ slug: 
               Ready for Authentic Vedic Guidance?
             </h3>
             <p className="mt-2 text-xs sm:text-sm text-[#FBF3E7]/80 max-w-xl mx-auto">
-              Direct consultation with {PLACEHOLDER_ASTROLOGER.displayName}. Second-by-second billing with 50% off on your first consultation.
+              Direct consultation with {PLACEHOLDER_ASTROLOGER.displayName}. Upfront flat-fee booking with 50% off on your first consultation (Flat ₹1,051/-).
             </p>
             <div className="mt-6 flex justify-center gap-4">
               <Link

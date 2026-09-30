@@ -84,17 +84,17 @@ export default function RefundPolicyPage() {
           {/* Section 3 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              3. Technical Disconnections &amp; Wallet Auto-Billing
+              3. Technical Disconnections &amp; Session Continuity
             </h2>
             <p>
-              Our platform utilizes an automated per-second billing engine for on-demand live consultations. If an active call drops due to server failure, telecommunication network glitch, or power interruption:
+              All consultations operate on an upfront flat-fee, pay-per-booking model. If an active live session drops prematurely due to server failure, telecommunication network glitch, or technical power interruption:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
-                Our billing engine implements an automatic 60-second grace window where billing is paused while you attempt to reconnect.
+                Our consultation room allows you to immediately reconnect to your ongoing session at zero additional charge.
               </li>
               <li>
-                If reconnection is impossible due to verified server-side technical failure, any unutilized wallet balance remains intact. If minutes were deducted erroneously, our technical desk will credit the disputed balance back to your in-app wallet within 24 business hours.
+                If reconnection is impossible due to verified server-side technical failure, our technical desk will immediately rebook your consultation at your convenience or issue a 100% full refund directly to your original payment method (Bank / UPI / Card) within 24–48 business hours.
               </li>
             </ul>
           </section>
@@ -102,14 +102,17 @@ export default function RefundPolicyPage() {
           {/* Section 4 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Customized Kundli Reports &amp; Vastu Audits
+              4. Customized Kundli PDF Reports &amp; Vastu Audits
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Computerized Instant Calculations:</strong> Free tool outputs (Kundli charts, Love Calculator, Panchang) are provided complimentary with zero charge.
+                <strong>Free Online Ephemeris Calculations:</strong> Online chart generation (Kundli charts, Love Calculator, Panchang) is provided complimentary with zero charge.
               </li>
               <li>
-                <strong>Hand-Analyzed Written Reports:</strong> For in-depth written Janampatri dossiers or Vastu map energy audits, once the bespoke computational work has commenced by Acharya Ji, cancellations are not permitted. If you notice incorrect birth coordinates provided on your submission, you may notify our desk within 2 hours of booking to update the data before the chart calculations are prepared.
+                <strong>Paid Kundli PDF Reports (₹501):</strong> If a PDF generation failure occurs after successful payment, our automated system re-triggers the PDF build immediately. In the event of an unresolvable technical generation error, a 100% refund is issued to your original payment mode within 24 hours.
+              </li>
+              <li>
+                <strong>Vaastu Consultations (₹15,000):</strong> For comprehensive Devta Vaastu audits, once the bespoke floor plan analysis has commenced, cancellations are not permitted. If you need to submit updated architectural blueprints or compass degrees, you may do so within 12 hours of booking.
               </li>
             </ul>
           </section>

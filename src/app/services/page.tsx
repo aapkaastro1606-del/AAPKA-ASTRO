@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CORE_SERVICES, ADMIN_CONFIGURABLE_PRICING, PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
+import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
 import {
   FileText,
   Compass,
@@ -81,8 +82,8 @@ export default function ServicesPage() {
         `Immediate 1-on-1 private encrypted chat, audio, or video consultation directly with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
       features: [
         "Real-time chart display during the consultation",
-        "Second-by-second billing with zero hidden platform charges",
-        "Automatic 50% discount on your very first consultation",
+        "Upfront flat-fee booking with zero hidden charges or surprise per-minute meters",
+        "Automatic 50% discount on your very first consultation (Flat ₹1,051/-)",
         "Direct prescription notes and written remedy summary in your account",
       ],
       idealFor: "Immediate clarity, urgent life decisions, specific questions",
@@ -92,6 +93,7 @@ export default function ServicesPage() {
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E]">
+      <ConsultationServicesJsonLd />
       {/* 1. Header Banner */}
       <section className="relative overflow-hidden border-b border-[#E8D8C3] bg-[#7B2D26] py-16 sm:py-20 text-[#FBF3E7]">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">

@@ -45,6 +45,7 @@ import {
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
+import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
 
 // Razorpay Script Loader helper (Viar Checkout Pattern)
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -408,6 +409,7 @@ export default function ConsultPage() {
 
   return (
     <div className="bg-[#FBF3E7] py-8 lg:py-12 min-h-screen text-[#3B2A1E]">
+      <ConsultationServicesJsonLd />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* =========================================================================
             STATE 1: ACTIVE LIVE CONSULTATION SESSION (SPLIT CHAT / CALL SCREEN)
