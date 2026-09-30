@@ -274,8 +274,8 @@ export const Navbar: React.FC = () => {
           type="button"
           onClick={() => setOpenDropdown(isOpen ? null : key)}
           aria-expanded={isOpen}
-          className={`flex items-center gap-1 py-1.5 border-b-2 transition-colors cursor-pointer ${
-            isSecondary ? "text-xs sm:text-[13px]" : "text-sm"
+          className={`flex items-center gap-0.5 xl:gap-1 py-1.5 border-b-2 transition-colors cursor-pointer ${
+            isSecondary ? "text-xs 2xl:text-[13px]" : "text-xs 2xl:text-sm"
           } ${
             isActive || isOpen
               ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
@@ -358,7 +358,7 @@ export const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-2.5 py-2.5 sm:px-6 sm:py-3 lg:px-8 gap-1.5 sm:gap-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6 2xl:px-8 py-2.5 sm:py-3 gap-1.5 sm:gap-2.5 2xl:gap-4">
           {/* 1. Left: Brand Identity + Single Compact "Online" Indicator (Shown Once) */}
           <div className="flex items-center shrink-0 min-w-0">
             <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
@@ -427,7 +427,7 @@ export const Navbar: React.FC = () => {
           {/* 2. Center: Primary Top-Level Navigation Items (Collapsed into Hamburger below xl/1280px) */}
           <nav
             aria-label="Main Navigation"
-            className="hidden xl:flex items-center gap-4 2xl:gap-6 shrink-0"
+            className="hidden xl:flex items-center gap-2.5 2xl:gap-5 shrink-0"
           >
             {/* Group 1: Horoscope (Dropdown) */}
             {renderDesktopDropdown(
@@ -456,7 +456,7 @@ export const Navbar: React.FC = () => {
             {/* Group 4: Services (Direct Link) */}
             <Link
               href="/services"
-              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
+              className={`text-xs 2xl:text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
                 isServicesActive
                   ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
                   : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
@@ -468,7 +468,7 @@ export const Navbar: React.FC = () => {
             {/* Direct Link: About Us */}
             <Link
               href="/about"
-              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
+              className={`text-xs 2xl:text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
                 isAboutActive
                   ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
                   : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
@@ -480,7 +480,7 @@ export const Navbar: React.FC = () => {
             {/* Direct Link: Contact Us */}
             <Link
               href="/contact"
-              className={`text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
+              className={`text-xs 2xl:text-sm py-1.5 border-b-2 transition-colors whitespace-nowrap ${
                 isContactActive
                   ? "border-[#7B2D26] font-semibold text-[#7B2D26]"
                   : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
@@ -559,9 +559,9 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/consult"
                 data-testid="primary-consult-cta"
-                className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap"
+                className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap shrink-0"
               >
-                <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
+                <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
                 <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
                 <span className="hidden sm:inline">
                   {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}
@@ -572,9 +572,9 @@ export const Navbar: React.FC = () => {
                 type="button"
                 data-testid="primary-consult-cta"
                 onClick={() => setCallbackModalOpen(true)}
-                className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap"
+                className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
-                <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
+                <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
                 <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
                 <span className="hidden sm:inline">
                   {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}

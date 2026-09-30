@@ -119,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LanguageProvider>
             <BrandedPreloader />
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 w-full overflow-x-hidden">{children}</main>
             <Footer />
             <WelcomeConsultationModal />
             <NavratriPromotionalModal />
