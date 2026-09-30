@@ -9,11 +9,14 @@ import {
   isRouteExcludedFromWelcomeModal,
   isUserInActiveSessionOrConsultation,
   hasActiveClerkSessionCookie,
+  shouldShowWelcomeModal,
+  shouldShowNavratriModal,
 } from "../src/components/home/WelcomeConsultationModal";
 import {
   PLACEHOLDER_ASTROLOGER,
   ADMIN_CONFIGURABLE_PRICING,
   FIRST_CONSULTATION_OFFER,
+  NavratriPromoConfig,
 } from "../src/config/placeholderContent";
 
 describe("Welcome Consultation Modal Policy & Content Compliance", () => {
@@ -340,6 +343,72 @@ describe("Welcome Consultation Modal Behavioral Controls", () => {
       layoutCode,
       /<WelcomeConsultationModal\s*\/>/,
       "Root layout must render WelcomeConsultationModal"
+    );
+  });
+
+  test("proves dynamic date-based switching: standard modal renders outside window, Navratri modal renders inside window", () => {
+    const festivePromoConfig: NavratriPromoConfig = {
+      enabled: true,
+      startDate: "2026-10-10",
+      endDate: "2026-10-20",
+      headline: "Navratri Special",
+      subheadline: "Festive blessing",
+      blessingDescription: "Authentic Rudraksh",
+      applicabilityNote: "Valid on all booked consultations",
+      appliesTo: "both",
+      ctaText: "Claim Rudraksh",
+    };
+
+    // Scenario 1: Date BEFORE Navratri window (e.g., Oct 5, 2026)
+    const beforeDate = new Date(2026, 9, 5, 12, 0, 0); // 2026-10-05
+    assert.equal(
+      shouldShowWelcomeModal({ referenceDate: beforeDate, promoConfig: festivePromoConfig }),
+      true,
+      "Standard WelcomeConsultationModal MUST render when date is BEFORE Navratri window"
+    );
+    assert.equal(
+      shouldShowNavratriModal({ referenceDate: beforeDate, promoConfig: festivePromoConfig }),
+      false,
+      "NavratriPromotionalModal MUST NOT render when date is BEFORE Navratri window"
+    );
+
+    // Scenario 2: Date INSIDE Navratri window (e.g., Oct 15, 2026)
+    const insideDate = new Date(2026, 9, 15, 12, 0, 0); // 2026-10-15
+    assert.equal(
+      shouldShowWelcomeModal({ referenceDate: insideDate, promoConfig: festivePromoConfig }),
+      false,
+      "Standard WelcomeConsultationModal MUST yield (not render) when date is INSIDE Navratri window"
+    );
+    assert.equal(
+      shouldShowNavratriModal({ referenceDate: insideDate, promoConfig: festivePromoConfig }),
+      true,
+      "NavratriPromotionalModal MUST render when date is INSIDE Navratri window"
+    );
+
+    // Scenario 3: Date AFTER Navratri window (e.g., Oct 25, 2026)
+    const afterDate = new Date(2026, 9, 25, 12, 0, 0); // 2026-10-25
+    assert.equal(
+      shouldShowWelcomeModal({ referenceDate: afterDate, promoConfig: festivePromoConfig }),
+      true,
+      "Standard WelcomeConsultationModal MUST automatically restore when date is AFTER Navratri window"
+    );
+    assert.equal(
+      shouldShowNavratriModal({ referenceDate: afterDate, promoConfig: festivePromoConfig }),
+      false,
+      "NavratriPromotionalModal MUST NOT render when date is AFTER Navratri window"
+    );
+
+    // Scenario 4: Window active, but campaign disabled by Admin toggle
+    const disabledPromoConfig = { ...festivePromoConfig, enabled: false };
+    assert.equal(
+      shouldShowWelcomeModal({ referenceDate: insideDate, promoConfig: disabledPromoConfig }),
+      true,
+      "Standard WelcomeConsultationModal MUST render if admin disables the festive campaign even inside window"
+    );
+    assert.equal(
+      shouldShowNavratriModal({ referenceDate: insideDate, promoConfig: disabledPromoConfig }),
+      false,
+      "NavratriPromotionalModal MUST NOT render if admin disables campaign"
     );
   });
 });

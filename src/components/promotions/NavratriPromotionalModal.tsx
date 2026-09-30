@@ -25,11 +25,14 @@ interface NavratriPromotionalModalProps {
   delayMs?: number;
   /** Force open for preview/testing purposes */
   forceOpen?: boolean;
+  /** Optional reference date for simulating calendar dates in tests */
+  referenceDate?: Date;
 }
 
 export function NavratriPromotionalModal({
   delayMs = 1800,
   forceOpen = false,
+  referenceDate,
 }: NavratriPromotionalModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -62,7 +65,7 @@ export function NavratriPromotionalModal({
     }
 
     // 1. Promotional Window Check: Must be currently enabled and within active date window
-    if (!isNavratriPromoActive(promoConfig)) {
+    if (!isNavratriPromoActive(promoConfig, referenceDate)) {
       setIsOpen(false);
       return;
     }
@@ -88,7 +91,7 @@ export function NavratriPromotionalModal({
 
       const timer = setTimeout(() => {
         if (
-          isNavratriPromoActive(promoConfig) &&
+          isNavratriPromoActive(promoConfig, referenceDate) &&
           !isRouteExcludedFromWelcomeModal(pathname) &&
           !isUserInActiveSessionOrConsultation(isAuthenticated, pathname)
         ) {
@@ -106,7 +109,7 @@ export function NavratriPromotionalModal({
     } catch {
       // Storage access blocked or restricted
     }
-  }, [delayMs, forceOpen, pathname, isAuthenticated, promoConfig]);
+  }, [delayMs, forceOpen, pathname, isAuthenticated, promoConfig, referenceDate]);
 
   const handleDismiss = useCallback(() => {
     setIsOpen(false);

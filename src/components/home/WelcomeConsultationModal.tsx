@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, ArrowRight } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
-import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER, isNavratriPromoActive } from "@/config/placeholderContent";
+import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER, isNavratriPromoActive, NavratriPromoConfig } from "@/config/placeholderContent";
 import { AdminStore } from "@/lib/store/adminStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 
@@ -113,16 +113,91 @@ export function isUserInActiveSessionOrConsultation(
   return false;
 }
 
+/**
+ * Evaluates whether WelcomeConsultationModal should display
+ * based on calendar referenceDate, promotion config, route, authentication, and visitor session.
+ */
+export function shouldShowWelcomeModal({
+  referenceDate = new Date(),
+  promoConfig = AdminStore.getPricing().navratriPromo,
+  pathname = "/",
+  isAuthenticated = false,
+  isSeenInSession = false,
+}: {
+  referenceDate?: Date;
+  promoConfig?: Partial<NavratriPromoConfig> | null;
+  pathname?: string | null;
+  isAuthenticated?: boolean;
+  isSeenInSession?: boolean;
+} = {}): boolean {
+  // If Navratri promo is active at referenceDate, welcome modal MUST yield
+  if (isNavratriPromoActive(promoConfig, referenceDate)) {
+    return false;
+  }
+  // Suppress on excluded routes
+  if (isRouteExcludedFromWelcomeModal(pathname)) {
+    return false;
+  }
+  // Suppress if active user session or booking flow
+  if (isUserInActiveSessionOrConsultation(isAuthenticated, pathname)) {
+    return false;
+  }
+  // Suppress if already seen in current session
+  if (isSeenInSession) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Evaluates whether NavratriPromotionalModal should display
+ * based on calendar referenceDate, promotion config, route, authentication, and visitor session.
+ */
+export function shouldShowNavratriModal({
+  referenceDate = new Date(),
+  promoConfig = AdminStore.getPricing().navratriPromo,
+  pathname = "/",
+  isAuthenticated = false,
+  isSeenInSession = false,
+}: {
+  referenceDate?: Date;
+  promoConfig?: Partial<NavratriPromoConfig> | null;
+  pathname?: string | null;
+  isAuthenticated?: boolean;
+  isSeenInSession?: boolean;
+} = {}): boolean {
+  // Must be active at referenceDate
+  if (!isNavratriPromoActive(promoConfig, referenceDate)) {
+    return false;
+  }
+  // Suppress on excluded routes
+  if (isRouteExcludedFromWelcomeModal(pathname)) {
+    return false;
+  }
+  // Suppress if active user session or booking flow
+  if (isUserInActiveSessionOrConsultation(isAuthenticated, pathname)) {
+    return false;
+  }
+  // Suppress if already seen in current session
+  if (isSeenInSession) {
+    return false;
+  }
+  return true;
+}
+
 interface WelcomeConsultationModalProps {
   /** Optional delay in milliseconds before displaying the modal on first visit. Default: 2000ms */
   delayMs?: number;
   /** Force open for preview/testing purposes */
   forceOpen?: boolean;
+  /** Optional reference date for simulating calendar dates in tests */
+  referenceDate?: Date;
 }
 
 export function WelcomeConsultationModal({
   delayMs = 2000,
   forceOpen = false,
+  referenceDate,
 }: WelcomeConsultationModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -150,7 +225,7 @@ export function WelcomeConsultationModal({
     }
 
     // 0. Promotional Priority Check: If Navratri festive promotion is active, it takes priority as first-visit popup
-    if (isNavratriPromoActive(AdminStore.getPricing().navratriPromo)) {
+    if (isNavratriPromoActive(AdminStore.getPricing().navratriPromo, referenceDate)) {
       setIsOpen(false);
       return;
     }
@@ -177,6 +252,7 @@ export function WelcomeConsultationModal({
       // Schedule display for first visit in this session
       const timer = setTimeout(() => {
         if (
+          !isNavratriPromoActive(AdminStore.getPricing().navratriPromo, referenceDate) &&
           !isRouteExcludedFromWelcomeModal(pathname) &&
           !isUserInActiveSessionOrConsultation(isAuthenticated, pathname)
         ) {
@@ -194,7 +270,7 @@ export function WelcomeConsultationModal({
     } catch {
       // sessionStorage not available or blocked
     }
-  }, [delayMs, forceOpen, pathname, isAuthenticated]);
+  }, [delayMs, forceOpen, pathname, isAuthenticated, referenceDate]);
 
   const handleDismiss = useCallback(() => {
     setIsOpen(false);

@@ -1845,6 +1845,36 @@ Following the complete decommission of per-minute wallet billing, the entire use
 - **Automated Test Suite**: 241 / 241 tests passing across 50 test suites (`npm test`).
 - **Production Compilation**: 99 / 99 routes built successfully without errors (`npm run build`).
 
+---
+
+## 32. Popup Coexistence & Dynamic Date-Based Switching Audit
+
+### 32.1 True State of Component Existence
+- **Audit Findings**:
+  - `WelcomeConsultationModal.tsx` (`src/components/home/WelcomeConsultationModal.tsx`) **WAS NOT DELETED**. It remains fully preserved, active, and mounted alongside `NavratriPromotionalModal.tsx` in the root layout (`src/app/layout.tsx`).
+  - Both modals coexist concurrently in the DOM tree, avoiding layout shifts or DOM unmounting races.
+  - Neither component contains a hardcoded permanent override.
+
+### 32.2 Genuine Date-Based Switching Mechanism
+The switching logic is genuinely dynamic and calendar-driven via `isNavratriPromoActive()` in [`src/config/placeholderContent.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts):
+1. **Configurable Date Window**: Uses `startDate` (00:00:00.000) and `endDate` (23:59:59.999), editable in real-time by the admin via the Admin Pricing Panel or configured via environment variables.
+2. **Promotional Priority**:
+   - Inside the active promotional window (and while `enabled: true`), `NavratriPromotionalModal` renders on first visit; `WelcomeConsultationModal` checks `isNavratriPromoActive()` and gracefully yields (`setIsOpen(false)`).
+   - Outside the active promotional window (before `startDate` or after `endDate`), or whenever `enabled: false`, `isNavratriPromoActive()` returns `false`, which automatically causes `NavratriPromotionalModal` to unmount and allows `WelcomeConsultationModal` to display normally.
+3. **No Hardcoded Overrides**:
+   - `WelcomeConsultationModal` dynamically checks `isNavratriPromoActive()` both at initial mount and right before opening the timer callback.
+   - Live synchronization via `astro_promo_updated` and `astro_pricing_updated` events allows dynamic toggling in browser sessions without requiring page reloads or code redeployments.
+
+### 32.3 Automated Test Simulation Proof
+A dedicated automated test was added to [`tests/welcomeModal.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/welcomeModal.test.ts):
+- **Test Name**: `proves dynamic date-based switching: standard modal renders outside window, Navratri modal renders inside window`.
+- **Simulations Executed**:
+  1. *Date BEFORE Navratri Window* (`2026-10-05` vs window `2026-10-10` to `2026-10-20`): Asserts `shouldShowWelcomeModal === true` and `shouldShowNavratriModal === false`.
+  2. *Date INSIDE Navratri Window* (`2026-10-15`): Asserts `shouldShowWelcomeModal === false` and `shouldShowNavratriModal === true`.
+  3. *Date AFTER Navratri Window* (`2026-10-25`): Asserts `shouldShowWelcomeModal === true` and `shouldShowNavratriModal === false`.
+  4. *Campaign Disabled Toggle* (`enabled: false` on `2026-10-15`): Asserts standard modal immediately recovers (`shouldShowWelcomeModal === true`) and festive modal suppresses.
+- **Result**: Passed (12/12 in `welcomeModal.test.ts`, 11/11 in `navratriPromoModal.test.ts`).
+
 
 
 
