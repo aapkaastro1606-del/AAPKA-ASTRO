@@ -1683,6 +1683,70 @@ A distinct digital product has been introduced for seekers wanting a downloadabl
 - **Total Project Tests**: **222 / 222 tests passing** across 46 test suites (`npm test`).
 - **Production Build**: Clean compilation of all 99 routes via Next.js Turbopack (`npm run build`).
 
+---
+
+## 29. Client-Authored About Us Content Full Rebuild (September 2026)
+
+### 29.1 Direct Authorization & Superseding Minimal Version
+The client directly authorized and provided his authored About Us content. This completely supersedes the earlier minimal "3 confirmed certificates only" version, resolving any previous questions regarding experience and counts with direct client sign-off:
+- **Practitioner Name**: Consistently confirmed as **Acharya Niraj Kumar**.
+- **Consultation Count**: Consistently authorized as **"more than 15,000 chart analyses and numerous Vastu consultations"**.
+- **Upbringing & Lineage**: Rooted in **Baidyanath Dham, Deoghar**, trained under **Late Guru Shri B. B. Tiwari**.
+
+### 29.2 Eight Core Sections Rebuilt Verbatim
+The About Us page ([`src/app/about/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/about/page.tsx)) was completely rebuilt using the client's verbatim authored copy across eight distinct sections:
+1. **Opening Statement**:
+   - `"At Aapka Astro, we work at the intersection of ancient wisdom and modern life."` (verbatim full statement in the hero banner).
+2. **"The Mind Behind Aapka Astro: Acharya Niraj Kumar"**:
+   - Upbringing in Baidyanath Dham, Deoghar.
+   - Authorized milestone of more than 15,000 chart analyses and numerous Vastu consultations.
+   - Interpretation quote: *"What sets him apart is not just knowledge, but interpretation. His work is known for being analytical, structured, and outcome-oriented rather than ritualistic or abstract."*
+   - Core philosophy: *"When your inner intent aligns with the energy of your environment, life begins to move with clarity, ease, and purpose."*
+   - Embedded interactive 5-second auto-cycling carousel ([`AboutHeroImageCarousel`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/about/AboutHeroImageCarousel.tsx)).
+3. **"Beyond Traditional Vastu: A Deeper, Precision-Led Approach"**:
+   - Advanced specializations in Devta Vastu, Energy Vastu, and AstroVastu decoding energetic micro-zones.
+   - Three framing cards:
+     1. Identifying root causes, not just surface defects.
+     2. Applying practical, non-destructive remedies.
+     3. Aligning spaces with the specific needs of individuals or businesses.
+   - Outcome principle: *"remove friction, restore balance, and enable growth."*
+4. **"Our Approach to Vastu Services"**:
+   - **Residential Vastu**: Detailed floor plan analysis, elemental balance (Panchamahabhutas), practical remedies without structural changes. (Ideal for homeowners, renters, and property buyers).
+   - **Commercial & Corporate Vastu**: Leadership cabin positioning, sales & customer flow optimization, workplace energy alignment. (Ideal for business owners, corporate offices, and retail).
+   - **Industrial Vastu**: Machinery placement optimization, raw material/finished goods zoning, workforce stability. (Ideal for factories, warehouses, and processing units).
+   - **Online / Virtual Consultation**: Digital analysis via plans and compass readings, detailed reports, same depth as physical visits. (Ideal for international clients and time-sensitive decisions).
+5. **"Where Spiritual Science Meets Corporate Insight"**:
+   - Two decades of senior leadership as Vice President and Business Head at Reliance Retail, Metro Cash & Carry, and NIF Food.
+   - Academic & Corporate Foundation card:
+     - B.Sc. (Hons.) in Physics
+     - PGDBM in International Business & Marketing
+     - Leadership Development & Change Management certification from XLRI
+6. **"Lineage, Learning, and Credibility"**:
+   - Complete credential roster:
+     - Trained under Late Guru Shri B. B. Tiwari
+     - Advanced Vastu certifications from Divya Vastu and Vaastu Just For You
+     - M.A. in Jyotish (IGNOU, 2024)
+     - Jyotish Acharya from Bhartiya Vidya Bhawan (K.N. Rao Institute)
+     - Nadi Parveen (ICAS)
+     - Jyotish Prabhakar (IRIW under Dr. Pawan Sinha)
+     - Jyotish Visharad & Jyotish Mani (Bharat Jyotish Vidyapith)
+   - Research & teaching commitment note.
+7. **"Our Core Offerings"**:
+   - **Vastu Shastra**: Strategic alignment of residential, commercial, and industrial spaces.
+   - **Vedic & KP Astrology**: Detailed chart analysis on career, relationships, and life direction.
+   - **Nadi Astrology**: Precise, deterministic system revealing deeper temporal patterns.
+   - **Prashna (Horary) Astrology**: Accurate, situation-specific answers based on the moment of inquiry.
+8. **"What We Stand For"**:
+   - Core premise: Enabling better decisions.
+   - Three pillars: *Not fear. Not blind belief. But clarity, structure, and alignment.*
+   - Verbatim closing statement: *"Whether you are building a home, scaling a business, or seeking direction in life, the objective is simple: Help you move forward with confidence and balance."*
+
+### 29.3 Automated Test Suite & Quality Verification
+- **New Test Suite**: Created [`tests/aboutContent.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/aboutContent.test.ts) covering all 8 sections and verbatim phrases (8/8 tests passing).
+- **Full Test Suite**: **230 / 230 tests passing** across 47 suites (`npm test`).
+- **Production Build**: **99 / 99 routes successfully compiled** (`npm run build`).
+
+
 
 
 

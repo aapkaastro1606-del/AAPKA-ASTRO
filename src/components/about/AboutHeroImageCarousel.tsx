@@ -154,7 +154,7 @@ export const AboutHeroImageCarousel: React.FC = () => {
       {/* 5. Bottom Overlay Content: Astrologer Name, Verified Credentials & Dynamic Caption */}
       <div className="absolute bottom-4 left-4 right-4 z-30 text-white text-center">
         <div className="font-temple text-2xl font-bold text-[#E8A33D] drop-shadow-sm">
-          Niraj Kumar
+          Acharya Niraj Kumar
         </div>
         <p className="text-xs text-[#FBF3E7]/95 mt-0.5 font-medium">
           Jyotish Acharya &bull; Vastu &amp; Gemstone Consultant
@@ -166,7 +166,7 @@ export const AboutHeroImageCarousel: React.FC = () => {
         {/* Certified Badge */}
         <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#7B2D26]/85 backdrop-blur-sm px-3 py-1 text-[11px] font-semibold border border-[#E8A33D]/40">
           <ShieldCheck className="h-3.5 w-3.5 text-[#E8A33D]" />
-          <span>Bharatiya Vidya Bhawan &bull; DivyVastu Certified</span>
+          <span>Bhartiya Vidya Bhawan &bull; Divya Vastu Certified</span>
         </div>
 
         {/* 6. Pagination / Progress Dots */}
