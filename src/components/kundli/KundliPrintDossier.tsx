@@ -3,16 +3,22 @@
 import React from "react";
 import { KundliData } from "@/lib/astrology/types";
 import { NorthIndianChart } from "./NorthIndianChart";
-import { Printer, Download, Sparkles, ShieldCheck } from "lucide-react";
+import { Printer, Download, Sparkles, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 
 interface KundliPrintDossierProps {
   kundli: KundliData;
   isPreview?: boolean;
+  isUnlocked?: boolean;
+  onPurchase?: () => void;
+  isProcessingPayment?: boolean;
 }
 
 export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
   kundli,
   isPreview = false,
+  isUnlocked = false,
+  onPurchase,
+  isProcessingPayment = false,
 }) => {
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -33,34 +39,65 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
     <div className={isPreview ? "space-y-6" : "print-only p-8 bg-white text-black"}>
       {/* Top Action Bar when viewed on screen */}
       {isPreview && (
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-[#7B2D26] text-[#FBF3E7] shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-[#7B2D26] text-[#FBF3E7] shadow-md">
           <div>
-            <h3 className="font-temple text-base font-bold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#E8A33D]" />
-              <span>Full Janam Kundli Dossier (Free Client-Side PDF)</span>
-            </h3>
-            <p className="text-xs text-[#E8D8C3] mt-0.5">
-              100% Free &bull; No sign up required &bull; Formatted for clean A4 printing / PDF export
+            <div className="flex items-center gap-2">
+              <h3 className="font-temple text-base font-bold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#E8A33D]" />
+                <span>Full Janam Kundli Dossier (Printable PDF Version)</span>
+              </h3>
+              {isUnlocked ? (
+                <span className="rounded-full bg-[#6B8E5A] px-2.5 py-0.5 text-[10px] font-bold text-white flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Unlocked &bull; Paid
+                </span>
+              ) : (
+                <span className="rounded-full bg-[#E8A33D] px-2.5 py-0.5 text-[10px] font-bold text-[#3B2A1E]">
+                  Paid Product: ₹501
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#E8D8C3] mt-1 font-body">
+              {isUnlocked
+                ? "Your full PDF report is unlocked! Click below to download or print your clean A4 document."
+                : "Full 12-page formatted Vedic horoscope report with dual charts, planetary dignity matrix, and remedies."}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E] px-4 py-2 text-xs font-bold transition-all shadow-sm cursor-pointer"
-          >
-            <Printer className="h-4 w-4" />
-            <span>Download / Print PDF Now</span>
-          </button>
+
+          <div className="flex items-center gap-2.5">
+            {isUnlocked ? (
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#6B8E5A] hover:bg-[#577548] text-white px-5 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download / Print Full PDF Dossier</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onPurchase}
+                disabled={isProcessingPayment}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E] px-5 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75"
+              >
+                <Lock className="h-4 w-4" />
+                <span>
+                  {isProcessingPayment ? "Processing Order..." : "Download Full PDF Report — ₹501"}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Actual Printable Document Container */}
-      <div className="bg-white text-[#1a1a1a] p-6 sm:p-8 rounded-2xl border border-[#E8D8C3] shadow-sm font-sans space-y-6 max-w-4xl mx-auto">
+      <div className="bg-white text-[#1a1a1a] p-6 sm:p-8 rounded-2xl border border-[#E8D8C3] shadow-sm font-sans space-y-6 max-w-4xl mx-auto relative">
         {/* Document Header */}
         <div className="border-b-2 border-[#7B2D26] pb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-xs font-bold uppercase tracking-widest text-[#7B2D26]">
-              Aapka Astro &bull; Vedic Astronomical Ephemeris
+              Aapka Astro &bull; Authentic Geocentric Vedic Ephemeris
             </div>
             <h1 className="text-2xl font-bold font-serif text-[#7B2D26] mt-1">
               {kundli.name}&apos;s Vedic Janam Kundli
@@ -77,6 +114,12 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
               <div className="text-[10px] uppercase font-bold text-[#7B2D26]">Lagna Ascendant</div>
               <div className="text-sm font-bold text-black">{kundli.ascendant.rashiName} ({kundli.ascendant.hindiName})</div>
             </div>
+            {isUnlocked && (
+              <div className="text-[10px] font-bold text-[#6B8E5A] mt-1 flex items-center justify-end gap-1">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Verified Client PDF &bull; ₹501 Paid</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -273,8 +316,8 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
             </div>
           </div>
           <div className="text-right text-[11px] text-[#777]">
-            <div>Prepared with Authentic NASA JPL Ephemeris by <strong>Aapka Astro</strong></div>
-            <div>For 1-on-1 personalized guidance, visit <strong>aapkaastro.com/consult</strong></div>
+            <div>Prepared with Authentic Geocentric Ephemeris by <strong>Aapka Astro</strong></div>
+            <div>For 1-on-1 personal consultation, visit <strong>aapkaastro.com/consult</strong></div>
           </div>
         </div>
       </div>

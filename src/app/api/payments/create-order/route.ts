@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
     if (productId === "astro" || productId === "vaastu") {
       rateCalculation = await calculateUserConsultationRate(userId, productId, format);
       orderAmount = rateCalculation.effectiveFee;
+    } else if (productId === "kundli_pdf" || serviceType === "kundli_pdf_report") {
+      orderAmount = 501;
     }
 
     if (!orderAmount || orderAmount <= 0) {
@@ -36,7 +38,10 @@ export async function POST(req: NextRequest) {
     const order = await paymentProvider.createOrder(orderAmount, receiptId, {
       userId: userId || "guest",
       productId: productId || "astro",
-      productName: rateCalculation?.productName || "Astro Consultation",
+      productName:
+        productId === "kundli_pdf" || serviceType === "kundli_pdf_report"
+          ? "Kundli Full PDF Report"
+          : rateCalculation?.productName || "Astro Consultation",
       amountINR: String(orderAmount),
       clientName: clientName || "",
       phone: phone || "",

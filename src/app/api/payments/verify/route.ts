@@ -36,33 +36,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paidAmount = amountINR || (productId === "vaastu" ? 15000 : 1051);
+    const paidAmount = amountINR || (productId === "kundli_pdf" ? 501 : productId === "vaastu" ? 15000 : 1051);
     const bookingId = `book_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     // Record session and transaction in PostgreSQL via Prisma
     try {
       if (userId && userId !== "guest") {
-        const defaultAstrologer = await prisma.user.findFirst({
-          where: { role: "ASTROLOGER" },
-          select: { id: true },
-        });
-
-        if (defaultAstrologer) {
-          await prisma.session.create({
-            data: {
-              clientId: userId,
-              astrologerId: defaultAstrologer.id,
-              type: format.toLowerCase().includes("video")
-                ? "VIDEO"
-                : format.toLowerCase().includes("voice")
-                ? "VOICE"
-                : "CHAT",
-              ratePerMin: 0,
-              totalCost: paidAmount,
-              status: "WAITING",
-              notes: `${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}: ${topic || "Vedic Guidance"}`,
-            },
+        if (productId !== "kundli_pdf") {
+          const defaultAstrologer = await prisma.user.findFirst({
+            where: { role: "ASTROLOGER" },
+            select: { id: true },
           });
+
+          if (defaultAstrologer) {
+            await prisma.session.create({
+              data: {
+                clientId: userId,
+                astrologerId: defaultAstrologer.id,
+                type: format.toLowerCase().includes("video")
+                  ? "VIDEO"
+                  : format.toLowerCase().includes("voice")
+                  ? "VOICE"
+                  : "CHAT",
+                ratePerMin: 0,
+                totalCost: paidAmount,
+                status: "WAITING",
+                notes: `${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}: ${topic || "Vedic Guidance"}`,
+              },
+            });
+          }
         }
 
         await prisma.walletTransaction.create({
@@ -73,7 +75,10 @@ export async function POST(req: NextRequest) {
             razorpayOrderId: orderId,
             razorpayPaymentId: paymentId,
             provider: paymentProvider.name,
-            description: `One-Time Payment: ${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}`,
+            description:
+              productId === "kundli_pdf"
+                ? "Kundli Full PDF Report Download"
+                : `One-Time Payment: ${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}`,
           },
         });
       }

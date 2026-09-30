@@ -1623,6 +1623,67 @@ The admin pricing screen now features dedicated management cards for both flat-f
   - Added test cases in `tests/billing.test.ts` for Vaastu standing pricing (₹15,000 / ₹25,000), Astro first-time gating (₹1,051 vs ₹2,100), and property details validation.
 - **Production Build**: 100% clean compilation via Next.js Turbopack across all 99 routes (`npm run build`).
 
+---
+
+## 28. Kundli Full PDF Report — Paid Product (₹501) & Free Tool Integrity
+
+### 28.1 Free Online Tool Integrity (Zero Paywalls to View Online)
+Per explicit client requirement:
+> *"The existing free, instant online Kundli chart generator stays exactly as it is — no payment required to view a chart online."*
+
+All free calculations and interactive visualizations remain completely open and unrestricted:
+- **Instant Chart Generation**: Users enter birth coordinates and instantly generate full horoscopes with zero signup, payment, or paywalls.
+- **Complete Online Depth**:
+  - D1 to D12 Shodashvarga chart selector (Lagna, Navamsha, Dashamsha, etc.)
+  - Planetary Longitudes, Nakshatras & Dignity Matrix (Exalted, Debilitated, Own Sign)
+  - KP System House Cusps & Sub-Lords
+  - 4-Tier Vimshottari Dasha Hierarchy (Mahadasha, Antardasha, Pratyantardasha, Sookshmadasha)
+  - Ashtakvarga Sarvashtak Point Matrix
+  - 6-Fold Shadbala Scores
+  - Classical Dosha Diagnosis (Manglik, Shani Sade Sati, Kaal Sarp, Pitra Dosha)
+  - Personalized Gemstone Prescription, Lucky Color, Lucky Number & Ishta Devata
+
+---
+
+### 28.2 New ₹501 Paid Product Architecture
+A distinct digital product has been introduced for seekers wanting a downloadable, high-resolution A4 printable dossier:
+- **Product Name**: `Kundli Full PDF Report` ([`KUNDLI_PDF_PRODUCT`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts))
+- **Price**: Flat **₹501/-** (one-time payment via Razorpay)
+- **Included Content**:
+  - High-resolution D1 Lagna and D9 Navamsha charts formatted for clean printing
+  - Complete planetary degree matrix with nakshatra padas and motion
+  - 4-tier Vimshottari dasha timeline with precise dates
+  - Classical dosha assessment and non-destructive remedial guidance
+  - Verified Aapka Astro authenticity seal and reference coordinates
+- **Offer Placement**:
+  - After a client generates their free online chart on [`/kundli`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/kundli/page.tsx) or [`/kundli-generator`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/kundli-generator/page.tsx), a clear **"Download Full PDF Report — ₹501"** button is displayed both in the top actions bar and as a prominent product callout card.
+  - The "Report" tab provides a formatted preview of the dossier with an active unlock action.
+
+---
+
+### 28.3 Viar-Style Checkout & Chart-Specific Unlocking
+1. **Server-Side Enforcement**:
+   - `POST /api/payments/create-order` detects `productId: "kundli_pdf"` and strictly enforces `orderAmount = 501` (50,100 paise), preventing client-side price modification.
+2. **Signature Verification**:
+   - `POST /api/payments/verify` verifies HMAC signature, records the ₹501 transaction, and confirms the order without creating an unnecessary consultation queue item.
+3. **Specific Chart Isolation**:
+   - Each unlock is uniquely keyed by the chart's exact birth coordinates:
+     `chartSignature = "${name}_${birthDate}_${birthTime}_${birthPlace}"`
+     `storageKey = "aapka_unlocked_kundli_${encodeURIComponent(chartSignature)}"`
+   - Unlocking one chart does not unlock different charts entered in the generator.
+   - Re-entering or navigating back to a purchased chart instantly restores the unlocked state from `localStorage`.
+4. **Instant Download Execution**:
+   - Once unlocked, the CTA transforms to a verified green **"Download Full PDF Report (Unlocked)"** button.
+   - Clicking it automatically executes the browser's clean `@media print` A4 PDF export engine without re-prompting for payment.
+
+---
+
+### 28.4 Automated Test Suite & Build Verification
+- **Automated Test Suite**: Added [`tests/kundliPdfOrder.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/kundliPdfOrder.test.ts) covering product configuration, free tool calculation integrity, server-side ₹501 price enforcement, payment verification, and chart signature isolation (5/5 tests passing).
+- **Total Project Tests**: **222 / 222 tests passing** across 46 test suites (`npm test`).
+- **Production Build**: Clean compilation of all 99 routes via Next.js Turbopack (`npm run build`).
+
+
 
 
 

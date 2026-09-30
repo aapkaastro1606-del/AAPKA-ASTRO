@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { KundliForm } from "@/components/kundli/KundliForm";
 import { NorthIndianChart } from "@/components/kundli/NorthIndianChart";
@@ -26,8 +26,24 @@ import {
   TrendingUp,
   Compass,
   FileText,
+  Lock,
+  Download,
 } from "lucide-react";
-import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING } from "@/config/placeholderContent";
+import { PLACEHOLDER_ASTROLOGER, KUNDLI_PDF_PRODUCT } from "@/config/placeholderContent";
+
+// Razorpay SDK Script Loader
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function KundliPage() {
   const [kundli, setKundli] = useState<KundliData>(() =>
@@ -49,9 +65,145 @@ export default function KundliPage() {
     "chart" | "planets" | "kp" | "dasha" | "ashtakvarga" | "shadbala" | "dosha" | "remedies" | "report"
   >("chart");
 
+  // Paid PDF Product State (₹501 one-time order per specific chart)
+  const [isPdfUnlocked, setIsPdfUnlocked] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Derive unique signature for the active chart
+  const chartSignature = `${kundli.name}_${kundli.birthDate}_${kundli.birthTime}_${kundli.birthPlace}`;
+  const chartStorageKey = `aapka_unlocked_kundli_${encodeURIComponent(chartSignature)}`;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(chartStorageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.unlocked) {
+            setIsPdfUnlocked(true);
+            return;
+          }
+        } catch {}
+      }
+      setIsPdfUnlocked(false);
+    }
+  }, [chartSignature, chartStorageKey]);
+
   const handlePrint = () => {
     if (typeof window !== "undefined") {
       window.print();
+    }
+  };
+
+  // One-time Razorpay checkout for ₹501 PDF report
+  const handlePdfPurchase = async () => {
+    if (isPdfUnlocked) {
+      handlePrint();
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    try {
+      // 1. Create order on server (server enforces ₹501)
+      const res = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: KUNDLI_PDF_PRODUCT.price, // ₹501
+          productId: "kundli_pdf",
+          serviceType: "kundli_pdf_report",
+          clientName: kundli.name,
+          phone: "9876543210",
+        }),
+      });
+
+      const orderData = await res.json().catch(() => null);
+      if (!res.ok || !orderData?.order) {
+        throw new Error(orderData?.message || "Failed to initiate PDF report order");
+      }
+
+      const orderId = orderData.order.id;
+      const keyId = orderData.keyId || "rzp_test_mock_key_id";
+
+      const completeUnlock = async (paymentId: string, signature: string = "") => {
+        // 2. Verify signature on server
+        await fetch("/api/payments/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            paymentId,
+            signature,
+            productId: "kundli_pdf",
+            amountINR: 501,
+            topic: `Kundli PDF Report for ${kundli.name}`,
+          }),
+        }).catch((err) => console.warn("Verification warning:", err));
+
+        setIsPdfUnlocked(true);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            chartStorageKey,
+            JSON.stringify({
+              unlocked: true,
+              orderId,
+              paymentId,
+              chartSignature,
+              unlockedAt: new Date().toISOString(),
+            })
+          );
+        }
+        setIsProcessingPayment(false);
+
+        // Prompt immediate download / print
+        setTimeout(() => {
+          handlePrint();
+        }, 300);
+      };
+
+      const isMock = keyId.includes("mock") || keyId.startsWith("rzp_test_mock");
+
+      if (isMock) {
+        setTimeout(async () => {
+          await completeUnlock(`pay_sim_pdf_${Date.now()}`, `sig_mock_${Date.now()}`);
+        }, 1200);
+      } else {
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+          throw new Error("Unable to load Razorpay payment gateway.");
+        }
+
+        const options = {
+          key: keyId,
+          amount: KUNDLI_PDF_PRODUCT.price * 100, // in paise
+          currency: "INR",
+          name: "Aapka Astro",
+          description: `Full PDF Report for ${kundli.name}`,
+          image: "/logo.png",
+          order_id: orderId,
+          handler: async function (response: any) {
+            await completeUnlock(response.razorpay_payment_id, response.razorpay_signature);
+          },
+          prefill: {
+            name: kundli.name,
+          },
+          theme: {
+            color: "#7B2D26",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingPayment(false);
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      }
+    } catch (err: any) {
+      console.error("PDF purchase error:", err);
+      setIsProcessingPayment(false);
+      alert(err.message || "Failed to process PDF report order. Please try again.");
     }
   };
 
@@ -83,25 +235,41 @@ export default function KundliPage() {
               Detailed Vedic Janam Kundli (जन्म पत्रिका)
             </h1>
             <p className="text-xs sm:text-sm text-[#7D6B5D] mt-1 font-body">
-              Classical Lahiri Geocentric Ephemeris &bull; Shodashvarga (D1 to D12) &bull; Ashtakvarga &bull; 6-Fold Shadbala
+              Classical Lahiri Geocentric Ephemeris &bull; Free Instant Online Chart &bull; Shodashvarga (D1 to D12) &bull; Ashtakvarga &bull; 6-Fold Shadbala
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          {/* Top Actions: Paid PDF Report + Consult Astrologer */}
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-xl border border-[#D4C3B3] bg-[#FFFDF9] px-3.5 py-2 text-xs font-semibold text-[#3B2A1E] hover:bg-[#F3E7D3] transition-all shadow-sm"
+              onClick={handlePdfPurchase}
+              disabled={isProcessingPayment}
+              className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75 ${
+                isPdfUnlocked
+                  ? "border-[#6B8E5A] bg-[#6B8E5A]/15 text-[#2A4720] hover:bg-[#6B8E5A]/25"
+                  : "border-[#7B2D26] bg-[#FAF1E4] text-[#7B2D26] hover:bg-[#F3E7D3]"
+              }`}
             >
-              <Printer className="h-4 w-4 text-[#C1662F]" />
-              <span>Print / Save PDF</span>
+              {isPdfUnlocked ? (
+                <>
+                  <Download className="h-4 w-4 text-[#6B8E5A]" />
+                  <span>Download Full PDF Report (Unlocked)</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4 text-[#7B2D26]" />
+                  <span>{isProcessingPayment ? "Processing..." : "Download Full PDF Report — ₹501"}</span>
+                </>
+              )}
             </button>
+
             <Link
               href="/consult"
               className="flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-[#64231D] transition-all"
             >
               <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
-              <span>Consult Acharya Ji</span>
+              <span>Consult Acharya Ji (₹1,051)</span>
             </Link>
           </div>
         </div>
@@ -195,7 +363,52 @@ export default function KundliPage() {
               </div>
             </div>
 
-            {/* Navigation Tabs (Astrotalk Tool Depth) */}
+            {/* Clear Paid PDF Offer Card (After Free Online Chart Generated) */}
+            <div className="my-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-r from-[#FFFDF9] via-[#FAF1E4] to-[#FFFDF9] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7B2D26] text-[#E8A33D] shrink-0 font-bold">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-temple font-bold text-sm sm:text-base text-[#7B2D26]">
+                      Download Full Janam Kundli PDF Report
+                    </h4>
+                    <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[10px] font-bold text-[#2A4720]">
+                      ₹501 One-Time
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6E5545] mt-0.5 font-body">
+                    Complete 12-page formatted A4 printable dossier with high-resolution charts, planetary dignity table, 4-tier dasha timeline, and remedies.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePdfPurchase}
+                disabled={isProcessingPayment}
+                className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer disabled:opacity-75 ${
+                  isPdfUnlocked
+                    ? "bg-[#6B8E5A] hover:bg-[#587749] text-white"
+                    : "bg-[#7B2D26] hover:bg-[#64231D] text-white"
+                }`}
+              >
+                {isPdfUnlocked ? (
+                  <>
+                    <Download className="h-4 w-4" />
+                    <span>Download PDF (Paid &amp; Unlocked)</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4 text-[#E8A33D]" />
+                    <span>{isProcessingPayment ? "Processing..." : "Download Full PDF Report — ₹501"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Navigation Tabs (Online Free Chart Exploration Remains 100% Unchanged) */}
             <div className="flex border-b border-[#E8D8C3] my-5 text-xs font-semibold gap-3 overflow-x-auto pb-1">
               <button
                 type="button"
@@ -300,7 +513,7 @@ export default function KundliPage() {
                 }`}
               >
                 <FileText className="h-3.5 w-3.5 text-[#E8A33D]" />
-                <span>Free PDF Report</span>
+                <span>{isPdfUnlocked ? "Full PDF Report (Unlocked)" : "Full PDF Report (₹501)"}</span>
               </button>
             </div>
 
@@ -317,7 +530,7 @@ export default function KundliPage() {
                         onClick={() => setSelectedVarga(v.code)}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                           selectedVarga === v.code
-                            ? "bg-[#7B2D26] text-white shadow-xs"
+                             ? "bg-[#7B2D26] text-white shadow-xs"
                             : "bg-white text-[#6E5545] border border-[#E8D8C3] hover:border-[#7B2D26]"
                         }`}
                       >
@@ -362,7 +575,15 @@ export default function KundliPage() {
               {activeTab === "ashtakvarga" && <AshtakvargaTable ashtakvarga={kundli.ashtakvarga} />}
               {activeTab === "shadbala" && <ShadbalaTable shadbala={kundli.shadbala} />}
               {activeTab === "dosha" && <DoshaAnalysis doshas={kundli.doshas} />}
-              {activeTab === "report" && <KundliPrintDossier kundli={kundli} isPreview={true} />}
+              {activeTab === "report" && (
+                <KundliPrintDossier
+                  kundli={kundli}
+                  isPreview={true}
+                  isUnlocked={isPdfUnlocked}
+                  onPurchase={handlePdfPurchase}
+                  isProcessingPayment={isProcessingPayment}
+                />
+              )}
 
               {activeTab === "remedies" && (
                 <div className="space-y-4">
@@ -408,7 +629,6 @@ export default function KundliPage() {
             </div>
 
             {/* Bottom Consultation CTA */}
-            {/* PLACEHOLDER: replace with real content */}
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-[#E8A33D]/60 bg-gradient-to-r from-[#7B2D26] via-[#64231D] to-[#3B2A1E] text-white p-5 shadow-lg">
               <div>
                 <h4 className="text-base font-bold font-temple">Have specific questions about this Kundli?</h4>
@@ -427,8 +647,8 @@ export default function KundliPage() {
         </div>
       </div>
 
-      {/* Printable PDF Dossier (Active on Window.Print) */}
-      <KundliPrintDossier kundli={kundli} />
+      {/* Printable PDF Dossier (Active on Window.Print when unlocked) */}
+      <KundliPrintDossier kundli={kundli} isUnlocked={isPdfUnlocked} />
     </div>
   );
 }

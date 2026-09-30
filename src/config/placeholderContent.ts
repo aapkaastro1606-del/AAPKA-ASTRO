@@ -159,6 +159,22 @@ export const FIRST_CONSULTATION_OFFER = {
   description: "Astro Consultation: Flat ₹1,051/- for first consultation (Regular ₹2,100)",
 };
 
+// Kundli Full PDF Report Product (₹501 One-Time Download)
+export const KUNDLI_PDF_PRODUCT = {
+  id: "kundli_pdf",
+  name: "Kundli Full PDF Report",
+  price: 501,
+  currency: "₹",
+  tagline: "Downloadable, formatted printable Vedic Horoscope Dossier",
+  deliverables: [
+    "High-resolution D1 Lagna & D9 Navamsha charts formatted for clean printing",
+    "Planetary longitudes, avasthas, degrees & dignity matrix (exalted/debilitated)",
+    "4-tier Vimshottari Dasha timeline (Mahadasha to Sookshmadasha)",
+    "Classical dosha diagnosis (Manglik, Shani Sade Sati, Kaal Sarp, Pitra Dosha)",
+    "Personalized gemstone, favorable color, number, and Vedic lifestyle remedies",
+  ],
+};
+
 // Legacy compatibility shim for transitioned components
 export interface PricingTier {
   type: "chat" | "voice" | "video";
