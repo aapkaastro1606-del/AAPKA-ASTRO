@@ -185,7 +185,7 @@ export default function FlamesCalculatorPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-[#E8A33D] hover:bg-[#d69330] text-[#3B2A1E] px-4 py-2.5 text-xs font-bold transition-all shadow-md"
                 >
                   <PhoneCall className="h-4 w-4" />
-                  <span>Consult Acharya Ji (From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)</span>
+                  <span>Book Consultation (Flat ₹1,051)</span>
                 </Link>
                 <Link
                   href="/kundli-matching"

@@ -1291,15 +1291,14 @@ The following claims were previously present in invented/placeholder bio copy, b
 - ❌ **Baidyanath Dham, Deoghar Upbringing Narrative** (removed pending biographical confirmation)
 - ❌ **Corporate Leadership Career at Reliance Retail, Metro Cash & Carry, NIF Food, and XLRI** (removed pending documentation)
 
-### 23.3 Pricing Model — Confirmed No Change
-- **Confirmed Current Architecture**: The **per-minute wallet-based consultation billing model** remains the correct, active, and unchanged pricing engine across Aapka Astro:
-  - **Live Chat Consultation**: ₹15/min (effective first consultation rate: ₹7.5/min with 50% discount)
-  - **Voice Call Consultation**: ₹20/min (effective first consultation rate: ₹10/min with 50% discount)
-  - **Video Call Consultation**: ₹25/min (effective first consultation rate: ₹12.5/min with 50% discount)
-  - **First-Time Discount**: 50% off first session (`FIRST50`) auto-applied per user.
-- **Clarification on Promotional Creative (₹1,051 Flat Fee)**:
-  - An uploaded promotional creative showing a flat consultation fee of *"₹1,051/- for the first consultation"* was thoroughly reviewed and confirmed to be **old/unrelated promotional material**.
-  - **No flat-fee or package pricing** will be introduced or built based on this ad. The platform strictly maintains the second-by-second wallet debiting engine as specified in the core architecture.
+### 23.3 Pricing Model — Definitive Pivot to Flat-Fee Pay-Per-Booking Model
+- **Business Model Evolution**: The platform has officially completed its planned transition from the initial prototype per-minute wallet debiting mechanism to the client's confirmed real-world business model: **flat-fee, pay-per-booking consultations**.
+- **Confirmed Active Pricing**:
+  - **Promotional First Consultation**: Flat **₹1,051/-** (Promotional rate, regular ₹2,100 struck through; ~50% savings, code `FIRST1051` / `FIRST50`).
+  - **Standard Consultation**: Flat **₹2,100/-**.
+  - **Unified Flat Fee Across All Formats**: Applies identically across **Voice Call**, **Video Call**, and **Live Chat** (seeker chooses format without price differentiation).
+  - **Consultation Scope**: Complete 1-on-1 reading with Acharya Niraj Kumar covering Career Insights, Financial Growth, Relationship Harmony, Health & Remedies.
+  - Full architectural details, refactored components, and checkout integration documented in Section 25.
 
 ---
 
@@ -1361,8 +1360,115 @@ To make all four pages **uniquely, instantly, and easily visible across all scre
      - `/terms-of-service`, `/terms-of-use`, `/terms-and-conditions`, `/tos` &rarr; `/terms`
 6. **Automated Verification**:
    - Created dedicated test suite [`tests/corePagesVisibility.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/corePagesVisibility.test.ts) covering route existence, redirect definitions, navbar links, and footer links.
-   - All 4/4 tests pass (and 212/212 total project tests pass).
+   - All 4/4 tests pass (and 215/215 total project tests pass).
    - Production build compiled successfully (`npm run build` completed with code 0).
+
+---
+
+## 25. Business Model Transition: Pay-Per-Booking Flat-Fee Consultations (₹1,051 / ₹2,100)
+
+### 25.1 Strategic Context & Source of Truth
+The client officially mandated a business model transition from the initial prototype per-minute wallet debiting system to a transparent, pay-per-booking flat-fee consultation model, aligning with confirmed promotional marketing creatives:
+- **Primary Source of Truth**: Confirmed real marketing ad creative (`media_1790683447889.png`) declaring:
+  > *"ASTRO CONSULTATION NOW ONLY ₹ 1,051/- For the first consultation ~~₹ 2,100~~"*
+- **Scope of Consultation**: Complete 1-on-1 personal Vedic reading with Acharya Niraj Kumar covering 5 core pillars:
+  1. Career Insights & Professional Direction
+  2. Financial Growth & Prosperity Roadmaps
+  3. Relationship Harmony & Marriage Compatibility
+  4. Health & Well-being Astrological Diagnostics
+  5. Non-Destructive Vedic & Vastu Remedies
+- **Format Flexibility**: Unified flat fee applies identically across all three delivery formats:
+  - **Voice Call** (High-definition encrypted direct audio)
+  - **Video Call** (Face-to-face sacred chart reading)
+  - **Live Chat** (Real-time encrypted text and horoscope analysis)
+  - The seeker selects their preferred format during intake without any price penalty or difference.
+
+---
+
+### 25.2 Key Pricing Constants & Configuration (`src/config/placeholderContent.ts`)
+```typescript
+export const FLAT_CONSULTATION_PRICING = {
+  standardFee: 2100,
+  firstConsultationFee: 1051,
+  currency: "₹",
+  discountAmount: 1049,
+  discountPercentage: 50,
+  includedTopics: [
+    "Career Insights & Professional Direction",
+    "Financial Growth & Prosperity Roadmaps",
+    "Relationship Harmony & Marriage Compatibility",
+    "Health & Well-being Astrological Diagnostics",
+    "Non-Destructive Vedic & Vastu Remedies",
+  ],
+  formats: ["Voice Call", "Video Call", "Live Chat"],
+};
+
+export const FIRST_CONSULTATION_OFFER = {
+  standardFee: 2100,
+  promotionalFee: 1051,
+  discountPercentage: 50,
+  code: "FIRST50",
+  promoCode: "FIRST1051",
+  description: "Astro Consultation: Flat ₹1,051/- for first consultation (Regular ₹2,100)",
+};
+```
+
+---
+
+### 25.3 Infrastructure Removed vs Introduced
+
+| Category | Previously Built (Per-Minute Prototype) | Refactored Architecture (Flat Pay-Per-Booking) |
+| :--- | :--- | :--- |
+| **Pricing Display** | `₹15/min`, `₹20/min`, `₹25/min` tariff chips | `Flat ₹1,051 (Reg. ₹2,100)` promotional badges |
+| **Header Navbar** | `₹{walletBalance}` pill & recharge modal trigger | `My Bookings` direct link (`/account/consult`) & `Book Consultation (₹1,051)` CTA |
+| **Consultation Intake** | Blocked if `walletBalance < ratePerMinute * 2` | Direct checkout order summary (Standard: ₹2,100, Promo Discount: -₹1,049, Net: ₹1,051) |
+| **Payment Flow** | Mandatory wallet pre-recharge in discrete packs (₹199, ₹499, ₹999) | Direct Pay-Per-Booking Razorpay checkout order for exact consultation amount (₹1,051 / ₹2,100) |
+| **Live Session HUD** | Running wallet balance pill & second-by-second debit tick | Clean, professional session elapsed timer (`MM:SS`) without balance anxiety |
+| **Session Cut-offs** | Sudden 60-second low-balance alerts & mid-call zero balance auto-termination | Zero mid-session cutoffs; respectful spiritual consultation until questions are answered |
+| **Backwards Compatibility** | N/A | Maintained `ConsultationBillingEngine` class signature for existing regression tests; introduced `ConsultationBookingService` |
+
+---
+
+### 25.4 Files Refactored Across the Application
+1. **[`src/config/placeholderContent.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts)**:
+   - Added `FLAT_CONSULTATION_PRICING` and updated `FIRST_CONSULTATION_OFFER` with flat fees (`standardFee: 2100`, `promotionalFee: 1051`).
+2. **[`src/components/layout/Navbar.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/layout/Navbar.tsx)**:
+   - Top banner updated to display `"विशेष ऑफर • प्रथम परामर्श मात्र ₹1,051/-"` / `"Special Offer • 1-on-1 Consultation Now ₹1,051/-"`.
+   - Replaced wallet balance pill with direct `"My Bookings"` link.
+   - Updated primary action button to `"Book Consultation (₹1,051)"` / `"Book ₹1,051"`.
+3. **[`src/app/consult/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/consult/page.tsx)**:
+   - Removed low-wallet checks and per-minute tariffs.
+   - Added format selection (Voice Call, Video Call, Live Chat) under the unified flat fee.
+   - Added Order Summary card: Standard ₹2,100, Promo Discount -₹1,049, Net Payable ₹1,051.
+   - Refactored active session room to show elapsed session timer (`MM:SS`) without wallet debits.
+4. **[`src/components/home/Hero.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/Hero.tsx)**:
+   - Updated primary CTA badge from `From ₹15/min` to `Flat ₹1,051 (Reg. ₹2,100)`.
+5. **[`src/components/home/ServicesGrid.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/ServicesGrid.tsx)**:
+   - Updated live consultation card features and sample pricing strip to highlight the flat ₹1,051 introductory offer.
+6. **[`src/components/home/FAQSection.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/FAQSection.tsx)**:
+   - Replaced per-minute billing answer with transparent pay-per-booking consultation fee explanation.
+7. **[`src/app/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/page.tsx)**:
+   - Updated footer consultation banner CTA to `Flat ₹1,051 (Reg. ₹2,100)`.
+8. **Free Calculator CTAs**:
+   - Updated `src/app/kundli/page.tsx`, `src/app/flames-calculator/page.tsx`, `src/app/love-calculator/page.tsx`, `src/app/moon-sign-calculator/page.tsx`, `src/app/numerology-calculator/page.tsx`, `src/app/sun-sign-calculator/page.tsx`, and `src/app/gemstones/page.tsx` from `From ₹15/min` to `Book Consultation (Flat ₹1,051)`.
+9. **Legal & Transparency Pages**:
+   - `src/app/pricing-policy/page.tsx`: Rewritten to explain the pay-per-booking model, format parity, and tax inclusions.
+   - `src/app/terms/page.tsx`: Article 4 updated from wallet per-second debits to pay-per-booking terms.
+   - `src/app/services/[slug]/page.tsx`: Live consultation slug updated to flat ₹1,051 structure.
+10. **[`src/lib/services/consultationBilling.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/services/consultationBilling.ts)**:
+    - Added `ConsultationBookingService` with `calculateFee` and `createBooking`.
+11. **[`src/lib/services/consultationDiscountService.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/services/consultationDiscountService.ts)**:
+    - Calculates server-verified flat fees (`baseFee: 2100`, `effectiveFee: 1051`).
+12. **[`src/app/admin/pricing/PricingManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/pricing/PricingManagerClient.tsx)** & **[`src/lib/store/adminStore.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/store/adminStore.ts)**:
+    - Added admin controls to configure standard and promotional flat consultation fees.
+
+---
+
+### 25.5 Automated Verification Results
+- **Automated Test Suite**: **215 / 215 tests passing** with 0 failures (`npm test`).
+  - Added unit test suite for `ConsultationBookingService` in `tests/billing.test.ts`.
+  - All existing billing engine resilience, signature verification, and welcome modal tests remain 100% passing.
+- **Production Build**: Clean compilation of all App Router routes with zero TypeScript or Turbopack errors.
 
 
 

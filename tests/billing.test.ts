@@ -115,3 +115,57 @@ describe("ConsultationBillingEngine", () => {
     assert.equal(state.isLowBalance, false); // No longer low balance
   });
 });
+
+describe("ConsultationBookingService (Flat-Fee Pay-Per-Booking Model)", () => {
+  const { ConsultationBookingService } = require("../src/lib/services/consultationBilling");
+
+  test("calculates first-time promotional consultation fee accurately (Flat ₹1,051)", () => {
+    const feeInfo = ConsultationBookingService.calculateFee(true);
+    assert.equal(feeInfo.standardFee, 2100);
+    assert.equal(feeInfo.amountToPay, 1051);
+    assert.equal(feeInfo.discountAmount, 1049);
+    assert.equal(feeInfo.isFirstTime, true);
+    assert.equal(feeInfo.currency, "₹");
+    assert.equal(feeInfo.promoCode, "FIRST1051");
+  });
+
+  test("calculates returning client consultation fee without promo (Flat ₹2,100)", () => {
+    const feeInfo = ConsultationBookingService.calculateFee(false);
+    assert.equal(feeInfo.standardFee, 2100);
+    assert.equal(feeInfo.amountToPay, 2100);
+    assert.equal(feeInfo.discountAmount, 0);
+    assert.equal(feeInfo.isFirstTime, false);
+  });
+
+  test("creates valid consultation booking across Voice Call, Video Call, and Live Chat", () => {
+    const formats: Array<"Voice Call" | "Video Call" | "Live Chat"> = [
+      "Voice Call",
+      "Video Call",
+      "Live Chat",
+    ];
+
+    for (const format of formats) {
+      const booking = ConsultationBookingService.createBooking({
+        userId: "user_test_123",
+        clientName: "Rohan Sharma",
+        phone: "+919876543210",
+        format,
+        topic: "Career guidance and marriage timing",
+        preferredSlot: "Immediate",
+        isFirstTime: true,
+      });
+
+      assert.ok(booking.bookingId.startsWith("book_"));
+      assert.equal(booking.userId, "user_test_123");
+      assert.equal(booking.clientName, "Rohan Sharma");
+      assert.equal(booking.phone, "+919876543210");
+      assert.equal(booking.format, format);
+      assert.equal(booking.standardFee, 2100);
+      assert.equal(booking.discountApplied, 1049);
+      assert.equal(booking.amountPaid, 1051);
+      assert.equal(booking.currency, "₹");
+      assert.equal(booking.status, "PENDING_PAYMENT");
+      assert.ok(booking.createdAt);
+    }
+  });
+});

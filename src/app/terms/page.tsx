@@ -104,17 +104,20 @@ export default function TermsOfServicePage() {
           {/* Article 4 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Wallet System, Payments &amp; Telecommunication Billing
+              4. Consultation Booking, Pricing &amp; Payment Terms
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                All monetary transactions on Aapka Astro are processed securely through certified PCI-DSS compliant payment aggregators (Razorpay / UPI).
+                All monetary transactions on Aapka Astro are processed securely through certified PCI-DSS compliant payment aggregators (Razorpay / UPI / Net Banking).
               </li>
               <li>
-                On-demand live sessions are billed per minute/second directly from your pre-loaded wallet balance. The billing clock commences strictly once the audio/video call or chat connection is answered by both parties.
+                Consultations operate on a transparent flat-fee, pay-per-booking model. First-time seekers are eligible for our promotional flat fee of ₹1,051/- (Regular ₹2,100). The unified flat fee applies across all formats: Voice Call, Video Call, and Live Chat.
               </li>
               <li>
-                Promotional bonuses, complimentary welcome credits, and coupon incentives are non-transferable and cannot be converted into cash.
+                Full reading scope covers Career, Financial Growth, Relationship Harmony, Health Diagnostics, and Non-Destructive Vedic/Vastu Remedies. Consultations are conducted directly and personally with Acharya Niraj Kumar.
+              </li>
+              <li>
+                Promotional discounts, special booking vouchers, and introductory offers are non-transferable and valid for one consultation booking per verified user.
               </li>
             </ul>
           </section>

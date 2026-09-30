@@ -420,7 +420,7 @@ export default function KundliPage() {
                 href="/consult"
                 className="shrink-0 rounded-xl bg-[#E8A33D] px-5 py-2.5 text-xs font-bold text-[#3B2A1E] hover:bg-[#d69330] shadow-md transition-all"
               >
-                Consult Acharya Ji (From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)
+                Book Consultation (Flat ₹1,051)
               </Link>
             </div>
           </div>

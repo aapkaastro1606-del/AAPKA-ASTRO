@@ -340,19 +340,19 @@ export const Navbar: React.FC = () => {
         ref={navRef}
         className="sticky top-0 z-40 border-b border-[#E8D8C3] bg-[#FFFDF9]/95 backdrop-blur-md shadow-[0_2px_10px_rgba(59,42,30,0.05)]"
       >
-        {/* Slim Offer-Only Utility Strip (Strictly for the 50% off offer — zero online/availability status duplication) */}
+        {/* Slim Offer-Only Utility Strip (Flat-Fee Pay-Per-Booking Consultation Offer) */}
         <div className="bg-[#7B2D26] px-3 py-1 text-center text-[10px] sm:text-[11px] font-medium text-[#FBF3E7]">
           <Link
             href="/consult"
             className="inline-flex items-center justify-center gap-1 sm:gap-1.5 hover:underline max-w-full"
           >
             <span className="font-bold text-[#E8A33D] shrink-0">
-              {isHi ? "प्रथम परामर्श पर 50% छूट:" : "50% Off First Consultation:"}
+              {isHi ? "विशेष ऑफर • प्रथम परामर्श मात्र ₹1,051/-" : "Special Offer • 1-on-1 Consultation Now ₹1,051/-"}
             </span>
             <span className="truncate">
               {isHi
-                ? "नीरज कुमार जी से 1-on-1 वैदिक ज्योतिष परामर्श"
-                : "1-on-1 Vedic Jyotish & Vastu with Niraj Kumar"}
+                ? "(वास्तविक शुल्क ₹2,100 — 50% छूट • कॅरियर, विवाह व स्वास्थ्य)"
+                : "(Regular ₹2,100 — Flat Fee • Career, Wealth & Relationship Guidance)"}
             </span>
             <span className="font-bold text-[#E8A33D] shrink-0">&rarr;</span>
           </Link>
@@ -521,12 +521,12 @@ export const Navbar: React.FC = () => {
             {isAuthenticatedUser ? (
               <div className="hidden sm:flex items-center gap-2.5">
                 <Link
-                  href="/wallet"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[#5A4332] hover:text-[#7B2D26] transition-colors"
-                  title="Your Aapka Astro Wallet Balance"
+                  href="/account/consult"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A4332] hover:text-[#7B2D26] transition-colors"
+                  title="Your Consultations & Bookings"
                 >
-                  <Wallet className="h-3.5 w-3.5 text-[#C1662F]" />
-                  <span className="font-mono font-semibold text-[#7B2D26]">₹{walletBalance}</span>
+                  <Calendar className="h-3.5 w-3.5 text-[#C1662F]" />
+                  <span>{isHi ? "मेरी बुकिंग्स" : "My Bookings"}</span>
                 </Link>
 
                 <div className="flex items-center gap-2">
@@ -562,9 +562,9 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap"
               >
                 <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">{isHi ? "परामर्श" : "Consult"}</span>
+                <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
                 <span className="hidden sm:inline">
-                  {isHi ? "लाइव परामर्श" : t("nav_live_consult")}
+                  {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}
                 </span>
               </Link>
             ) : (
@@ -575,9 +575,9 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap"
               >
                 <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">{isHi ? "परामर्श" : "Consult"}</span>
+                <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
                 <span className="hidden sm:inline">
-                  {isHi ? "परामर्श बुक करें" : "Consult Now"}
+                  {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}
                 </span>
               </button>
             )}
@@ -823,12 +823,12 @@ export const Navbar: React.FC = () => {
                     </Link>
                   </div>
                   <Link
-                    href="/wallet"
+                    href="/account/consult"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-1.5 rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] px-3 py-1.5 text-xs font-bold text-[#7B2D26]"
                   >
-                    <Wallet className="h-3.5 w-3.5 text-[#C1662F]" />
-                    <span className="font-mono font-black">₹{walletBalance}</span>
+                    <Calendar className="h-3.5 w-3.5 text-[#C1662F]" />
+                    <span>{isHi ? "मेरी बुकिंग्स" : "My Bookings"}</span>
                   </Link>
                 </div>
               ) : (

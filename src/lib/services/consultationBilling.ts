@@ -111,3 +111,94 @@ export class ConsultationBillingEngine {
     };
   }
 }
+
+/**
+ * ============================================================================
+ * FLAT-FEE CONSULTATION BOOKING SERVICE
+ * ============================================================================
+ * Pay-per-booking model matching confirmed promotional creatives:
+ * - First Consultation: Flat ₹1,051/- (Standard ₹2,100, 50% discount)
+ * - Standard Consultation: Flat ₹2,100/-
+ * - Unified flat fee across Voice Call, Video Call, and Live Chat
+ */
+export interface ConsultationBooking {
+  bookingId: string;
+  userId: string;
+  clientName: string;
+  phone: string;
+  format: "Voice Call" | "Video Call" | "Live Chat";
+  topic: string;
+  preferredSlot: string;
+  dateOfBirth?: string;
+  timeOfBirth?: string;
+  placeOfBirth?: string;
+  standardFee: number;
+  discountApplied: number;
+  amountPaid: number;
+  currency: string;
+  status: "PENDING_PAYMENT" | "CONFIRMED" | "IN_SESSION" | "COMPLETED" | "CANCELLED";
+  paymentId?: string;
+  orderId?: string;
+  createdAt: string;
+  confirmedAt?: string;
+}
+
+export class ConsultationBookingService {
+  public static calculateFee(isFirstTime: boolean = true): {
+    standardFee: number;
+    discountAmount: number;
+    amountToPay: number;
+    currency: string;
+    isFirstTime: boolean;
+    promoCode: string;
+  } {
+    const standardFee = 2100;
+    const amountToPay = isFirstTime ? 1051 : 2100;
+    const discountAmount = standardFee - amountToPay;
+
+    return {
+      standardFee,
+      discountAmount,
+      amountToPay,
+      currency: "₹",
+      isFirstTime,
+      promoCode: isFirstTime ? "FIRST1051" : "",
+    };
+  }
+
+  public static createBooking(params: {
+    userId: string;
+    clientName: string;
+    phone: string;
+    format: "Voice Call" | "Video Call" | "Live Chat";
+    topic: string;
+    preferredSlot: string;
+    dateOfBirth?: string;
+    timeOfBirth?: string;
+    placeOfBirth?: string;
+    isFirstTime?: boolean;
+  }): ConsultationBooking {
+    const pricing = this.calculateFee(params.isFirstTime ?? true);
+    const bookingId = `book_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    return {
+      bookingId,
+      userId: params.userId,
+      clientName: params.clientName,
+      phone: params.phone,
+      format: params.format,
+      topic: params.topic,
+      preferredSlot: params.preferredSlot,
+      dateOfBirth: params.dateOfBirth,
+      timeOfBirth: params.timeOfBirth,
+      placeOfBirth: params.placeOfBirth,
+      standardFee: pricing.standardFee,
+      discountApplied: pricing.discountAmount,
+      amountPaid: pricing.amountToPay,
+      currency: "₹",
+      status: "PENDING_PAYMENT",
+      createdAt: new Date().toISOString(),
+    };
+  }
+}
+

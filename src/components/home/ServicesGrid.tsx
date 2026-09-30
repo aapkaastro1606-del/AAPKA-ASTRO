@@ -67,15 +67,15 @@ export const ServicesGrid: React.FC = () => {
       hindi: "सीधा व्यक्तिगत परामर्श",
       description:
         `Real-time chat, voice, or video sessions covering any of the above with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
-      pricing: `Chat: ₹${ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/m | Voice: ₹${ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/m | Video: ₹${ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/m`,
+      pricing: "Flat ₹1,051 (Regular ₹2,100) — 50% Savings",
       badge: "50% Off 1st Session",
       icon: PhoneCall,
       href: "/consult",
       features: [
         "Live 1-on-1 direct encrypted connection",
-        `Chat (₹${ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min), Voice (₹${ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/min), Video (₹${ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/min)`,
-        "First consultation: 50% off (auto-applied once per user)",
-        "Second-by-second live wallet billing with zero lock-in",
+        "Format choice: Voice Call, Video Call, or Live Chat (Unified Fee)",
+        "First consultation: Flat ₹1,051/- (Regular ₹2,100 — 50% savings)",
+        "Covers Career, Finance, Marriage Compatibility, Health & Remedies",
       ],
     },
   ];
@@ -158,38 +158,38 @@ export const ServicesGrid: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#7B2D26] font-temple mb-1">
                 <Sparkles className="h-4 w-4 text-[#E8A33D]" />
-                <span>Transparent Live Consultation Pricing (Admin Configurable)</span>
+                <span>Special 1-on-1 Consultation Offer</span>
               </div>
               <p className="text-xs text-[#6E5545] font-body">
-                Pay only for the seconds you speak. No lock-in or minimum recharge hurdles.
+                Flat ₹1,051/- for your first personal reading (Regular ₹2,100). Choose between Voice, Video, or Chat.
               </p>
             </div>
 
             {/* Pricing Badges */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-center shadow-sm">
-                <div className="text-[10px] uppercase font-bold text-[#7D6B5D] font-temple">Chat Session</div>
-                <div className="text-base font-bold font-temple text-[#7B2D26]">₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min</div>
-                <div className="text-[10px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/min</div>
+                <div className="text-[10px] uppercase font-bold text-[#7D6B5D] font-temple">Live Chat</div>
+                <div className="text-base font-bold font-temple text-[#7B2D26]">₹1,051</div>
+                <div className="text-[10px] text-[#6B8E5A] font-bold">Reg. ₹2,100</div>
               </div>
 
               <div className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-center shadow-sm">
                 <div className="text-[10px] uppercase font-bold text-[#7D6B5D] font-temple">Voice Call</div>
-                <div className="text-base font-bold font-temple text-[#7B2D26]">₹{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/min</div>
-                <div className="text-[10px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/min</div>
+                <div className="text-base font-bold font-temple text-[#7B2D26]">₹1,051</div>
+                <div className="text-[10px] text-[#6B8E5A] font-bold">Reg. ₹2,100</div>
               </div>
 
               <div className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-center shadow-sm">
                 <div className="text-[10px] uppercase font-bold text-[#7D6B5D] font-temple">Video Call</div>
-                <div className="text-base font-bold font-temple text-[#7B2D26]">₹{ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/min</div>
-                <div className="text-[10px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate}/min</div>
+                <div className="text-base font-bold font-temple text-[#7B2D26]">₹1,051</div>
+                <div className="text-[10px] text-[#6B8E5A] font-bold">Reg. ₹2,100</div>
               </div>
 
               <Link
                 href="/consult"
                 className="rounded-xl bg-[#7B2D26] px-5 py-3 text-xs font-bold text-white hover:bg-[#64231D] shadow-sm transition-all"
               >
-                Connect Now (50% Off)
+                Book Now (₹1,051)
               </Link>
             </div>
           </div>

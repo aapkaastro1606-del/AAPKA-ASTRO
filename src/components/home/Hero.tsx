@@ -113,7 +113,7 @@ export const Hero: React.FC = () => {
                 </span>
                 {/* PLACEHOLDER: replace with real content */}
                 <span className="rounded-md bg-[#E8A33D] px-2 py-0.5 text-xs font-black text-[#3B2A1E]">
-                  From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min
+                  Flat ₹1,051 (Reg. ₹2,100)
                 </span>
               </Link>
 

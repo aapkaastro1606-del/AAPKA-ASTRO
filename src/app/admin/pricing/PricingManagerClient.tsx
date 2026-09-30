@@ -120,11 +120,80 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Flat-Fee Pay-Per-Booking Consultation Rates */}
+          <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm space-y-6">
+            <h3 className="font-temple text-lg font-bold text-[#7B2D26] flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-[#C1662F]" />
+              <span>Flat-Fee Consultation Pricing (Pay-Per-Booking)</span>
+            </h3>
+            <p className="text-xs text-[#6E5545] font-body">
+              Configure the primary flat fees shown sitewide for 1-on-1 personal consultations with Acharya Niraj Kumar.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* First Consultation Promotional Fee */}
+              <div className="rounded-2xl border border-[#E8A33D]/60 bg-[#FAF1E4] p-5">
+                <div className="flex items-center justify-between text-xs font-bold text-[#7B2D26] mb-2">
+                  <span>First Consultation Promotional Fee</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#7B2D26] text-white">50% PROMO</span>
+                </div>
+                <label className="block text-[11px] text-[#6E5545] mb-1">
+                  Payable amount for first-time booking (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#7B2D26]">₹</span>
+                  <input
+                    type="number"
+                    min={100}
+                    max={10000}
+                    disabled={!canManage}
+                    value={pricing.flatFirstConsultationFee ?? 1051}
+                    onChange={(e) =>
+                      setPricing({ ...pricing, flatFirstConsultationFee: Number(e.target.value) })
+                    }
+                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                  />
+                </div>
+                <span className="mt-2 block text-[10px] text-[#6E5545]">
+                  Published promotional creative rate: Flat ₹1,051/-
+                </span>
+              </div>
+
+              {/* Standard Consultation Fee */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
+                <div className="flex items-center justify-between text-xs font-bold text-[#7B2D26] mb-2">
+                  <span>Standard Consultation Fee</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#6B8E5A]/20 text-[#2A4720]">REGULAR</span>
+                </div>
+                <label className="block text-[11px] text-[#6E5545] mb-1">
+                  Standard session rate (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#7B2D26]">₹</span>
+                  <input
+                    type="number"
+                    min={500}
+                    max={20000}
+                    disabled={!canManage}
+                    value={pricing.flatStandardFee ?? 2100}
+                    onChange={(e) =>
+                      setPricing({ ...pricing, flatStandardFee: Number(e.target.value) })
+                    }
+                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2.5 pl-8 pr-3 font-mono text-base font-bold text-[#7B2D26] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                  />
+                </div>
+                <span className="mt-2 block text-[10px] text-[#6E5545]">
+                  Published regular rate: Flat ₹2,100/-
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Per-minute Rates Box */}
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm space-y-6">
             <h3 className="font-temple text-lg font-bold text-[#7B2D26] flex items-center gap-2">
               <Sliders className="h-5 w-5 text-[#C1662F]" />
-              <span>Base Consultation Rates (Per Minute)</span>
+              <span>Base Consultation Rates (Per Minute - Secondary / Legacy)</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">

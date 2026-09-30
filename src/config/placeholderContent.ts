@@ -69,11 +69,49 @@ export const OFFICIAL_GALLERY_IMAGES = [
   },
 ];
 
-// Admin-editable pricing configuration
+// Flat-Fee Pay-Per-Booking Consultation Configuration (Source of Truth: Confirmed Promotional Creative)
+export interface FlatConsultationPricing {
+  standardFee: number;
+  firstConsultationFee: number;
+  currency: string;
+  discountAmount: number;
+  discountPercentage: number;
+  includedTopics: string[];
+  formats: Array<"Voice Call" | "Video Call" | "Live Chat">;
+}
+
+export const FLAT_CONSULTATION_PRICING: FlatConsultationPricing = {
+  standardFee: 2100,
+  firstConsultationFee: 1051,
+  currency: "₹",
+  discountAmount: 1049,
+  discountPercentage: 50,
+  includedTopics: [
+    "Career Insights & Professional Direction",
+    "Financial Growth & Prosperity Roadmaps",
+    "Relationship Harmony & Marriage Compatibility",
+    "Health & Well-being Astrological Diagnostics",
+    "Non-Destructive Vedic & Vastu Remedies",
+  ],
+  formats: ["Voice Call", "Video Call", "Live Chat"],
+};
+
+export const FIRST_CONSULTATION_OFFER = {
+  standardFee: 2100,
+  promotionalFee: 1051,
+  discountPercentage: 50,
+  code: "FIRST50",
+  promoCode: "FIRST1051",
+  description: "Astro Consultation: Flat ₹1,051/- for first consultation (Regular ₹2,100)",
+};
+
+// Legacy compatibility shim for transitioned components
 export interface PricingTier {
   type: "chat" | "voice" | "video";
   label: string;
   ratePerMinute: number;
+  flatFee: number;
+  standardFee: number;
   currency: string;
   discountPercentage: number;
   effectiveFirstTimeRate: number;
@@ -85,35 +123,35 @@ export const ADMIN_CONFIGURABLE_PRICING: Record<"chat" | "voice" | "video", Pric
     type: "chat",
     label: "Live Chat Consultation",
     ratePerMinute: 15,
+    flatFee: 1051,
+    standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
     effectiveFirstTimeRate: 7.5, // 50% off for first consultation
-    unit: "min",
+    unit: "session",
   },
   voice: {
     type: "voice",
     label: "Voice Call Consultation",
     ratePerMinute: 20,
+    flatFee: 1051,
+    standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
     effectiveFirstTimeRate: 10, // 50% off for first consultation
-    unit: "min",
+    unit: "session",
   },
   video: {
     type: "video",
     label: "Video Call Consultation",
     ratePerMinute: 25,
+    flatFee: 1051,
+    standardFee: 2100,
     currency: "₹",
     discountPercentage: 50,
     effectiveFirstTimeRate: 12.5, // 50% off for first consultation
-    unit: "min",
+    unit: "session",
   },
-};
-
-export const FIRST_CONSULTATION_OFFER = {
-  discountPercentage: 50,
-  code: "FIRST50",
-  description: "First consultation: 50% off (auto-applied once per user)",
 };
 
 // Core services

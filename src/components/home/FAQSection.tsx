@@ -20,8 +20,8 @@ export const FAQSection: React.FC = () => {
       a: "When Acharya Ji is offline or conducting sacred rituals/sadhana, you will see his next available live time (e.g. 'Tomorrow at 10:00 AM IST'). You can pre-book a dedicated appointment slot or request an alert when he turns online.",
     },
     {
-      q: "How does billing and wallet deduction work?",
-      a: `Live consultations are billed strictly on a per-minute basis (Chat: ₹${ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min, Voice: ₹${ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/min, Video: ₹${ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/min; first consultation enjoys ${FIRST_CONSULTATION_OFFER.discountPercentage}% off). You recharge your Aapka Astro wallet using UPI, RuPay, or Cards. The live consultation screen has an active transparent timer displaying second-by-second deductions. Unused wallet balance never expires.`,
+      q: "How does consultation booking and fee payment work?",
+      a: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). This flat fee applies universally across all consultation formats: Voice Call, Video Call, or Live Chat. You simply select your preferred format, provide your birth details and questions, and complete checkout securely via UPI, Cards, or Net Banking. There are no surprise per-minute debits or hidden talktime deductions.",
     },
     {
       q: "How accurate is the free Janam Kundli calculator on this website?",

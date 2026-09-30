@@ -8,14 +8,12 @@ import {
   QueueItem,
   ActiveSession,
   ConsultationMessage,
-  INITIAL_ASTROLOGER,
 } from "@/lib/store/astrologerStore";
 import {
   PhoneCall,
   Video,
   MessageSquare,
   Clock,
-  Wallet,
   Sparkles,
   Send,
   PhoneOff,
@@ -24,18 +22,23 @@ import {
   VideoOff,
   Calendar,
   Star,
-  AlertTriangle,
-  WifiOff,
-  RefreshCw,
+  CheckCircle2,
+  ShieldCheck,
+  CreditCard,
+  Lock,
+  ArrowRight,
+  User,
+  MapPin,
 } from "lucide-react";
 import {
   PLACEHOLDER_ASTROLOGER,
   ADMIN_CONFIGURABLE_PRICING,
   FIRST_CONSULTATION_OFFER,
+  FLAT_CONSULTATION_PRICING,
 } from "@/config/placeholderContent";
 import {
-  ConsultationBillingEngine,
-  BillingState,
+  ConsultationBookingService,
+  ConsultationBooking,
 } from "@/lib/services/consultationBilling";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
@@ -43,56 +46,56 @@ import { useUser } from "@/components/auth/ClerkAuthWrapper";
 export default function ConsultPage() {
   const { isAstrologer } = useCurrentUserRole();
   const { user } = useUser();
-  // Live State
+
+  // Live Astrologer & Queue State
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
-  const [walletBalance, setWalletBalance] = useState(0);
 
-  // Client Consultation Form State
+  // Client Consultation Intake State
   const [userName, setUserName] = useState("");
   const [userPhone, setUserPhone] = useState("");
-  const [consultType, setConsultType] = useState<"chat" | "voice" | "video">("chat");
+  const [consultFormat, setConsultFormat] = useState<"Voice Call" | "Video Call" | "Live Chat">("Voice Call");
   const [birthDate, setBirthDate] = useState("1995-10-24");
   const [birthTime, setBirthTime] = useState("14:35");
   const [birthPlace, setBirthPlace] = useState("New Delhi, Delhi");
-  const [concern, setConcern] = useState("Seeking career guidance and timing for job switch");
+  const [concern, setConcern] = useState("Career growth, job switch timing, and financial stability");
+
+  // Booking & Payment State
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(null);
 
   // In-Queue state for current user
   const [myQueueItem, setMyQueueItem] = useState<QueueItem | null>(null);
 
-  // Consultation Billing Engine & Disconnect Resilience
-  const billingEngineRef = useRef<ConsultationBillingEngine | null>(null);
-  const [billingState, setBillingState] = useState<BillingState | null>(null);
-
-  // Active Chat / Call State
+  // Active Session State
   const [messages, setMessages] = useState<ConsultationMessage[]>([]);
   const [inputMsg, setInputMsg] = useState("");
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
 
-  // Appointment Booking Modal
+  // Scheduled Slot Modal State
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState("2026-09-22");
-  const [scheduledSlot, setScheduledSlot] = useState("11:00 AM - 11:30 AM");
+  const [scheduledDate, setScheduledDate] = useState("2026-10-02");
+  const [scheduledSlot, setScheduledSlot] = useState("11:00 AM - 11:45 AM");
   const [scheduleSuccess, setScheduleSuccess] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activePricing = ADMIN_CONFIGURABLE_PRICING[consultType];
-  const ratePerMinute = activePricing.effectiveFirstTimeRate; // 50% discount auto-applied
+  // Pricing constants (Flat-Fee Pay-Per-Booking Model)
+  const standardFee = FLAT_CONSULTATION_PRICING.standardFee; // ₹2,100
+  const promoFee = FLAT_CONSULTATION_PRICING.firstConsultationFee; // ₹1,051
+  const discountAmount = standardFee - promoFee; // ₹1,049
 
   const syncAll = () => {
     const currentStatus = AstrologerStateStore.getStatus();
     const currentQueue = AstrologerStateStore.getQueue();
     const currentSession = AstrologerStateStore.getActiveSession();
-    const currentWallet = AstrologerStateStore.getWalletBalance();
 
     setStatus(currentStatus);
     setQueue(currentQueue);
     setActiveSession(currentSession);
-    setWalletBalance(currentWallet);
 
     if (currentSession) {
       setMessages(AstrologerStateStore.getMessages(currentSession.id));
@@ -113,71 +116,19 @@ export default function ConsultPage() {
     if (user?.fullName && !userName) {
       setUserName(user.fullName);
     }
-    fetch("/api/auth/sync")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.user?.walletBalance !== undefined) {
-          setWalletBalance(data.user.walletBalance);
-          AstrologerStateStore.setWalletBalance(data.user.walletBalance);
-        }
-      })
-      .catch(() => {});
   }, [user, userName]);
 
-  // Initialize Billing Engine when active session is established
+  // Clean Elapsed Session Timer (No wallet ticks / no balance countdowns)
   useEffect(() => {
     if (activeSession) {
-      const engine = new ConsultationBillingEngine(
-        activeSession.id,
-        activeSession.ratePerMin || ratePerMinute,
-        walletBalance
-      );
-      billingEngineRef.current = engine;
-      setBillingState(engine.getState());
-
-      const handleOnline = () => {
-        billingEngineRef.current?.notifyReconnect();
-        setBillingState(billingEngineRef.current?.getState() || null);
-      };
-
-      const handleOffline = () => {
-        billingEngineRef.current?.notifyDisconnect();
-        setBillingState(billingEngineRef.current?.getState() || null);
-      };
-
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
-
       const timer = setInterval(() => {
-        if (!billingEngineRef.current) return;
-        const nextState = billingEngineRef.current.tick();
-        setBillingState(nextState);
-        setSessionSeconds(nextState.sessionSeconds);
-        setWalletBalance(nextState.walletBalance);
-        AstrologerStateStore.setWalletBalance(nextState.walletBalance);
-
-        if (nextState.isTerminated) {
-          if (nextState.terminationReason === "zero_balance") {
-            alert(
-              "⚠️ Session Ended Gracefully: Your wallet balance reached ₹0. Please recharge your wallet to initiate another consultation."
-            );
-          } else if (nextState.terminationReason === "grace_expired") {
-            alert(
-              "⚠️ Session Disconnected: Network reconnect grace window (60s) has expired without restoration. Billing paused and session finalized."
-            );
-          }
-          handleEndSession();
-        }
+        setSessionSeconds((prev) => prev + 1);
       }, 1000);
 
       return () => {
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
         clearInterval(timer);
       };
     } else {
-      billingEngineRef.current = null;
-      setBillingState(null);
       setSessionSeconds(0);
     }
   }, [activeSession]);
@@ -186,53 +137,99 @@ export default function ConsultPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle Joining Queue or Direct Start
-  const handleStartConsultation = (e: React.FormEvent) => {
+  // Handle Pay-Per-Booking Checkout & Session Entrance
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const minRequired = ratePerMinute * 2;
-    if (walletBalance < minRequired) {
-      alert(`Minimum wallet balance of ₹${minRequired} (2 minutes) is required to start consultation. Please recharge your wallet.`);
+    if (!userName.trim() || !userPhone.trim()) {
+      alert("Please provide your name and contact phone number to proceed.");
       return;
     }
 
-    if (status === "AVAILABLE" && queue.length === 0) {
-      const sess = AstrologerStateStore.startDirectSession({
-        userName,
-        userPhone,
-        type: consultType,
-        ratePerMin: ratePerMinute,
-        birthDetails: {
-          name: userName,
-          birthDate,
-          birthTime,
-          birthPlace,
-          gender: "male",
-          latitude: 28.6139,
-          longitude: 77.209,
-          timezone: 5.5,
-        },
-        concern,
+    setIsProcessingPayment(true);
+
+    try {
+      // 1. Create order on server via payment endpoint
+      const res = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: promoFee, // Flat ₹1,051
+          userId: user?.id || `guest_${Date.now()}`,
+          serviceType: "consultation_booking",
+        }),
       });
-      setActiveSession(sess);
-    } else {
-      const qItem = AstrologerStateStore.joinQueue({
-        userName,
-        userPhone,
-        consultationType: consultType,
-        birthDetails: {
-          name: userName,
-          birthDate,
-          birthTime,
-          birthPlace,
-          gender: "male",
-          latitude: 28.6139,
-          longitude: 77.209,
-          timezone: 5.5,
-        },
-        concern,
+
+      const orderData = await res.json().catch(() => null);
+
+      // 2. Generate local ConsultationBooking record
+      const booking = ConsultationBookingService.createBooking({
+        userId: user?.id || `user_${Date.now()}`,
+        clientName: userName,
+        phone: userPhone,
+        format: consultFormat,
+        topic: concern,
+        preferredSlot: "Immediate Live Consultation",
+        dateOfBirth: birthDate,
+        timeOfBirth: birthTime,
+        placeOfBirth: birthPlace,
+        isFirstTime: true,
       });
-      setMyQueueItem(qItem);
+
+      booking.status = "CONFIRMED";
+      booking.orderId = orderData?.order?.id || `ord_${Date.now()}`;
+      booking.paymentId = `pay_${Date.now()}_sim`;
+      booking.confirmedAt = new Date().toISOString();
+
+      setConfirmedBooking(booking);
+      setIsProcessingPayment(false);
+
+      // Map format to session type
+      const sessionType = consultFormat === "Voice Call" ? "voice" : consultFormat === "Video Call" ? "video" : "chat";
+
+      // 3. Enter direct session if astrologer is available, otherwise join queue
+      if (status === "AVAILABLE" && queue.length === 0) {
+        const sess = AstrologerStateStore.startDirectSession({
+          userName,
+          userPhone,
+          type: sessionType,
+          ratePerMin: 0,
+          birthDetails: {
+            name: userName,
+            birthDate,
+            birthTime,
+            birthPlace,
+            gender: "male",
+            latitude: 28.6139,
+            longitude: 77.209,
+            timezone: 5.5,
+          },
+          concern,
+        });
+        setActiveSession(sess);
+      } else {
+        const qItem = AstrologerStateStore.joinQueue({
+          userName,
+          userPhone,
+          consultationType: sessionType,
+          birthDetails: {
+            name: userName,
+            birthDate,
+            birthTime,
+            birthPlace,
+            gender: "male",
+            latitude: 28.6139,
+            longitude: 77.209,
+            timezone: 5.5,
+          },
+          concern,
+        });
+        setMyQueueItem(qItem);
+      }
+    } catch (err) {
+      console.error("Payment or booking error:", err);
+      setIsProcessingPayment(false);
+      alert("Encountered an issue processing booking. Please try again or reach out to support.");
     }
   };
 
@@ -258,8 +255,8 @@ export default function ConsultPage() {
     setTimeout(() => {
       setShowScheduleModal(false);
       setScheduleSuccess(false);
-      alert(`Appointment confirmed for ${scheduledDate} at ${scheduledSlot}! Confirmation sent to ${userPhone}.`);
-    }, 1500);
+      alert(`Consultation confirmed for ${scheduledDate} at ${scheduledSlot}! Confirmation receipt and meeting bridge link sent to ${userPhone}.`);
+    }, 1200);
   };
 
   const myQueuePosition = myQueueItem
@@ -275,7 +272,7 @@ export default function ConsultPage() {
         ========================================================================= */}
         {activeSession ? (
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] shadow-xl overflow-hidden">
-            {/* Session Top Bar: Live Billing Timer & Astrologer Details */}
+            {/* Session Top Bar: Elapsed Duration & Astrologer Details */}
             <div className="flex flex-wrap items-center justify-between border-b border-[#E8D8C3] bg-[#FAF5EE] px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -287,13 +284,12 @@ export default function ConsultPage() {
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#6B8E5A] ring-2 ring-white" />
                 </div>
                 <div>
-                  {/* PLACEHOLDER: replace with real content */}
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-[#3B2A1E] font-temple text-base">
                       {PLACEHOLDER_ASTROLOGER.displayName}
                     </h3>
                     <span className="rounded bg-[#6B8E5A]/20 px-2 py-0.5 text-[10px] font-bold text-[#6B8E5A] border border-[#6B8E5A]/30 font-temple">
-                      LIVE CONSULTATION
+                      LIVE 1-ON-1
                     </span>
                   </div>
                   <div className="text-xs text-[#7D6B5D] font-body">
@@ -302,29 +298,28 @@ export default function ConsultPage() {
                 </div>
               </div>
 
-              {/* Billing HUD */}
-              {/* PLACEHOLDER: replace with real content */}
+              {/* Session Duration Counter & Controls */}
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="flex items-center gap-2 rounded-xl border border-[#E8A33D]/50 bg-[#FAF1E4] px-3.5 py-1.5 font-mono text-xs text-[#7B2D26]">
                   <Clock className="h-4 w-4 animate-pulse text-[#C1662F]" />
-                  <span className="font-bold">
+                  <span className="font-bold text-sm">
                     {Math.floor(sessionSeconds / 60).toString().padStart(2, "0")}:
                     {(sessionSeconds % 60).toString().padStart(2, "0")}
                   </span>
-                  <span className="text-[10px] text-[#7D6B5D]">
-                    (@ ₹{activeSession.ratePerMin || ratePerMinute}/min • 50% Off)
+                  <span className="text-[10px] text-[#7D6B5D] font-sans">
+                    (Session Elapsed)
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 rounded-xl border border-[#D4C3B3] bg-[#FFFDF9] px-3 py-1.5 text-xs">
-                  <Wallet className="h-4 w-4 text-[#6B8E5A]" />
-                  <span className="font-bold text-[#3B2A1E]">Wallet: ₹{walletBalance}</span>
+                  <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
+                  <span className="font-bold text-[#3B2A1E]">Paid Session (Flat ₹1,051)</span>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleEndSession}
-                  className="rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D] transition-all flex items-center gap-1.5 shadow-sm"
+                  className="rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D] transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <PhoneOff className="h-4 w-4" />
                   <span>End Session</span>
@@ -332,115 +327,14 @@ export default function ConsultPage() {
               </div>
             </div>
 
-            {/* Low-Balance Warning Alert Banner (< 60 seconds remaining) */}
-            {billingState?.isLowBalance && !billingState.isGracePeriod && (
-              <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-[#7B2D26] text-white px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-inner animate-pulse">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-200" />
-                  <span className="font-bold">
-                    Low Balance Warning: Less than 1 minute ({billingState.secondsRemaining}s) remaining!
-                  </span>
-                  <span className="opacity-90 hidden sm:inline">
-                    Recharge now to prevent mid-conversation auto-termination.
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      billingEngineRef.current?.addFunds(100);
-                      AstrologerStateStore.addWallet(100);
-                      setBillingState(billingEngineRef.current?.getState() || null);
-                      setWalletBalance((prev) => prev + 100);
-                    }}
-                    className="rounded-lg bg-white px-3 py-1 text-xs font-black text-[#7B2D26] hover:bg-amber-100 transition-all shadow"
-                  >
-                    Quick Add +₹100
-                  </button>
-                  <Link
-                    href="/account/wallet"
-                    target="_blank"
-                    className="underline text-amber-100 hover:text-white font-medium text-xs"
-                  >
-                    Open Wallet &rarr;
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Disconnect Grace Period Banner (60s Reconnect Window) */}
-            {billingState?.isGracePeriod && (
-              <div className="bg-rose-900 border-b-2 border-rose-500 text-white px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
-                <div className="flex items-center gap-2.5">
-                  <WifiOff className="h-5 w-5 shrink-0 text-rose-300 animate-bounce" />
-                  <div>
-                    <div className="font-bold text-sm flex items-center gap-2">
-                      <span>Connection Dropped &bull; Billing Paused</span>
-                      <span className="rounded bg-rose-700 px-2 py-0.5 text-xs font-mono text-white">
-                        {billingState.graceSecondsRemaining}s grace window
-                      </span>
-                    </div>
-                    <p className="text-rose-200 text-[11px] mt-0.5">
-                      We detected a network interruption. Your consultation billing has stopped. Reconnect before the timer expires to resume automatically.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      billingEngineRef.current?.notifyReconnect();
-                      setBillingState(billingEngineRef.current?.getState() || null);
-                    }}
-                    className="rounded-xl bg-[#6B8E5A] px-4 py-2 text-xs font-bold text-white hover:bg-[#58754a] transition-all shadow flex items-center gap-1.5"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    <span>Reconnect Now</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Disconnect Testing & Resilience Bar (For verification and simulation) */}
-            <div className="bg-[#FAF1E4] border-b border-[#E8D8C3] px-6 py-1.5 flex items-center justify-between text-[11px] text-[#7D6B5D]">
-              <span>Resilience Diagnostics:</span>
-              <div className="flex items-center gap-3">
-                {!billingState?.isGracePeriod ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      billingEngineRef.current?.notifyDisconnect();
-                      setBillingState(billingEngineRef.current?.getState() || null);
-                    }}
-                    className="text-xs text-rose-700 hover:underline flex items-center gap-1"
-                  >
-                    <WifiOff className="h-3 w-3" />
-                    <span>Test Network Drop (Pause Billing)</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      billingEngineRef.current?.notifyReconnect();
-                      setBillingState(billingEngineRef.current?.getState() || null);
-                    }}
-                    className="text-xs text-[#6B8E5A] font-bold hover:underline flex items-center gap-1"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Test Network Restoration (Resume Billing)</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
             {/* Main Consultation Room Body */}
             <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
-              {/* Left Column: Live Audio/Video & Client Kundli Summary */}
+              {/* Left Column: Client Kundli Summary & Audio/Video Bridge */}
               <div className="lg:col-span-4 border-r border-[#E8D8C3] p-6 flex flex-col justify-between bg-[#FAF5EE]">
                 <div>
                   <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 mb-5 text-xs space-y-2 shadow-sm">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block">
-                      Consultation Context
+                      Consultation Profile
                     </span>
                     <div className="flex justify-between text-[#6B5A4E]">
                       <span>Client:</span>
@@ -471,28 +365,30 @@ export default function ConsultPage() {
                       <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-[#6B8E5A] ring-2 ring-white" />
                     </div>
                     <div className="text-xs font-bold text-[#3B2A1E] font-temple">Encrypted Vedic Bridge</div>
-                    <div className="text-[11px] text-[#7D6B5D]">High-Definition Peer-to-Peer Connection</div>
+                    <div className="text-[11px] text-[#7D6B5D]">High-Definition Direct Connection</div>
 
                     <div className="mt-4 flex justify-center gap-3">
                       <button
                         type="button"
                         onClick={() => setIsMuted(!isMuted)}
-                        className={`rounded-xl p-3 text-xs transition-all ${
+                        className={`rounded-xl p-3 text-xs transition-all cursor-pointer ${
                           isMuted
                             ? "bg-rose-600 text-white"
                             : "border border-[#D4C3B3] bg-[#FAF5EE] text-[#3B2A1E] hover:bg-[#F3E7D3]"
                         }`}
+                        title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
                       >
                         {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-[#7B2D26]" />}
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsVideoOff(!isVideoOff)}
-                        className={`rounded-xl p-3 text-xs transition-all ${
+                        className={`rounded-xl p-3 text-xs transition-all cursor-pointer ${
                           isVideoOff
                             ? "bg-rose-600 text-white"
                             : "border border-[#D4C3B3] bg-[#FAF5EE] text-[#3B2A1E] hover:bg-[#F3E7D3]"
                         }`}
+                        title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
                       >
                         {isVideoOff ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4 text-[#7B2D26]" />}
                       </button>
@@ -501,7 +397,7 @@ export default function ConsultPage() {
                 </div>
 
                 <div className="text-center text-[11px] text-[#7D6B5D] mt-4 font-body">
-                  Privacy Guaranteed &bull; 100% Confidential
+                  100% Private &amp; Confidential &bull; Personal Guidance by Acharya Ji
                 </div>
               </div>
 
@@ -509,8 +405,8 @@ export default function ConsultPage() {
               <div className="lg:col-span-8 p-6 flex flex-col justify-between bg-[#FFFDF9]">
                 <div className="space-y-4 overflow-y-auto max-h-[420px] pr-2">
                   <div className="text-center">
-                    <span className="rounded-full bg-[#FAF1E4] border border-[#E8D8C3] px-3 py-1 text-[10px] font-semibold text-[#7D6B5D]">
-                      Live Session Established &bull; Billed at ₹{activeSession.ratePerMin || ratePerMinute}/min (50% Off First Session)
+                    <span className="rounded-full bg-[#FAF1E4] border border-[#E8D8C3] px-3.5 py-1 text-[10px] font-semibold text-[#7D6B5D]">
+                      Live Session Established &bull; Full Vedic Reading in Progress
                     </span>
                   </div>
 
@@ -547,7 +443,7 @@ export default function ConsultPage() {
                   />
                   <button
                     type="submit"
-                    className="rounded-xl bg-[#7B2D26] p-3 text-white hover:bg-[#64231D] transition-all font-bold shrink-0 shadow-sm"
+                    className="rounded-xl bg-[#7B2D26] p-3 text-white hover:bg-[#64231D] transition-all font-bold shrink-0 shadow-sm cursor-pointer"
                   >
                     <Send className="h-4 w-4 text-[#E8A33D]" />
                   </button>
@@ -564,8 +460,8 @@ export default function ConsultPage() {
               <Clock className="h-10 w-10 animate-spin text-[#C1662F]" />
             </div>
 
-            <span className="rounded-full bg-[#FAF1E4] px-3 py-1 text-xs font-bold text-[#7B2D26] border border-[#E8D8C3] font-temple">
-              YOU ARE IN THE LIVE CONSULTATION QUEUE
+            <span className="rounded-full bg-[#FAF1E4] px-3.5 py-1 text-xs font-bold text-[#7B2D26] border border-[#E8D8C3] font-temple">
+              BOOKING CONFIRMED &bull; IN QUEUE
             </span>
 
             <h2 className="text-3xl font-bold font-temple text-[#3B2A1E] mt-4">
@@ -582,17 +478,12 @@ export default function ConsultPage() {
                 <span className="font-bold text-[#3B2A1E]">{myQueueItem.userName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Consultation Mode:</span>
+                <span className="text-[#7D6B5D]">Selected Format:</span>
                 <span className="font-bold uppercase text-[#7B2D26]">{myQueueItem.consultationType}</span>
               </div>
-              {/* PLACEHOLDER: replace with real content */}
               <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Applied Rate (50% Off First):</span>
-                <span className="font-bold text-[#6B8E5A]">₹{ratePerMinute} / Minute</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Wallet Balance:</span>
-                <span className="font-bold text-[#3B2A1E]">₹{walletBalance}</span>
+                <span className="text-[#7D6B5D]">Consultation Fee:</span>
+                <span className="font-bold text-[#6B8E5A]">Flat ₹1,051 Paid (Standard ₹2,100)</span>
               </div>
             </div>
 
@@ -603,7 +494,7 @@ export default function ConsultPage() {
                   AstrologerStateStore.removeFromQueue(myQueueItem.id);
                   setMyQueueItem(null);
                 }}
-                className="rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-5 py-2.5 text-xs font-semibold text-[#3B2A1E] hover:bg-[#F3E7D3]"
+                className="rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-5 py-2.5 text-xs font-semibold text-[#3B2A1E] hover:bg-[#F3E7D3] cursor-pointer"
               >
                 Leave Queue
               </button>
@@ -619,40 +510,39 @@ export default function ConsultPage() {
             </div>
 
             <p className="mt-6 text-[11px] text-[#7D6B5D]">
-              Keep this tab open. A chime sound will alert you when Acharya Ji accepts your session.
+              Please keep this page open. You will be connected automatically the moment Acharya Ji completes the preceding reading.
             </p>
           </div>
         ) : (
           /* =========================================================================
-             STATE 3: GENERAL CONSULTATION LANDING & INTAKE FORM
+             STATE 3: GENERAL CONSULTATION LANDING & INTAKE FORM (FLAT ₹1,051 MODEL)
           ========================================================================= */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Left Column: Astrologer Real-Time Status & Value Proposition */}
+            {/* Left Column: Astrologer Profile, Promotional Pricing & 5 Pillars */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-sm">
+              <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-7 shadow-sm">
                 {/* Real-time Status Card */}
-                {/* PLACEHOLDER: replace with real content */}
                 <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-5">
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <img
                         src={PLACEHOLDER_ASTROLOGER.avatarUrl}
                         alt={PLACEHOLDER_ASTROLOGER.displayName}
-                        className="h-14 w-14 rounded-2xl object-cover border-2 border-[#E8A33D]"
+                        className="h-16 w-16 rounded-2xl object-cover border-2 border-[#E8A33D]"
                       />
                       {status === "AVAILABLE" && (
                         <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#6B8E5A] ring-2 ring-white" />
                       )}
                     </div>
                     <div>
-                      <h3 className="font-bold font-temple text-[#3B2A1E] text-base">
+                      <h3 className="font-bold font-temple text-[#3B2A1E] text-lg">
                         {PLACEHOLDER_ASTROLOGER.displayName}
                       </h3>
                       <div className="text-xs text-[#C1662F] font-semibold">
                         {PLACEHOLDER_ASTROLOGER.experienceText}
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-[#7D6B5D] mt-0.5 font-body">
-                        <Star className="h-3 w-3 fill-[#E8A33D] text-[#E8A33D]" />
+                        <Star className="h-3.5 w-3.5 fill-[#E8A33D] text-[#E8A33D]" />
                         <span className="font-bold text-[#3B2A1E]">4.98</span>
                         <span>({PLACEHOLDER_ASTROLOGER.followersCount} Followers)</span>
                       </div>
@@ -685,142 +575,132 @@ export default function ConsultPage() {
                   </p>
                 </div>
 
-                {/* Pricing & Transparency (Admin-Editable Sample Pricing) */}
-                {/* PLACEHOLDER: replace with real content */}
-                <div className="mt-5 space-y-3 text-xs">
-                  <div className="rounded-xl border border-[#E8A33D]/40 bg-[#FAF1E4] p-3 text-xs">
-                    <div className="font-bold text-[#7B2D26] flex items-center gap-1.5 font-temple">
-                      <Sparkles className="h-3.5 w-3.5 text-[#E8A33D]" />
-                      <span>{FIRST_CONSULTATION_OFFER.description}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-[#E8D8C3]/80 pb-2 font-body">
-                    <span className="text-[#7D6B5D]">Live Chat Rate:</span>
-                    <span className="font-bold text-[#3B2A1E]">
-                      ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min{" "}
-                      <span className="text-[#6B8E5A] font-bold">
-                        (First: ₹{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/min)
-                      </span>
+                {/* Promotional Flat Fee Callout Banner */}
+                <div className="mt-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
+                      Promotional Offer
+                    </span>
+                    <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
+                      50% Savings
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#E8D8C3]/80 pb-2 font-body">
-                    <span className="text-[#7D6B5D]">Voice Call Rate:</span>
-                    <span className="font-bold text-[#3B2A1E]">
-                      ₹{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/min{" "}
-                      <span className="text-[#6B8E5A] font-bold">
-                        (First: ₹{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/min)
-                      </span>
-                    </span>
+                  <div className="mt-3 flex items-baseline gap-2.5">
+                    <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹1,051/-</span>
+                    <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹2,100</span>
+                    <span className="text-xs font-semibold text-[#6B8E5A]">for first consultation</span>
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#E8D8C3]/80 pb-2 font-body">
-                    <span className="text-[#7D6B5D]">Video Call Rate:</span>
-                    <span className="font-bold text-[#3B2A1E]">
-                      ₹{ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/min{" "}
-                      <span className="text-[#6B8E5A] font-bold">
-                        (First: ₹{ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate}/min)
-                      </span>
-                    </span>
-                  </div>
+                  <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
+                    A comprehensive 1-on-1 personal reading covering all your questions. Pay once per booking with zero surprise per-minute debits.
+                  </p>
+                </div>
 
-                  <div className="flex items-center justify-between font-body">
-                    <span className="text-[#7D6B5D]">Current Wallet:</span>
-                    <span className="font-bold text-[#7B2D26]">₹{walletBalance}</span>
+                {/* 5 Core Pillars Covered */}
+                <div className="mt-5 space-y-2.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block">
+                    What This Consultation Covers:
+                  </span>
+                  <div className="space-y-2">
+                    {FLAT_CONSULTATION_PRICING.includedTopics.map((topic, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-[#3B2A1E]">
+                        <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0 mt-0.5" />
+                        <span>{topic}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Pre-book Appointment Option */}
+                {/* Pre-book Dedicated Appointment Slot Option */}
                 <div className="mt-6 border-t border-[#E8D8C3] pt-5">
                   <button
                     type="button"
                     onClick={() => setShowScheduleModal(true)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#F3E7D3] transition-all shadow-sm"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#F3E7D3] transition-all shadow-sm cursor-pointer"
                   >
                     <Calendar className="h-4 w-4 text-[#C1662F]" />
-                    <span>Prefer a Scheduled Time? Book 30m Slot</span>
+                    <span>Prefer a Scheduled Time? Book Slot</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Intake Form to Join Queue / Enter Room */}
+            {/* Right Column: Intake Form & Unified Flat Fee Checkout */}
             <div className="lg:col-span-7 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7B2D26] text-white font-bold">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7B2D26] text-white font-bold">
                   <PhoneCall className="h-5 w-5 text-[#E8A33D]" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold font-temple text-[#7B2D26]">Start 1-on-1 Consultation</h3>
+                  <h3 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26]">Book 1-on-1 Consultation</h3>
                   <p className="text-xs text-[#7D6B5D] font-body">
-                    Direct access to {PLACEHOLDER_ASTROLOGER.displayName}. No third-party advisors.
+                    Direct access to {PLACEHOLDER_ASTROLOGER.displayName}. Select format, provide birth coordinates, and proceed.
                   </p>
                 </div>
               </div>
 
-              <form onSubmit={handleStartConsultation} className="space-y-4">
-                {/* Consultation Channel Selection (Chat, Voice, Video) */}
-                {/* PLACEHOLDER: replace with real content */}
+              <form onSubmit={handleBookingSubmit} className="space-y-5">
+                {/* 1. Format Selection (Voice, Video, Live Chat) under Unified Flat Fee */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
-                    Select Consultation Mode &amp; Pricing
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
+                    1. Choose Consultation Format (Unified Flat Fee)
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       type="button"
-                      onClick={() => setConsultType("chat")}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all ${
-                        consultType === "chat"
+                      onClick={() => setConsultFormat("Voice Call")}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                        consultFormat === "Voice Call"
                           ? "border-[#7B2D26] bg-[#FAF1E4] text-[#7B2D26] ring-1 ring-[#7B2D26]/30 shadow-sm"
                           : "border-[#D4C3B3] bg-[#FAF5EE] text-[#7D6B5D] hover:bg-[#F3E7D3]"
                       }`}
                     >
-                      <MessageSquare className="h-4 w-4 mb-1" />
-                      <span className="text-xs font-bold">Live Chat</span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/m
-                      </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/m</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setConsultType("voice")}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all ${
-                        consultType === "voice"
-                          ? "border-[#7B2D26] bg-[#FAF1E4] text-[#7B2D26] ring-1 ring-[#7B2D26]/30 shadow-sm"
-                          : "border-[#D4C3B3] bg-[#FAF5EE] text-[#7D6B5D] hover:bg-[#F3E7D3]"
-                      }`}
-                    >
-                      <PhoneCall className="h-4 w-4 mb-1" />
+                      <PhoneCall className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
                       <span className="text-xs font-bold">Voice Call</span>
                       <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        ₹{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}/m
+                        Flat ₹1,051
                       </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/m</span>
+                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => setConsultType("video")}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all ${
-                        consultType === "video"
+                      onClick={() => setConsultFormat("Video Call")}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                        consultFormat === "Video Call"
                           ? "border-[#7B2D26] bg-[#FAF1E4] text-[#7B2D26] ring-1 ring-[#7B2D26]/30 shadow-sm"
                           : "border-[#D4C3B3] bg-[#FAF5EE] text-[#7D6B5D] hover:bg-[#F3E7D3]"
                       }`}
                     >
-                      <Video className="h-4 w-4 mb-1" />
+                      <Video className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
                       <span className="text-xs font-bold">Video Call</span>
                       <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
-                        ₹{ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}/m
+                        Flat ₹1,051
                       </span>
-                      <span className="text-[9px] text-[#6B8E5A] font-bold">First: ₹{ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate}/m</span>
+                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setConsultFormat("Live Chat")}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                        consultFormat === "Live Chat"
+                          ? "border-[#7B2D26] bg-[#FAF1E4] text-[#7B2D26] ring-1 ring-[#7B2D26]/30 shadow-sm"
+                          : "border-[#D4C3B3] bg-[#FAF5EE] text-[#7D6B5D] hover:bg-[#F3E7D3]"
+                      }`}
+                    >
+                      <MessageSquare className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
+                      <span className="text-xs font-bold">Live Chat</span>
+                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                        Flat ₹1,051
+                      </span>
+                      <span className="text-[9px] text-[#6B8E5A] font-bold">Reg. ₹2,100</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Name & Phone */}
+                {/* 2. Client Details (Name & Phone) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Your Full Name</label>
@@ -834,7 +714,7 @@ export default function ConsultPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Mobile (for SMS alert)</label>
+                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Mobile (for SMS &amp; Session Alert)</label>
                     <input
                       type="tel"
                       required
@@ -846,41 +726,47 @@ export default function ConsultPage() {
                   </div>
                 </div>
 
-                {/* Birth Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Birth Date</label>
-                    <input
-                      type="date"
-                      required
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Birth Time</label>
-                    <input
-                      type="time"
-                      required
-                      value={birthTime}
-                      onChange={(e) => setBirthTime(e.target.value)}
-                      className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Birth City</label>
-                    <input
-                      type="text"
-                      required
-                      value={birthPlace}
-                      onChange={(e) => setBirthPlace(e.target.value)}
-                      className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
-                    />
+                {/* 3. Birth Coordinates for Vedic Horoscope Calculation */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
+                    2. Birth Details for Precise Chart Reading
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Date</label>
+                      <input
+                        type="date"
+                        required
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
+                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth Time</label>
+                      <input
+                        type="time"
+                        required
+                        value={birthTime}
+                        onChange={(e) => setBirthTime(e.target.value)}
+                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#6E5545] mb-1">Birth City / Town</label>
+                      <input
+                        type="text"
+                        required
+                        value={birthPlace}
+                        onChange={(e) => setBirthPlace(e.target.value)}
+                        placeholder="e.g. New Delhi, Delhi"
+                        className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Primary Concern */}
+                {/* 4. Primary Questions / Concern */}
                 <div>
                   <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">
                     What would you like to ask Acharya Ji?
@@ -890,42 +776,55 @@ export default function ConsultPage() {
                     required
                     value={concern}
                     onChange={(e) => setConcern(e.target.value)}
-                    placeholder="e.g. Career dilemma, job change timing, marital compatibility, financial difficulties..."
+                    placeholder="e.g. Career dilemma, job switch timing, marital compatibility, financial growth..."
                     className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3.5 py-2.5 text-xs text-[#3B2A1E] placeholder-[#7D6B5D] focus:border-[#7B2D26] focus:outline-none leading-relaxed font-body"
                   />
                 </div>
 
-                {/* Wallet Balance Warning / Quick Top-up Link */}
-                {walletBalance < ratePerMinute * 2 ? (
-                  <div className="rounded-xl border border-[#C1662F]/40 bg-[#FAF1E4] p-3 flex items-center justify-between text-xs">
-                    <span className="text-[#C1662F] font-semibold">
-                      Wallet balance low (₹{walletBalance}). Minimum ₹{ratePerMinute * 2} required for 2 mins.
-                    </span>
-                    <Link
-                      href="/wallet"
-                      className="font-bold text-[#7B2D26] hover:underline"
-                    >
-                      Recharge Wallet &rarr;
-                    </Link>
+                {/* 5. Order Summary & Direct Pay-Per-Booking Card */}
+                <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs text-[#6B5A4E]">
+                    <span>Standard Consultation Fee:</span>
+                    <span className="font-semibold line-through">₹{standardFee}</span>
                   </div>
-                ) : (
-                  <div className="text-[11px] text-[#7D6B5D] font-body">
-                    Wallet Balance: <strong className="text-[#6B8E5A]">₹{walletBalance}</strong> (Available talktime ~{Math.floor(walletBalance / ratePerMinute)} mins at ₹{ratePerMinute}/min).
+                  <div className="flex items-center justify-between text-xs text-[#6B8E5A]">
+                    <span>First Consultation Special Discount (50% Off):</span>
+                    <span className="font-bold">-₹{discountAmount}</span>
                   </div>
-                )}
+                  <div className="border-t border-[#E8D8C3] pt-2 flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-bold text-[#3B2A1E] font-temple">Net Amount Payable:</span>
+                      <span className="block text-[10px] text-[#7D6B5D]">Inclusive of statutory taxes &bull; Single upfront payment</span>
+                    </div>
+                    <span className="font-temple text-2xl font-black text-[#7B2D26]">₹{promoFee}/-</span>
+                  </div>
+                </div>
 
-                {/* Submit Action */}
+                {/* Submit & Pay Action */}
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-[#7B2D26] py-4 font-bold text-white shadow-md hover:bg-[#64231D] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
+                  disabled={isProcessingPayment}
+                  className="w-full rounded-xl bg-[#7B2D26] py-4 font-bold text-white shadow-md hover:bg-[#64231D] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-75"
                 >
-                  <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
+                  <CreditCard className="h-4 w-4 text-[#E8A33D]" />
                   <span>
-                    {status === "AVAILABLE" && queue.length === 0
-                      ? `Connect Now (@ ₹${ratePerMinute}/min • 50% Off)`
-                      : `Join Live Queue (Position #${queue.length + 1})`}
+                    {isProcessingPayment
+                      ? "Initiating Booking..."
+                      : `Proceed to Pay ₹${promoFee} & Start Consultation`}
                   </span>
                 </button>
+
+                <div className="flex items-center justify-center gap-4 text-[11px] text-[#7D6B5D]">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#6B8E5A]" />
+                    <span>PCI-DSS Secure Razorpay Checkout</span>
+                  </span>
+                  <span>&bull;</span>
+                  <span className="flex items-center gap-1">
+                    <Lock className="h-3.5 w-3.5 text-[#7B2D26]" />
+                    <span>100% Confidential</span>
+                  </span>
+                </div>
               </form>
             </div>
           </div>
@@ -936,11 +835,11 @@ export default function ConsultPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3B2A1E]/60 p-4 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-4 mb-4">
-                <h3 className="font-bold font-temple text-[#7B2D26] text-base">Schedule 30-Minute Consultation</h3>
+                <h3 className="font-bold font-temple text-[#7B2D26] text-base">Schedule Consultation Slot</h3>
                 <button
                   type="button"
                   onClick={() => setShowScheduleModal(false)}
-                  className="text-[#7D6B5D] hover:text-[#3B2A1E] text-lg font-bold"
+                  className="text-[#7D6B5D] hover:text-[#3B2A1E] text-lg font-bold cursor-pointer"
                 >
                   &times;
                 </button>
@@ -959,33 +858,33 @@ export default function ConsultPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#3B2A1E] font-semibold mb-1">Available 30m Slot</label>
+                  <label className="block text-[#3B2A1E] font-semibold mb-1">Available Time Slot</label>
                   <select
                     value={scheduledSlot}
                     onChange={(e) => setScheduledSlot(e.target.value)}
                     className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] p-2.5 text-[#3B2A1E]"
                   >
-                    <option value="11:00 AM - 11:30 AM">11:00 AM - 11:30 AM IST</option>
-                    <option value="03:00 PM - 03:30 PM">03:00 PM - 03:30 PM IST</option>
-                    <option value="05:30 PM - 06:00 PM">05:30 PM - 06:00 PM IST</option>
-                    <option value="07:30 PM - 08:00 PM">07:30 PM - 08:00 PM IST</option>
+                    <option value="11:00 AM - 11:45 AM">11:00 AM - 11:45 AM IST</option>
+                    <option value="03:00 PM - 03:45 PM">03:00 PM - 03:45 PM IST</option>
+                    <option value="05:30 PM - 06:15 PM">05:30 PM - 06:15 PM IST</option>
+                    <option value="07:30 PM - 08:15 PM">07:30 PM - 08:15 PM IST</option>
                   </select>
                 </div>
 
-                <div className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] p-3">
-                  <div className="flex justify-between text-[#6B5A4E] mb-1">
-                    <span>Dedicated 30m In-depth Fee:</span>
-                    <strong className="text-[#7B2D26] font-bold">₹499</strong>
+                <div className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] p-3 space-y-1">
+                  <div className="flex justify-between text-[#6B5A4E]">
+                    <span>Dedicated 1-on-1 Consultation:</span>
+                    <strong className="text-[#7B2D26] font-bold">Flat ₹1,051/-</strong>
                   </div>
-                  <span className="text-[10px] text-[#7D6B5D]">Includes full horoscope PDF and audio recording.</span>
+                  <span className="text-[10px] text-[#7D6B5D] block">Includes personal reading, birth chart analysis, and practical remedies.</span>
                 </div>
 
                 <button
                   type="submit"
                   disabled={scheduleSuccess}
-                  className="w-full rounded-xl bg-[#7B2D26] py-3 font-bold text-white hover:bg-[#64231D] transition-all shadow-sm"
+                  className="w-full rounded-xl bg-[#7B2D26] py-3 font-bold text-white hover:bg-[#64231D] transition-all shadow-sm cursor-pointer"
                 >
-                  {scheduleSuccess ? "Booking Confirmed..." : "Confirm & Pay via UPI / Card"}
+                  {scheduleSuccess ? "Booking Confirmed..." : "Confirm & Pay ₹1,051 via UPI / Card"}
                 </button>
               </form>
             </div>

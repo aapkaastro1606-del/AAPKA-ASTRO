@@ -249,7 +249,7 @@ const GemstonesPage: React.FC = () => {
             className="shrink-0 rounded-xl bg-[#E8A33D] px-6 py-3.5 text-xs font-bold text-[#3B2A1E] hover:bg-[#d69330] shadow-md flex items-center gap-2 transition-all"
           >
             <PhoneCall className="h-4 w-4" />
-            <span>Consult Acharya Ji First (From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min)</span>
+            <span>Consult Acharya Ji First (Flat ₹1,051)</span>
           </Link>
         </div>
       </div>

@@ -1,26 +1,30 @@
 import { prisma } from "@/lib/db/prisma";
-import { ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
+import { FLAT_CONSULTATION_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
 
 export interface ConsultationRateCalculation {
   userId: string;
   consultationType: "chat" | "voice" | "video";
+  baseFee: number;
+  effectiveFee: number;
   baseRatePerMin: number;
   effectiveRatePerMin: number;
   isFirstConsultation: boolean;
   discountPercentage: number;
+  discountAmount: number;
   discountReason: string;
 }
 
 /**
- * Server-side determination of user consultation rate.
- * Guarantees that first-time 50% discount is applied ONLY if the user has
- * zero prior completed sessions in the database. Never trusts client claims.
+ * Server-side determination of user consultation fee.
+ * Guarantees that first-time ₹1,051 promotional rate (regular ₹2,100) is applied
+ * ONLY if the user has zero prior completed sessions in the database.
  */
 export async function calculateUserConsultationRate(
   userId: string,
-  type: "chat" | "voice" | "video"
+  type: "chat" | "voice" | "video" = "chat"
 ): Promise<ConsultationRateCalculation> {
-  const baseRate = ADMIN_CONFIGURABLE_PRICING[type].ratePerMinute;
+  const standardFee = FLAT_CONSULTATION_PRICING.standardFee; // ₹2,100
+  const promoFee = FLAT_CONSULTATION_PRICING.firstConsultationFee; // ₹1,051
 
   let isFirstConsultation = true;
 
@@ -40,20 +44,22 @@ export async function calculateUserConsultationRate(
     isFirstConsultation = true;
   }
 
+  const effectiveFee = isFirstConsultation ? promoFee : standardFee;
+  const discountAmount = isFirstConsultation ? standardFee - promoFee : 0;
   const discountPercentage = isFirstConsultation ? FIRST_CONSULTATION_OFFER.discountPercentage : 0;
-  const effectiveRate = isFirstConsultation
-    ? Math.round(baseRate * (1 - discountPercentage / 100))
-    : baseRate;
 
   return {
     userId,
     consultationType: type,
-    baseRatePerMin: baseRate,
-    effectiveRatePerMin: effectiveRate,
+    baseFee: standardFee,
+    effectiveFee,
+    baseRatePerMin: 0,
+    effectiveRatePerMin: 0,
     isFirstConsultation,
     discountPercentage,
+    discountAmount,
     discountReason: isFirstConsultation
-      ? "Welcome Shubh Aarambh: 50% discount on first live consultation"
-      : "Standard Vedic Consultation Tariff",
+      ? "First Consultation Special Offer: Flat ₹1,051/- (Regular ₹2,100)"
+      : "Standard Vedic Consultation Tariff: Flat ₹2,100/-",
   };
 }

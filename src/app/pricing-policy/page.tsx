@@ -37,13 +37,12 @@ export default function PricingPolicyPage() {
           </p>
         </header>
 
-        {/* Placeholder Advisory Alert */}
+        {/* Pricing Transparency Notice */}
         <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
           <div>
             <strong className="block font-bold">Pricing Transparency Notice:</strong>
-            {/* PLACEHOLDER: replace with client-approved legal text */}
-            Aapka Astro operates on a transparent, per-minute and fixed-fee model. All rates published on this page are clear and upfront. There are never surge fees, convenience charges, or surprise subscription renewals.
+            Aapka Astro operates on a clear, upfront pay-per-booking flat-fee consultation model. For your first consultation, you enjoy a special promotional rate of Flat ₹1,051/- (Regular ₹2,100 — 50% discount). All rates published on this page are inclusive of statutory taxes. There are never surge fees, convenience markups, hidden per-minute debits, or surprise subscriptions.
           </div>
         </div>
 
@@ -51,10 +50,10 @@ export default function PricingPolicyPage() {
         <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              Live 1-on-1 Consultation Rates
+              1-on-1 Vedic Consultation Structure
             </h2>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#6B8E5A]/15 text-[#2A4720] font-bold">
-              {FIRST_CONSULTATION_OFFER.discountPercentage}% OFF First Session
+              Special First Consultation Offer: Flat ₹1,051/-
             </span>
           </div>
 
@@ -63,7 +62,7 @@ export default function PricingPolicyPage() {
             <div className="p-5 rounded-xl bg-[#FBF3E7]/60 border border-[#E8D8C3] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#7B2D26] uppercase tracking-wider">
-                  {ADMIN_CONFIGURABLE_PRICING.chat.label}
+                  Live Chat Consultation
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#7B2D26] text-[#FFFDF9] font-bold">
                   CHAT
@@ -71,17 +70,17 @@ export default function PricingPolicyPage() {
               </div>
               <div className="space-y-0.5">
                 <div className="text-2xl font-bold font-temple text-[#7B2D26]">
-                  {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}
-                  <span className="text-xs font-normal text-[#6E5545]"> / min</span>
+                  Flat ₹1,051
+                  <span className="text-xs font-normal text-[#6E5545] line-through ml-1.5">₹2,100</span>
                 </div>
                 <div className="text-xs text-[#6B8E5A] font-semibold">
-                  First Session: {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}/min
+                  First Session: 50% Savings Applied
                 </div>
               </div>
               <ul className="text-xs text-[#6E5545] space-y-1 pt-1 border-t border-[#E8D8C3]">
                 <li>&bull; Real-time encrypted text</li>
-                <li>&bull; Kundli chart sharing</li>
-                <li>&bull; Per-second precision</li>
+                <li>&bull; Live Kundli chart analysis</li>
+                <li>&bull; Complete personal Q&amp;A</li>
               </ul>
             </div>
 
@@ -89,7 +88,7 @@ export default function PricingPolicyPage() {
             <div className="p-5 rounded-xl bg-[#FBF3E7]/60 border border-[#E8D8C3] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#7B2D26] uppercase tracking-wider">
-                  {ADMIN_CONFIGURABLE_PRICING.voice.label}
+                  Voice Call Consultation
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#C1662F] text-[#FFFDF9] font-bold">
                   VOICE
@@ -97,17 +96,17 @@ export default function PricingPolicyPage() {
               </div>
               <div className="space-y-0.5">
                 <div className="text-2xl font-bold font-temple text-[#7B2D26]">
-                  {ADMIN_CONFIGURABLE_PRICING.voice.currency}{ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute}
-                  <span className="text-xs font-normal text-[#6E5545]"> / min</span>
+                  Flat ₹1,051
+                  <span className="text-xs font-normal text-[#6E5545] line-through ml-1.5">₹2,100</span>
                 </div>
                 <div className="text-xs text-[#6B8E5A] font-semibold">
-                  First Session: {ADMIN_CONFIGURABLE_PRICING.voice.currency}{ADMIN_CONFIGURABLE_PRICING.voice.effectiveFirstTimeRate}/min
+                  First Session: 50% Savings Applied
                 </div>
               </div>
               <ul className="text-xs text-[#6E5545] space-y-1 pt-1 border-t border-[#E8D8C3]">
-                <li>&bull; High-definition audio</li>
-                <li>&bull; Instant direct connect</li>
-                <li>&bull; 60s disconnect grace</li>
+                <li>&bull; High-definition direct audio</li>
+                <li>&bull; In-depth voice consultation</li>
+                <li>&bull; Direct with Acharya Ji</li>
               </ul>
             </div>
 
@@ -115,7 +114,7 @@ export default function PricingPolicyPage() {
             <div className="p-5 rounded-xl bg-[#FBF3E7]/60 border border-[#E8D8C3] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#7B2D26] uppercase tracking-wider">
-                  {ADMIN_CONFIGURABLE_PRICING.video.label}
+                  Video Call Consultation
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#E8A33D] text-[#3B2A1E] font-bold">
                   VIDEO
@@ -123,16 +122,16 @@ export default function PricingPolicyPage() {
               </div>
               <div className="space-y-0.5">
                 <div className="text-2xl font-bold font-temple text-[#7B2D26]">
-                  {ADMIN_CONFIGURABLE_PRICING.video.currency}{ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute}
-                  <span className="text-xs font-normal text-[#6E5545]"> / min</span>
+                  Flat ₹1,051
+                  <span className="text-xs font-normal text-[#6E5545] line-through ml-1.5">₹2,100</span>
                 </div>
                 <div className="text-xs text-[#6B8E5A] font-semibold">
-                  First Session: {ADMIN_CONFIGURABLE_PRICING.video.currency}{ADMIN_CONFIGURABLE_PRICING.video.effectiveFirstTimeRate}/min
+                  First Session: 50% Savings Applied
                 </div>
               </div>
               <ul className="text-xs text-[#6E5545] space-y-1 pt-1 border-t border-[#E8D8C3]">
-                <li>&bull; Face-to-face consultation</li>
-                <li>&bull; Screen-share horoscope</li>
+                <li>&bull; Face-to-face sacred session</li>
+                <li>&bull; Screen-share horoscope reading</li>
                 <li>&bull; Deepest spiritual connection</li>
               </ul>
             </div>
@@ -144,20 +143,23 @@ export default function PricingPolicyPage() {
           {/* Section 1 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              1. How Wallet Billing Works
+              1. Pay-Per-Booking Consultation Model
             </h2>
             <p>
-              Aapka Astro uses an automated, per-second equivalent billing engine:
+              Aapka Astro provides transparent, respectful consultations without the stress of per-minute meters:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
-                <strong>Pre-Paid Wallet Balance:</strong> Seekers recharge their in-app wallet via Razorpay (UPI, Credit/Debit Card, Net Banking). Funds reside securely in your account balance until utilized.
+                <strong>Unified Flat Fee:</strong> Whether you prefer Voice Call, Video Call, or Live Chat, the fee remains identical. You select your preferred mode when booking.
               </li>
               <li>
-                <strong>Exact Second Deductions:</strong> When you initiate a live call or chat with Acharya Ji, billing deducts proportionally each second. If you speak for 7 minutes and 30 seconds at ₹20/min, you are billed exactly ₹150.00—never rounded up to 8 full minutes.
+                <strong>First-Time Promotional Rate:</strong> Every new seeker is eligible for our introductory offer of Flat ₹1,051/- (Regular ₹2,100).
               </li>
               <li>
-                <strong>Disconnect Grace Window:</strong> If telecommunication drops occur, our system triggers a 60-second grace window where billing halts while you reconnect.
+                <strong>Comprehensive Reading Scope:</strong> The reading covers all critical aspects of life: Career Insights, Financial Prosperity, Relationship Compatibility, Health, and Practical Vedic/Vastu Remedies.
+              </li>
+              <li>
+                <strong>No Surprise Meter Deductions:</strong> You pay a single flat fee upfront. There are no sudden call cut-offs due to per-second wallet exhaustion.
               </li>
             </ul>
           </section>

@@ -1,7 +1,8 @@
-// PLACEHOLDER: replace with real content
-import { ADMIN_CONFIGURABLE_PRICING, PricingTier } from "@/config/placeholderContent";
+import { ADMIN_CONFIGURABLE_PRICING, PricingTier, FLAT_CONSULTATION_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
 
 export interface PricingSettings {
+  flatStandardFee: number;
+  flatFirstConsultationFee: number;
   chatRate: number;
   voiceRate: number;
   videoRate: number;
@@ -23,6 +24,8 @@ export interface PlatformAnalytics {
 }
 
 let memoryPricing: PricingSettings = {
+  flatStandardFee: FLAT_CONSULTATION_PRICING.standardFee,
+  flatFirstConsultationFee: FLAT_CONSULTATION_PRICING.firstConsultationFee,
   chatRate: ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute,
   voiceRate: ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute,
   videoRate: ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute,
@@ -66,6 +69,14 @@ export const AdminStore = {
   updatePricing: (updates: Partial<PricingSettings>) => {
     memoryPricing = { ...memoryPricing, ...updates };
     // Synchronize with global config object
+    if (updates.flatStandardFee !== undefined) {
+      FLAT_CONSULTATION_PRICING.standardFee = updates.flatStandardFee;
+      FIRST_CONSULTATION_OFFER.standardFee = updates.flatStandardFee;
+    }
+    if (updates.flatFirstConsultationFee !== undefined) {
+      FLAT_CONSULTATION_PRICING.firstConsultationFee = updates.flatFirstConsultationFee;
+      FIRST_CONSULTATION_OFFER.promotionalFee = updates.flatFirstConsultationFee;
+    }
     if (updates.chatRate !== undefined) ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute = updates.chatRate;
     if (updates.voiceRate !== undefined) ADMIN_CONFIGURABLE_PRICING.voice.ratePerMinute = updates.voiceRate;
     if (updates.videoRate !== undefined) ADMIN_CONFIGURABLE_PRICING.video.ratePerMinute = updates.videoRate;

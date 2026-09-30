@@ -294,15 +294,15 @@ export default function HomePage() {
               <PhoneCall className="h-4 w-4" />
               <span>Consult Acharya Ji Now</span>
               <span className="rounded-md bg-[#3B2A1E]/15 px-2 py-0.5 text-xs font-black">
-                From ₹{ADMIN_CONFIGURABLE_PRICING.chat.ratePerMinute}/min
+                Flat ₹1,051 (Reg. ₹2,100)
               </span>
             </Link>
 
             <Link
-              href="/wallet"
+              href="/consult"
               className="flex items-center gap-2 rounded-xl border border-[#FBF3E7]/30 bg-[#64221C] px-7 py-4 text-sm font-semibold text-[#FBF3E7] hover:bg-[#FBF3E7]/10 transition-all"
             >
-              <span>Recharge Wallet &amp; Get Extra Talktime</span>
+              <span>View Consultation Formats &amp; Topics</span>
             </Link>
           </div>
         </div>

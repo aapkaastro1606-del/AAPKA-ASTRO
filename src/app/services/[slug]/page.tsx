@@ -197,12 +197,12 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
     icon: PhoneCall,
     steps: [
       {
-        title: "1. Select Consultation Mode",
-        desc: "Choose between Live Text Chat (₹15/min), Voice Call (₹20/min), or Video Call (₹25/min).",
+        title: "1. Select Consultation Format",
+        desc: "Choose between Voice Call, Video Call, or Live Text Chat — all available at the unified flat fee.",
       },
       {
-        title: "2. Recharged Wallet or Instant 50% Off",
-        desc: "Your first consultation automatically qualifies for 50% discount. Pay strictly for the exact minutes spoken.",
+        title: "2. Promotional Flat Fee (50% Off)",
+        desc: "Your first consultation automatically qualifies for the promotional flat fee of ₹1,051/- (Regular ₹2,100). No hidden per-minute ticking clock.",
       },
       {
         title: "3. Direct Private Connection",
@@ -221,13 +221,13 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
     ],
     preparationItems: [
       "Birth Date, Time, and City",
-      "Specific questions written down for quick reference",
-      "Sufficient wallet balance for uninterrupted discussion",
+      "Specific questions regarding career, wealth, relationships, or health",
+      "Peaceful environment for focused conversation",
     ],
     faqs: [
       {
-        q: "How does billing work if the call disconnects?",
-        a: "Billing is second-by-second. If a technical glitch occurs, your unspent wallet balance remains 100% safe and available for immediate resumption.",
+        q: "How does consultation booking work?",
+        a: "Consultations are booked on a transparent flat-fee basis (₹1,051 first consultation promo / ₹2,100 standard). You select your preferred format (Voice, Video, or Chat) and connect directly with Acharya Ji.",
       },
       {
         q: "What if Acharya Ji is offline when I visit?",
