@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { BrandedPreloader } from "@/components/layout/BrandedPreloader";
 import { WelcomeConsultationModal } from "@/components/home/WelcomeConsultationModal";
+import { NavratriPromotionalModal } from "@/components/promotions/NavratriPromotionalModal";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { getClerkPublishableKey } from "@/lib/auth/clerkConfig";
@@ -121,6 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="flex-1">{children}</main>
             <Footer />
             <WelcomeConsultationModal />
+            <NavratriPromotionalModal />
           </LanguageProvider>
         </body>
       </html>

@@ -15,7 +15,15 @@ import {
   Tag,
   Compass,
   Sparkles,
+  Calendar,
+  Flame,
+  Gift,
 } from "lucide-react";
+import {
+  DEFAULT_NAVRATRI_PROMO_CONFIG,
+  NavratriPromoConfig,
+  isNavratriPromoActive,
+} from "@/config/placeholderContent";
 
 interface PricingManagerClientProps {
   canManage: boolean;
@@ -57,6 +65,46 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
 
   const astroSavings = (pricing.flatStandardFee ?? 2100) - (pricing.flatFirstConsultationFee ?? 1051);
   const vaastuSavings = (pricing.vaastuStandardFee ?? 25000) - (pricing.vaastuPromoFee ?? 15000);
+
+  const promo = pricing.navratriPromo || DEFAULT_NAVRATRI_PROMO_CONFIG;
+  const isPromoActive = isNavratriPromoActive(promo);
+
+  const updatePromo = (updates: Partial<NavratriPromoConfig>) => {
+    setPricing((prev) => ({
+      ...prev,
+      navratriPromo: {
+        ...(prev.navratriPromo || DEFAULT_NAVRATRI_PROMO_CONFIG),
+        ...updates,
+      },
+    }));
+  };
+
+  const getPromoStatus = () => {
+    if (!promo.enabled) {
+      return { label: "DISABLED", color: "bg-stone-100 text-stone-700 border-stone-300" };
+    }
+    if (isPromoActive) {
+      return { label: "ACTIVE NOW (PRIORITY POPUP)", color: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+    }
+    try {
+      const now = new Date().getTime();
+      const [sy, sm, sd] = promo.startDate.split("-").map(Number);
+      const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0).getTime();
+      const [ey, em, ed] = promo.endDate.split("-").map(Number);
+      const end = new Date(ey, em - 1, ed, 23, 59, 59, 999).getTime();
+      if (now < start) {
+        return { label: "SCHEDULED", color: "bg-amber-100 text-amber-800 border-amber-300" };
+      }
+      if (now > end) {
+        return { label: "EXPIRED", color: "bg-rose-100 text-rose-800 border-rose-300" };
+      }
+    } catch {
+      // fallback
+    }
+    return { label: "INACTIVE", color: "bg-stone-100 text-stone-700 border-stone-300" };
+  };
+
+  const promoStatus = getPromoStatus();
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -330,6 +378,162 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
               <span className="text-[10px] font-bold text-[#6B8E5A] bg-[#6B8E5A]/15 px-2 py-0.5 rounded-full">
                 UNRESTRICTED
               </span>
+            </div>
+          </div>
+
+          {/* FESTIVE CAMPAIGNS & SEASONAL OFFERS: NAVRATRI PROMOTION */}
+          <div className="rounded-3xl border-2 border-[#E8A33D]/60 bg-[#FFFDF9] p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-5">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#E8A33D]/20 text-[#7B2D26] flex items-center justify-center font-bold">
+                  <Flame className="h-5 w-5 text-[#E8A33D]" />
+                </div>
+                <div>
+                  <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
+                    Festive Campaign: Navratri Rudraksh Promotion
+                  </h3>
+                  <p className="text-xs text-[#6E5545]">
+                    Configure the active promotional window for the abhimantrit Rudraksh gift popup.
+                  </p>
+                </div>
+              </div>
+              <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${promoStatus.color}`}>
+                {promoStatus.label}
+              </span>
+            </div>
+
+            {/* Campaign Priority Explanation */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                <Sparkles className="h-4 w-4 text-[#E8A33D]" />
+                Visitor Priority Behavior:
+              </p>
+              <p className="text-amber-800">
+                When active, this promotional popup takes priority over the standard 50%-off welcome popup on visitors&apos; first visit. Once the promotional window ends or is toggled off, the platform automatically reverts to the standard welcome popup without code changes or redeployments.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Campaign Toggle */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5 flex flex-col justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-[#7B2D26] mb-1">
+                    Campaign Status
+                  </label>
+                  <p className="text-[11px] text-[#6E5545]">
+                    Enable or temporarily pause the Navratri promo popup across all visitor pages.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="navratriPromoEnabled"
+                    disabled={!canManage}
+                    checked={promo.enabled}
+                    onChange={(e) => updatePromo({ enabled: e.target.checked })}
+                    className="h-5 w-5 rounded border-[#E8D8C3] text-[#7B2D26] focus:ring-[#7B2D26] cursor-pointer"
+                  />
+                  <label htmlFor="navratriPromoEnabled" className="text-xs font-bold text-[#3B2A1E] cursor-pointer">
+                    {promo.enabled ? "Campaign Enabled" : "Campaign Disabled"}
+                  </label>
+                </div>
+              </div>
+
+              {/* Start Date */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
+                <div className="flex items-center justify-between text-xs font-bold text-[#7B2D26] mb-2">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" /> Start Date
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8A33D]/20 text-[#7B2D26]">00:00 IST</span>
+                </div>
+                <label className="block text-[11px] text-[#6E5545] mb-1">
+                  Festive campaign start
+                </label>
+                <input
+                  type="date"
+                  disabled={!canManage}
+                  value={promo.startDate}
+                  onChange={(e) => updatePromo({ startDate: e.target.value })}
+                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2 px-3 font-mono text-xs font-bold text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                />
+                <span className="mt-2 block text-[10px] text-[#6E5545]">
+                  Popup begins displaying on this date
+                </span>
+              </div>
+
+              {/* End Date */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
+                <div className="flex items-center justify-between text-xs font-bold text-[#7B2D26] mb-2">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" /> End Date
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E8A33D]/20 text-[#7B2D26]">23:59 IST</span>
+                </div>
+                <label className="block text-[11px] text-[#6E5545] mb-1">
+                  Festive campaign end
+                </label>
+                <input
+                  type="date"
+                  disabled={!canManage}
+                  value={promo.endDate}
+                  onChange={(e) => updatePromo({ endDate: e.target.value })}
+                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2 px-3 font-mono text-xs font-bold text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                />
+                <span className="mt-2 block text-[10px] text-[#6E5545]">
+                  Automatically reverts to standard popup after
+                </span>
+              </div>
+            </div>
+
+            {/* Applicability and Copy Settings */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Product Applicability */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
+                <label className="block text-xs font-bold text-[#7B2D26] mb-1">
+                  Offer Applies To Consultations:
+                </label>
+                <p className="text-[11px] text-[#6E5545] mb-3">
+                  Specify whether the free abhimantrit Rudraksh gift applies to Astro, Vaastu, or both.
+                </p>
+                <select
+                  disabled={!canManage}
+                  value={promo.appliesTo || "both"}
+                  onChange={(e) =>
+                    updatePromo({
+                      appliesTo: e.target.value as "both" | "astro" | "vaastu",
+                      applicabilityNote:
+                        e.target.value === "both"
+                          ? "Limited period offer — valid on all booked consultations (applies to both Vedic Astro Consultation and Vaastu Consultation)."
+                          : e.target.value === "astro"
+                          ? "Limited period offer — valid on booked Vedic Astro Consultations."
+                          : "Limited period offer — valid on booked Vaastu Consultations.",
+                    })
+                  }
+                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2 px-3 text-xs font-bold text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60 cursor-pointer"
+                >
+                  <option value="both">Both Vedic Astro &amp; Vaastu Consultations (Default)</option>
+                  <option value="astro">Vedic Astro Consultation Only</option>
+                  <option value="vaastu">Vaastu Consultation Only</option>
+                </select>
+              </div>
+
+              {/* Promo Headline */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5">
+                <label className="block text-xs font-bold text-[#7B2D26] mb-1">
+                  Popup Headline (Verbatim Offer Copy)
+                </label>
+                <p className="text-[11px] text-[#6E5545] mb-2">
+                  Client-approved verbatim marketing text shown prominently on modal.
+                </p>
+                <input
+                  type="text"
+                  disabled={!canManage}
+                  value={promo.headline}
+                  onChange={(e) => updatePromo({ headline: e.target.value })}
+                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2 px-3 text-xs font-medium text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26] disabled:opacity-60"
+                />
+              </div>
             </div>
           </div>
 

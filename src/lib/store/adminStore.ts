@@ -4,6 +4,8 @@ import {
   FLAT_CONSULTATION_PRICING,
   FIRST_CONSULTATION_OFFER,
   CONSULTATION_PRODUCTS,
+  NavratriPromoConfig,
+  DEFAULT_NAVRATRI_PROMO_CONFIG,
 } from "@/config/placeholderContent";
 
 export interface PricingSettings {
@@ -16,6 +18,9 @@ export interface PricingSettings {
   vaastuStandardFee: number;
   vaastuPromoFee: number;
   vaastuDiscountPercentage?: number;
+
+  // Festive Campaign: Navratri Rudraksh Promotion
+  navratriPromo?: NavratriPromoConfig;
 
   // Optional legacy fields for backward compatibility
   chatRate?: number;
@@ -44,6 +49,7 @@ let memoryPricing: PricingSettings = {
   vaastuStandardFee: 25000,
   vaastuPromoFee: 15000,
   vaastuDiscountPercentage: 40,
+  navratriPromo: { ...DEFAULT_NAVRATRI_PROMO_CONFIG },
   chatRate: 15,
   voiceRate: 20,
   videoRate: 25,
@@ -116,8 +122,15 @@ export const AdminStore = {
       ADMIN_CONFIGURABLE_PRICING.voice.discountPercentage = updates.discountPercentage;
       ADMIN_CONFIGURABLE_PRICING.video.discountPercentage = updates.discountPercentage;
     }
+    if (updates.navratriPromo !== undefined) {
+      memoryPricing.navratriPromo = {
+        ...(memoryPricing.navratriPromo || DEFAULT_NAVRATRI_PROMO_CONFIG),
+        ...updates.navratriPromo,
+      };
+    }
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("astro_pricing_updated"));
+      window.dispatchEvent(new Event("astro_promo_updated"));
     }
   },
 

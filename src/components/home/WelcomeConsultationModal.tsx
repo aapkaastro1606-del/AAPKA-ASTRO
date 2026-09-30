@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, ArrowRight } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
-import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
+import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER, isNavratriPromoActive } from "@/config/placeholderContent";
+import { AdminStore } from "@/lib/store/adminStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 
 export const WELCOME_MODAL_STORAGE_KEY = "aapka_welcome_modal_dismissed";
@@ -133,7 +134,11 @@ export function WelcomeConsultationModal({
   useEffect(() => {
     const handlePricingUpdated = () => setPricingVersion((v) => v + 1);
     window.addEventListener("astro_pricing_updated", handlePricingUpdated);
-    return () => window.removeEventListener("astro_pricing_updated", handlePricingUpdated);
+    window.addEventListener("astro_promo_updated", handlePricingUpdated);
+    return () => {
+      window.removeEventListener("astro_pricing_updated", handlePricingUpdated);
+      window.removeEventListener("astro_promo_updated", handlePricingUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -141,6 +146,12 @@ export function WelcomeConsultationModal({
 
     if (forceOpen) {
       setIsOpen(true);
+      return;
+    }
+
+    // 0. Promotional Priority Check: If Navratri festive promotion is active, it takes priority as first-visit popup
+    if (isNavratriPromoActive(AdminStore.getPricing().navratriPromo)) {
+      setIsOpen(false);
       return;
     }
 

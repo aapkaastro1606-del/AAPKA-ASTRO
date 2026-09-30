@@ -1746,6 +1746,64 @@ The About Us page ([`src/app/about/page.tsx`](file:///c:/Users/anmol/OneDrive/De
 - **Full Test Suite**: **230 / 230 tests passing** across 47 suites (`npm test`).
 - **Production Build**: **99 / 99 routes successfully compiled** (`npm run build`).
 
+---
+
+## 30. Festive Campaigns: Navratri Rudraksh Promotional Popup & Priority Orchestration
+
+### 30.1 Background & Client Requirements
+The client requested an authentic festive promotional popup for the sacred festival of Navratri:
+> *"Get one abhimantrit Rudraksh on consultation — limited period offer, only for Navratri."*
+
+Key architectural and business requirements:
+1. **Distinct from 50%-Off Welcome Popup**: The festive popup is a standalone campaign component, not a mutation or overwrite of the permanent 50%-off first-consultation welcome popup.
+2. **Promotional Priority Lifecycle**: During the active promotional window, this Navratri offer takes priority as the first-visit popup shown to visitors, temporarily superseding the standard welcome modal. Once the festival window concludes (or is disabled via the admin panel), the platform automatically reverts to displaying the standard 50%-off welcome popup on first visit without code modifications or site redeployment.
+3. **Admin-Configurable Date Boundaries**: Because Navratri dates shift every year according to the Hindu lunar calendar, the start and end dates are fully configurable in real-time via the Admin Consultation Products & Pricing Panel (`/admin/pricing`) and support environment variable overrides (`NEXT_PUBLIC_NAVRATRI_PROMO_*`).
+4. **Brand Design System Fidelity**: Adheres strictly to Aapka Astro's temple aesthetic—Deep Maroon (`#7B2D26`), Marigold Gold (`#E8A33D`), Warm Ivory (`#FBF3E7`), Pure Ivory Card (`#FFFDF9`), Sandalwood (`#3B2A1E`), Cinzel (`font-temple`), and Mukta (`font-body`), with no generic third-party electric yellow templates.
+5. **Applicability Assumption (Flagged per Client Prompt)**:
+   > **Assumption Documented**: The client copy specifies *"on consultation"*. By default, the promotion applies to **all booked consultations** (both Vedic Astro Consultation at ₹1,051 first-time / ₹2,100 standard and Vaastu Consultation at ₹15,000 standing promotional fee). The admin panel includes a dedicated selector permitting the site owner to configure applicability to **"Both (Default)"**, **"Astro Only"**, or **"Vaastu Only"** at any time with immediate effect.
+
+---
+
+### 30.2 Technical Implementation Details
+
+1. **Configuration & Scheduling Engine** ([`src/config/placeholderContent.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts)):
+   - Defined `NavratriPromoConfig` schema and `DEFAULT_NAVRATRI_PROMO_CONFIG` with default active window (`startDate: "2026-09-25"`, `endDate: "2026-10-31"`).
+   - Created `isNavratriPromoActive(config, referenceDate)` evaluating date boundaries (00:00:00 start of day to 23:59:59 end of day IST) and checking environment overrides.
+2. **Store & State Management** ([`src/lib/store/adminStore.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/store/adminStore.ts)):
+   - Extended `PricingSettings` interface to include `navratriPromo?: NavratriPromoConfig`.
+   - Initialized `navratriPromo` in `memoryPricing`.
+   - Added synchronization and event dispatching (`astro_promo_updated` & `astro_pricing_updated`) in `AdminStore.updatePricing`.
+3. **Promotional Component** ([`src/components/promotions/NavratriPromotionalModal.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/promotions/NavratriPromotionalModal.tsx)):
+   - Verbatim headline display: *"Get one abhimantrit Rudraksh on consultation — limited period offer, only for Navratri."*
+   - Sacred visual anchor: Consecrated Rudraksh motif with sacred Om symbol and flame/diya accents.
+   - Transparent copy breakdown: Explains that each consultation includes a genuine 5-Mukhi Nepali Rudraksh consecrated by Acharya Niraj Kumar.
+   - Dual applicability list: Clarifies rates for both Astro and Vaastu consultations.
+   - Direct CTA: Links to `/consult` with smooth dismissal.
+   - Visitor session protection: Show once per browser session using `sessionStorage` (`aapka_navratri_promo_session_seen`) and cookie fallback (`aapka_navratri_promo_seen`).
+   - Suppressed on operational routes: `/dashboard/*`, `/admin/*`, `/astrologer/*`, `/account/*`, `/consult*`, `/login*`, `/signup*`, and during active sessions.
+   - Accessibility: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="navratri-promo-title"`, `Escape` key dismissal, and backdrop click dismiss.
+4. **Welcome Modal Priority Yield** ([`src/components/home/WelcomeConsultationModal.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/WelcomeConsultationModal.tsx)):
+   - When `!forceOpen`, checks `isNavratriPromoActive(AdminStore.getPricing().navratriPromo)`.
+   - If festive promo is active, the standard welcome modal cleanly yields priority and does not display.
+   - Listens to `astro_promo_updated` so any change in admin toggle or dates immediately restores or suppresses the standard welcome modal in real-time.
+5. **Admin Campaign Controls** ([`src/app/admin/pricing/PricingManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/admin/pricing/PricingManagerClient.tsx)):
+   - Added card *"Festive Campaign: Navratri Rudraksh Promotion"*.
+   - Dynamic status badge: `ACTIVE NOW (PRIORITY POPUP)` (green), `SCHEDULED` (amber), `EXPIRED` (rose), or `DISABLED` (stone).
+   - Campaign Status checkbox toggle.
+   - Start Date and End Date native date pickers.
+   - Consultation Applicability dropdown (Both, Astro Only, Vaastu Only).
+   - Verbatim Headline text editor.
+6. **Root Layout Integration** ([`src/app/layout.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/layout.tsx)):
+   - Both `<WelcomeConsultationModal />` and `<NavratriPromotionalModal />` are cleanly mounted in the root layout for full visitor coverage.
+
+---
+
+### 30.3 Verification & Test Coverage
+- **New Dedicated Test Suite**: [`tests/navratriPromoModal.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/navratriPromoModal.test.ts) (11 tests covering headline verbatim matching, dual consultation applicability, brand design token compliance, layout mounting, welcome modal priority yielding, IST date boundary evaluation, adminStore persistence, and operational route suppression).
+- **All Automated Tests**: **241 / 241 tests passing** across **50 test suites** (`npm test`).
+- **Production Build**: **99 / 99 routes successfully compiled** (`npm run build`).
+
+
 
 
 

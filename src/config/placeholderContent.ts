@@ -179,6 +179,93 @@ export const KUNDLI_PDF_PRODUCT = {
   ],
 };
 
+// ============================================================================
+// NAVRATRI PROMOTIONAL CAMPAIGN CONFIGURATION (ABHIMANTRIT RUDRAKSH OFFER)
+// ============================================================================
+export interface NavratriPromoConfig {
+  enabled: boolean;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  headline: string;
+  subheadline: string;
+  blessingDescription: string;
+  applicabilityNote: string;
+  appliesTo: "both" | "astro" | "vaastu";
+  ctaText: string;
+}
+
+export const DEFAULT_NAVRATRI_PROMO_CONFIG: NavratriPromoConfig = {
+  enabled: true,
+  startDate: "2026-09-25", // Active for current window / testing
+  endDate: "2026-10-31", // Covers full Navratri festival period
+  headline: "Get one abhimantrit Rudraksh on consultation — limited period offer, only for Navratri.",
+  subheadline: "Special Festive Blessing • Auspicious Nine Nights of Maa Durga",
+  blessingDescription:
+    "Celebrate the sacred nine nights of Maa Durga. Every consultation booked during this festive window includes a genuine 5-Mukhi Nepali Rudraksh, consecrated (abhimantrit) with authentic Vedic stotras by Acharya Niraj Kumar for peace, health, and spiritual protection.",
+  applicabilityNote:
+    "Limited period offer — valid on all booked consultations (applies to both Vedic Astro Consultation and Vaastu Consultation).",
+  appliesTo: "both",
+  ctaText: "Book Consultation & Claim Rudraksh",
+};
+
+/**
+ * Evaluates whether the Navratri promotional campaign is currently active.
+ * Considers admin configuration, environment variables, and the active date window.
+ */
+export function isNavratriPromoActive(
+  config?: Partial<NavratriPromoConfig> | null,
+  referenceDate: Date = new Date()
+): boolean {
+  // 1. Environment variable forced overrides
+  if (typeof process !== "undefined" && process.env) {
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_FORCE === "true") return true;
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_FORCE === "false") return false;
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_ENABLED === "false") return false;
+  }
+
+  const merged: NavratriPromoConfig = {
+    ...DEFAULT_NAVRATRI_PROMO_CONFIG,
+    ...(config || {}),
+  };
+
+  // Environment variable date overrides if supplied
+  if (typeof process !== "undefined" && process.env) {
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_START) {
+      merged.startDate = process.env.NEXT_PUBLIC_NAVRATRI_PROMO_START;
+    }
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_END) {
+      merged.endDate = process.env.NEXT_PUBLIC_NAVRATRI_PROMO_END;
+    }
+    if (process.env.NEXT_PUBLIC_NAVRATRI_PROMO_ENABLED !== undefined) {
+      merged.enabled = process.env.NEXT_PUBLIC_NAVRATRI_PROMO_ENABLED === "true";
+    }
+  }
+
+  if (!merged.enabled) {
+    return false;
+  }
+
+  if (!merged.startDate || !merged.endDate) {
+    return false;
+  }
+
+  try {
+    // Parse start date: beginning of day (00:00:00.000)
+    const [startYear, startMonth, startDay] = merged.startDate.split("-").map(Number);
+    const startTime = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0).getTime();
+
+    // Parse end date: end of day (23:59:59.999)
+    const [endYear, endMonth, endDay] = merged.endDate.split("-").map(Number);
+    const endTime = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999).getTime();
+
+    const currentTime = referenceDate.getTime();
+
+    return currentTime >= startTime && currentTime <= endTime;
+  } catch {
+    return false;
+  }
+}
+
 // Legacy compatibility shim for transitioned components
 export interface PricingTier {
   type: "chat" | "voice" | "video";
