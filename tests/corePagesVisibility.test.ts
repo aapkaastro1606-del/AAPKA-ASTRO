@@ -91,6 +91,11 @@ describe("Core Pages Visibility & Discoverability Audit", () => {
       /परिचय\s*\(About\)/,
       "Hindi navbar must cleanly display 'परिचय' without English '(About)' in parentheses"
     );
+    assert.doesNotMatch(
+      content,
+      /हमारे बारे में\s*\(About Us\)/,
+      "Hindi navbar mobile drawer must not contain '(About Us)' in parentheses"
+    );
     assert.ok(
       content.includes('"परिचय"'),
       "Hindi navbar must display clean 'परिचय' for About page link"

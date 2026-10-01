@@ -693,7 +693,7 @@ export const Navbar: React.FC = () => {
                   <Award className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <div>{isHi ? "हमारे बारे में (About Us)" : "About Us"}</div>
+                  <div>{isHi ? "परिचय" : "About Us"}</div>
                   <div className="text-[10px] text-[#6E5545] font-normal">
                     {isHi ? "प्रमाणपत्र, अनुभव एवं परिचय" : "Verified Credentials & Bio"}
                   </div>
