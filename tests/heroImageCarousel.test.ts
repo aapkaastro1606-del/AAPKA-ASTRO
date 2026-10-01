@@ -110,4 +110,25 @@ describe("Hero Section Auto-Rotating Image Carousel", () => {
       "Hero.tsx must render <HeroImageCarousel />"
     );
   });
+
+  it("verifies corner Award icon and 'Jyotish Acharya • Vastu Expert' with rating badge are preserved", () => {
+    const heroPath = path.join(rootDir, "src/components/home/Hero.tsx");
+    const heroContent = fs.readFileSync(heroPath, "utf-8");
+    assert.ok(
+      heroContent.includes("Award") && heroContent.includes("rounded-full bg-[#7B2D26]"),
+      "Hero.tsx must preserve the corner Award icon accent overlapping the card"
+    );
+
+    const carouselPath = path.join(rootDir, "src/components/home/HeroImageCarousel.tsx");
+    const carouselContent = fs.readFileSync(carouselPath, "utf-8");
+    assert.ok(
+      carouselContent.includes("Jyotish Acharya &bull; Vastu Expert") ||
+        carouselContent.includes("Jyotish Acharya • Vastu Expert"),
+      "HeroImageCarousel must preserve 'Jyotish Acharya • Vastu Expert' caption"
+    );
+    assert.ok(
+      carouselContent.includes("4.98"),
+      "HeroImageCarousel must preserve the 4.98 rating badge"
+    );
+  });
 });

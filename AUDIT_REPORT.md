@@ -2098,13 +2098,16 @@ Key architectural and design choices:
 - **Single Image at a Time**: Occupies the exact same card footprint (`h-64 sm:h-72 w-full`) within the carved temple card in `Hero.tsx`.
 - **5-Second Auto-Advance**: Advances every 5,000 milliseconds (`5000ms`).
 - **Smooth Crossfade Transition**: Implemented using stacked absolute positioning with CSS opacity transitions (`transition-opacity duration-700 ease-in-out`, toggling `opacity-100` and `opacity-0`). Zero horizontal sliding or swipe animation was used to maintain a dignified, serene temple aesthetic.
-- **100% Genuine Media Assets**: Cycles exclusively through real, verified photos already in the repository:
-  1. `Acharya Niraj Kumar` — Official Vedic Jyotish & Vastu Portrait (`/images/Acharya_Niraj_Kumar.jpg`)
-  2. `Pashupati Award Felicitation` — Prestigious International Honor (`/gallery/felicitation_pashupati_award.jpg`)
-  3. `Best Astrologer Award` — National Astrological Excellence (`/gallery/best_astrologer_award.jpg`)
-  4. `Dignitary Greeting` — Cultural & Astrological Recognition (`/gallery/dignitary_greeting.jpg`)
-  5. `Awards Felicitation Ceremony` — Distinguished Vedic Services (`/gallery/Awards_Receiving.jpg`)
-  6. `Spiritual Guide Discipleship` — Traditional Gurukul Parampara (`/gallery/with_spiritual_guide.jpg`)
+- **100% Genuine Media Assets (Strictly Individual Single Photos — Zero Collages)**: Cycles exclusively through real, verified single-moment conclave and stage photos:
+  1. `Pashupati Award Felicitation` — Prestigious International Honor with State Dignitaries (`/gallery/felicitation_pashupati_award.jpg`)
+  2. `Best Astrologer Award` — National Astrological Excellence Plaque (`/gallery/best_astrologer_award.jpg`)
+  3. `Dignitary Greeting` — Cultural & Astrological Floral Welcome (`/gallery/dignitary_greeting.jpg`)
+  4. `Live Vastu Workshop Haridwar` — Live Workshop Certificate & Memento (`/gallery/Getting_Certificates.jpg`)
+  5. `Distinguished Service Award` — Stage Presentation Honor (`/gallery/Getting_Awards.jpg`)
+  6. `Spiritual Guide Discipleship` — Traditional Gurukul Ashram Parampara (`/gallery/with_spiritual_guide.jpg`)
+- **Preserved Existing Design Context**:
+  - **Overlapping Award Badge**: The circular corner ornament (`<Award className="h-5 w-5" />`) positioned at `-top-3.5 -right-3.5` with `#7B2D26` and gold border `#C1662F` is fully preserved, honoring Acharya Ji's lifelong Vedic mastery across every photo in the rotation.
+  - **Floating Badge & Rating Strip**: Preserved the `"Jyotish Acharya • Vastu Expert"` title pill and `★ 4.98` rating badge as-is across all slides, complemented by the dynamic photo credential caption and subtle warm-gold dots in the lower strip.
 
 ### 39.2 Interaction & Accessibility Features
 - **Hover & Touch Pause**: Automatically suspends the 5-second timer when the user hovers with a mouse (`onMouseEnter`/`onMouseLeave`), touches on mobile (`onTouchStart`/`onTouchEnd`), or focuses via keyboard navigation (`onFocus`/`onBlur`). A subtle, elegant "Paused" badge indicates the freeze.
@@ -2112,13 +2115,13 @@ Key architectural and design choices:
 - **Subtle Warm-Gold Dot Indicators**: Custom navigation dots styled with `#C1662F` and `#E8A33D` using accessible ARIA tablist semantics (`role="tablist"` / `role="tab"`), accompanied by discreet previous and next buttons.
 
 ### 39.3 Verification & Automated Test Evidence
-- **Automated Test Suite (`tests/heroImageCarousel.test.ts`)**: 6 comprehensive unit tests verify:
+- **Automated Test Suite (`tests/heroImageCarousel.test.ts`)**: 7 comprehensive unit tests verify:
   1. All 6 image assets exist on physical disk in `public/`.
   2. Auto-rotation interval is set to exactly 5000ms.
   3. Smooth crossfade classes (`transition-opacity`, `duration-700`, `opacity-100`, `opacity-0`) are present with no horizontal slide classes.
   4. Mouse hover/leave pause state handlers exist.
   5. `prefers-reduced-motion` media query detection is implemented.
   6. `Hero.tsx` imports and embeds `<HeroImageCarousel />`.
-- **Full Test Suite (`npm test`)**: **262 / 262 tests passing** across 52 test suites.
+  7. Corner Award icon, `"Jyotish Acharya • Vastu Expert"` caption, and `4.98` rating badge are verified preserved.
+- **Full Test Suite (`npm test`)**: **263 / 263 tests passing** across 52 test suites.
 - **Production Build (`npm run build`)**: Turbopack build succeeded with 99/99 routes compiled with zero errors.
-

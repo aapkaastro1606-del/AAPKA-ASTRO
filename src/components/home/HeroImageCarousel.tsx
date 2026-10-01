@@ -13,45 +13,45 @@ export interface HeroCarouselSlide {
 
 export const HERO_SLIDES: HeroCarouselSlide[] = [
   {
-    src: "/images/Acharya_Niraj_Kumar.jpg",
-    alt: "Acharya Niraj Kumar - Certified Jyotish Acharya",
-    badge: "Jyotish Acharya & Vastu Expert",
-    caption: "Bhartiya Vidya Bhawan Certified",
-    objectPosition: "object-top",
-  },
-  {
     src: "/gallery/felicitation_pashupati_award.jpg",
-    alt: "Acharya Niraj Kumar receiving felicitation plaque",
-    badge: "Plaque Felicitation",
-    caption: "Felicitation by Conclave Dignitaries",
+    alt: "Acharya Niraj Kumar receiving felicitation honor and memento",
+    badge: "Jyotish Acharya & Vastu Expert",
+    caption: "Felicitation by State Dignitaries",
     objectPosition: "object-top",
   },
   {
     src: "/gallery/best_astrologer_award.jpg",
     alt: "Acharya Niraj Kumar receiving Best Astrologer award",
-    badge: "Best Astrologer Recognition",
+    badge: "Jyotish Acharya & Vastu Expert",
     caption: "National Astrology Conclave Honor",
     objectPosition: "object-top",
   },
   {
     src: "/gallery/dignitary_greeting.jpg",
     alt: "Acharya Niraj Kumar receiving floral greeting from senior dignitary",
-    badge: "Dignitary Floral Welcome",
+    badge: "Jyotish Acharya & Vastu Expert",
     caption: "Stage Greeting by Senior Dignitaries",
     objectPosition: "object-top",
   },
   {
-    src: "/gallery/Awards_Receiving.jpg",
-    alt: "Acharya Niraj Kumar memento presentation",
-    badge: "Stage Felicitation",
-    caption: "Memento Presentation on Stage",
+    src: "/gallery/Getting_Certificates.jpg",
+    alt: "Acharya Niraj Kumar at Live Vastu Workshop Haridwar",
+    badge: "Jyotish Acharya & Vastu Expert",
+    caption: "Live Vastu Workshop Felicitation",
+    objectPosition: "object-top",
+  },
+  {
+    src: "/gallery/Getting_Awards.jpg",
+    alt: "Acharya Niraj Kumar receiving stage award",
+    badge: "Jyotish Acharya & Vastu Expert",
+    caption: "Distinguished Service Award",
     objectPosition: "object-top",
   },
   {
     src: "/gallery/with_spiritual_guide.jpg",
     alt: "Acharya Niraj Kumar with spiritual mentor",
-    badge: "Guru Parampara",
-    caption: "Traditional Ashram Lineage",
+    badge: "Jyotish Acharya & Vastu Expert",
+    caption: "Traditional Ashram Guru Parampara",
     objectPosition: "object-center",
   },
 ];
@@ -157,10 +157,10 @@ export const HeroImageCarousel: React.FC = () => {
           </div>
         )}
 
-        {/* Bottom Floating Badge & Rating Strip */}
+        {/* Bottom Floating Badge & Rating Strip: Preserved exactly as-is across all photos */}
         <div className="absolute bottom-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
-          <div className="rounded-lg bg-[#FFFDF9]/95 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-[#7B2D26] shadow-sm border border-[#E8D8C3] font-temple max-w-[70%] truncate">
-            {currentSlide.badge}
+          <div className="rounded-lg bg-[#FFFDF9]/95 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-[#7B2D26] shadow-sm border border-[#E8D8C3] font-temple">
+            Jyotish Acharya &bull; Vastu Expert
           </div>
           <div className="flex items-center gap-1 rounded-lg bg-[#E8A33D] px-2 py-1 text-xs font-black text-[#3B2A1E] shadow-sm">
             <Star className="h-3.5 w-3.5 fill-current" />
