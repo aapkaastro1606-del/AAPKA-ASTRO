@@ -84,17 +84,17 @@ export default function RefundPolicyPage() {
           {/* Section 3 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              3. Technical Disconnections &amp; Session Continuity
+              3. Telecommunication Disconnections &amp; Session Continuity
             </h2>
             <p>
-              All consultations operate on an upfront flat-fee, pay-per-booking model. If an active live session drops prematurely due to server failure, telecommunication network glitch, or technical power interruption:
+              All consultations operate on an upfront flat-fee, pay-per-booking model conducted via WhatsApp Call or Google Meet. If a call drops prematurely due to cellular network glitch, Wi-Fi outage, or carrier interruption:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
-                Our consultation room allows you to immediately reconnect to your ongoing session at zero additional charge.
+                Acharya Ji or his desk will immediately redial or re-share the meeting link to resume your booked session at zero additional charge.
               </li>
               <li>
-                If reconnection is impossible due to verified server-side technical failure, our technical desk will immediately rebook your consultation at your convenience or issue a 100% full refund directly to your original payment method (Bank / UPI / Card) within 24–48 business hours.
+                If reconnection is impossible due to verified prolonged network failure, our desk will reschedule your consultation at your convenience or issue a 100% full refund directly to your original payment method (Bank / UPI / Card) within 24–48 business hours.
               </li>
             </ul>
           </section>

@@ -191,22 +191,22 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
   "live-consultation": {
     title: "Live Consultation",
     hindi: "सीधा व्यक्तिगत परामर्श",
-    subtitle: "Encrypted 1-on-1 private Chat, Voice, or Video call directly with Acharya Ji.",
+    subtitle: "Direct 1-on-1 private WhatsApp Call or Google Meet video consultation personally with Acharya Ji.",
     longDescription:
-      "When facing crucial crossroads in career, marriage, health, or business, direct conversation provides immediate relief and clarity. In our live consultation room, Acharya Ji reviews your live Janam Kundli chart simultaneously on screen, giving you heartfelt, uncluttered answers and practical remedies.",
+      "When facing crucial crossroads in career, marriage, health, or business, direct conversation provides immediate relief and clarity. Consultations are delivered directly via WhatsApp Call or Google Meet, giving you heartfelt, uncluttered answers and practical satvik remedies without complex apps.",
     icon: PhoneCall,
     steps: [
       {
         title: "1. Select Consultation Format",
-        desc: "Choose between Voice Call, Video Call, or Live Text Chat — all available at the unified flat fee.",
+        desc: "Choose between WhatsApp Voice Call, Google Meet Video Call, or Consultation Desk Chat — all at one unified flat fee.",
       },
       {
         title: "2. Promotional Flat Fee (50% Off)",
         desc: "Your first consultation automatically qualifies for the promotional flat fee of ₹1,051/- (Regular ₹2,100). No hidden per-minute ticking clock.",
       },
       {
-        title: "3. Direct Private Connection",
-        desc: "Enter the private room. No middlemen, no recorded public streams. 100% confidential.",
+        title: "3. Direct WhatsApp / Meet Bridge",
+        desc: "Acharya Ji connects directly to your mobile number via WhatsApp call or shares a private Google Meet bridge. 100% confidential.",
       },
       {
         title: "4. Prescribed Summary in Account",
@@ -227,7 +227,7 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
     faqs: [
       {
         q: "How does consultation booking work?",
-        a: "Consultations are booked on a transparent flat-fee basis (₹1,051 first consultation promo / ₹2,100 standard). You select your preferred format (Voice, Video, or Chat) and connect directly with Acharya Ji.",
+        a: "Consultations are booked on a transparent flat-fee basis (₹1,051 first consultation promo / ₹2,100 standard). After booking, Acharya Ji connects directly with you via WhatsApp Call or Google Meet video link — no complicated software needed.",
       },
       {
         q: "What if Acharya Ji is offline when I visit?",

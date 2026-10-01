@@ -1875,6 +1875,32 @@ A dedicated automated test was added to [`tests/welcomeModal.test.ts`](file:///c
   4. *Campaign Disabled Toggle* (`enabled: false` on `2026-10-15`): Asserts standard modal immediately recovers (`shouldShowWelcomeModal === true`) and festive modal suppresses.
 - **Result**: Passed (12/12 in `welcomeModal.test.ts`, 11/11 in `navratriPromoModal.test.ts`).
 
+---
+
+## 33. Real Communication Architecture Simplification (WhatsApp Call & Google Meet Delivery)
+
+### 33.1 Operational Reality & Scope Reduction
+In direct alignment with the client's operational practice, live consultations are conducted via **WhatsApp Call** or **Google Meet**, rather than requiring an in-app real-time WebRTC audio/video communication layer.
+- **Cost Reduction**: Completely removes expensive per-minute WebRTC infrastructure billing (Agora / ZegoCloud vendor accounts and token issuance).
+- **Zero Client Friction**: Seekers do not need to download custom plugins or debug in-browser microphone/camera WebRTC permissions. Consultations connect directly to the seeker's phone via standard WhatsApp Audio/Video or a 1-click Google Meet link.
+- **Consultation Continuity**: Resilient to cellular glitches; the sanctum desk can immediately redial or re-share a meeting link.
+
+### 33.2 Surfaces Updated
+1. **Consultation Room & Intake Flow** ([`src/app/consult/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/consult/page.tsx)):
+   - Format selector clearly displays *Direct WhatsApp Audio* and *Google Meet / Video*.
+   - Client phone intake explicitly labeled: *WhatsApp & Mobile Number (for Call / Google Meet Link)*.
+   - Pending booking confirmation screen (State 2) guides seekers on how Acharya Ji initiates the session and provides a 1-click WhatsApp sanctum desk notification CTA.
+   - Live consultation screen (State 1) replaces custom WebRTC stream with 1-click direct WhatsApp and Google Meet launch bridges.
+2. **Astrologer Session Workbench** ([`src/app/dashboard/session/[id]/SessionWorkbenchClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/dashboard/session/[id]/SessionWorkbenchClient.tsx)):
+   - Replaced Agora channel controls with instant **WhatsApp Call** and **Google Meet** bridge actions for Acharya Ji.
+3. **Services Documentation** ([`src/app/services/[slug]/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/services/[slug]/page.tsx)):
+   - Updated Live Consultation service copy, steps, and FAQs to clearly explain delivery via WhatsApp Call or Google Meet.
+4. **Client Account & Policy Surfaces**:
+   - [`src/app/account/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/page.tsx): Updated consultation quick actions to reference WhatsApp, Meet, or Chat.
+   - [`src/app/account/history/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/history/page.tsx): Updated history descriptors.
+   - [`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx): Updated Section 3 to address telecommunication continuity via WhatsApp redial and Google Meet link re-sharing.
+   - [`.env.example`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/.env.example): Marked Agora/ZegoCloud as optional legacy mocks and documented direct WhatsApp/Google Meet architecture.
+
 
 
 

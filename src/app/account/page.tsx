@@ -199,7 +199,7 @@ export default function ClientAccountDashboard() {
               <h3 className="font-temple text-sm font-bold text-[#7B2D26] group-hover:text-[#C1662F]">
                 Start Consultation
               </h3>
-              <p className="text-[11px] text-[#6E5545] mt-0.5">Chat, Audio or Video</p>
+              <p className="text-[11px] text-[#6E5545] mt-0.5">WhatsApp, Meet or Chat</p>
             </div>
           </Link>
 

@@ -43,8 +43,6 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
   const [remedyText, setRemedyText] = useState("");
   const [remedySent, setRemedySent] = useState(false);
   const [sessionSeconds, setSessionSeconds] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
   const [chartType, setChartType] = useState<"north" | "south">("north");
   const [activeTab, setActiveTab] = useState<"chart" | "planets" | "dasha">("chart");
   const [clientKundli, setClientKundli] = useState<KundliData | null>(null);
@@ -209,38 +207,36 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Live Chat Feed & Remedy Scratchpad */}
           <div className="lg:col-span-6 space-y-6">
-            {/* Audio / Video Controls */}
+            {/* Live Call Bridge (WhatsApp Call & Google Meet) */}
             {activeSession?.type !== "chat" && (
-              <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 shadow-sm flex items-center justify-between">
+              <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-[#6B8E5A] animate-pulse" />
                   <span className="text-xs font-bold text-[#2A4720]">
-                    Agora Real-Time Voice Channel Connected
+                    Direct Client Bridge (WhatsApp / Google Meet)
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsMuted(!isMuted)}
-                    className={`rounded-lg p-2 text-xs font-bold transition-all ${
-                      isMuted ? "bg-rose-100 text-rose-800" : "bg-[#FBF3E7] text-[#3B2A1E]"
-                    }`}
+                  <a
+                    href={`https://wa.me/${activeSession?.userPhone?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Pranam ${activeSession?.userName || ""}, this is Acharya Niraj Kumar connecting with you for your booked consultation session.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-3 py-1.5 text-xs font-bold transition-all shadow-xs"
                   >
-                    {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                  </button>
+                    <PhoneCall className="h-3.5 w-3.5" />
+                    <span>WhatsApp Call</span>
+                  </a>
 
-                  {activeSession?.type === "video" && (
-                    <button
-                      type="button"
-                      onClick={() => setIsVideoOff(!isVideoOff)}
-                      className={`rounded-lg p-2 text-xs font-bold transition-all ${
-                        isVideoOff ? "bg-rose-100 text-rose-800" : "bg-[#FBF3E7] text-[#3B2A1E]"
-                      }`}
-                    >
-                      {isVideoOff ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-                    </button>
-                  )}
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 py-1.5 text-xs font-bold transition-all shadow-xs"
+                  >
+                    <Video className="h-3.5 w-3.5" />
+                    <span>Google Meet</span>
+                  </a>
                 </div>
               </div>
             )}

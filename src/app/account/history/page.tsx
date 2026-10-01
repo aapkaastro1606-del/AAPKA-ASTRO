@@ -65,7 +65,7 @@ export default function AccountHistoryPage() {
               <Clock className="h-10 w-10 text-[#C1662F] mx-auto mb-3" />
               <h3 className="font-temple text-lg font-bold text-[#7B2D26]">No Past Sessions Yet</h3>
               <p className="text-xs text-[#6E5545] mt-1">
-                Your past audio, video, and chat consultations will be automatically preserved here.
+                Your past WhatsApp, Google Meet, and consultation session summaries will be automatically preserved here.
               </p>
             </div>
           ) : (

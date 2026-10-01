@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import {
   PLACEHOLDER_ASTROLOGER,
+  PLACEHOLDER_CONTACT_INFO,
   CONSULTATION_PRODUCTS,
   FLAT_CONSULTATION_PRICING,
 } from "@/config/placeholderContent";
@@ -509,9 +510,9 @@ export default function ConsultPage() {
                     </div>
                   </div>
 
-                  {/* Audio / Video Simulated Feed */}
-                  <div className="relative rounded-2xl bg-[#2A1D15] p-6 text-white text-center flex flex-col items-center justify-center min-h-[220px] shadow-inner">
-                    <div className="h-20 w-20 rounded-full border-2 border-[#E8A33D] overflow-hidden mb-3 shadow-md">
+                  {/* Direct Calling & Video Meeting Bridge (WhatsApp / Google Meet) */}
+                  <div className="relative rounded-2xl bg-[#2A1D15] p-5 text-white text-center flex flex-col items-center justify-center min-h-[220px] shadow-inner">
+                    <div className="h-18 w-18 rounded-full border-2 border-[#E8A33D] overflow-hidden mb-2.5 shadow-md">
                       <img
                         src={PLACEHOLDER_ASTROLOGER.avatarUrl}
                         alt="Astrologer Video"
@@ -523,37 +524,35 @@ export default function ConsultPage() {
                     </span>
                     <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1 font-mono">
                       <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                      HD Audio &amp; Video Connected
+                      Session Live &bull; Direct Meeting Bridge
                     </span>
 
-                    {/* Media Mute/Camera Toggles */}
-                    <div className="mt-4 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsMuted(!isMuted)}
-                        className={`p-2.5 rounded-full text-xs transition-all ${
-                          isMuted ? "bg-rose-600 text-white" : "bg-white/20 hover:bg-white/30 text-white"
-                        }`}
-                        title={isMuted ? "Unmute Mic" : "Mute Mic"}
+                    {/* Quick Launch Buttons: WhatsApp Call or Google Meet */}
+                    <div className="mt-3.5 flex flex-col sm:flex-row items-center gap-2 w-full max-w-xs">
+                      <a
+                        href={PLACEHOLDER_CONTACT_INFO.whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-3 py-2 text-xs font-bold transition-all shadow-sm"
                       >
-                        {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsVideoOff(!isVideoOff)}
-                        className={`p-2.5 rounded-full text-xs transition-all ${
-                          isVideoOff ? "bg-rose-600 text-white" : "bg-white/20 hover:bg-white/30 text-white"
-                        }`}
-                        title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+                        <PhoneCall className="h-3.5 w-3.5" />
+                        <span>Connect on WhatsApp</span>
+                      </a>
+                      <a
+                        href="https://meet.google.com/new"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 py-2 text-xs font-bold transition-all shadow-sm"
                       >
-                        {isVideoOff ? <VideoOff className="h-4 w-4" /> : <Video className="h-4 w-4" />}
-                      </button>
+                        <Video className="h-3.5 w-3.5" />
+                        <span>Google Meet Bridge</span>
+                      </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-[#7D6B5D] text-center mt-4">
-                  Encrypted 1-on-1 Consultation &bull; Pay-Per-Booking Confirmed
+                <div className="text-[11px] text-[#7D6B5D] text-center mt-3">
+                  Direct 1-on-1 Consultation via WhatsApp / Google Meet &bull; Flat-Fee Paid
                 </div>
               </div>
 
@@ -681,8 +680,28 @@ export default function ConsultPage() {
               )}
             </div>
 
-            <p className="mt-6 text-[11px] text-[#7D6B5D]">
-              Please keep this page open. You will be connected automatically the moment Acharya Ji opens your session.
+            <div className="mt-5 rounded-2xl border border-[#6B8E5A]/40 bg-[#F4F9F2] p-4 text-xs text-center max-w-lg mx-auto">
+              <span className="font-bold text-[#2A4720] block mb-1">
+                How Your Consultation Takes Place:
+              </span>
+              <p className="text-[#4F6D40] leading-relaxed">
+                Acharya Ji personally connects via <strong>WhatsApp Call</strong> or shares a <strong>Google Meet link</strong> directly to your mobile number (<strong>{userPhone || confirmedBooking?.phone}</strong>). You do not need to install any custom app.
+              </p>
+              <div className="mt-3">
+                <a
+                  href={`https://wa.me/919311215564?text=${encodeURIComponent(`Pranam Acharya Ji, I have confirmed my booking (${confirmedBooking?.productName || "Astro Consultation"}) with reference ${confirmedBooking?.orderId || "Pending"}. Client: ${userName || confirmedBooking?.clientName}.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-2 font-bold text-xs shadow-xs transition-all"
+                >
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  <span>Notify Sanctum Desk on WhatsApp</span>
+                </a>
+              </div>
+            </div>
+
+            <p className="mt-5 text-[11px] text-[#7D6B5D]">
+              Please keep your phone handy. Acharya Ji or his desk will reach out as soon as your turn begins.
             </p>
           </div>
         ) : (
@@ -899,7 +918,7 @@ export default function ConsultPage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-2 font-temple">
                     1. Choose Consultation Format
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       type="button"
                       onClick={() => setConsultFormat("Voice Call")}
@@ -911,7 +930,8 @@ export default function ConsultPage() {
                     >
                       <PhoneCall className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
                       <span className="text-xs font-bold">Voice Call</span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                      <span className="text-[10px] text-[#6E5545] mt-0.5">Direct WhatsApp Audio</span>
+                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
                         Flat ₹{promoFee.toLocaleString("en-IN")}
                       </span>
                     </button>
@@ -929,7 +949,8 @@ export default function ConsultPage() {
                       <span className="text-xs font-bold">
                         {isAstro ? "Video Call" : "Video (Layout Review)"}
                       </span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                      <span className="text-[10px] text-[#6E5545] mt-0.5">Google Meet / Video</span>
+                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
                         Flat ₹{promoFee.toLocaleString("en-IN")}
                       </span>
                     </button>
@@ -947,7 +968,8 @@ export default function ConsultPage() {
                       <span className="text-xs font-bold">
                         {isAstro ? "Live Chat" : "Audit Report Consultation"}
                       </span>
-                      <span className="text-[11px] font-mono mt-0.5 font-bold text-[#7B2D26]">
+                      <span className="text-[10px] text-[#6E5545] mt-0.5">WhatsApp / Client Desk</span>
+                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
                         Flat ₹{promoFee.toLocaleString("en-IN")}
                       </span>
                     </button>
@@ -968,7 +990,9 @@ export default function ConsultPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">Mobile (for SMS &amp; Meeting Bridge)</label>
+                    <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">
+                      WhatsApp &amp; Mobile Number (for Call / Google Meet Link)
+                    </label>
                     <input
                       type="tel"
                       required
