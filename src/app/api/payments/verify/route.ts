@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paymentProvider } from "@/lib/providers/payment";
 import { prisma } from "@/lib/db/prisma";
+import { BookingEmailService } from "@/lib/services/bookingEmailService";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
       productId = "astro",
       format = "Voice Call",
       topic,
+      clientName,
+      clientEmail,
+      clientPhone,
     } = body;
 
     if (!orderId || !paymentId) {
@@ -86,6 +90,35 @@ export async function POST(req: NextRequest) {
       // Graceful fallback if database schema is mock in test environments
     }
 
+    // Dispatch formal confirmation email with direct WhatsApp coordination link
+    let emailResult = null;
+    const productName = productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation";
+    const whatsappCoordinationUrl = BookingEmailService.getWhatsAppCoordinationLink({
+      bookingId,
+      clientName: clientName || "Valued Client",
+      productName,
+    });
+
+    if (productId !== "kundli_pdf") {
+      try {
+        emailResult = await BookingEmailService.sendBookingConfirmationEmail({
+          bookingId,
+          clientName: clientName || "Valued Client",
+          clientEmail: clientEmail || "",
+          phone: clientPhone || "",
+          productName,
+          productId: productId as "astro" | "vaastu",
+          amountPaid: paidAmount,
+          format,
+          orderId,
+          paymentId,
+          topic,
+        });
+      } catch (e) {
+        console.warn("[VerifyRoute] Booking email dispatch non-blocking error:", e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Payment verified and consultation booked successfully",
@@ -94,6 +127,8 @@ export async function POST(req: NextRequest) {
       productId,
       orderId,
       paymentId,
+      whatsappCoordinationUrl,
+      emailDispatched: emailResult?.success ?? false,
     });
   } catch (err: any) {
     return NextResponse.json(

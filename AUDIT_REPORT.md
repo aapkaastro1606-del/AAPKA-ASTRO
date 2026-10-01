@@ -179,8 +179,8 @@ The following credentials, content assets, and business decisions are required f
 3. **Razorpay Live Merchant Keys (`RAZORPAY_KEY_ID` & `RAZORPAY_KEY_SECRET`)**:
    - Live API keys from Razorpay Dashboard after completing business KYC and bank account verification.
    - Set `RAZORPAY_WEBHOOK_SECRET` and point webhook URL to `https://aapkaastro.com/api/payments/webhook`.
-4. **Live Audio/Video Calling Keys (`AGORA_APP_ID` & `AGORA_APP_CERTIFICATE` or `ZEGO_APP_ID` & `ZEGO_SERVER_SECRET`)**:
-   - Agora or ZegoCloud project credentials for live RTC calling.
+4. **Live Audio/Video Calling Keys (DECOMMISSIONED / NOT NEEDED)**:
+   - *Status:* No Agora or ZegoCloud project keys are required. Live consultations are conducted directly via WhatsApp Call or Google Meet following post-payment handoff, saving significant vendor costs.
 5. **Instagram Meta Graph API Token (`INSTAGRAM_ACCESS_TOKEN`)**:
    - Long-lived user access token generated via Meta Business Suite for `@aapkaastrologer` to enable automated sync of reels and daily Panchang graphics.
 6. **Production Cron Secret (`CRON_SECRET`)**:
@@ -234,8 +234,7 @@ While the full application code compiles cleanly, runs deterministically, and pa
    - *Status:* Mocked fallback active; mock reels displayed.
    - *Action Needed:* Generate a long-lived user token for `@aapkaastrologer` via Meta for Developers to enable automated reel ingestion.
 4. **Live Audio/Video RTC Credentials (`AGORA_APP_ID` / `ZEGO_APP_ID`)**:
-   - *Status:* Fallback simulated call workbench active.
-   - *Action Needed:* Provide Agora or ZegoCloud project keys for production WebRTC media streams.
+   - *Status:* **DECOMMISSIONED / NOT NEEDED**. In-app WebRTC calling layer has been replaced by the post-payment handoff to direct WhatsApp Call and Google Meet. Scaffolded files left inert. Zero external vendor credentials needed.
 5. **Final Legal Policy Review & Lawyer Sign-Off**:
    - *Status:* Comprehensive placeholder policies populated at `/refund-policy`, `/terms`, `/privacy-policy`, `/disclaimer`, and `/pricing-policy`.
    - *Action Needed:* Client or their legal counsel must review and sign off on final refund terms and company identification details.
@@ -1900,6 +1899,48 @@ In direct alignment with the client's operational practice, live consultations a
    - [`src/app/account/history/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/history/page.tsx): Updated history descriptors.
    - [`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx): Updated Section 3 to address telecommunication continuity via WhatsApp redial and Google Meet link re-sharing.
    - [`.env.example`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/.env.example): Marked Agora/ZegoCloud as optional legacy mocks and documented direct WhatsApp/Google Meet architecture.
+
+---
+
+## 34. Honest Audit: In-App Calling Integration Replacement with Post-Payment Handoff
+
+### 34.1 Honest Architectural Audit of Agora/ZegoCloud Integration
+In compliance with the directive to honestly report whether an in-app Agora or ZegoCloud calling integration exists or was scaffolded:
+1. **Initial Scaffolded State**:
+   - An early prototype scaffolding was previously created in `src/lib/providers/call/` (`AgoraCallProvider.ts`, `CallProvider.ts`, `MockCallProvider.ts`, `index.ts`), supported by an endpoint at `src/app/api/consultation/token/route.ts` and environment schema definitions in `src/config/env.ts`.
+   - This provider implemented a simulated HMAC-SHA256 Agora RTC token generator (`007...` format).
+   - **True Runtime Reality**: A client-side WebRTC media player/streamer was *never* fully integrated into the client consultation experience. The consultation room ran on simulated timers and direct phone actions.
+2. **Decommissioned & Inert Status**:
+   - Rather than maintaining dead or expensive real-time WebRTC infrastructure that incurs recurring per-minute vendor licensing costs, this scaffold has been **completely decommissioned and left inert**.
+   - No frontend component or user consultation flow calls `generateToken` or loads `@agora-rtc` or ZegoCloud browser SDKs.
+   - The production build has **zero dependency** on Agora or ZegoCloud servers.
+
+### 34.2 Dedicated Post-Payment Handoff Confirmation Screen
+Following successful payment for **Astro Consultation** (Flat ₹1,051) or **Vaastu Consultation** (Flat ₹15,000), the platform now immediately renders the dedicated [`ConsultationConfirmationScreen`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/consult/ConsultationConfirmationScreen.tsx) with:
+1. **Mandatory Delivery Announcement**:
+   > *"The consultation is confirmed, and it will be conducted via **WhatsApp call** or **Google Meet**, as you prefer or as arranged with Acharya Ji's sanctum."*
+2. **Direct One-Tap WhatsApp Coordination Link**:
+   - Prominently displays a one-tap link to `https://wa.me/919311215564` with a pre-filled, personalized message including the client's Name, Consultation Type, and Booking Reference ID.
+3. **Comprehensive Booking Summary**:
+   - Displays official Booking Reference ID, Client Name, Client Phone, Consultation Format, and Amount Paid (Flat ₹1,051 or ₹15,000 — paid in full with zero per-minute debits).
+4. **Action Controls**:
+   - One-tap "Message on WhatsApp (+91 93112 15564)"
+   - "Print / Save Booking Receipt" (`window.print()`)
+   - "Book Another Consultation" (smoothly resets state)
+   - "Return to Home"
+
+### 34.3 Automated Booking Confirmation Email
+1. **Engine**: Implemented [`BookingEmailService`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/lib/services/bookingEmailService.ts) and wired directly into [`/api/payments/verify`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/api/payments/verify/route.ts).
+2. **Email Content**:
+   - Explicitly informs the client that the consultation will be conducted via WhatsApp call or Google Meet.
+   - Embeds a direct, one-tap "Message on WhatsApp (+91 93112 15564)" button linking to `https://wa.me/919311215564`.
+   - Delivers official receipt details and next steps.
+   - Dispatches via Resend if `RESEND_API_KEY` is configured, or logs resiliently without blocking checkout in staging/test environments.
+
+### 34.4 Preservation of Real-Time Astrologer Status Indicator
+- Preserved the real-time **"Online / Busy / Offline"** indicator on the Navbar and Consultation Intake Form (`src/app/consult/page.tsx`).
+- It serves as a vital **trust and urgency signal**, telling visitors whether Acharya Niraj Kumar is actively at his desk and likely to connect promptly via WhatsApp or Google Meet upon booking.
+- Decoupled from in-app queue waiting mechanics to prevent friction while retaining genuine visitor confidence.
 
 
 

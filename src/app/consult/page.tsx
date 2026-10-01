@@ -32,6 +32,7 @@ import {
   Home,
   Compass,
   FileCheck,
+  MessageCircle,
 } from "lucide-react";
 import {
   PLACEHOLDER_ASTROLOGER,
@@ -43,10 +44,12 @@ import {
   ConsultationBookingService,
   ConsultationBooking,
 } from "@/lib/services/consultationBilling";
+import { BookingEmailService } from "@/lib/services/bookingEmailService";
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
+import { ConsultationConfirmationScreen } from "@/components/consult/ConsultationConfirmationScreen";
 
 // Razorpay Script Loader helper (Viar Checkout Pattern)
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -77,6 +80,7 @@ export default function ConsultPage() {
   // Common Client Intake State
   const [userName, setUserName] = useState("");
   const [userPhone, setUserPhone] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [consultFormat, setConsultFormat] = useState<"Voice Call" | "Video Call" | "Live Chat">("Voice Call");
 
   // Astro Product Specific State
@@ -168,7 +172,10 @@ export default function ConsultPage() {
     if (user?.fullName && !userName) {
       setUserName(user.fullName);
     }
-  }, [user, userName]);
+    if (user?.primaryEmailAddress?.emailAddress && !userEmail) {
+      setUserEmail(user.primaryEmailAddress.emailAddress);
+    }
+  }, [user, userName, userEmail]);
 
   // Clean Elapsed Session Timer (No wallet ticks / no balance countdowns)
   useEffect(() => {
@@ -227,9 +234,9 @@ export default function ConsultPage() {
       const orderId = orderData.order.id;
       const keyId = orderData.keyId || "rzp_test_mock_key_id";
 
-      // 2. Execute Payment Verification (either through Razorpay SDK or Mock/Dev handler)
+      // 2. Execute Payment Verification & Post-Payment Handoff
       const completeBooking = async (paymentId: string, signature: string = "") => {
-        // Verify payment on server
+        // Verify payment on server & trigger confirmation email with direct WhatsApp link
         await fetch("/api/payments/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -238,6 +245,9 @@ export default function ConsultPage() {
             paymentId,
             signature,
             userId,
+            clientName: userName,
+            clientEmail: userEmail,
+            clientPhone: userPhone,
             productId: selectedProduct,
             amountINR: promoFee,
             format: consultFormat,
@@ -253,7 +263,7 @@ export default function ConsultPage() {
           productId: selectedProduct,
           format: consultFormat,
           topic: topicText,
-          preferredSlot: "Immediate Live Consultation",
+          preferredSlot: "Direct WhatsApp / Google Meet Coordination",
           dateOfBirth: isAstro ? birthDate : undefined,
           timeOfBirth: isAstro ? birthTime : undefined,
           placeOfBirth: isAstro ? birthPlace : undefined,
@@ -267,58 +277,10 @@ export default function ConsultPage() {
         booking.paymentId = paymentId;
         booking.confirmedAt = new Date().toISOString();
 
+        // Set confirmed booking to immediately show the Post-Payment Handoff Confirmation Screen
         setConfirmedBooking(booking);
         ClientAccountStore.setActiveBooking(booking);
         setIsProcessingPayment(false);
-
-        // Map format to session type
-        const sessionType = consultFormat === "Voice Call" ? "voice" : consultFormat === "Video Call" ? "video" : "chat";
-
-        // 3. Enter direct session if astrologer is available and queue is clear, otherwise join queue
-        if (status === "AVAILABLE" && queue.length === 0) {
-          const sess = AstrologerStateStore.startDirectSession({
-            userName,
-            userPhone,
-            type: sessionType,
-            productType: selectedProduct,
-            bookingId: booking.bookingId,
-            amountPaid: promoFee,
-            ratePerMin: 0,
-            birthDetails: {
-              name: userName,
-              birthDate: isAstro ? birthDate : "1990-01-01",
-              birthTime: isAstro ? birthTime : "12:00",
-              birthPlace: isAstro ? birthPlace : propertyCity,
-              gender: "other",
-              latitude: 28.6139,
-              longitude: 77.209,
-              timezone: 5.5,
-            },
-            concern: topicText,
-          });
-          setActiveSession(sess);
-        } else {
-          const qItem = AstrologerStateStore.joinQueue({
-            userName,
-            userPhone,
-            consultationType: sessionType,
-            productType: selectedProduct,
-            bookingId: booking.bookingId,
-            amountPaid: promoFee,
-            birthDetails: {
-              name: userName,
-              birthDate: isAstro ? birthDate : "1990-01-01",
-              birthTime: isAstro ? birthTime : "12:00",
-              birthPlace: isAstro ? birthPlace : propertyCity,
-              gender: "other",
-              latitude: 28.6139,
-              longitude: 77.209,
-              timezone: 5.5,
-            },
-            concern: topicText,
-          });
-          setMyQueueItem(qItem);
-        }
       };
 
       // Check if running in mock/preview mode or live Razorpay
@@ -413,297 +375,17 @@ export default function ConsultPage() {
       <ConsultationServicesJsonLd />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* =========================================================================
-            STATE 1: ACTIVE LIVE CONSULTATION SESSION (SPLIT CHAT / CALL SCREEN)
+            STATE 1: POST-PAYMENT HANDOFF CONFIRMATION SCREEN
+            (Shown immediately upon booking confirmation for Astro or Vaastu)
         ========================================================================= */}
-        {activeSession ? (
-          <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] shadow-xl overflow-hidden">
-            {/* Session Top Bar: Elapsed Duration & Astrologer Details */}
-            <div className="flex flex-wrap items-center justify-between border-b border-[#E8D8C3] bg-[#FAF5EE] px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img
-                    src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                    alt={PLACEHOLDER_ASTROLOGER.displayName}
-                    className="h-11 w-11 rounded-full object-cover border-2 border-[#E8A33D]"
-                  />
-                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#6B8E5A] ring-2 ring-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-[#3B2A1E] font-temple text-base">
-                      {PLACEHOLDER_ASTROLOGER.displayName}
-                    </h3>
-                    <span className="rounded bg-[#6B8E5A]/20 px-2 py-0.5 text-[10px] font-bold text-[#6B8E5A] border border-[#6B8E5A]/30 font-temple">
-                      LIVE 1-ON-1
-                    </span>
-                  </div>
-                  <div className="text-xs text-[#7D6B5D] font-body">
-                    {activeSession.productType === "vaastu" ? "Devta Vaastu Shastra" : "Vedic Jyotish"} &bull; Client: {activeSession.userName} ({activeSession.type.toUpperCase()})
-                  </div>
-                </div>
-              </div>
-
-              {/* Session Duration Counter & Controls */}
-              <div className="flex items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-2 rounded-xl border border-[#E8A33D]/50 bg-[#FAF1E4] px-3.5 py-1.5 font-mono text-xs text-[#7B2D26]">
-                  <Clock className="h-4 w-4 animate-pulse text-[#C1662F]" />
-                  <span className="font-bold text-sm">
-                    {Math.floor(sessionSeconds / 60).toString().padStart(2, "0")}:
-                    {(sessionSeconds % 60).toString().padStart(2, "0")}
-                  </span>
-                  <span className="text-[10px] text-[#7D6B5D] font-sans">
-                    (Session Elapsed)
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 rounded-xl border border-[#D4C3B3] bg-[#FFFDF9] px-3 py-1.5 text-xs">
-                  <ShieldCheck className="h-4 w-4 text-[#6B8E5A]" />
-                  <span className="font-bold text-[#3B2A1E]">
-                    Paid Session ({activeSession.productType === "vaastu" ? "Flat ₹15,000" : "Flat ₹1,051"})
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleEndSession}
-                  className="rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D] transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-                >
-                  <PhoneOff className="h-4 w-4" />
-                  <span>End Session</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Main Consultation Room Body */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
-              {/* Left Column: Client Profile & Audio/Video Bridge */}
-              <div className="lg:col-span-4 border-r border-[#E8D8C3] p-6 flex flex-col justify-between bg-[#FAF5EE]">
-                <div>
-                  <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 mb-5 text-xs space-y-2 shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block">
-                      Consultation Profile ({activeSession.productType === "vaastu" ? "Vaastu Audit" : "Janam Kundli"})
-                    </span>
-                    <div className="flex justify-between text-[#6B5A4E]">
-                      <span>Client:</span>
-                      <strong className="text-[#3B2A1E]">{activeSession.userName}</strong>
-                    </div>
-                    {activeSession.productType !== "vaastu" ? (
-                      <>
-                        <div className="flex justify-between text-[#6B5A4E]">
-                          <span>Birth Time:</span>
-                          <span>{activeSession.birthDetails.birthDate} ({activeSession.birthDetails.birthTime})</span>
-                        </div>
-                        <div className="flex justify-between text-[#6B5A4E]">
-                          <span>Place:</span>
-                          <span>{activeSession.birthDetails.birthPlace}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex justify-between text-[#6B5A4E]">
-                        <span>Property:</span>
-                        <span>{activeSession.birthDetails.birthPlace}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-[#E8D8C3] pt-2 text-[#7D6B5D]">
-                      <span className="font-semibold text-[#3B2A1E]">Question / Focus:</span>
-                      <p className="mt-1 line-clamp-3 italic text-[11px]">&ldquo;{activeSession.concern}&rdquo;</p>
-                    </div>
-                  </div>
-
-                  {/* Direct Calling & Video Meeting Bridge (WhatsApp / Google Meet) */}
-                  <div className="relative rounded-2xl bg-[#2A1D15] p-5 text-white text-center flex flex-col items-center justify-center min-h-[220px] shadow-inner">
-                    <div className="h-18 w-18 rounded-full border-2 border-[#E8A33D] overflow-hidden mb-2.5 shadow-md">
-                      <img
-                        src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                        alt="Astrologer Video"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-[#E8A33D] font-temple">
-                      {PLACEHOLDER_ASTROLOGER.displayName}
-                    </span>
-                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1 font-mono">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                      Session Live &bull; Direct Meeting Bridge
-                    </span>
-
-                    {/* Quick Launch Buttons: WhatsApp Call or Google Meet */}
-                    <div className="mt-3.5 flex flex-col sm:flex-row items-center gap-2 w-full max-w-xs">
-                      <a
-                        href={PLACEHOLDER_CONTACT_INFO.whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-3 py-2 text-xs font-bold transition-all shadow-sm"
-                      >
-                        <PhoneCall className="h-3.5 w-3.5" />
-                        <span>Connect on WhatsApp</span>
-                      </a>
-                      <a
-                        href="https://meet.google.com/new"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1a73e8] hover:bg-[#1557b0] text-white px-3 py-2 text-xs font-bold transition-all shadow-sm"
-                      >
-                        <Video className="h-3.5 w-3.5" />
-                        <span>Google Meet Bridge</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-[#7D6B5D] text-center mt-3">
-                  Direct 1-on-1 Consultation via WhatsApp / Google Meet &bull; Flat-Fee Paid
-                </div>
-              </div>
-
-              {/* Right Column: Live Chat & Remedies Stream */}
-              <div className="lg:col-span-8 p-6 flex flex-col justify-between bg-[#FFFDF9]">
-                <div className="space-y-3 overflow-y-auto max-h-[420px] pr-2">
-                  {messages.map((m) => (
-                    <div
-                      key={m.id}
-                      className={`flex flex-col ${
-                        m.sender === "client" || m.sender === "user" ? "items-end" : "items-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-2xl p-3.5 text-xs ${
-                          m.sender === "client" || m.sender === "user"
-                            ? "bg-[#7B2D26] text-white rounded-br-none"
-                            : "bg-[#FAF5EE] text-[#3B2A1E] border border-[#E8D8C3] rounded-bl-none"
-                        }`}
-                      >
-                        <span className="block text-[9px] opacity-75 font-semibold mb-1">
-                          {m.sender === "client" || m.sender === "user" ? "You" : PLACEHOLDER_ASTROLOGER.displayName} &bull; {m.timestamp}
-                        </span>
-                        <p className="leading-relaxed">{m.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input Bar */}
-                <form onSubmit={handleSendMessage} className="mt-4 flex gap-2 border-t border-[#E8D8C3] pt-4">
-                  <input
-                    type="text"
-                    value={inputMsg}
-                    onChange={(e) => setInputMsg(e.target.value)}
-                    placeholder="Ask Acharya Ji anything regarding your chart, remedies, layout..."
-                    className="flex-1 rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-4 py-3 text-xs text-[#3B2A1E] placeholder-[#7D6B5D] focus:border-[#7B2D26] focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-[#7B2D26] p-3 text-white hover:bg-[#64231D] transition-all font-bold shrink-0 shadow-sm cursor-pointer"
-                  >
-                    <Send className="h-4 w-4 text-[#E8A33D]" />
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        ) : (myQueueItem || (confirmedBooking && confirmedBooking.status === "CONFIRMED")) ? (
-          /* =========================================================================
-             STATE 2: CONSULTATION BOOKED: SESSION PENDING & IN-QUEUE
-          ========================================================================= */
-          <div className="mx-auto max-w-2xl rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 text-center shadow-lg">
-            <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FAF1E4] text-[#7B2D26] border border-[#E8D8C3]">
-              <Clock className="h-10 w-10 animate-spin text-[#C1662F]" />
-            </div>
-
-            <span className="rounded-full bg-[#6B8E5A]/20 px-3.5 py-1 text-xs font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
-              PAYMENT VERIFIED &bull; CONFIRMED
-            </span>
-
-            {/* Required Dashboard Header: "Consultation booked: [type], session pending" */}
-            <h2 className="text-2xl sm:text-3xl font-bold font-temple text-[#3B2A1E] mt-4">
-              Consultation booked: {confirmedBooking?.productName || (selectedProduct === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}, session pending
-            </h2>
-
-            <p className="mt-2 text-sm text-[#6B5A4E] font-body">
-              Your booking is confirmed. Acharya Ji is reviewing your details.
-              {myQueuePosition > 0 && (
-                <span> Queue position: <strong className="text-[#7B2D26]">#{myQueuePosition}</strong> (Estimated wait: ~{estimatedWaitMins} mins)</span>
-              )}
-            </p>
-
-            <div className="mt-6 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 text-xs text-[#6B5A4E] space-y-2 text-left max-w-lg mx-auto">
-              <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Client Name:</span>
-                <span className="font-bold text-[#3B2A1E]">{userName || confirmedBooking?.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Consultation Type:</span>
-                <span className="font-bold text-[#7B2D26]">{confirmedBooking?.productName || (selectedProduct === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Selected Format:</span>
-                <span className="font-bold uppercase text-[#7B2D26]">{consultFormat}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D6B5D]">Amount Paid:</span>
-                <span className="font-bold text-[#6B8E5A]">
-                  Flat ₹{confirmedBooking?.amountPaid || promoFee} Paid (No per-minute debits)
-                </span>
-              </div>
-              {confirmedBooking?.orderId && (
-                <div className="flex justify-between">
-                  <span className="text-[#7D6B5D]">Payment Reference:</span>
-                  <span className="font-mono text-[10px] text-[#7D6B5D]">{confirmedBooking.orderId}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  if (myQueueItem) {
-                    AstrologerStateStore.removeFromQueue(myQueueItem.id);
-                    setMyQueueItem(null);
-                  }
-                  ClientAccountStore.setActiveBooking(null);
-                  setConfirmedBooking(null);
-                }}
-                className="rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-5 py-2.5 text-xs font-semibold text-[#3B2A1E] hover:bg-[#F3E7D3] cursor-pointer"
-              >
-                Cancel / Reset Pending Session
-              </button>
-
-              {isAstrologer && (
-                <Link
-                  href="/astrologer"
-                  className="rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#64231D] shadow-md transition-all"
-                >
-                  Open Astrologer Cockpit (Connect Now)
-                </Link>
-              )}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-[#6B8E5A]/40 bg-[#F4F9F2] p-4 text-xs text-center max-w-lg mx-auto">
-              <span className="font-bold text-[#2A4720] block mb-1">
-                How Your Consultation Takes Place:
-              </span>
-              <p className="text-[#4F6D40] leading-relaxed">
-                Acharya Ji personally connects via <strong>WhatsApp Call</strong> or shares a <strong>Google Meet link</strong> directly to your mobile number (<strong>{userPhone || confirmedBooking?.phone}</strong>). You do not need to install any custom app.
-              </p>
-              <div className="mt-3">
-                <a
-                  href={`https://wa.me/919311215564?text=${encodeURIComponent(`Pranam Acharya Ji, I have confirmed my booking (${confirmedBooking?.productName || "Astro Consultation"}) with reference ${confirmedBooking?.orderId || "Pending"}. Client: ${userName || confirmedBooking?.clientName}.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-2 font-bold text-xs shadow-xs transition-all"
-                >
-                  <PhoneCall className="h-3.5 w-3.5" />
-                  <span>Notify Sanctum Desk on WhatsApp</span>
-                </a>
-              </div>
-            </div>
-
-            <p className="mt-5 text-[11px] text-[#7D6B5D]">
-              Please keep your phone handy. Acharya Ji or his desk will reach out as soon as your turn begins.
-            </p>
-          </div>
+        {confirmedBooking ? (
+          <ConsultationConfirmationScreen
+            booking={confirmedBooking}
+            onReset={() => {
+              setConfirmedBooking(null);
+              ClientAccountStore.setActiveBooking(null);
+            }}
+          />
         ) : (
           /* =========================================================================
              STATE 3: GENERAL CONSULTATION LANDING & INTAKE FORM (TWO PRODUCTS)
@@ -759,10 +441,10 @@ export default function ConsultPage() {
                   </div>
 
                   <p className="text-xs text-[#6B5A4E] leading-relaxed font-body">
-                    {status === "AVAILABLE" && `${PLACEHOLDER_ASTROLOGER.displayName} is at his desk and ready to connect right now.`}
-                    {status === "BUSY" && `${PLACEHOLDER_ASTROLOGER.displayName} is currently reading a client chart. ${queue.length} in queue. Estimated wait: ~${(queue.length + 1) * 7} mins.`}
-                    {status === "BREAK" && "Acharya Ji is on a brief tea/sadhana break. Resuming live sessions shortly."}
-                    {status === "OFFLINE" && "Acharya Ji is offline. Pre-book an appointment slot below for tomorrow."}
+                    {status === "AVAILABLE" && `${PLACEHOLDER_ASTROLOGER.displayName} is currently online at his sanctum desk. High likelihood of immediate WhatsApp call / Google Meet connection upon booking.`}
+                    {status === "BUSY" && `${PLACEHOLDER_ASTROLOGER.displayName} is currently reading a client chart. New bookings are received and coordinated for the immediate next window.`}
+                    {status === "BREAK" && "Acharya Ji is on a brief tea/sadhana break. WhatsApp sanctum desk remains open for booking coordination."}
+                    {status === "OFFLINE" && "Acharya Ji is offline for sacred rituals. Book now to hold your priority consultation slot for tomorrow."}
                   </p>
                 </div>
 
@@ -1002,6 +684,19 @@ export default function ConsultPage() {
                       className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3.5 py-2.5 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#3B2A1E] mb-1">
+                    Email Address (for Booking Confirmation Receipt &amp; WhatsApp Coordination Link)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. rahul@example.com"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] px-3.5 py-2.5 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none"
+                  />
                 </div>
 
                 {/* 3. Dynamic Section: Birth Coordinates (for Astro) OR Property Details (for Vaastu) */}
