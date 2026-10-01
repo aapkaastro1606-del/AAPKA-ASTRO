@@ -2087,23 +2087,38 @@ The search specifically targeted:
 4. **Production Build Compilation**:
    - `npm run build` executed via Turbopack: 99/99 routes compiled cleanly with 0 TypeScript or lint errors.
 
+---
 
+## 39. Hero Section Single-Image Auto-Rotating Credentials Carousel
 
+### 39.1 Context & Requirement
+The hero section previously displayed a static photo arrangement. To elevate the visual presentation, maintain focus on individual credentials, and build seeker trust dynamically without cluttering the screen, it was replaced with a modern, single-image auto-rotating carousel.
 
+Key architectural and design choices:
+- **Single Image at a Time**: Occupies the exact same card footprint (`h-64 sm:h-72 w-full`) within the carved temple card in `Hero.tsx`.
+- **5-Second Auto-Advance**: Advances every 5,000 milliseconds (`5000ms`).
+- **Smooth Crossfade Transition**: Implemented using stacked absolute positioning with CSS opacity transitions (`transition-opacity duration-700 ease-in-out`, toggling `opacity-100` and `opacity-0`). Zero horizontal sliding or swipe animation was used to maintain a dignified, serene temple aesthetic.
+- **100% Genuine Media Assets**: Cycles exclusively through real, verified photos already in the repository:
+  1. `Acharya Niraj Kumar` — Official Vedic Jyotish & Vastu Portrait (`/images/Acharya_Niraj_Kumar.jpg`)
+  2. `Pashupati Award Felicitation` — Prestigious International Honor (`/gallery/felicitation_pashupati_award.jpg`)
+  3. `Best Astrologer Award` — National Astrological Excellence (`/gallery/best_astrologer_award.jpg`)
+  4. `Dignitary Greeting` — Cultural & Astrological Recognition (`/gallery/dignitary_greeting.jpg`)
+  5. `Awards Felicitation Ceremony` — Distinguished Vedic Services (`/gallery/Awards_Receiving.jpg`)
+  6. `Spiritual Guide Discipleship` — Traditional Gurukul Parampara (`/gallery/with_spiritual_guide.jpg`)
 
+### 39.2 Interaction & Accessibility Features
+- **Hover & Touch Pause**: Automatically suspends the 5-second timer when the user hovers with a mouse (`onMouseEnter`/`onMouseLeave`), touches on mobile (`onTouchStart`/`onTouchEnd`), or focuses via keyboard navigation (`onFocus`/`onBlur`). A subtle, elegant "Paused" badge indicates the freeze.
+- **`prefers-reduced-motion` Respect**: Automatically queries `window.matchMedia('(prefers-reduced-motion: reduce)')` with a live change listener. When the operating system setting is active, auto-advance is disabled and the first slide is displayed statically, while manual controls remain accessible.
+- **Subtle Warm-Gold Dot Indicators**: Custom navigation dots styled with `#C1662F` and `#E8A33D` using accessible ARIA tablist semantics (`role="tablist"` / `role="tab"`), accompanied by discreet previous and next buttons.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 39.3 Verification & Automated Test Evidence
+- **Automated Test Suite (`tests/heroImageCarousel.test.ts`)**: 6 comprehensive unit tests verify:
+  1. All 6 image assets exist on physical disk in `public/`.
+  2. Auto-rotation interval is set to exactly 5000ms.
+  3. Smooth crossfade classes (`transition-opacity`, `duration-700`, `opacity-100`, `opacity-0`) are present with no horizontal slide classes.
+  4. Mouse hover/leave pause state handlers exist.
+  5. `prefers-reduced-motion` media query detection is implemented.
+  6. `Hero.tsx` imports and embeds `<HeroImageCarousel />`.
+- **Full Test Suite (`npm test`)**: **262 / 262 tests passing** across 52 test suites.
+- **Production Build (`npm run build`)**: Turbopack build succeeded with 99/99 routes compiled with zero errors.
 

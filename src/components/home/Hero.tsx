@@ -6,6 +6,7 @@ import { AstrologerStateStore, AstrologerStatus, QueueItem } from "@/lib/store/a
 import { PhoneCall, Star, ArrowRight, Award } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
+import { HeroImageCarousel } from "@/components/home/HeroImageCarousel";
 
 export const Hero: React.FC = () => {
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
@@ -151,25 +152,8 @@ export const Hero: React.FC = () => {
                 <Award className="h-5 w-5" />
               </div>
 
-              {/* Portrait with Warm Natural Lighting */}
-              <div className="relative mb-5 overflow-hidden rounded-xl border border-[#E8D8C3] bg-[#FBF3E7]">
-                <img
-                  src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                  alt={PLACEHOLDER_ASTROLOGER.displayName}
-                  className="h-64 w-full object-cover object-top filter contrast-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3B2A1E]/80 via-transparent to-transparent" />
-
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                  <div className="rounded-lg bg-[#FFFDF9]/95 px-2.5 py-1 text-xs font-bold text-[#7B2D26] shadow-sm border border-[#E8D8C3] font-temple">
-                    Jyotish Acharya &bull; Vastu Expert
-                  </div>
-                  <div className="flex items-center gap-1 rounded-lg bg-[#E8A33D] px-2 py-1 text-xs font-black text-[#3B2A1E] shadow-sm">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    <span>4.98</span>
-                  </div>
-                </div>
-              </div>
+              {/* 5-Second Crossfading Auto-Rotating Credentials Carousel */}
+              <HeroImageCarousel />
 
               {/* Bio & Credentials */}
               <div className="space-y-3">
