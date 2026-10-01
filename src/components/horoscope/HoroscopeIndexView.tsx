@@ -97,7 +97,7 @@ export function HoroscopeIndexView({
           {/* Direct Link to Moon Sign Calculator */}
           <div className="mt-5 flex justify-center">
             <Link
-              href="/calculators/moon-sign"
+              href="/moon-sign-calculator"
               className="inline-flex items-center gap-2 rounded-xl border border-[#C1662F]/40 bg-[#FFFDF9] px-4 py-2 text-xs sm:text-sm font-bold text-[#7B2D26] shadow-xs hover:border-[#7B2D26] hover:bg-[#FBF3E7] transition-all"
             >
               <HelpCircle className="h-4 w-4 text-[#C1662F]" />
@@ -232,7 +232,7 @@ export function HoroscopeIndexView({
               <span>{isHi ? "आचार्य जी से बात करें" : "Talk to Acharya Ji Now"}</span>
             </Link>
             <Link
-              href="/calculators/moon-sign"
+              href="/moon-sign-calculator"
               className="inline-flex items-center gap-2 rounded-xl border border-[#FBF3E7]/30 bg-[#7B2D26] px-6 py-3.5 text-sm font-bold text-[#FBF3E7] hover:bg-[#64221C] transition-all"
             >
               <Compass className="h-4 w-4" />

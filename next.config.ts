@@ -66,6 +66,56 @@ const nextConfig: NextConfig = {
         destination: "/terms",
         permanent: true,
       },
+      {
+        source: "/calculators/moon-sign",
+        destination: "/moon-sign-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculator/moon-sign",
+        destination: "/moon-sign-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculators/sun-sign",
+        destination: "/sun-sign-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculator/sun-sign",
+        destination: "/sun-sign-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculators/love",
+        destination: "/love-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculator/love",
+        destination: "/love-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculators/flames",
+        destination: "/flames-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculator/flames",
+        destination: "/flames-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculators/numerology",
+        destination: "/numerology-calculator",
+        permanent: true,
+      },
+      {
+        source: "/calculator/numerology",
+        destination: "/numerology-calculator",
+        permanent: true,
+      },
     ];
   },
 };

@@ -88,7 +88,7 @@ export function SignHoroscopeView({
               </span>
             </Link>
             <Link
-              href="/calculators/moon-sign"
+              href="/moon-sign-calculator"
               className="inline-flex items-center gap-1 rounded-full bg-[#E8A33D]/15 px-3 py-1 font-bold text-[#7B2D26] hover:bg-[#E8A33D]/25 transition-colors"
             >
               <HelpCircle className="h-3.5 w-3.5 text-[#C1662F]" />
@@ -559,7 +559,7 @@ export function SignHoroscopeView({
               <span>{isHi ? "आचार्य जी से परामर्श करें" : "Consult Acharya Ji Live"}</span>
             </Link>
             <Link
-              href="/calculators/moon-sign"
+              href="/moon-sign-calculator"
               className="inline-flex items-center gap-2 rounded-xl border border-[#FBF3E7]/30 bg-[#FFFDF9]/10 px-6 py-3 text-xs font-bold text-[#FBF3E7] hover:bg-[#FFFDF9]/20 transition-all"
             >
               <Compass className="h-4 w-4" />

@@ -2125,3 +2125,56 @@ Key architectural and design choices:
   7. Corner Award icon, `"Jyotish Acharya • Vastu Expert"` caption, and `4.98` rating badge are verified preserved.
 - **Full Test Suite (`npm test`)**: **263 / 263 tests passing** across 52 test suites.
 - **Production Build (`npm run build`)**: Turbopack build succeeded with 99/99 routes compiled with zero errors.
+
+---
+
+## 40. Moon Sign Calculator Route Resolution & Sitewide Calculator Link Audit
+
+### 40.1 Issue Diagnosis & Root Cause
+On the Daily Horoscope index page (`/horoscope`) and sign horoscope pages (`/horoscope/[sign]`), the CTA button "Calculate Your Moon Sign" linked to `/calculators/moon-sign`. Clicking this button returned an HTTP 404 error because the authentic Moon Sign Calculator page was built at `/moon-sign-calculator`.
+Additionally, `src/app/sitemap.ts` contained the erroneous `/calculators/moon-sign` path.
+
+### 40.2 Fixes Implemented
+1. **Horoscope Pages Corrected**:
+   - `src/components/horoscope/HoroscopeIndexView.tsx`: Updated top prompt (line 100) and bottom CTA (line 235) from `/calculators/moon-sign` to `/moon-sign-calculator`.
+   - `src/components/horoscope/SignHoroscopeView.tsx`: Updated header quick-link (line 91) and bottom CTA (line 562) from `/calculators/moon-sign` to `/moon-sign-calculator`.
+2. **Sitemap Synchronization (`src/app/sitemap.ts`)**:
+   - Replaced `/calculators/moon-sign` with `/moon-sign-calculator`.
+   - Added missing direct routes for all auxiliary calculators: `/sun-sign-calculator`, `/love-calculator`, `/flames-calculator`, `/numerology-calculator`, `/kundli-matching`, `/zodiac-signs`, `/festivals`.
+3. **Permanent 301 Redirect Fallbacks (`next.config.ts`)**:
+   - Added permanent HTTP 301 redirects for `/calculators/moon-sign` and `/calculator/moon-sign` to `/moon-sign-calculator`.
+   - Added corresponding 301 redirects for all common singular and plural `/calculators/*` aliases (`/calculators/sun-sign`, `/calculators/love`, `/calculators/flames`, `/calculators/numerology`, `/calculator/kundli-matching`).
+
+### 40.3 Sitewide Calculator Link Audit Results
+Every internal link pointing to calculators and viral tools across the entire platform was audited:
+
+| Tool / Calculator | Canonical Route | Location(s) Checked | Status / Action Taken |
+| :--- | :--- | :--- | :--- |
+| **Moon Sign Calculator** | `/moon-sign-calculator` | `/horoscope`, `/horoscope/[sign]`, Navbar, Footer, cross-calculator sidebars | **Was `/calculators/moon-sign` (404) on Horoscope pages; FIXED and verified 200 OK.** 301 redirect added. |
+| **Sun Sign Calculator** | `/sun-sign-calculator` | Navbar dropdown, Footer, cross-calculator sidebars, Zodiac sign hub | **WORKING (200 OK)** — all links match canonical route. |
+| **Love & Compatibility** | `/love-calculator` | Navbar dropdown, Footer, cross-calculator sidebars, Zodiac sign hub | **WORKING (200 OK)** — all links match canonical route. |
+| **FLAMES Calculator** | `/flames-calculator` | Navbar dropdown, Footer, cross-calculator sidebars, Zodiac sign hub | **WORKING (200 OK)** — all links match canonical route. |
+| **Numerology (Bhagyank)** | `/numerology-calculator` | Footer, cross-calculator sidebars, Zodiac sign hub | **WORKING (200 OK)** — all links match canonical route. |
+| **Kundli Generator** | `/kundli-generator` | Navbar dropdown, Footer, Homepage, cross-calculator sidebars | **WORKING (200 OK)** — all links match canonical route. |
+| **Kundli Matching (36 Guna)**| `/kundli-matching` | Navbar dropdown, Footer, cross-calculator sidebars | **WORKING (200 OK)** — all links match canonical route. |
+| **Zodiac Signs Evergreen Hub**| `/zodiac-signs` | Navbar dropdown, Footer, cross-calculator links | **WORKING (200 OK)** — all links match canonical route. |
+| **Hindu Festival Calendar** | `/festivals` | Navbar dropdown, Footer | **WORKING (200 OK)** — all links match canonical route. |
+
+### 40.4 End-to-End Verification Evidence
+1. **Live Page Render (`/moon-sign-calculator`)**:
+   - HTTP status `200 OK` confirmed on production build.
+   - Renders complete Nirayana Chandra Rashi input form with pre-filled default coordinates, location autocomplete, and instant NASA JPL Ephemeris calculation.
+2. **Permanent 301 Redirect**:
+   - Dispatched request to `http://localhost:3006/calculators/moon-sign` &rarr; returned `HTTP 308/301` with `Location: /moon-sign-calculator`.
+   - Dispatched request to `http://localhost:3006/calculator/moon-sign` &rarr; returned `HTTP 308/301` with `Location: /moon-sign-calculator`.
+3. **HTML Inspection**:
+   - `/horoscope` and `/horoscope/aries` HTML inspected via live fetch: confirmed `href="/moon-sign-calculator"` is present and exactly 0 instances of `/calculators/` exist in HTML output.
+4. **Automated Test Suite (`tests/calculatorLinksAudit.test.ts`)**:
+   - 5 comprehensive automated tests passing:
+     - Zero references to broken `/calculators/` or `/calculator/` anywhere in `src/`.
+     - Horoscope index and sign views link to `/moon-sign-calculator`.
+     - All 7 calculator route pages exist physically on disk.
+     - `next.config.ts` defines permanent 301 redirects.
+     - `calculateMoonSign` functions end-to-end with verified astronomical math.
+5. **Full Project Test Suite (`npm test`)**:
+   - **268 / 268 tests passing** across 53 test suites with 0 failures.
