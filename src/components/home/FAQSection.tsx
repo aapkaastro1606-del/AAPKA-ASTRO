@@ -12,16 +12,16 @@ export const FAQSection: React.FC = () => {
   // {/* PLACEHOLDER: replace with real content */}
   const faqs = [
     {
-      q: "How does the live consultation queue work if there is only one astrologer?",
-      a: `Because ${PLACEHOLDER_ASTROLOGER.displayName} consults personally without third-party interns, our live queue system is 100% transparent. When he is ONLINE, you can join the queue. You are shown your exact position (e.g. #2 in line) and an accurate estimated wait time (approx. 7–10 minutes per client). Your device chimes and notifies you the moment Acharya Ji connects with you.`,
+      q: "How does the consultation booking and connection process work?",
+      a: `Consultations with ${PLACEHOLDER_ASTROLOGER.displayName} follow a simple, transparent, real-world flow: you book and pay the flat consultation fee online → you immediately receive your confirmation on screen and via email containing your official booking reference and direct WhatsApp contact details (+91 93112 15564) → Acharya Niraj Kumar or his sanctum desk coordinates the exact time and connects with you via WhatsApp call or Google Meet, as you prefer or as arranged. Because Acharya Ji consults personally without third-party interns, every session is a genuine 1-on-1 private reading without requiring any complex in-app software or call plugins.`,
     },
     {
-      q: "What happens if Acharya Ji is offline or taking a break?",
-      a: "When Acharya Ji is offline or conducting sacred rituals/sadhana, you will see his next available live time (e.g. 'Tomorrow at 10:00 AM IST'). You can pre-book a dedicated appointment slot or request an alert when he turns online.",
+      q: "What happens if Acharya Ji is offline or currently in a consultation when I book?",
+      a: `Acharya Ji's real-time desk presence (Online, In Consultation, or Offline) is shown on the consultation page as an honest indicator of how quickly he can connect. Even if he is currently in a session or offline for sacred rituals, you can complete your booking and immediately receive your confirmation with WhatsApp contact details. You can tap the one-touch WhatsApp link to reserve the next available window, or his sanctum desk will contact your registered phone number to confirm the exact consultation time.`,
     },
     {
       q: "How does consultation booking and fee payment work?",
-      a: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). This flat fee applies universally across all consultation formats: Voice Call, Video Call, or Live Chat. You simply select your preferred format, provide your birth details and questions, and complete checkout securely via UPI, Cards, or Net Banking. There are no surprise per-minute debits or hidden talktime deductions.",
+      a: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first Astro consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). Vaastu Consultations are flat ₹15,000/- (Regular ₹25,000). You simply select your consultation type, provide your intake details, and complete checkout securely via UPI, Cards, or Net Banking. Upon payment, you receive instant confirmation on screen and by email with a direct WhatsApp link to coordinate your session. There are zero surprise per-minute debits or hidden talktime deductions.",
     },
     {
       q: "How accurate is the free Janam Kundli calculator on this website?",
@@ -50,7 +50,7 @@ export const FAQSection: React.FC = () => {
           </h2>
           <MandalaDivider className="my-4" />
           <p className="text-[#6E5545] text-sm">
-            Everything you need to know regarding our single-astrologer consultation model, queue, and remedies.
+            Everything you need to know regarding our single-astrologer consultation model, WhatsApp/Meet coordination, and remedies.
           </p>
         </div>
 

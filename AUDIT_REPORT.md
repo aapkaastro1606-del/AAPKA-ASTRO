@@ -1938,9 +1938,41 @@ Following successful payment for **Astro Consultation** (Flat ₹1,051) or **Vaa
    - Dispatches via Resend if `RESEND_API_KEY` is configured, or logs resiliently without blocking checkout in staging/test environments.
 
 ### 34.4 Preservation of Real-Time Astrologer Status Indicator
-- Preserved the real-time **"Online / Busy / Offline"** indicator on the Navbar and Consultation Intake Form (`src/app/consult/page.tsx`).
+- Preserved the real-time **"Online / Busy / Offline"** indicator on the Navbar, Hero banner, and Consultation Intake Form (`src/app/consult/page.tsx`).
 - It serves as a vital **trust and urgency signal**, telling visitors whether Acharya Niraj Kumar is actively at his desk and likely to connect promptly via WhatsApp or Google Meet upon booking.
 - Decoupled from in-app queue waiting mechanics to prevent friction while retaining genuine visitor confidence.
+
+---
+
+## 35. Comprehensive Copy Audit & Rewriting: In-App Queue to WhatsApp/Meet Handoff
+
+### 35.1 Removal of Obsolete In-App Connection Language
+A comprehensive audit was performed across all visitor-facing copy to eradicate references to in-app calling mechanics, browser audio rings, and virtual waiting queues:
+1. **Removed**: *"Your device chimes and notifies you the moment Acharya Ji connects with you."*
+2. **Removed**: References to in-app queue waiting rooms and per-minute queue counters.
+3. **Replaced with Genuine Real-World Flow**:
+   - Step 1: Client selects service and books online with a flat fee.
+   - Step 2: Instant confirmation screen and automated email with official Booking Reference and direct WhatsApp desk link (`+91 93112 15564`).
+   - Step 3: Acharya Niraj Kumar or his sanctum desk coordinates the exact session time, conducting the consultation directly via **WhatsApp Call** or **Google Meet**.
+
+### 35.2 Updated Surfaces
+- [`src/components/home/FAQSection.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/FAQSection.tsx):
+  - Completely rewritten Question 1 ("How does the consultation booking and connection process work?").
+  - Updated Question 2 regarding offline/in-session scheduling.
+  - Updated Question 3 regarding transparent flat-fee pricing and instant confirmation.
+- [`src/components/home/Hero.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/Hero.tsx):
+  - In-session badge updated to *"In Session: Acharya Ji is consulting • Next slot opens shortly"*.
+  - Primary CTA changed from *"Join Live Queue"* to *"Book Live Consultation"* / *"Book Next Session"*.
+- [`src/components/home/WhyAapkaAstro.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/WhyAapkaAstro.tsx):
+  - Status transparency row updated to reflect real-time sanctum presence without queue gimmicks.
+- [`src/app/services/[slug]/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/services/%5Bslug%5D/page.tsx):
+  - Step 3 rewritten as *"Direct WhatsApp & Google Meet Handoff"*.
+  - FAQ answers updated to highlight zero in-app software barriers.
+- [`src/app/consult/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/consult/page.tsx):
+  - Intake form alerts updated to confirm instant coordination via WhatsApp.
+- [`tests/postPaymentHandoff.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/postPaymentHandoff.test.ts):
+  - Added strict regression tests asserting total absence of "device chimes" and verifying presence of WhatsApp coordination copy.
+
 
 
 

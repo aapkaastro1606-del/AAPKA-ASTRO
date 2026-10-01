@@ -207,4 +207,37 @@ describe("Post-Payment Handoff & WhatsApp / Google Meet Architecture", () => {
     assert.doesNotMatch(consultPageCode, /agora-rtc/i);
     assert.doesNotMatch(consultPageCode, /zegocloud/i);
   });
+
+  test("FAQ section eliminates in-app queue chimes and accurately describes WhatsApp/Meet delivery", () => {
+    const faqCode = fs.readFileSync(
+      path.join(process.cwd(), "src/components/home/FAQSection.tsx"),
+      "utf8"
+    );
+
+    // Old in-app chime / queue connection mechanism must NOT exist
+    assert.doesNotMatch(faqCode, /device chimes/i);
+    assert.doesNotMatch(faqCode, /notifies you the moment Acharya Ji connects with you/i);
+
+    // New real flow copy must exist
+    assert.match(faqCode, /book and pay the flat consultation fee online/i);
+    assert.match(faqCode, /direct WhatsApp contact details \(\+91 93112 15564\)/i);
+    assert.match(faqCode, /WhatsApp call or Google Meet/i);
+  });
+
+  test("Hero CTA and Services page describe real booking flow rather than in-app queue", () => {
+    const heroCode = fs.readFileSync(
+      path.join(process.cwd(), "src/components/home/Hero.tsx"),
+      "utf8"
+    );
+
+    assert.doesNotMatch(heroCode, /Join Live Queue/i);
+
+    const servicesCode = fs.readFileSync(
+      path.join(process.cwd(), "src/app/services/[slug]/page.tsx"),
+      "utf8"
+    );
+
+    assert.match(servicesCode, /Direct WhatsApp & Google Meet Handoff/i);
+    assert.match(servicesCode, /WhatsApp call or Google Meet/i);
+  });
 });

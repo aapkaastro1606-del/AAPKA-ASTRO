@@ -205,8 +205,8 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
         desc: "Your first consultation automatically qualifies for the promotional flat fee of ₹1,051/- (Regular ₹2,100). No hidden per-minute ticking clock.",
       },
       {
-        title: "3. Direct WhatsApp / Meet Bridge",
-        desc: "Acharya Ji connects directly to your mobile number via WhatsApp call or shares a private Google Meet bridge. 100% confidential.",
+        title: "3. Direct WhatsApp & Google Meet Handoff",
+        desc: "Upon payment, you receive immediate confirmation on screen and via email with direct WhatsApp contact details (+91 93112 15564). Tap to coordinate your preferred slot, and Acharya Ji connects directly via WhatsApp call or Google Meet.",
       },
       {
         title: "4. Prescribed Summary in Account",
@@ -227,11 +227,11 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
     faqs: [
       {
         q: "How does consultation booking work?",
-        a: "Consultations are booked on a transparent flat-fee basis (₹1,051 first consultation promo / ₹2,100 standard). After booking, Acharya Ji connects directly with you via WhatsApp Call or Google Meet video link — no complicated software needed.",
+        a: "Consultations are booked on a transparent flat-fee basis (₹1,051 first consultation promo / ₹2,100 standard for Astro, ₹15,000 for Vaastu). You complete booking and payment online, receive instant confirmation with direct WhatsApp contact details (+91 93112 15564), and Acharya Niraj Kumar coordinates the session with you via WhatsApp call or Google Meet — no complex in-app software required.",
       },
       {
-        q: "What if Acharya Ji is offline when I visit?",
-        a: "You can request a priority callback or book a guaranteed slot for his next scheduled availability.",
+        q: "What if Acharya Ji is offline or in a session when I visit?",
+        a: "You can complete your booking and receive immediate confirmation along with WhatsApp coordination contact details. You can message the desk immediately to reserve the next available window, or his sanctum desk will contact your registered phone number.",
       },
     ],
     ctaText: "Start Live Consultation",

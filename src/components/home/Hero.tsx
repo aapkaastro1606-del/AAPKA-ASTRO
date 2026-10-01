@@ -64,7 +64,7 @@ export const Hero: React.FC = () => {
                 )}
                 {status === "BUSY" && (
                   <>
-                    <strong className="text-[#C1662F]">In Session:</strong> {queueLength} waiting &bull; ~{estimatedWait}m wait
+                    <strong className="text-[#C1662F]">In Session:</strong> Acharya Ji is consulting &bull; Next slot opens shortly
                   </>
                 )}
                 {status === "BREAK" && "Acharya Ji on brief break &bull; Resumes shortly"}
@@ -109,7 +109,7 @@ export const Hero: React.FC = () => {
               >
                 <PhoneCall className="h-4 w-4 text-[#E8A33D]" />
                 <span>
-                  {status === "AVAILABLE" ? "Start Live Consultation" : status === "BUSY" ? "Join Live Queue" : "Book Preferred Slot"}
+                  {status === "AVAILABLE" ? "Book Live Consultation" : status === "BUSY" ? "Book Next Session" : "Book Priority Slot"}
                 </span>
                 {/* PLACEHOLDER: replace with real content */}
                 <span className="rounded-md bg-[#E8A33D] px-2 py-0.5 text-xs font-black text-[#3B2A1E]">

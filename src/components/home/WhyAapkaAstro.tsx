@@ -23,7 +23,7 @@ export const WhyAapkaAstro: React.FC = () => {
     },
     {
       feature: "Availability & Honesty",
-      aapkaAstro: "100% transparent real-time status: Online, In Consultation, or Scheduled Queue",
+      aapkaAstro: "100% transparent real-time status: Online, In Consultation, or Sacred Sadhana window",
       astrotalk: "Illusion of instant 24/7 availability by rotating unknown interns",
       aapkaPositive: true,
     },
