@@ -474,7 +474,7 @@ export const Navbar: React.FC = () => {
                   : "border-transparent font-medium text-[#4A3525] hover:text-[#7B2D26]"
               }`}
             >
-              {isHi ? "परिचय (About)" : "About Us"}
+              {isHi ? "परिचय" : "About Us"}
             </Link>
 
             {/* Direct Link: Contact Us */}

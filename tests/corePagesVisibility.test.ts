@@ -85,6 +85,17 @@ describe("Core Pages Visibility & Discoverability Audit", () => {
       "Navbar must display 'Contact Us' text"
     );
 
+    // Hindi navbar translation purity assertion
+    assert.doesNotMatch(
+      content,
+      /परिचय\s*\(About\)/,
+      "Hindi navbar must cleanly display 'परिचय' without English '(About)' in parentheses"
+    );
+    assert.ok(
+      content.includes('"परिचय"'),
+      "Hindi navbar must display clean 'परिचय' for About page link"
+    );
+
     // Mobile drawer trust links
     assert.ok(
       content.includes('href="/terms"'),

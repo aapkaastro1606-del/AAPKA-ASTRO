@@ -2005,6 +2005,26 @@ The astrologer's dashboard (`src/app/dashboard/page.tsx`) has been transformed f
    - Quick controls to move bookings through `Confirmed` &rarr; `Awaiting Session` &rarr; `Mark Completed`.
    - Filter tabs: `All Bookings`, `Confirmed`, `Awaiting Session`, and `Completed`.
 
+---
+
+## 37. Hindi Navbar Translation Purity: "परिचय (About)" Bug Fix
+
+### 37.1 Identification & Problem
+In the Hindi localized version of the website, the desktop navigation header displayed `"परिचय (About)"` with the English term in parentheses, whereas every other primary nav item was cleanly translated into Devanagari Hindi:
+- `राशिफल` (Horoscope)
+- `कुंडली एवं मिलान` (Kundli & Matching)
+- `पंचांग एवं पर्व` (Panchang & Festivals)
+- `सेवाएँ` (Services)
+- `परिचय (About)` &larr; **Inconsistent English parenthesis artifact**
+- `संपर्क` (Contact Us)
+
+### 37.2 Resolution
+- Updated [`src/components/layout/Navbar.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/layout/Navbar.tsx) line 477:
+  - From: `{isHi ? "परिचय (About)" : "About Us"}`
+  - To: `{isHi ? "परिचय" : "About Us"}`
+- Added regression test in [`tests/corePagesVisibility.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/corePagesVisibility.test.ts) asserting absence of `/परिचय\s*\(About\)/` and presence of clean `"परिचय"`.
+
+
 
 
 
