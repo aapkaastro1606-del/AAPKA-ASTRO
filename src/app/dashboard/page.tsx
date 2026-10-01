@@ -7,6 +7,7 @@ import {
   AstrologerStateStore,
   AstrologerStatus,
   QueueItem,
+  ConfirmedBookingItem,
   ActiveSession,
 } from "@/lib/store/astrologerStore";
 import { AdminStore } from "@/lib/store/adminStore";
@@ -33,6 +34,8 @@ import {
   Tag,
   BarChart3,
   UserCheck,
+  MessageCircle,
+  FileText,
 } from "lucide-react";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 
@@ -41,6 +44,10 @@ export default function AstrologerDashboardPage() {
   const { isOwner, isAdmin, isAstrologer, hasPermission } = useCurrentUserRole();
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [confirmedBookings, setConfirmedBookings] = useState<ConfirmedBookingItem[]>(() =>
+    AstrologerStateStore.getConfirmedBookings()
+  );
+  const [bookingFilter, setBookingFilter] = useState<"ALL" | "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED">("ALL");
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [runningCron, setRunningCron] = useState(false);
   const [cronReport, setCronReport] = useState<any>(null);
@@ -63,14 +70,17 @@ export default function AstrologerDashboardPage() {
     setStatus(AstrologerStateStore.getStatus());
     setQueue(AstrologerStateStore.getQueue());
     setActiveSession(AstrologerStateStore.getActiveSession());
+    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
   };
 
   useEffect(() => {
     sync();
     window.addEventListener("astro_state_changed", sync);
+    window.addEventListener("aapka_booking_updated", sync);
     const interval = setInterval(sync, 2000);
     return () => {
       window.removeEventListener("astro_state_changed", sync);
+      window.removeEventListener("aapka_booking_updated", sync);
       clearInterval(interval);
     };
   }, []);
@@ -80,21 +90,52 @@ export default function AstrologerDashboardPage() {
     setStatus(newStatus);
   };
 
-  const handleAcceptQueueItem = (item: QueueItem) => {
-    const session = AstrologerStateStore.startDirectSession({
-      userName: item.userName,
-      userPhone: item.userPhone,
-      type: item.consultationType,
-      birthDetails: item.birthDetails,
-      concern: item.concern,
-    });
-    router.push(`/dashboard/session/${session.id}`);
+  const handleUpdateBookingState = (id: string, newState: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED") => {
+    AstrologerStateStore.updateBookingState(id, newState);
+    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
   };
 
-  const handleRemoveQueueItem = (id: string) => {
-    AstrologerStateStore.removeFromQueue(id);
-    setQueue(AstrologerStateStore.getQueue());
+  const handleRemoveBooking = (id: string) => {
+    AstrologerStateStore.removeConfirmedBooking(id);
+    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
   };
+
+  const handleSimulateNewBooking = () => {
+    const newBooking: ConfirmedBookingItem = {
+      id: `bk-${Date.now()}`,
+      bookingId: `AA-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      userId: `usr_${Date.now()}`,
+      userName: "Rahul Sengupta",
+      userPhone: "+91 98200 11223",
+      userEmail: "rahul.sengupta@example.com",
+      productId: "astro",
+      productName: "Astro Consultation",
+      format: "WhatsApp Call / Google Meet",
+      concern: "Career progression, foreign settlement yog, and Saturn Sade Sati remedies",
+      amountPaid: 1051,
+      paymentStatus: "PAID",
+      bookingState: "CONFIRMED",
+      bookedAt: new Date().toISOString(),
+      preferredSlot: "Today • Immediate Next Window",
+      birthDetails: {
+        name: "Rahul Sengupta",
+        gender: "male",
+        birthDate: "1991-11-12",
+        birthTime: "10:15",
+        birthPlace: "Kolkata, WB",
+        latitude: 22.5726,
+        longitude: 88.3639,
+        timezone: 5.5,
+      },
+    };
+    AstrologerStateStore.addConfirmedBooking(newBooking);
+    sync();
+  };
+
+  const filteredBookings = confirmedBookings.filter((b) => {
+    if (bookingFilter === "ALL") return true;
+    return b.bookingState === bookingFilter;
+  });
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -391,102 +432,241 @@ export default function AstrologerDashboardPage() {
           </div>
         )}
 
-        {/* Incoming Live Queue (Only for Consultations operator or Owner/Admin) */}
+        {/* Confirmed & Paid Consultation Bookings (Only for Consultations operator or Owner/Admin) */}
         {(isOwner || isAstrologer || hasPermission("consultations")) && (
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E8D8C3]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#E8D8C3]">
               <div>
-                <h2 className="font-temple text-xl font-bold text-[#7B2D26] flex items-center gap-2">
-                  <Users className="h-5 w-5 text-[#C1662F]" />
-                  <span>Live Incoming Queue ({queue.length})</span>
-                </h2>
-                <p className="text-xs text-[#6E5545] mt-0.5">
-                  Clients currently waiting to enter consultation with you.
+                <div className="flex items-center gap-2.5">
+                  <h2 className="font-temple text-xl font-bold text-[#7B2D26] flex items-center gap-2">
+                    <Users className="h-5 w-5 text-[#C1662F]" />
+                    <span>Confirmed &amp; Paid Consultation Bookings</span>
+                  </h2>
+                  <span className="rounded-full bg-[#6B8E5A]/15 border border-[#6B8E5A]/30 px-2.5 py-0.5 text-xs font-bold text-[#2A4720]">
+                    {confirmedBookings.length} Total
+                  </span>
+                </div>
+                <p className="text-xs text-[#6E5545] mt-1">
+                  Client bookings confirmed with upfront payment. Reach out directly via WhatsApp call or Google Meet at the arranged slot.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  // Seed a demo queue item if empty for operator testing
-                  AstrologerStateStore.addToQueue({
-                    userName: "Devendra Verma",
-                    userPhone: "+91 98111 22334",
-                    consultationType: "voice",
-                    concern: "Mahadasha change & business investment timing",
-                    birthDetails: {
-                      name: "Devendra Verma",
-                      gender: "male",
-                      birthDate: "1988-04-18",
-                      birthTime: "06:45",
-                      birthPlace: "Lucknow, UP",
-                      latitude: 26.8467,
-                      longitude: 80.9462,
-                      timezone: 5.5,
-                    },
-                  });
-                  sync();
-                }}
-                className="text-xs font-semibold text-[#C1662F] hover:underline"
-              >
-                + Simulate Incoming Seeker
-              </button>
+              <div className="flex items-center gap-2 self-start md:self-auto">
+                <button
+                  type="button"
+                  onClick={handleSimulateNewBooking}
+                  className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-3.5 py-2 text-xs font-bold text-[#7B2D26] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>+ Simulate Paid Booking</span>
+                </button>
+              </div>
             </div>
 
-            {queue.length === 0 ? (
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              {[
+                { id: "ALL", label: "All Bookings", count: confirmedBookings.length },
+                {
+                  id: "CONFIRMED",
+                  label: "Confirmed",
+                  count: confirmedBookings.filter((b) => b.bookingState === "CONFIRMED").length,
+                },
+                {
+                  id: "AWAITING_SESSION",
+                  label: "Awaiting Session",
+                  count: confirmedBookings.filter((b) => b.bookingState === "AWAITING_SESSION").length,
+                },
+                {
+                  id: "COMPLETED",
+                  label: "Completed",
+                  count: confirmedBookings.filter((b) => b.bookingState === "COMPLETED").length,
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setBookingFilter(tab.id as any)}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    bookingFilter === tab.id
+                      ? "bg-[#7B2D26] text-white shadow-xs"
+                      : "bg-[#FAF5EE] text-[#6E5545] border border-[#E8D8C3] hover:text-[#3B2A1E]"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`text-[10px] rounded-full px-1.5 py-0.2 ${
+                      bookingFilter === tab.id ? "bg-white/20 text-white" : "bg-[#E8D8C3] text-[#3B2A1E]"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {filteredBookings.length === 0 ? (
               <div className="py-12 text-center text-[#6E5545] space-y-2">
                 <Clock className="h-10 w-10 text-[#C1662F] mx-auto opacity-50" />
-                <p className="text-sm font-medium">Queue is clear.</p>
-                <p className="text-xs">Incoming consultation requests will appear here instantly with sound alert.</p>
+                <p className="text-sm font-medium">No bookings in this category.</p>
+                <p className="text-xs">
+                  Incoming paid consultation bookings will appear here instantly with full client contact details.
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {queue.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7B2D26] text-white font-mono font-bold text-sm">
-                        #{idx + 1}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-temple text-base font-bold text-[#7B2D26]">
-                            {item.userName}
-                          </h4>
+                {filteredBookings.map((item) => {
+                  const cleanedPhone = item.userPhone.replace(/[^0-9]/g, "");
+                  const whatsappMsg = `Pranam ${item.userName}, this is Acharya Niraj Kumar connecting regarding your booked ${item.productName} (Ref: ${item.bookingId}). Please let me know if you are ready for our consultation session via WhatsApp Call or Google Meet.`;
+                  const whatsappHref = `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(whatsappMsg)}`;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-[#E8D8C3] bg-[#FBF3E7] p-5 sm:p-6 flex flex-col lg:flex-row items-start justify-between gap-5 transition-all hover:border-[#7B2D26]/40 hover:shadow-xs"
+                    >
+                      {/* Left: Client Contact Details & Consultation Context */}
+                      <div className="space-y-3 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-[#7B2D26] bg-[#FFFDF9] px-2.5 py-1 rounded border border-[#E8D8C3]">
+                            {item.bookingId}
+                          </span>
+                          <span className="rounded-md bg-[#6B8E5A]/15 text-[#2A4720] border border-[#6B8E5A]/30 px-2 py-0.5 text-[10px] font-bold">
+                            PAID: Flat ₹{item.amountPaid.toLocaleString("en-IN")}
+                          </span>
                           <span className="rounded-md bg-[#FFFDF9] px-2 py-0.5 text-[10px] font-bold text-[#C1662F] border border-[#E8D8C3] uppercase">
-                            {item.consultationType}
+                            {item.productName}
+                          </span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              item.bookingState === "COMPLETED"
+                                ? "bg-[#6B8E5A]/20 text-[#2A4720] border border-[#6B8E5A]/30"
+                                : item.bookingState === "AWAITING_SESSION"
+                                ? "bg-[#E8A33D]/20 text-[#C1662F] border border-[#E8A33D]/30"
+                                : "bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20"
+                            }`}
+                          >
+                            State:{" "}
+                            {item.bookingState === "CONFIRMED"
+                              ? "Confirmed"
+                              : item.bookingState === "AWAITING_SESSION"
+                              ? "Awaiting Session"
+                              : "Completed"}
                           </span>
                         </div>
-                        <p className="text-xs text-[#6E5545] mt-1">
-                          Concern: <strong>{item.concern}</strong>
-                        </p>
-                        <p className="text-[11px] text-[#6E5545]">
-                          Born: {item.birthDetails.birthDate} at {item.birthDetails.birthTime} ({item.birthDetails.birthPlace})
-                        </p>
+
+                        {/* Client Identity & Phone */}
+                        <div>
+                          <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
+                            {item.userName}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#6E5545] mt-1 font-body">
+                            <span className="font-bold text-[#3B2A1E]">
+                              Phone: <span className="font-mono text-[#7B2D26] font-bold">{item.userPhone}</span>
+                            </span>
+                            {item.userEmail && <span>&bull; {item.userEmail}</span>}
+                            <span>
+                              &bull; Preferred Slot:{" "}
+                              <strong>{item.preferredSlot || "Immediate Next Window"}</strong>
+                            </span>
+                            <span>
+                              &bull; Format: <strong>{item.format}</strong>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Consultation Topic / Concern */}
+                        <div className="bg-[#FFFDF9] p-3 rounded-xl border border-[#E8D8C3] text-xs">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C1662F] block mb-0.5">
+                            Client&apos;s Focus &amp; Question:
+                          </span>
+                          <p className="text-[#3B2A1E] font-medium leading-relaxed">{item.concern}</p>
+                          {item.birthDetails && (
+                            <p className="text-[11px] text-[#6E5545] mt-1.5 pt-1.5 border-t border-[#E8D8C3]/50">
+                              Born: <strong>{item.birthDetails.birthDate}</strong> at{" "}
+                              <strong>{item.birthDetails.birthTime}</strong> ({item.birthDetails.birthPlace})
+                            </p>
+                          )}
+                          {item.propertyDetails && (
+                            <p className="text-[11px] text-[#6E5545] mt-1.5 pt-1.5 border-t border-[#E8D8C3]/50">
+                              Property: <strong>{item.propertyDetails.propertyType}</strong> (
+                              {item.propertyDetails.propertyLocation})
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Direct Outreach CTAs & State Controls (Direct Outreach & Status Actions) */}
+                      <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end justify-between gap-3 w-full lg:w-auto shrink-0">
+                        {/* Direct Outreach CTAs */}
+                        <div className="flex flex-col gap-2 w-full">
+                          <a
+                            href={whatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-xl bg-[#25D366] hover:bg-[#20ba5a] px-4 py-2 text-xs font-bold text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            <span>Reach Out on WhatsApp</span>
+                          </a>
+
+                          <a
+                            href={`tel:${cleanedPhone}`}
+                            className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FAF5EE] px-4 py-2 text-xs font-bold text-[#3B2A1E] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <PhoneCall className="h-3.5 w-3.5 text-[#7B2D26]" />
+                            <span>Call {item.userPhone}</span>
+                          </a>
+
+                          <Link
+                            href={`/dashboard/session/${item.id}`}
+                            className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-4 py-2 text-xs font-bold text-[#7B2D26] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            <span>Open Chart &amp; Remedies</span>
+                          </Link>
+                        </div>
+
+                        {/* Booking State Progression Controls */}
+                        <div className="pt-2 border-t border-[#E8D8C3]/60 w-full text-right">
+                          <span className="text-[10px] uppercase font-bold text-[#6E5545] block mb-1">
+                            Update State:
+                          </span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {item.bookingState !== "AWAITING_SESSION" && item.bookingState !== "COMPLETED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBookingState(item.id, "AWAITING_SESSION")}
+                                className="rounded-lg bg-[#E8A33D]/20 text-[#C1662F] hover:bg-[#E8A33D]/30 border border-[#E8A33D]/40 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+                              >
+                                &rarr; Awaiting Session
+                              </button>
+                            )}
+
+                            {item.bookingState !== "COMPLETED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBookingState(item.id, "COMPLETED")}
+                                className="rounded-lg bg-[#6B8E5A] text-white hover:bg-[#58754a] px-2.5 py-1 text-[11px] font-bold transition-all shadow-xs cursor-pointer"
+                              >
+                                &check; Mark Completed
+                              </button>
+                            )}
+
+                            {item.bookingState === "COMPLETED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBookingState(item.id, "CONFIRMED")}
+                                className="text-[11px] text-[#7D6B5D] hover:underline cursor-pointer"
+                              >
+                                Reset to Confirmed
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveQueueItem(item.id)}
-                        className="rounded-xl border border-[#E8D8C3] px-3 py-2 text-xs font-semibold text-[#6E5545] hover:bg-[#FFFDF9]"
-                      >
-                        Dismiss
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAcceptQueueItem(item)}
-                        className="rounded-xl bg-[#6B8E5A] px-4 py-2 text-xs font-bold text-white hover:bg-[#58754a] transition-all shadow-sm flex items-center gap-1.5"
-                      >
-                        <PhoneCall className="h-3.5 w-3.5" />
-                        <span>Accept &amp; Connect</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

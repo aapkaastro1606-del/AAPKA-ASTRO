@@ -21,6 +21,7 @@ import {
   Star,
   CheckCircle2,
   Gift,
+  MessageCircle,
 } from "lucide-react";
 
 export default function ClientAccountDashboard() {
@@ -147,34 +148,77 @@ export default function ClientAccountDashboard() {
           </div>
         </div>
 
-        {/* Pending Active Consultation Banner */}
-        {activeBooking && activeBooking.status === "CONFIRMED" && (
-          <div className="rounded-3xl border-2 border-[#7B2D26] bg-[#FFFDF9] p-6 sm:p-7 shadow-lg">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-              <div className="flex items-center gap-4">
+        {/* Active Consultation Status Banner */}
+        {activeBooking && (
+          <div className="rounded-3xl border-2 border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-7 shadow-lg">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 pb-5 border-b border-[#E8D8C3]">
+              <div className="flex items-start sm:items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FAF1E4] text-[#7B2D26] border border-[#E8D8C3] shrink-0">
                   <Clock className="h-7 w-7 text-[#C1662F] animate-spin" />
                 </div>
                 <div>
-                  <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
-                    BOOKING CONFIRMED &bull; PAYMENT RECEIVED
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold font-temple text-[#7B2D26] mt-1">
-                    Consultation booked: {activeBooking.productName || (activeBooking.productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}, session pending
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-[#7B2D26] bg-[#FBF3E7] px-2 py-0.5 rounded border border-[#E8D8C3]">
+                      {activeBooking.bookingId}
+                    </span>
+                    <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
+                      PAID &bull; {activeBooking.status === "COMPLETED" ? "SESSION COMPLETED" : activeBooking.status === "AWAITING_SESSION" ? "AWAITING SESSION" : "BOOKING CONFIRMED"}
+                    </span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold font-temple text-[#7B2D26] mt-1">
+                    {activeBooking.productName || (activeBooking.productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}
                   </h2>
-                  <p className="text-xs text-[#6E5545] mt-1 font-body">
+                  <p className="text-xs text-[#6E5545] mt-0.5 font-body">
                     Format: <strong>{activeBooking.format}</strong> &bull; Amount Paid: <strong>Flat ₹{activeBooking.amountPaid.toLocaleString("en-IN")}</strong> &bull; Astrologer status: <span className="font-bold text-[#6B8E5A]">{astrologerStatus}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <Link
-                  href="/consult"
-                  className="flex-1 sm:flex-none rounded-xl bg-[#7B2D26] px-5 py-3 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-md text-center flex items-center justify-center gap-1.5"
+
+              {/* Action Buttons: WhatsApp Coordination (No In-App Room) */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+                <a
+                  href={`https://wa.me/919311215564?text=${encodeURIComponent(`Pranam Acharya Ji, I am coordinating my booked consultation (Booking Ref: ${activeBooking.bookingId}). Please let me know when we can connect on WhatsApp Call / Google Meet.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-[#25D366] hover:bg-[#20ba5a] px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Open Consultation Room</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Message on WhatsApp (+91 93112 15564)</span>
+                </a>
+
+                <Link
+                  href="/account/consult"
+                  className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-4 py-2.5 text-xs font-bold text-[#3B2A1E] transition-all text-center flex items-center justify-center gap-1.5"
+                >
+                  <span>View Status</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
+              </div>
+            </div>
+
+            {/* 3-State Progress Indicators */}
+            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#2A4720] bg-[#F4F9F2] p-2.5 rounded-xl border border-[#B8DCB0]">
+                <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0" />
+                <span>1. Confirmed (Paid)</span>
+              </div>
+              <div className={`flex items-center gap-2 text-xs font-semibold p-2.5 rounded-xl border ${
+                activeBooking.status === "AWAITING_SESSION"
+                  ? "bg-[#FFF8ED] text-[#C1662F] border-[#E8A33D]"
+                  : activeBooking.status === "COMPLETED"
+                  ? "bg-[#F4F9F2] text-[#2A4720] border-[#B8DCB0]"
+                  : "bg-[#FAF5EE] text-[#6E5545] border-[#E8D8C3]"
+              }`}>
+                <Clock className={`h-4 w-4 shrink-0 ${activeBooking.status === "AWAITING_SESSION" ? "text-[#C1662F] animate-spin" : "text-[#A8988B]"}`} />
+                <span>2. Awaiting Session</span>
+              </div>
+              <div className={`flex items-center gap-2 text-xs font-semibold p-2.5 rounded-xl border ${
+                activeBooking.status === "COMPLETED"
+                  ? "bg-[#F4F9F2] text-[#2A4720] border-[#B8DCB0]"
+                  : "bg-[#FAF5EE] text-[#6E5545] border-[#E8D8C3] opacity-75"
+              }`}>
+                <Sparkles className={`h-4 w-4 shrink-0 ${activeBooking.status === "COMPLETED" ? "text-[#6B8E5A]" : "text-[#A8988B]"}`} />
+                <span>3. Completed</span>
               </div>
             </div>
           </div>

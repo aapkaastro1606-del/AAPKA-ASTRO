@@ -177,4 +177,18 @@ export const ClientAccountStore = {
       } catch {}
     }
   },
+
+  updateActiveBookingState: (status: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED") => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("aapka_active_booking");
+        if (stored) {
+          const booking = JSON.parse(stored);
+          booking.status = status;
+          localStorage.setItem("aapka_active_booking", JSON.stringify(booking));
+          window.dispatchEvent(new Event("aapka_booking_updated"));
+        }
+      } catch {}
+    }
+  },
 };

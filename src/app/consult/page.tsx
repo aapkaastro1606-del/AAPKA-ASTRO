@@ -277,6 +277,43 @@ export default function ConsultPage() {
         booking.paymentId = paymentId;
         booking.confirmedAt = new Date().toISOString();
 
+        // Register in Astrologer store so it appears instantly on the Astrologer's dashboard
+        AstrologerStateStore.addConfirmedBooking({
+          id: `bk-${Date.now()}`,
+          bookingId: booking.bookingId,
+          userId,
+          userName,
+          userPhone,
+          userEmail,
+          productId: selectedProduct,
+          productName: booking.productName,
+          format: consultFormat,
+          concern: topicText,
+          amountPaid: promoFee,
+          paymentStatus: "PAID",
+          bookingState: "CONFIRMED",
+          bookedAt: new Date().toISOString(),
+          preferredSlot: "Immediate Next Window",
+          birthDetails: isAstro
+            ? {
+                name: userName,
+                gender: "male",
+                birthDate,
+                birthTime,
+                birthPlace,
+                latitude: 28.6139,
+                longitude: 77.209,
+                timezone: 5.5,
+              }
+            : undefined,
+          propertyDetails: !isAstro
+            ? {
+                propertyType,
+                propertyLocation: propertyCity,
+              }
+            : undefined,
+        });
+
         // Set confirmed booking to immediately show the Post-Payment Handoff Confirmation Screen
         setConfirmedBooking(booking);
         ClientAccountStore.setActiveBooking(booking);

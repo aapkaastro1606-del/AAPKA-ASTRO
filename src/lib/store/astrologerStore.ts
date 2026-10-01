@@ -27,6 +27,38 @@ export interface QueueItem {
   estimatedWaitMins: number;
 }
 
+export interface ConfirmedBookingItem {
+  id: string;
+  bookingId: string;
+  userId: string;
+  userName: string;
+  userPhone: string;
+  userEmail?: string;
+  productId: "astro" | "vaastu";
+  productName: string;
+  format: string;
+  concern: string;
+  amountPaid: number;
+  paymentStatus: "PAID";
+  bookingState: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED";
+  bookedAt: string;
+  preferredSlot?: string;
+  birthDetails?: {
+    name: string;
+    gender: "male" | "female" | "other";
+    birthDate: string;
+    birthTime: string;
+    birthPlace: string;
+    latitude?: number;
+    longitude?: number;
+    timezone?: number;
+  };
+  propertyDetails?: {
+    propertyType: string;
+    propertyLocation: string;
+  };
+}
+
 export interface ConsultationMessage {
   id: string;
   sessionId: string;
@@ -119,7 +151,8 @@ const STORAGE_KEYS = {
   QUEUE: "aapka_astro_queue",
   ACTIVE_SESSION: "aapka_astro_session",
   MESSAGES: "aapka_astro_messages",
-  WALLET: "aapka_astro_user_wallet"
+  WALLET: "aapka_astro_user_wallet",
+  CONFIRMED_BOOKINGS: "aapka_astro_confirmed_bookings",
 };
 
 // Client-side state helper with local synchronization
@@ -196,6 +229,105 @@ export class AstrologerStateStore {
   static removeFromQueue(queueId: string): void {
     const queue = this.getQueue().filter(q => q.id !== queueId);
     this.setStorage(STORAGE_KEYS.QUEUE, queue);
+  }
+
+  static getConfirmedBookings(): ConfirmedBookingItem[] {
+    return this.getStorage<ConfirmedBookingItem[]>(STORAGE_KEYS.CONFIRMED_BOOKINGS, [
+      {
+        id: "bk-101",
+        bookingId: "AA-2026-8821",
+        userId: "user-devendra",
+        userName: "Devendra Verma",
+        userPhone: "+91 98111 22334",
+        userEmail: "devendra.verma@example.com",
+        productId: "astro",
+        productName: "Astro Consultation",
+        format: "WhatsApp Call / Google Meet",
+        concern: "Mahadasha transition & business expansion timing",
+        amountPaid: 1051,
+        paymentStatus: "PAID",
+        bookingState: "CONFIRMED",
+        bookedAt: new Date(Date.now() - 25 * 60000).toISOString(),
+        preferredSlot: "Today • Immediate Next Slot",
+        birthDetails: {
+          name: "Devendra Verma",
+          gender: "male",
+          birthDate: "1988-04-18",
+          birthTime: "06:45",
+          birthPlace: "Lucknow, UP",
+          latitude: 26.8467,
+          longitude: 80.9462,
+          timezone: 5.5,
+        },
+      },
+      {
+        id: "bk-102",
+        bookingId: "AA-2026-8822",
+        userId: "user-priya",
+        userName: "Priya Sundaram",
+        userPhone: "+91 97110 44552",
+        userEmail: "priya.sundaram@example.com",
+        productId: "vaastu",
+        productName: "Vaastu Consultation",
+        format: "Google Meet Video",
+        concern: "3BHK Apartment north-east entry and kitchen fire zone energy correction",
+        amountPaid: 15000,
+        paymentStatus: "PAID",
+        bookingState: "AWAITING_SESSION",
+        bookedAt: new Date(Date.now() - 90 * 60000).toISOString(),
+        preferredSlot: "Tomorrow • 11:00 AM - 11:45 AM IST",
+        propertyDetails: {
+          propertyType: "Residential Apartment (3BHK)",
+          propertyLocation: "Sector 62, Noida, NCR",
+        },
+      },
+      {
+        id: "bk-103",
+        bookingId: "AA-2026-8819",
+        userId: "user-ananya",
+        userName: "Ananya Deshmukh",
+        userPhone: "+91 99201 55667",
+        userEmail: "ananya.d@example.com",
+        productId: "astro",
+        productName: "Astro Consultation",
+        format: "WhatsApp Call",
+        concern: "Kundli matching and marriage timing compatibility",
+        amountPaid: 1051,
+        paymentStatus: "PAID",
+        bookingState: "COMPLETED",
+        bookedAt: new Date(Date.now() - 24 * 3600000).toISOString(),
+        preferredSlot: "Yesterday • 05:30 PM IST",
+        birthDetails: {
+          name: "Ananya Deshmukh",
+          gender: "female",
+          birthDate: "1996-12-04",
+          birthTime: "18:20",
+          birthPlace: "Pune, Maharashtra",
+          latitude: 18.5204,
+          longitude: 73.8567,
+          timezone: 5.5,
+        },
+      },
+    ]);
+  }
+
+  static addConfirmedBooking(item: ConfirmedBookingItem): ConfirmedBookingItem {
+    const list = this.getConfirmedBookings();
+    list.unshift(item);
+    this.setStorage(STORAGE_KEYS.CONFIRMED_BOOKINGS, list);
+    return item;
+  }
+
+  static updateBookingState(id: string, state: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED"): void {
+    const list = this.getConfirmedBookings().map((b) =>
+      b.id === id || b.bookingId === id ? { ...b, bookingState: state } : b
+    );
+    this.setStorage(STORAGE_KEYS.CONFIRMED_BOOKINGS, list);
+  }
+
+  static removeConfirmedBooking(id: string): void {
+    const list = this.getConfirmedBookings().filter((b) => b.id !== id && b.bookingId !== id);
+    this.setStorage(STORAGE_KEYS.CONFIRMED_BOOKINGS, list);
   }
 
   static getActiveSession(): ActiveSession | null {

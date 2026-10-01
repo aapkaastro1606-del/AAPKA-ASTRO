@@ -1973,6 +1973,39 @@ A comprehensive audit was performed across all visitor-facing copy to eradicate 
 - [`tests/postPaymentHandoff.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/postPaymentHandoff.test.ts):
   - Added strict regression tests asserting total absence of "device chimes" and verifying presence of WhatsApp coordination copy.
 
+---
+
+## 36. Consultation Dashboard Simplification: Client Booking State & Astrologer Handoff
+
+### 36.1 Client-Facing Consultation Status View
+In accordance with the simplification directive, all in-app "join call" and "open room" buttons have been eliminated in favor of a real booking state tracker and WhatsApp sanctum handoff:
+1. **3-Stage Booking Lifecycle State Tracker**:
+   - `CONFIRMED`: Upfront payment verified & priority slot reserved.
+   - `AWAITING_SESSION`: Sanctum WhatsApp / Google Meet session timing coordination in progress.
+   - `COMPLETED`: Session completed & official remedies / summary preserved.
+2. **Elimination of In-App Calling Controls**:
+   - Completely replaced in-app calling controls and virtual rooms with a direct, one-tap link to WhatsApp (`https://wa.me/919311215564`) with pre-filled booking details.
+   - Clarified delivery copy: *"The consultation is confirmed, and it will be conducted directly via WhatsApp call or Google Meet, as you prefer or as arranged with Acharya Ji's sanctum desk. There is no in-app calling room or queue software to join."*
+3. **Surfaces Implemented**:
+   - [`src/components/consult/ClientConsultationStatusView.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/consult/ClientConsultationStatusView.tsx): Dedicated status view component.
+   - [`src/app/account/consult/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/consult/page.tsx): Updated to serve as the client's consultation status desk with toggle to book new sessions.
+   - [`src/app/account/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/account/page.tsx): Replaced old "Open Consultation Room" button with WhatsApp CTA and 3-stage visual status progress.
+   - [`src/components/consult/ConsultationConfirmationScreen.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/consult/ConsultationConfirmationScreen.tsx): Added visual 3-stage lifecycle progress.
+
+### 36.2 Astrologer Operator Dashboard: Confirmed & Paid Bookings List
+The astrologer's dashboard (`src/app/dashboard/page.tsx`) has been transformed from an in-app queue waiting room into an actionable bookings desk:
+1. **Confirmed, Paid Bookings List**:
+   - Replaced "Live Incoming Queue" with **"Confirmed & Paid Consultation Bookings"**.
+   - Displays client contact details collected at booking (Full Name, Phone Number, Email, Consultation Topic/Concern, Birth/Property Details).
+2. **Direct Outreach Controls (Zero In-App Start Call Control)**:
+   - **"Reach Out on WhatsApp"**: One-tap link (`https://wa.me/<cleanedPhone>?text=...`) to initiate the consultation session.
+   - **"Call Client"**: Direct dialer (`tel:<phone>`).
+   - **"Open Chart & Remedies"**: Dedicated link to review Janam Kundli and save written remedies.
+3. **State Progression Lifecycle**:
+   - Quick controls to move bookings through `Confirmed` &rarr; `Awaiting Session` &rarr; `Mark Completed`.
+   - Filter tabs: `All Bookings`, `Confirmed`, `Awaiting Session`, and `Completed`.
+
+
 
 
 

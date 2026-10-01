@@ -80,6 +80,27 @@ export const ConsultationConfirmationScreen: React.FC<ConsultationConfirmationSc
         </p>
       </div>
 
+      {/* 3-Stage Booking Lifecycle Progress */}
+      <div className="mt-6 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-4 max-w-xl mx-auto text-left">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block mb-2.5">
+          Consultation Lifecycle State: Confirmed
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#2A4720] bg-[#F4F9F2] p-2.5 rounded-xl border border-[#B8DCB0]">
+            <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0" />
+            <span>1. Confirmed</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#C1662F] bg-[#FFF8ED] p-2.5 rounded-xl border border-[#E8A33D]">
+            <Clock className="h-4 w-4 text-[#C1662F] animate-spin shrink-0" />
+            <span>2. Awaiting Session</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#6E5545] bg-[#FAF5EE] p-2.5 rounded-xl border border-[#E8D8C3] opacity-70">
+            <Sparkles className="h-4 w-4 text-[#A8988B] shrink-0" />
+            <span>3. Completed</span>
+          </div>
+        </div>
+      </div>
+
       {/* Booking Summary Card */}
       <div className="mt-6 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 sm:p-6 text-xs text-left max-w-xl mx-auto shadow-xs space-y-2.5">
         <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-2.5">

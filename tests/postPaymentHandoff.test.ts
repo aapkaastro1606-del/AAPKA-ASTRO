@@ -240,4 +240,72 @@ describe("Post-Payment Handoff & WhatsApp / Google Meet Architecture", () => {
     assert.match(servicesCode, /Direct WhatsApp & Google Meet Handoff/i);
     assert.match(servicesCode, /WhatsApp call or Google Meet/i);
   });
+
+  test("client-facing consultation status view shows booking states (confirmed, awaiting session, completed) and replaces join call with WhatsApp link", () => {
+    const statusViewCode = fs.readFileSync(
+      path.join(process.cwd(), "src/components/consult/ClientConsultationStatusView.tsx"),
+      "utf8"
+    );
+
+    // Asserts booking states (confirmed, awaiting session, completed)
+    assert.match(statusViewCode, /Confirmed/i);
+    assert.match(statusViewCode, /Awaiting Session/i);
+    assert.match(statusViewCode, /Completed/i);
+
+    // Asserts direct WhatsApp link from Section 1 (+91 93112 15564)
+    assert.match(statusViewCode, /https:\/\/wa\.me\/919311215564/);
+    assert.match(statusViewCode, /Message on WhatsApp \(\+91 93112 15564\)/);
+
+    // Strictly eliminates in-app join call buttons
+    assert.doesNotMatch(statusViewCode, /join call/i);
+    assert.doesNotMatch(statusViewCode, /start call/i);
+    assert.doesNotMatch(statusViewCode, /open consultation room/i);
+
+    // Account consult page imports and renders ClientConsultationStatusView
+    const accountConsultCode = fs.readFileSync(
+      path.join(process.cwd(), "src/app/account/consult/page.tsx"),
+      "utf8"
+    );
+    assert.match(accountConsultCode, /ClientConsultationStatusView/);
+
+    // Account dashboard banner replaces Open Consultation Room with WhatsApp link and 3-stage status
+    const accountDashboardCode = fs.readFileSync(
+      path.join(process.cwd(), "src/app/account/page.tsx"),
+      "utf8"
+    );
+    assert.doesNotMatch(accountDashboardCode, /Open Consultation Room/i);
+    assert.match(accountDashboardCode, /https:\/\/wa\.me\/919311215564/);
+    assert.match(accountDashboardCode, /1\. Confirmed/);
+    assert.match(accountDashboardCode, /2\. Awaiting Session/);
+    assert.match(accountDashboardCode, /3\. Completed/);
+  });
+
+  test("astrologer dashboard displays confirmed, paid bookings with client contact details rather than an in-app start call control", () => {
+    const dashboardCode = fs.readFileSync(
+      path.join(process.cwd(), "src/app/dashboard/page.tsx"),
+      "utf8"
+    );
+
+    // Confirmed & Paid Consultation Bookings section title
+    assert.match(dashboardCode, /Confirmed & Paid Consultation Bookings/i);
+    assert.match(dashboardCode, /Client bookings confirmed with upfront payment/i);
+
+    // Client contact details collected at booking (name, phone number)
+    assert.match(dashboardCode, /item\.userName/);
+    assert.match(dashboardCode, /item\.userPhone/);
+
+    // Outreach actions via WhatsApp and Phone dial
+    assert.match(dashboardCode, /Reach Out on WhatsApp/i);
+    assert.match(dashboardCode, /https:\/\/wa\.me\//);
+    assert.match(dashboardCode, /tel:\$\{cleanedPhone\}/);
+
+    // State progression controls
+    assert.match(dashboardCode, /Awaiting Session/i);
+    assert.match(dashboardCode, /Mark Completed/i);
+
+    // No in-app start call or accept and connect controls
+    assert.doesNotMatch(dashboardCode, /Accept & Connect/i);
+    assert.doesNotMatch(dashboardCode, /start call/i);
+    assert.doesNotMatch(dashboardCode, /join call/i);
+  });
 });
