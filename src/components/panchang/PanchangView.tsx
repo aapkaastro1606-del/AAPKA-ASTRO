@@ -927,7 +927,7 @@ export function PanchangView({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="text-[11px] font-bold text-[#C1662F]">
-                            {isHi ? yoga.nameEn : yoga.nameHi}
+                            {isHi ? "वैदिक शुभ योग" : yoga.nameHi}
                           </div>
                           <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
                             {isHi ? yoga.nameHi : yoga.nameEn}

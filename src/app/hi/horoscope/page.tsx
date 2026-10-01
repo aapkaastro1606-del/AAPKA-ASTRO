@@ -7,7 +7,7 @@ import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "आज का राशिफल (Dainik Rashifal in Hindi) — १२ चन्द्र राशियों का वैदिक भविष्यफल | Aapka Astro",
+  title: "आज का राशिफल — १२ चन्द्र राशियों का वैदिक भविष्यफल | Aapka Astro",
   description:
     "आचार्य नीरज कुमार द्वारा चित्रापक्ष लाहिड़ी अयनांश एवं वास्तविक ग्रह गोचर (चन्द्र राशि) पर आधारित आज का दैनिक राशिफल। जानें मेष से मीन तक करियर, प्रेम, स्वास्थ्य, धन, शुभ समय एवं वैदिक उपाय।",
   keywords: [

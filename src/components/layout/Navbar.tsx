@@ -93,7 +93,7 @@ export const Navbar: React.FC = () => {
   // 1. Horoscope Dropdown Items
   const horoscopeItems = [
     {
-      label: isHi ? "दैनिक राशिफल (Daily Horoscope)" : "Daily Horoscope (Chandra Rashi)",
+      label: isHi ? "दैनिक राशिफल" : "Daily Horoscope (Chandra Rashi)",
       desc: isHi
         ? "चन्द्र गोचर, नक्षत्र एवं ताराबल आधारित १२ राशियों का फल"
         : "Authentic Moon-sign transit forecasts & domain scores",
@@ -101,7 +101,7 @@ export const Navbar: React.FC = () => {
       icon: Sparkles,
     },
     {
-      label: isHi ? "१२ वैदिक राशियाँ (Zodiac Signs Hub)" : "Zodiac Signs Hub (12 Rashis)",
+      label: isHi ? "१२ वैदिक राशियाँ" : "Zodiac Signs Hub (12 Rashis)",
       desc: isHi
         ? "सभी १२ राशियों के स्वामी, तत्व, स्वभाव एवं इष्ट देव"
         : "Explore traits, ruling planets & elements for all 12 signs",
@@ -109,7 +109,7 @@ export const Navbar: React.FC = () => {
       icon: Star,
     },
     {
-      label: isHi ? "चन्द्र राशि कैलकुलेटर (Moon Sign)" : "Moon Sign Calculator",
+      label: isHi ? "चन्द्र राशि कैलकुलेटर" : "Moon Sign Calculator",
       desc: isHi
         ? "जन्म विवरण से अपनी सटीक वैदिक जन्म राशि और नक्षत्र जानें"
         : "Find your exact Vedic Chandra Rashi & Nakshatra from birth details",
@@ -129,7 +129,7 @@ export const Navbar: React.FC = () => {
   // 2. Kundli & Matching Dropdown Items
   const kundliMatchingItems = [
     {
-      label: isHi ? "जन्म कुंडली निर्माण (Kundli Generator)" : "Free Kundli Generator",
+      label: isHi ? "जन्म कुंडली निर्माण" : "Free Kundli Generator",
       desc: isHi
         ? "लग्न चार्ट, नवमांश, विंशोत्तरी दशा एवं ग्रह स्थिति"
         : "Full Lagna chart, Navamsha, planetary degrees & Dasha periods",
@@ -137,7 +137,7 @@ export const Navbar: React.FC = () => {
       icon: FileText,
     },
     {
-      label: isHi ? "कुंडली मिलान (Kundli Matching)" : "Kundli Matching (Guna Milan)",
+      label: isHi ? "कुंडली मिलान" : "Kundli Matching (Guna Milan)",
       desc: isHi
         ? "अष्टकूट ३६ गुण मिलान एवं मांगलिक दोष विश्लेषण"
         : "36-point Ashtakoota marriage compatibility & Manglik check",
@@ -145,7 +145,7 @@ export const Navbar: React.FC = () => {
       icon: HeartHandshake,
     },
     {
-      label: isHi ? "प्रेम अनुकूलता (Love Calculator)" : "Love Compatibility Calculator",
+      label: isHi ? "प्रेम अनुकूलता" : "Love Compatibility Calculator",
       desc: isHi
         ? "राशि एवं नाम के आधार पर संबंध सामंजस्य"
         : "Check relationship harmony & cosmic bond score",
@@ -153,7 +153,7 @@ export const Navbar: React.FC = () => {
       icon: Calculator,
     },
     {
-      label: isHi ? "फ्लेम्स कैलकुलेटर (FLAMES)" : "FLAMES Relationship Calculator",
+      label: isHi ? "फ्लेम्स कैलकुलेटर" : "FLAMES Relationship Calculator",
       desc: isHi
         ? "नाम अक्षरों से मित्रता और संबंध विश्लेषण"
         : "Classic name-based relationship & bond analyzer",
@@ -165,7 +165,7 @@ export const Navbar: React.FC = () => {
   // 3. Panchang & Festivals Dropdown Items
   const panchangFestivalItems = [
     {
-      label: isHi ? "आज का पंचांग (Daily Panchang)" : "Today's Vedic Panchang",
+      label: isHi ? "आज का पंचांग" : "Today's Vedic Panchang",
       desc: isHi
         ? "तिथि, नक्षत्र, योग, करण, राहुकाल एवं चौघड़िया समयरेखा"
         : "Tithi, Nakshatra, Rahu Kaal, Abhijit Muhurat & 24h Choghadiya",
@@ -173,7 +173,7 @@ export const Navbar: React.FC = () => {
       icon: Calendar,
     },
     {
-      label: isHi ? "कल का पंचांग (Tomorrow's Panchang)" : "Tomorrow's Panchang",
+      label: isHi ? "कल का पंचांग" : "Tomorrow's Panchang",
       desc: isHi
         ? "आगामी दिन के शुभ मुहूर्त एवं चौघड़िया की पूर्व जानकारी"
         : "Plan ahead with tomorrow's sunrise, tithi & auspicious timings",
@@ -181,7 +181,7 @@ export const Navbar: React.FC = () => {
       icon: Sun,
     },
     {
-      label: isHi ? "व्रत एवं त्यौहार कैलेंडर (Festivals)" : "Hindu Festival & Vrat Calendar",
+      label: isHi ? "व्रत एवं त्यौहार कैलेंडर" : "Hindu Festival & Vrat Calendar",
       desc: isHi
         ? "एकादशी, पूर्णिमा, अमावस्या एवं प्रमुख सनातन पर्व सूची"
         : "Upcoming Ekadashi, Purnima, Sankranti & major Hindu festivals",
@@ -193,7 +193,7 @@ export const Navbar: React.FC = () => {
   // 4. Content Dropdown Items (Blog, Reels, Vastu & Gemstones)
   const contentItems = [
     {
-      label: isHi ? "ज्योतिष लेख (Vedic Blog)" : "Astrology Blog & Guides",
+      label: isHi ? "ज्योतिष लेख" : "Astrology Blog & Guides",
       desc: isHi
         ? "ग्रह गोचर, शास्त्रीय उपाय एवं पर्व विशेषांक लेख"
         : "In-depth articles on planetary transits, remedies & scriptures",
@@ -201,7 +201,7 @@ export const Navbar: React.FC = () => {
       icon: BookOpen,
     },
     {
-      label: isHi ? "आध्यात्मिक रील्स (Astro Reels)" : "Astro Reels & Short Videos",
+      label: isHi ? "आध्यात्मिक रील्स" : "Astro Reels & Short Videos",
       desc: isHi
         ? "आचार्य जी के संक्षिप्त ज्योतिषीय एवं वास्तु सूत्र"
         : "Bite-sized daily Vedic wisdom & remedies by Acharya Ji",
@@ -209,7 +209,7 @@ export const Navbar: React.FC = () => {
       icon: Sparkles,
     },
     {
-      label: isHi ? "वास्तु शास्त्र (Vastu Shastra)" : "Vastu Shastra & Devta Vastu",
+      label: isHi ? "वास्तु शास्त्र" : "Vastu Shastra & Devta Vastu",
       desc: isHi
         ? "भवन, कार्यालय एवं ४५ देवता ऊर्जा क्षेत्र मार्गदर्शन"
         : "45-Devta energy mapping for homes, offices & factories",
@@ -217,7 +217,7 @@ export const Navbar: React.FC = () => {
       icon: Compass,
     },
     {
-      label: isHi ? "प्रमाणित रत्न (Gemstones)" : "Natural Vedic Gemstones",
+      label: isHi ? "प्रमाणित रत्न" : "Natural Vedic Gemstones",
       desc: isHi
         ? "लग्न अनुसार अभिमंत्रित एवं प्रमाणित रत्न मार्गदर्शन"
         : "Guide to lab-certified planetary gemstones energized by mantra",
@@ -603,17 +603,17 @@ export const Navbar: React.FC = () => {
               [
                 {
                   key: "horoscope" as const,
-                  title: isHi ? "राशिफल (Horoscope)" : "Horoscope",
+                  title: isHi ? "राशिफल" : "Horoscope",
                   items: horoscopeItems,
                 },
                 {
                   key: "kundli" as const,
-                  title: isHi ? "कुंडली एवं मिलान (Kundli & Matching)" : "Kundli & Matching",
+                  title: isHi ? "कुंडली एवं मिलान" : "Kundli & Matching",
                   items: kundliMatchingItems,
                 },
                 {
                   key: "panchang" as const,
-                  title: isHi ? "पंचांग एवं पर्व (Panchang & Festivals)" : "Panchang & Festivals",
+                  title: isHi ? "पंचांग एवं पर्व" : "Panchang & Festivals",
                   items: panchangFestivalItems,
                 },
               ]
@@ -674,7 +674,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center justify-between rounded-xl border border-[#E8D8C3] bg-[#FBF3E7]/55 px-3.5 py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#FBF3E7]"
             >
-              <span>{isHi ? "वैदिक सेवाएँ एवं पूजा (Services)" : "Services (Puja, Vastu & Remedies)"}</span>
+              <span>{isHi ? "वैदिक सेवाएँ एवं पूजा" : "Services (Puja, Vastu & Remedies)"}</span>
               <span className="text-[#7B2D26] font-bold">&rarr;</span>
             </Link>
 
@@ -717,7 +717,7 @@ export const Navbar: React.FC = () => {
                   <MapPin className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <div>{isHi ? "संपर्क करें (Contact Us)" : "Contact Us"}</div>
+                  <div>{isHi ? "संपर्क करें" : "Contact Us"}</div>
                   <div className="text-[10px] text-[#6E5545] font-normal">
                     {isHi ? "नोएडा कार्यालय एवं हेल्पलाइन" : "Noida Office & Direct Helpline"}
                   </div>
@@ -737,7 +737,7 @@ export const Navbar: React.FC = () => {
                     aria-expanded={expanded}
                     className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs font-semibold text-[#6E5545] hover:bg-[#FBF3E7]/50 cursor-pointer"
                   >
-                    <span>{isHi ? "लेख एवं रील्स (Content)" : "Content (Blog, Reels & Guides)"}</span>
+                    <span>{isHi ? "लेख एवं रील्स" : "Content (Blog, Reels & Guides)"}</span>
                     <ChevronDown
                       className={`h-4 w-4 text-[#8C7565] transition-transform duration-150 ${
                         expanded ? "rotate-180" : ""

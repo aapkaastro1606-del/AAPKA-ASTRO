@@ -12,18 +12,18 @@
 import * as Astronomy from "astronomy-engine";
 
 export const RASHI_NAMES: { [key: number]: { en: string; hi: string; lord: string } } = {
-  1: { en: "Aries", hi: "मेष (Mesh)", lord: "Mars" },
-  2: { en: "Taurus", hi: "वृषभ (Vrishabha)", lord: "Venus" },
-  3: { en: "Gemini", hi: "मिथुन (Mithun)", lord: "Mercury" },
-  4: { en: "Cancer", hi: "कर्क (Kark)", lord: "Moon" },
-  5: { en: "Leo", hi: "सिंह (Simha)", lord: "Sun" },
-  6: { en: "Virgo", hi: "कन्या (Kanya)", lord: "Mercury" },
-  7: { en: "Libra", hi: "तुला (Tula)", lord: "Venus" },
-  8: { en: "Scorpio", hi: "वृश्चिक (Vrishchik)", lord: "Mars" },
-  9: { en: "Sagittarius", hi: "धनु (Dhanu)", lord: "Jupiter" },
-  10: { en: "Capricorn", hi: "मकर (Makar)", lord: "Saturn" },
-  11: { en: "Aquarius", hi: "कुम्भ (Kumbha)", lord: "Saturn" },
-  12: { en: "Pisces", hi: "मीन (Meen)", lord: "Jupiter" },
+  1: { en: "Aries", hi: "मेष", lord: "Mars" },
+  2: { en: "Taurus", hi: "वृषभ", lord: "Venus" },
+  3: { en: "Gemini", hi: "मिथुन", lord: "Mercury" },
+  4: { en: "Cancer", hi: "कर्क", lord: "Moon" },
+  5: { en: "Leo", hi: "सिंह", lord: "Sun" },
+  6: { en: "Virgo", hi: "कन्या", lord: "Mercury" },
+  7: { en: "Libra", hi: "तुला", lord: "Venus" },
+  8: { en: "Scorpio", hi: "वृश्चिक", lord: "Mars" },
+  9: { en: "Sagittarius", hi: "धनु", lord: "Jupiter" },
+  10: { en: "Capricorn", hi: "मकर", lord: "Saturn" },
+  11: { en: "Aquarius", hi: "कुम्भ", lord: "Saturn" },
+  12: { en: "Pisces", hi: "मीन", lord: "Jupiter" },
 };
 
 export const NAKSHATRAS = [

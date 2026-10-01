@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const sign = horoscope.sign;
   return {
-    title: `${sign.hindiName} राशिफल आज का (${sign.englishName} Daily Horoscope in Hindi) | Aapka Astro`,
+    title: `आज का ${sign.hindiName} राशिफल — वैदिक चन्द्र गोचर भविष्यफल | Aapka Astro`,
     description: `आज का ${sign.hindiName} (${sign.sanskritName}) वैदिक चन्द्र राशिफल — जानें करियर, प्रेम, स्वास्थ्य, आर्थिक स्थिति, पारिवारिक सुख, शुभ रंग, शुभ समय, वैदिक उपाय एवं बीज मंत्र। चित्रापक्ष लाहिड़ी अयनांश पर आधारित।`,
     keywords: [
       `${sign.hindiName} राशिफल आज का`,

@@ -1461,7 +1461,7 @@ export function computeRealtimePanchang(
       sunriseDefinition: "Sun upper limb with standard atmospheric refraction (-0.833° solar altitude)",
       sunriseDefinitionHindi: "सूर्य के ऊपरी कोर का उदय (वायुमंडलीय अपवर्तन सहित -0.833° उन्नतांश)",
       nodeConvention: "Mean Lunar Node (Madhyama Rahu) primary; True Node (Spashta Rahu) also computed",
-      nodeConventionHindi: "मध्यम राहु (Mean Node) एवं स्पष्ट राहु (True Node) दोनों गणितीय रूप से उपलब्ध",
+      nodeConventionHindi: "मध्यम राहु एवं स्पष्ट राहु दोनों गणितीय रूप से उपलब्ध",
       meanRahuDegrees: Number(posAtSunrise.meanRahuSid.toFixed(2)),
       trueRahuDegrees: Number(posAtSunrise.trueRahuSid.toFixed(2)),
     },
