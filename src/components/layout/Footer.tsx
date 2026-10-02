@@ -78,7 +78,7 @@ export const Footer: React.FC = () => {
             <div className="flex flex-col items-center">
               <Heart className="h-6 w-6 text-[#E8A33D] mb-1.5" />
               <span className="font-temple font-bold text-[#FBF3E7]">15,000+ Natal Charts Analyzed</span>
-              <span className="text-[11px] text-[#FBF3E7]/70">Across 32 Countries &bull; Zero Gimmicks</span>
+              <span className="text-[11px] text-[#FBF3E7]/70">Authentic Guidance &bull; Zero Gimmicks</span>
             </div>
           </div>
         </div>
