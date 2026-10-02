@@ -310,6 +310,14 @@ export default function HomePage() {
               <span>View Consultation Formats &amp; Topics</span>
             </Link>
           </div>
+
+          <div className="mt-8 pt-6 border-t border-[#FBF3E7]/15 flex flex-wrap items-center justify-center gap-2 text-xs text-[#FBF3E7]/80 font-body">
+            <span className="font-temple font-bold text-[#FBF3E7]">15,000+ Natal Charts Analyzed</span>
+            <span>&bull;</span>
+            <span>Authentic Guidance</span>
+            <span>&bull;</span>
+            <span>Zero Gimmicks</span>
+          </div>
         </div>
       </section>
     </div>

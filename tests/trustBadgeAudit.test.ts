@@ -26,6 +26,28 @@ test("Trust Marks & Claims Audit: Unconfirmed '32 Countries' claim removed", () 
   );
 });
 
+test("Homepage Sacred Action Banner: Reassurance bar retains client-confirmed claim without country metrics", () => {
+  const homePath = path.join(process.cwd(), "src/app/page.tsx");
+  const homeContent = fs.readFileSync(homePath, "utf-8");
+
+  assert.ok(
+    homeContent.includes("15,000+ Natal Charts Analyzed"),
+    "Homepage Sacred Action Banner must retain '15,000+ Natal Charts Analyzed'"
+  );
+  assert.ok(
+    homeContent.includes("Authentic Guidance"),
+    "Homepage Sacred Action Banner must retain 'Authentic Guidance'"
+  );
+  assert.ok(
+    homeContent.includes("Zero Gimmicks"),
+    "Homepage Sacred Action Banner must retain 'Zero Gimmicks'"
+  );
+  assert.ok(
+    !homeContent.toLowerCase().includes("32 countr"),
+    "Homepage must not contain unconfirmed '32 Countries' claim"
+  );
+});
+
 test("Sitewide Verification: No invented country counts exist in src/", () => {
   const srcDir = path.join(process.cwd(), "src");
 

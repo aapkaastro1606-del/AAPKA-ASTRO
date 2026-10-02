@@ -2306,5 +2306,34 @@ Given the pattern of specific invented numbers and claims surfacing throughout t
 - **Full Project Test Suite (`npm test`)**: **276 / 276 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero errors.
 
+---
 
+## 44. Homepage Final CTA Section Reassurance Alignment & Zero Country Counts Sitewide Guarantee
 
+### 44.1 Context & Problem Statement
+The user requested ensuring that the homepage final CTA section aligns strictly with client-confirmed facts and eliminates any trace of the fabricated `"32 Countries"` claim. While `"32 Countries"` had been previously cleared from the footer trust badges, the homepage final CTA block (Section 10: "Sacred Action Banner") required explicit reassurance aligning with the established, authentic phrasing used across the rest of the site (e.g., Kundli pages and footer trust marks):
+`"15,000+ Natal Charts Analyzed • Authentic Guidance • Zero Gimmicks"`.
+
+### 44.2 Actions Taken & Code Implementation
+1. **Homepage Sacred Action Banner Update (`src/app/page.tsx`)**:
+   - In Section 10 directly beneath the consultation CTA buttons, added a dedicated trust reassurance bar:
+     ```tsx
+     <div className="mt-8 pt-6 border-t border-[#FBF3E7]/15 flex flex-wrap items-center justify-center gap-2 text-xs text-[#FBF3E7]/80 font-body">
+       <span className="font-temple font-bold text-[#FBF3E7]">15,000+ Natal Charts Analyzed</span>
+       <span>&bull;</span>
+       <span>Authentic Guidance</span>
+       <span>&bull;</span>
+       <span>Zero Gimmicks</span>
+     </div>
+     ```
+   - Reinforces the client-confirmed milestone (`15,000+ Natal Charts Analyzed`) without introducing any fabricated geographic or country claims.
+
+2. **Sitewide Grep & File Scan**:
+   - Automated scan across all files in `src/` confirms 0 matches for `/across \d+ countr/i` or `/\b32 countr/i`.
+   - Verified that neither the homepage, footer, service pages, nor calculator pages contain any invented country metrics.
+
+3. **Automated Test Suite Expansion (`tests/trustBadgeAudit.test.ts`)**:
+   - Added test `"Homepage Sacred Action Banner: Reassurance bar retains client-confirmed claim without country metrics"`.
+   - Verified 5/5 assertions in `trustBadgeAudit.test.ts` pass cleanly.
+   - Ran complete repository test suite: **277 / 277 tests passing** across 54 suites with 0 failures.
+   - Ran `npm run build`: All 99/99 routes compiled cleanly with zero Turbopack errors.
