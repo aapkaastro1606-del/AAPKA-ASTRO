@@ -114,7 +114,7 @@ export default function AccountKundliPage() {
               </p>
               <div className="flex flex-wrap justify-center gap-3 pt-2">
                 <Link
-                  href="/kundli"
+                  href="/kundli-generator"
                   className="rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-[#FBF3E7] hover:bg-[#64221C] transition-all shadow-sm flex items-center gap-1.5"
                 >
                   <Sparkles className="h-4 w-4 text-[#E8A33D]" />
@@ -188,7 +188,7 @@ export default function AccountKundliPage() {
 
               <div className="mt-6 pt-4 border-t border-[#E8D8C3] flex items-center justify-between gap-3">
                 <Link
-                  href="/kundli"
+                  href="/kundli-generator"
                   className="text-xs font-bold text-[#7B2D26] hover:underline"
                 >
                   View Full Chart &rarr;

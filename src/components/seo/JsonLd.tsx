@@ -209,7 +209,7 @@ export function ConsultationServicesJsonLd() {
           price: "501",
           priceValidUntil: "2027-12-31",
           availability: "https://schema.org/InStock",
-          url: "https://aapkaastro.com/kundli",
+          url: "https://aapkaastro.com/kundli-generator",
           description: "Download Full Formatted PDF Report for Flat ₹501 (Free online chart viewing permanently complimentary).",
         },
       },

@@ -174,7 +174,7 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
 
                     <td className="py-4 text-right space-x-2">
                       <Link
-                        href="/kundli"
+                        href="/kundli-generator"
                         className="rounded-lg border border-[#E8D8C3] bg-[#FBF3E7] px-3 py-1.5 font-bold text-[#7B2D26] hover:bg-[#E8D8C3] inline-block"
                       >
                         Chart

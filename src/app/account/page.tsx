@@ -368,7 +368,7 @@ export default function ClientAccountDashboard() {
                     </div>
 
                     <Link
-                      href="/kundli"
+                      href="/kundli-generator"
                       className="rounded-lg bg-[#FFFDF9] border border-[#E8D8C3] px-3 py-1.5 text-xs font-bold text-[#7B2D26] hover:bg-[#7B2D26] hover:text-white transition-all shadow-sm"
                     >
                       Open Chart
@@ -380,7 +380,7 @@ export default function ClientAccountDashboard() {
               <div className="rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FBF3E7]/50 p-6 text-center space-y-2">
                 <p className="text-xs text-[#6E5545]">No saved Janam Kundlis found yet.</p>
                 <Link
-                  href="/kundli"
+                  href="/kundli-generator"
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-[#FBF3E7] hover:bg-[#64221C] transition-all shadow-sm"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-[#E8A33D]" />

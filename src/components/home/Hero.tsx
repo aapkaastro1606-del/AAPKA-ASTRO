@@ -119,7 +119,7 @@ export const Hero: React.FC = () => {
               </Link>
 
               <Link
-                href="/kundli"
+                href="/kundli-generator"
                 className="flex items-center justify-center gap-2 rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-6 py-4 text-sm font-bold text-[#3B2A1E] hover:border-[#C1662F] hover:bg-[#FBF3E7] transition-all shadow-sm"
               >
                 <span>Calculate Free Janam Kundli</span>

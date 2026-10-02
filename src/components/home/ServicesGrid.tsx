@@ -19,7 +19,7 @@ export const ServicesGrid: React.FC = () => {
       pricing: "Included in Live Session & Detailed PDF Readings",
       badge: "Core Service",
       icon: FileText,
-      href: "/kundli",
+      href: "/kundli-generator",
       features: [
         "Lagna & planetary degrees calculation",
         "Vimshottari Dasha timing & upcoming life transits",

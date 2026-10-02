@@ -122,6 +122,83 @@ describe("Calculator Routes & Internal Link Integrity Audit", () => {
     );
     assert.equal(moonRedirect?.destination, "/moon-sign-calculator");
     assert.equal(moonRedirect?.permanent, true);
+
+    const kundliRedirect = redirects.find((r) => r.source === "/kundli");
+    assert.ok(kundliRedirect, "Must redirect /kundli");
+    assert.equal(kundliRedirect?.destination, "/kundli-generator");
+    assert.equal(kundliRedirect?.permanent, true);
+  });
+
+  it("verifies duplicate /kundli consolidation and canonical /kundli-generator internal links", () => {
+    // 1. Kundli page redirects permanently
+    const kundliPageContent = fs.readFileSync(
+      path.join(rootDir, "src/app/kundli/page.tsx"),
+      "utf-8"
+    );
+    assert.ok(
+      kundliPageContent.includes('permanentRedirect("/kundli-generator")'),
+      "src/app/kundli/page.tsx must issue permanent redirect to /kundli-generator"
+    );
+
+    // 2. Homepage Hero button points directly to /kundli-generator
+    const heroContent = fs.readFileSync(
+      path.join(rootDir, "src/components/home/Hero.tsx"),
+      "utf-8"
+    );
+    assert.ok(
+      heroContent.includes('href="/kundli-generator"'),
+      "Hero must link 'Calculate Free Janam Kundli' to /kundli-generator"
+    );
+    assert.ok(
+      !heroContent.includes('href="/kundli"'),
+      "Hero must not link to non-canonical /kundli"
+    );
+
+    // 3. Homepage Kundli Section 'Open Full Screen Detailed Kundli' points to /kundli-generator
+    const homeContent = fs.readFileSync(
+      path.join(rootDir, "src/app/page.tsx"),
+      "utf-8"
+    );
+    assert.ok(
+      homeContent.includes('href="/kundli-generator"'),
+      "Homepage must link 'Open Full Screen Detailed Kundli' to /kundli-generator"
+    );
+    assert.ok(
+      !homeContent.includes('href="/kundli"'),
+      "Homepage must not contain non-canonical /kundli links"
+    );
+
+    // 4. Services Grid Kundli card points to /kundli-generator
+    const servicesGridContent = fs.readFileSync(
+      path.join(rootDir, "src/components/home/ServicesGrid.tsx"),
+      "utf-8"
+    );
+    assert.ok(
+      servicesGridContent.includes('href: "/kundli-generator"'),
+      "ServicesGrid must link to /kundli-generator"
+    );
+
+    // 5. Canonical Kundli Generator page contains consolidated feature set
+    const generatorContent = fs.readFileSync(
+      path.join(rootDir, "src/app/kundli-generator/page.tsx"),
+      "utf-8"
+    );
+    assert.ok(
+      generatorContent.includes("Free Online Janam Kundli Generator"),
+      "Must have canonical title"
+    );
+    assert.ok(
+      generatorContent.includes("ShadbalaTable"),
+      "Must include ShadbalaTable"
+    );
+    assert.ok(
+      generatorContent.includes("Auspicious Vedic Alignments"),
+      "Must include Auspicious Vedic Alignments card"
+    );
+    assert.ok(
+      generatorContent.includes("vargaOptions"),
+      "Must include Shodashvarga varga options"
+    );
   });
 
   it("verifies Moon Sign Calculator functions correctly end-to-end with real ephemeris", () => {

@@ -247,7 +247,7 @@ export default function MoonSignCalculatorPage() {
                   <span>Book Consultation (Flat ₹1,051)</span>
                 </Link>
                 <Link
-                  href="/kundli"
+                  href="/kundli-generator"
                   className="text-xs text-[#E8D8C3] hover:text-white underline font-semibold flex items-center gap-1"
                 >
                   <span>Generate Full Janam Kundli</span>

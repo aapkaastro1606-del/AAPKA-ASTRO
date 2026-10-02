@@ -2337,3 +2337,59 @@ The user requested ensuring that the homepage final CTA section aligns strictly 
    - Verified 5/5 assertions in `trustBadgeAudit.test.ts` pass cleanly.
    - Ran complete repository test suite: **277 / 277 tests passing** across 54 suites with 0 failures.
    - Ran `npm run build`: All 99/99 routes compiled cleanly with zero Turbopack errors.
+
+---
+
+## 45. Consolidation of Duplicate Kundli Pages into Canonical `/kundli-generator`
+
+### 45.1 Context & Problem Statement
+The site previously contained two separate, nearly identical pages for birth chart calculation: `/kundli` and `/kundli-generator`. Both pages rendered their own birth-details form, planetary charts, and tab layouts. Having two competing URLs for the exact same core feature created duplicate content issues for search engine indexing (diluting crawl equity and organic ranking signals) and introduced inconsistent navigation pathways for visitors.
+
+### 45.2 Consolidation Decisions & Canonical Selection
+1. **Canonical Route Selection**:
+   - **`/kundli-generator`** was selected as the sole canonical route.
+   - Rationale: It is the more descriptive, intent-rich URL for organic search, and was already established in the site's footer under "Free Calculators & Hubs" as well as in the XML sitemap (`/sitemap.xml`).
+
+2. **Feature-Complete Upgrade of Canonical Page (`src/app/kundli-generator/page.tsx`)**:
+   To prevent any feature regression during consolidation, all specialized capabilities from both former pages were integrated into `src/app/kundli-generator/page.tsx`:
+   - **Full Shodashvarga Support**: Added interactive divisional chart pills (D1 Lagna, D9 Navamsha, D10 Dashamsha, D7 Saptamsha, D3 Drekkana, D12 Dwadasamsha, D2 Hora) with custom house projections and significance descriptions.
+   - **Auspicious Vedic Alignments Card**: Added the complete quick-reference panel displaying Ascendant (Lagna), Moon Sign (Rashi), Sun Sign, Birth Nakshatra & Pada, Lahiri Ayanamsa, Prescribed Gemstone, Favorable Color, Lucky Number, and Ishta Devata.
+   - **All 9 Comprehensive Tabs**:
+     1. Charts & Vargas (`NorthIndianChart` / `SouthIndianChart` with format toggle)
+     2. Planets & Avasthas (`PlanetaryTable`)
+     3. KP System (`KPTable`)
+     4. 4-Tier Dasha (`DashaTimeline`)
+     5. Ashtakvarga (`AshtakvargaTable`)
+     6. Shadbala (`ShadbalaTable` with 6-fold planetary strength calculation)
+     7. Dosha Diagnosis (`DoshaAnalysis` for Manglik, Sade Sati, Kaal Sarp, Pitra Dosha)
+     8. Remedies (Gemstone recommendation with link to `/gemstones` and daily Vedic mantras)
+     9. Full PDF Report (`KundliPrintDossier` preview and instant unlock)
+   - **Lead-Gen & Account Integration**: Preserved the "Save Kundli to Account" flow with the auth prompt modal (`showSignupPrompt`), allowing seekers to register or log in.
+   - **Razorpay Digital Product**: Preserved the one-time ₹501 PDF report purchase with instant unlocking, `localStorage` caching, and printable A4 dossier generation.
+
+3. **Permanent Redirection of Non-Canonical Route (`/kundli`)**:
+   - **Network/Routing Layer (`next.config.ts`)**: Configured permanent HTTP 308 redirect from `/kundli` to `/kundli-generator` with `permanent: true`.
+   - **Component Layer (`src/app/kundli/page.tsx`)**: Replaced the entire 655-line duplicate page component with a lightweight server component executing Next.js `permanentRedirect("/kundli-generator")`. This ensures any internal or external request hitting `/kundli` directly receives a strict HTTP 308 permanent redirect.
+
+4. **Internal Link Audit & Updating**:
+   Every internal link previously pointing to `/kundli` was updated to point directly to `/kundli-generator`:
+   - **Homepage Hero (`src/components/home/Hero.tsx`)**: "Calculate Free Janam Kundli" button updated from `href="/kundli"` to `href="/kundli-generator"`.
+   - **Homepage Kundli Section (`src/app/page.tsx`)**: "Open Full Screen Detailed Kundli" link updated from `href="/kundli"` to `href="/kundli-generator"`.
+   - **Homepage Services Grid (`src/components/home/ServicesGrid.tsx`)**: Kundli card updated from `href: "/kundli"` to `href: "/kundli-generator"`.
+   - **Global Service Config (`src/config/placeholderContent.ts`)**: Kundli service card updated to `href: "/kundli-generator"`.
+   - **User Account Kundli Vault (`src/app/account/kundli/page.tsx`)**: "Calculate Free Kundli" and "View Full Chart" links updated to `href="/kundli-generator"`.
+   - **User Account Overview (`src/app/account/page.tsx`)**: "Open Chart" and "Calculate & Save Free Kundli" links updated to `href="/kundli-generator"`.
+   - **Astrologer Client Management (`src/app/dashboard/clients/ClientsManagerClient.tsx`)**: Table chart link updated to `href="/kundli-generator"`.
+   - **Moon Sign Calculator (`src/app/moon-sign-calculator/page.tsx`)**: "Generate Full Janam Kundli" updated to `href="/kundli-generator"`.
+   - **Numerology Calculator (`src/app/numerology-calculator/page.tsx`)**: "Check Vedic Kundli" updated to `href="/kundli-generator"`.
+   - **Structured Data / SEO (`src/components/seo/JsonLd.tsx`)**: Offer product URL updated to `https://aapkaastro.com/kundli-generator`.
+
+### 45.3 Automated Verification Evidence
+- **Automated Test Suite (`tests/calculatorLinksAudit.test.ts`)**:
+  - Verified `next.config.ts` defines permanent redirect `{ source: "/kundli", destination: "/kundli-generator", permanent: true }`.
+  - Verified `src/app/kundli/page.tsx` issues Next.js `permanentRedirect("/kundli-generator")`.
+  - Verified zero links to non-canonical `/kundli` exist in `Hero.tsx`, `page.tsx`, and `ServicesGrid.tsx`.
+  - Verified canonical `src/app/kundli-generator/page.tsx` contains the complete consolidated feature set (Shodashvarga, ShadbalaTable, Auspicious Vedic Alignments).
+- **Full Project Test Suite (`npm test`)**: **278 / 278 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
+

@@ -327,7 +327,7 @@ export const CORE_SERVICES = [
       "Vimshottari Dasha timing & life roadmap",
       "Manglik, Sade Sati & Kaal Sarp analysis",
     ],
-    href: "/kundli",
+    href: "/kundli-generator",
   },
   {
     id: "vastu",

@@ -237,7 +237,7 @@ export default function HomePage() {
                   Calculated with Lahiri Ayanamsa: <strong className="text-[#3B2A1E]">{kundli.ayanamsa.toFixed(2)}°</strong>
                 </span>
                 <Link
-                  href="/kundli"
+                  href="/kundli-generator"
                   className="flex items-center gap-1.5 font-bold text-[#7B2D26] hover:underline"
                 >
                   <span>Open Full Screen Detailed Kundli</span>

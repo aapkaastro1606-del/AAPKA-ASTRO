@@ -116,6 +116,11 @@ const nextConfig: NextConfig = {
         destination: "/numerology-calculator",
         permanent: true,
       },
+      {
+        source: "/kundli",
+        destination: "/kundli-generator",
+        permanent: true,
+      },
     ];
   },
 };
