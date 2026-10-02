@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 
 export interface HeroCarouselSlide {
   src: string;
@@ -157,14 +157,14 @@ export const HeroImageCarousel: React.FC = () => {
           </div>
         )}
 
-        {/* Bottom Floating Badge & Rating Strip: Preserved exactly as-is across all photos */}
+        {/* Bottom Floating Badge & Trust Strip: Preserved credentials across all photos */}
         <div className="absolute bottom-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
           <div className="rounded-lg bg-[#FFFDF9]/95 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-[#7B2D26] shadow-sm border border-[#E8D8C3] font-temple">
             Jyotish Acharya &bull; Vastu Expert
           </div>
-          <div className="flex items-center gap-1 rounded-lg bg-[#E8A33D] px-2 py-1 text-xs font-black text-[#3B2A1E] shadow-sm">
-            <Star className="h-3.5 w-3.5 fill-current" />
-            <span>4.98</span>
+          <div className="flex items-center gap-1 rounded-lg bg-[#E8A33D] px-2 py-1 text-xs font-bold text-[#3B2A1E] shadow-sm font-temple">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#3B2A1E]" />
+            <span>Verified Lineage</span>
           </div>
         </div>
 

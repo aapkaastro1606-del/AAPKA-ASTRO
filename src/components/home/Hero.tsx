@@ -138,7 +138,7 @@ export const Hero: React.FC = () => {
                 <div className="text-xs text-[#6E5545] font-medium">Consultations Completed</div>
               </div>
               <div>
-                <div className="font-temple text-2xl sm:text-3xl font-bold text-[#7B2D26]">4.98 ★</div>
+                <div className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26]">Jyotish Acharya</div>
                 <div className="text-xs text-[#6E5545] font-medium">Bhartiya Vidya Bhawan</div>
               </div>
             </div>

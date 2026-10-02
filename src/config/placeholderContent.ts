@@ -98,7 +98,7 @@ export const CONSULTATION_PRODUCTS: Record<"astro" | "vaastu", ConsultationProdu
     promoPrice: 1051,
     firstTimeOnly: true, // Gated per user ID server-side, one-time only
     currency: "₹",
-    description: "Detailed birth chart examination, planetary transits, dasha analysis, and customized Vedic remedies with Acharya Abhishek Bhardwaj.",
+    description: "Detailed birth chart examination, planetary transits, dasha analysis, and customized Vedic remedies with Acharya Niraj Kumar.",
     deliverables: [
       "Full Janam Kundli & D10/D9 chart analysis",
       "Career, business, marriage, and health predictions",
@@ -361,7 +361,7 @@ export const CORE_SERVICES = [
     highlights: [
       "Direct 1-on-1 private encrypted connection",
       "Audio, video, or real-time text chat",
-      "Second-by-second billing with 50% off first session",
+      "Transparent flat fee with 50% off first consultation",
     ],
     href: "/consult",
   },

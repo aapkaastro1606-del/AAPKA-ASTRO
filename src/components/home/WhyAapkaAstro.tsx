@@ -12,7 +12,7 @@ export const WhyAapkaAstro: React.FC = () => {
     {
       feature: "Who Conducts Your Consultation?",
       aapkaAstro: `Exclusively ${PLACEHOLDER_ASTROLOGER.displayName} (Over ${PLACEHOLDER_ASTROLOGER.experienceYears} Years Exp, Traditional Vedic Scholar)`,
-      astrotalk: "Random gig worker selected from 500+ unverified listings",
+      astrotalk: "Random gig worker selected from unverified marketplace listings",
       aapkaPositive: true,
     },
     {

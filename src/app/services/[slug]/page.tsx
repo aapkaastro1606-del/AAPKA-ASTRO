@@ -127,7 +127,7 @@ const SERVICE_MAP: Record<string, ServiceDetailData> = {
     faqs: [
       {
         q: "Do I have to break walls or renovate my house?",
-        a: "No. 95% of Vastu defects can be neutralized using elemental energy locks, metallic strips, energized pyramids, and color vibration corrections without breaking a single brick.",
+        a: "No. The vast majority of Vastu defects can be neutralized using elemental energy locks, metallic strips, energized pyramids, and color vibration corrections without breaking a single brick.",
       },
       {
         q: "Can rented apartments be corrected?",

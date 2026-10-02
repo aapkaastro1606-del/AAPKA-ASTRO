@@ -80,20 +80,19 @@ export default function TestimonialsPage() {
             Real stories from genuine seekers guided by {PLACEHOLDER_ASTROLOGER.displayName} across India and overseas.
           </p>
 
-          {/* Rating Badge */}
+          {/* Trust Milestone Badge */}
           <div className="mt-8 inline-flex items-center gap-6 rounded-2xl bg-[#FFFDF9] px-6 py-3 shadow-lg text-[#3B2A1E]">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-2xl font-black text-[#7B2D26]">4.95</span>
-              <div className="flex text-[#E8A33D]">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-[#E8A33D]" />
-                ))}
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-7 w-7 text-[#6B8E5A]" />
+              <div className="text-left">
+                <div className="font-temple text-xl font-bold text-[#7B2D26]">15,000+</div>
+                <div className="text-[11px] text-[#6E5545] font-semibold">Natal Charts Analyzed</div>
               </div>
             </div>
             <div className="h-8 w-px bg-[#E8D8C3]" />
             <div className="text-left text-xs">
-              <div className="font-bold text-[#7B2D26]">1,200+ Consultations</div>
-              <div className="text-[#6E5545]">100% Verified Feedback</div>
+              <div className="font-bold text-[#7B2D26]">Two Decades of Mastery</div>
+              <div className="text-[#6E5545]">Direct Counsel with Acharya Ji</div>
             </div>
           </div>
         </div>

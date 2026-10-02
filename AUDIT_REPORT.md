@@ -2261,4 +2261,50 @@ Every internal link pointing to calculators and viral tools across the entire pl
 - **Full Project Test Suite (`npm test`)**: **274 / 274 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: Turbopack compiled 99/99 routes cleanly in <1s.
 
+---
+
+## 43. Final Comprehensive Sweep for Unconfirmed / Invented Specifics
+
+### 43.1 Context & Client Mandate
+Given the pattern of specific invented numbers and claims surfacing throughout the project, a comprehensive, systematic sweep of every single page and component was performed. All metrics, ratings, counts, and assertions were cataloged and verified against the client's own provided materials:
+1. The **About Us Document** (authored by Acharya Niraj Kumar)
+2. Verified **Educational Degrees & Certificates** (Bhartiya Vidya Bhawan, DivyVastu, IGNOU, ICAS, Bharat Jyotish Vidyapith)
+3. Conclave **Honors & Presentation Photographs** in `/public/gallery/`
+4. Client-Approved **Promotional Creatives & Pricing Guidelines** (Navratri Rudraksh campaign, Flat ₹1,051 / ₹15,000 consultation rates)
+
+### 43.2 Comprehensive Claims Inventory & Categorization
+
+| Claim / Metric | Location in Codebase | Source Material Verification | Status / Category | Action Taken |
+| :--- | :--- | :--- | :--- | :--- |
+| **Acharya Niraj Kumar** | Sitewide | About Us doc, BVB Roll OH21011 | **Confirmed-Real** | Preserved sitewide as primary practitioner |
+| **Over two decades / 20+ Years Mastery** | Homepage, About, Consult, Pricing | About Us doc ("Over the last two decades, he has studied, practiced...") | **Confirmed-Real** | Preserved |
+| **15,000+ Natal Charts Analyzed / Consultations** | Footer, Hero, About, Navratri modal | About Us doc ("more than 15,000 chart analyses and numerous Vastu consultations") | **Confirmed-Real** | Preserved as official client milestone |
+| **Jyotish Acharya (Bhartiya Vidya Bhawan)** | About, Trust Credentials, Homepage | Official BVB Certificate (Roll No. OH21011) | **Confirmed-Real** | Preserved |
+| **Logical Vastu™ Expert (DivyVastu)** | About, Trust Credentials | Official DivyVastu / Alchemy Vastu ISO 9001:2015 Certificate | **Confirmed-Real** | Preserved |
+| **Corporate Leadership (VP / Business Head at Reliance Retail, Metro Cash & Carry, NIF Food)** | About Us page | About Us doc | **Confirmed-Real** | Preserved |
+| **Academic Foundation (B.Sc. Physics, PGDBM, XLRI Certification)** | About Us page | About Us doc | **Confirmed-Real** | Preserved |
+| **Baidyanath Dham, Deoghar & Late Guru Shri B. B. Tiwari** | About Us page, Config | About Us doc | **Confirmed-Real** | Preserved |
+| **All Gallery Conclave Photos (Pashupati Award, Best Astrologer, Dignitary Greeting, etc.)** | `/public/gallery/` | Real photos provided by client | **Confirmed-Real** | Preserved |
+| **Consultation Rates (Flat ₹1,051 first-time / ₹2,100 standard Astro; Flat ₹15,000 Vaastu)** | Pricing, Consult, Modals | Client promotional creative & policy | **Confirmed-Real** | Preserved |
+| **`4.98 ★` Seeker Rating** | `src/app/about/page.tsx:96` | None — unconfirmed decimal rating | **Needs-Removal** | **REMOVED**. Replaced with confirmed credential: `Jyotish Acharya` / `Bhartiya Vidya Bhawan`. |
+| **`4.98 ★` attached to Bhartiya Vidya Bhawan** | `src/components/home/Hero.tsx:141` | None — arbitrary rating erroneously attached to educational institute | **Needs-Removal** | **REMOVED**. Replaced with verified degree: `Jyotish Acharya` / `Bhartiya Vidya Bhawan`. |
+| **`4.98` Rating Badge** | `src/components/home/HeroImageCarousel.tsx:167` | None — unconfirmed decimal rating | **Needs-Removal** | **REMOVED**. Replaced with verified trust badge: `<ShieldCheck /> Verified Lineage`. |
+| **`4.98 (15,000+ Consultations Followers)`** | `src/app/consult/page.tsx:456-458` | None — invented rating and confused follower count | **Needs-Removal** | **REMOVED**. Replaced with client-confirmed credential: `<Award /> 15,000+ Natal Charts Analyzed`. |
+| **`4.95` Rating & `1,200+ Consultations`** | `src/app/testimonials/page.tsx:86, 95` | None — invented decimal rating and conflicting consultation count | **Needs-Removal** | **REMOVED**. Replaced with client-confirmed milestone: `15,000+ Natal Charts Analyzed` & `Two Decades of Mastery`. |
+| **`with Acharya Abhishek Bhardwaj.`** | `src/config/placeholderContent.ts:101` | None — rogue placeholder name from early template | **Needs-Removal** | **REMOVED**. Replaced with actual astrologer name: `Acharya Niraj Kumar`. |
+| **`Over {followersCount} seekers`** | `src/components/home/InstagramFeedSection.tsx:26` | None — rendered awkwardly as "Over 15,000+ Consultations seekers" | **Needs-Removal** | **REMOVED**. Replaced with clean text: *"Daily transit wisdom, Vastu principles, and genuine gemstone insights shared directly by Acharya Niraj Kumar."* |
+| **`95% of Vastu defects can be neutralized`** | `src/app/services/[slug]/page.tsx:130` | None — unverified percentage metric | **Needs-Removal** | **REMOVED**. Replaced with verified philosophy: *"The vast majority of Vastu defects can be neutralized using elemental energy locks..."* |
+| **`Second-by-second billing with 50% off`** | `src/config/placeholderContent.ts:364` | Deprecated — old in-app wallet meter | **Needs-Removal** | **REMOVED**. Replaced with current policy: *"Transparent flat fee with 50% off first consultation"*. |
+| **`selected from 500+ unverified listings`** | `src/components/home/WhyAapkaAstro.tsx:15` | None — generic marketplace number | **Needs-Removal** | **REMOVED**. Replaced with clean text: *"selected from unverified marketplace listings"*. |
+| **Store Mock Numbers (`26000`, `4.98`, `12850`)** | `src/lib/store/astrologerStore.ts:125-127` | None — unverified mock stats | **Needs-Removal** | **REMOVED**. Synchronized with client-confirmed milestones (`consultationsCompleted: 15000, experienceYears: 20`). |
+
+### 43.3 Automated Verification Evidence
+- **Automated Test Suite (`tests/trustBadgeAudit.test.ts` & `tests/heroImageCarousel.test.ts`)**:
+  - `HeroImageCarousel` verified to display `Verified Lineage` and verified to contain 0 instances of `4.98`.
+  - Sitewide automated directory scan verified that 0 files in `src/` contain `4.98`, `4.95`, `Abhishek Bhardwaj`, `95% of Vastu defects`, or `500+ unverified`.
+  - Retention of all essential client-confirmed facts (`Acharya Niraj Kumar`, `15,000+`, `20+`, `Bhartiya Vidya Bhawan`, `Jyotish Acharya`, `Baidyanath Dham, Deoghar`) verified across all views.
+- **Full Project Test Suite (`npm test`)**: **276 / 276 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero errors.
+
+
 

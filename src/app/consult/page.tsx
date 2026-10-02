@@ -22,6 +22,7 @@ import {
   VideoOff,
   Calendar,
   Star,
+  Award,
   CheckCircle2,
   ShieldCheck,
   CreditCard,
@@ -451,10 +452,9 @@ export default function ConsultPage() {
                       <div className="text-xs text-[#C1662F] font-semibold">
                         {PLACEHOLDER_ASTROLOGER.experienceText}
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] text-[#7D6B5D] mt-0.5 font-body">
-                        <Star className="h-3.5 w-3.5 fill-[#E8A33D] text-[#E8A33D]" />
-                        <span className="font-bold text-[#3B2A1E]">4.98</span>
-                        <span>({PLACEHOLDER_ASTROLOGER.followersCount} Followers)</span>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#7D6B5D] mt-0.5 font-body">
+                        <Award className="h-3.5 w-3.5 text-[#C1662F]" />
+                        <span className="font-semibold text-[#3B2A1E]">15,000+ Natal Charts Analyzed</span>
                       </div>
                     </div>
                   </div>

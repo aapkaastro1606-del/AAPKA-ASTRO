@@ -93,9 +93,9 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-3.5 shadow-sm">
-                  <div className="text-xl font-black text-[#7B2D26]">4.98 ★</div>
+                  <div className="text-base sm:text-lg font-black font-temple text-[#7B2D26]">Jyotish Acharya</div>
                   <div className="text-[11px] text-[#6E5545] font-medium mt-0.5">
-                    Seeker Rating
+                    Bhartiya Vidya Bhawan
                   </div>
                 </div>
               </div>

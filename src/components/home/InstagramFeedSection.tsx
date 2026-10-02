@@ -23,7 +23,7 @@ export const InstagramFeedSection: React.FC = () => {
               Watch {PLACEHOLDER_ASTROLOGER.displayName} on Instagram
             </h2>
             <p className="mt-1 text-sm text-[#6E5545]">
-              Over {PLACEHOLDER_ASTROLOGER.followersCount} seekers learn daily transit wisdom, Vastu secrets, and genuine gemstone insights.
+              Daily transit wisdom, Vastu principles, and genuine gemstone insights shared directly by {PLACEHOLDER_ASTROLOGER.displayName}.
             </p>
           </div>
 

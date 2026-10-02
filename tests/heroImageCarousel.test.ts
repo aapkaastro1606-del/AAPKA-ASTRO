@@ -111,7 +111,7 @@ describe("Hero Section Auto-Rotating Image Carousel", () => {
     );
   });
 
-  it("verifies corner Award icon and 'Jyotish Acharya • Vastu Expert' with rating badge are preserved", () => {
+  it("verifies corner Award icon and 'Jyotish Acharya • Vastu Expert' with verified lineage badge are preserved", () => {
     const heroPath = path.join(rootDir, "src/components/home/Hero.tsx");
     const heroContent = fs.readFileSync(heroPath, "utf-8");
     assert.ok(
@@ -127,8 +127,12 @@ describe("Hero Section Auto-Rotating Image Carousel", () => {
       "HeroImageCarousel must preserve 'Jyotish Acharya • Vastu Expert' caption"
     );
     assert.ok(
-      carouselContent.includes("4.98"),
-      "HeroImageCarousel must preserve the 4.98 rating badge"
+      carouselContent.includes("Verified Lineage"),
+      "HeroImageCarousel must render verified lineage badge"
+    );
+    assert.ok(
+      !carouselContent.includes("4.98"),
+      "HeroImageCarousel must not contain unconfirmed 4.98 rating"
     );
   });
 });
