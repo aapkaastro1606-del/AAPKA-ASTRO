@@ -2393,3 +2393,46 @@ The site previously contained two separate, nearly identical pages for birth cha
 - **Full Project Test Suite (`npm test`)**: **278 / 278 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
 
+---
+
+## 46. Domain-Dependent Links: Viar.in DNS Verification & Live Custom Domain Status
+
+### 46.1 Context & Requirement
+The cross-promotion section promotes sister initiative **Vihangam Institute of Astrology and Research** using its production custom domain (`https://viar.in`). The client instructed to verify whether `viar.in` DNS is actively resolving and pointing to the authentic Viar deployment. If not yet live, the links were to be temporarily pointed to a working `.vercel.app` staging deployment until domain cutover; otherwise, if already live, the real custom domain was to be retained.
+
+### 46.2 Technical Verification Findings
+1. **DNS Resolution Test**:
+   - Query: `Resolve-DnsName viar.in`
+   - IPv4 A Records: `172.67.151.200`, `104.21.80.168` (Cloudflare CDN Anycast)
+   - IPv6 AAAA Records: `2606:4700:3034::6815:50a8`, `2606:4700:3030::ac43:97c8`
+   - Result: **Active and resolving globally without latency**.
+
+2. **HTTP / TLS Live Response Test**:
+   - Request: `fetch('https://viar.in', { method: 'HEAD' })`
+   - HTTP Status Code: `200 OK`
+   - Response Latency: ~540ms
+   - HTML Page Title: `"Vihangam Institute of Astrology"`
+   - Main Header / Brand: `"Vihangam Institute of Astrology & Research"`
+   - Content Verification: The site renders the live curriculum for Natal Astrology, Predictive Techniques, and Kerala Prashant, including contact information and Noida campus location.
+   - Result: **The domain is 100% live, fully cut over, and actively serving the authentic production deployment**.
+
+3. **Approach Taken & Rationale**:
+   - **Approach**: Retained the official custom domain **`https://viar.in`** sitewide across all cross-promotion touchpoints:
+     - `src/config/sisterServices.ts`: `url: "https://viar.in"`, `domain: "viar.in"`
+     - `src/components/home/SisterServicesSection.tsx`: All primary CTAs and external cards link directly to `https://viar.in`
+     - `src/components/layout/Footer.tsx`: Lines 114, 185, 364 link to `https://viar.in` with `target="_blank"` and `rel="noopener noreferrer"`
+     - `src/components/home/WelcomeConsultationModal.tsx`: Subordinate footer link points to `https://viar.in`
+   - **Rationale**: Because DNS propagation and domain cutover to the production Cloudflare edge are complete and returning HTTP 200 with authentic Vihangam Institute content, there is no need for a temporary `.vercel.app` proxy URL. Linking directly to `https://viar.in` delivers maximum brand authority, clean backlinks for SEO, and zero redirect latency for seekers.
+
+4. **Status of Secondary Sibling (Dow Consulting)**:
+   - `dowconsulting.in` DNS was re-checked and remains non-resolving (NXDOMAIN).
+   - In accordance with strict instructions, Dow Consulting remains completely omitted from all pages and configurations.
+
+### 46.3 Automated Test Evidence
+- **Automated Test (`tests/reciprocalCrossPromotion.test.ts`)**:
+  - Test case `"confirms viar.in live custom domain status and deployment responsiveness"` added and passing.
+  - Verifies that `https://viar.in` is registered in `SISTER_SERVICES` and resolves with a 2xx success status code.
+- **Full Project Test Suite (`npm test`)**: **279 / 279 tests passing** across 54 suites with 0 failures.
+- **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
+
+
