@@ -11,6 +11,7 @@ import { PanchangWidget } from "@/components/home/PanchangWidget";
 import { InstagramFeedSection } from "@/components/home/InstagramFeedSection";
 import { BlogPreviewSection } from "@/components/home/BlogPreviewSection";
 import { TrustCredentialsSection } from "@/components/home/TrustCredentialsSection";
+import { SisterServicesSection } from "@/components/home/SisterServicesSection";
 import { KundliForm } from "@/components/kundli/KundliForm";
 import { NorthIndianChart } from "@/components/kundli/NorthIndianChart";
 import { SouthIndianChart } from "@/components/kundli/SouthIndianChart";
@@ -272,7 +273,10 @@ export default function HomePage() {
       {/* 8. FAQ Section */}
       <FAQSection />
 
-      {/* 7. Sacred Action Banner */}
+      {/* 9. Our Other Services / Sister Initiatives (Viar.in Academy) */}
+      <SisterServicesSection />
+
+      {/* 10. Sacred Action Banner */}
       <section className="border-t border-[#E8D8C3] bg-[#7B2D26] py-16 text-[#FBF3E7]">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#64221C] px-3.5 py-1 text-xs font-bold text-[#E8A33D] border border-[#E8A33D]/30 mb-4">

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Lock, Award, Heart, Phone, Mail, MapPin, ShieldCheck } from "lucide-react";
+import { Lock, Award, Heart, Phone, Mail, MapPin, ShieldCheck, GraduationCap, ExternalLink } from "lucide-react";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { PLACEHOLDER_ASTROLOGER, PLACEHOLDER_SOCIAL_LINKS, PLACEHOLDER_CONTACT_INFO } from "@/config/placeholderContent";
 
@@ -80,6 +80,40 @@ export const Footer: React.FC = () => {
               <span className="font-temple font-bold text-[#FBF3E7]">15,000+ Natal Charts Analyzed</span>
               <span className="text-[11px] text-[#FBF3E7]/70">Across 32 Countries &bull; Zero Gimmicks</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ecosystem Cross-Promotion Banner: Our Other Services (Viar.in Academy) */}
+      <div className="border-b border-[#FBF3E7]/15 bg-[#541B16] py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E8A33D]/20 text-[#E8A33D] border border-[#E8A33D]/40 font-temple">
+                Ecosystem &amp; Lineage
+              </span>
+              <span className="text-xs text-[#FBF3E7]/70 font-semibold font-temple">Our Other Services</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-[#FFFDF9] font-temple">
+              Want to Learn Vedic Astrology Yourself? Explore Viar.in Academy
+            </h3>
+            <p className="text-xs text-[#FBF3E7]/80 mt-1 max-w-2xl font-body">
+              Looking to study classical Jyotish, understand chart synthesis, and earn verifiable certifications?
+              Join live interactive cohorts taught personally by Acharya Niraj Kumar at Vihangam Institute of Astrology and Research (Viar.in).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <a
+              href="https://viar.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E] inline-flex items-center gap-2 transition-all shadow-md"
+            >
+              <GraduationCap className="w-4 h-4 text-[#7B2D26]" />
+              <span>Visit Viar.in Academy</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#3B2A1E]" />
+            </a>
           </div>
         </div>
       </div>
@@ -248,6 +282,18 @@ export const Footer: React.FC = () => {
                   <span>Privacy &amp; Data Protection</span>
                 </Link>
               </li>
+              <li>
+                <a
+                  href="https://viar.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-2 text-xs sm:text-[13px] font-bold text-[#E8A33D] hover:text-[#FFFDF9] transition-colors"
+                >
+                  <span className="text-[#E8A33D] font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  <span>Viar.in (Astrology Academy)</span>
+                  <ExternalLink className="h-3 w-3 text-[#E8A33D]" />
+                </a>
+              </li>
               <li className="pt-1.5 border-t border-[#FBF3E7]/15">
                 <Link href="/pricing-policy" className="text-xs text-[#FBF3E7]/85 hover:text-[#E8A33D] transition-colors pl-3.5 block">
                   Transparent Pricing Policy
@@ -334,6 +380,16 @@ export const Footer: React.FC = () => {
             <Link href="/terms" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Terms of Service</Link>
             <span className="text-[#E8A33D]">&bull;</span>
             <Link href="/privacy-policy" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Privacy Policy</Link>
+            <span className="text-[#E8A33D]">&bull;</span>
+            <a
+              href="https://viar.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#E8A33D] text-[#E8A33D] font-bold underline underline-offset-4 inline-flex items-center gap-1"
+            >
+              <span>Viar.in Academy</span>
+              <ExternalLink className="h-2.5 w-2.5" />
+            </a>
             <span>&bull;</span>
             <Link href="/pricing-policy" className="hover:text-[#E8A33D] text-[#FBF3E7]/80">Pricing Policy</Link>
             <span>&bull;</span>

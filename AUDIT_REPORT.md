@@ -2178,3 +2178,50 @@ Every internal link pointing to calculators and viral tools across the entire pl
      - `calculateMoonSign` functions end-to-end with verified astronomical math.
 5. **Full Project Test Suite (`npm test`)**:
    - **268 / 268 tests passing** across 53 test suites with 0 failures.
+
+---
+
+## 41. Reciprocal Cross-Promotion to Viar.in (Vihangam Institute of Astrology and Research)
+
+### 41.1 Context & Requirements
+- **Goal**: Add reciprocal cross-promotion to **Viar.in** (Vihangam Institute of Astrology and Research) for students wanting to learn astrology directly from Acharya Niraj Kumar.
+- **Pattern Alignment**: Match the structural "Our Other Services" section already live on Viar.in (`src/app/page.tsx`, `src/config/services.ts`, `src/components/Footer.tsx`).
+- **Condition on Dow Consulting (`dowconsulting.in`)**: Only include `dowconsulting.in` if it is already live; if that site does not exist yet, leave it out entirely rather than linking to a dead page.
+
+### 41.2 Verification of External Domains
+1. **`dowconsulting.in` Verification**:
+   - Dispatched DNS resolution queries and HTTPS ping to `dowconsulting.in`.
+   - Result: `Resolve-DnsName` returned DNS resolution failure (domain not configured / NXDOMAIN / unreachable) and fetch failed (`fetch failed`).
+   - Decision: **Completely omitted from all configuration and user-facing components** to prevent any dead or broken links, adhering strictly to the user requirement.
+2. **`https://viar.in` Verification**:
+   - Verified as the live, functional sister educational academy (*Vihangam Institute of Astrology and Research*) instructed by Acharya Niraj Kumar for comprehensive Vedic astrology, Prashna, Nakshatra, and Vastu courses.
+
+### 41.3 Implementation Summary
+1. **Centralized Configuration (`src/config/sisterServices.ts`)**:
+   - Created configuration model defining `Viar.in (Vihangam Institute of Astrology and Research)` with target audience, live link `https://viar.in`, badge `Vedic Astrology Academy`, and curriculum highlights.
+   - Documented explicit exclusion of Dow Consulting pending its production launch.
+2. **Homepage "Our Other Services" Section (`src/components/home/SisterServicesSection.tsx`)**:
+   - Added responsive, sacred temple-styled section with `id="our-other-services"`.
+   - Badge: `"Ecosystem & Lineage"`.
+   - Title: *"Our Other Services & Educational Lineage"*.
+   - Subtitle: *"Aapka Astro specializes in personal consultations, while our sister academy empowers dedicated students to study authentic Vedic Jyotish directly under Acharya Niraj Kumar."*
+   - Interactive card displaying:
+     - Target Audience: *"For students & seekers aspiring to learn authentic Parashari Jyotish, Prashna, and Vedic wisdom."*
+     - 4 Key Pillars: Comprehensive curriculum, live mentorship with Acharya Ji, foundational to research-grade certs, active community.
+     - Direct CTA button: *"Explore Astrology Courses at Viar.in"* (`target="_blank"`, `rel="noopener noreferrer"`).
+3. **Homepage Placement (`src/app/page.tsx`)**:
+   - Wired `<SisterServicesSection />` between `<FAQSection />` and the sacred action banner, matching the user experience and reciprocal pattern of Viar.in.
+4. **Footer Reciprocal Cross-Promotion (`src/components/layout/Footer.tsx`)**:
+   - **Top Ecosystem Banner**: Dedicated horizontal banner highlighting *"Looking to study Vedic astrology professionally? Learn directly at Vihangam Institute of Astrology and Research"* with quick-action link to `https://viar.in`.
+   - **Company Column Link**: Added `Viar.in (Astrology Academy)` under Column 3 ("Company & Trust").
+   - **Legal Bar Citation**: Added `Viar.in Academy` external link in the bottom copyright row.
+
+### 41.4 Verification & Automated Test Evidence
+- **Automated Test Suite (`tests/reciprocalCrossPromotion.test.ts`)**: 4 unit tests passing:
+  1. Verifies `SISTER_SERVICES` configuration defines Viar.in and omits `dowconsulting.in`.
+  2. Verifies `SisterServicesSection` renders "Our Other Services" section for Viar.in.
+  3. Verifies `HomePage` imports and embeds `SisterServicesSection`.
+  4. Verifies `Footer` renders reciprocal cross-promotion banner and links to Viar.in.
+- **Full Project Test Suite (`npm test`)**: **272 / 272 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: Turbopack compiled 99/99 routes cleanly with zero TypeScript errors.
+
