@@ -2554,3 +2554,50 @@ Phrases implying a proprietary "encrypted connection" or "in-app encrypted chat"
 - **Full Project Test Suite (`npm test`)**: **287 / 287 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
 
+---
+
+## 49. Testimonial Duration Reference Removal & Refund Policy Grammar Correction
+
+### 49.1 Context & Problem Statement
+1. **Outdated Testimonial Duration Reference**:
+   The testimonial from client "Siddharth Malhotra" previously stated:
+   ```text
+   "Had a 45-minute live consultation regarding career expansion and investment timing. The planetary Dasha roadmap Acharya Ji predicted materialized precisely. Transparent, calm, and reassuring."
+   ```
+   Specifying a "45-minute" duration implied that session duration was a packaged, sold unit of time, which contradicts the authentic flat-fee, pay-per-booking model (`₹1,051` first-time promo / `₹2,100` standard flat fee with comprehensive discussion).
+2. **Refund Policy Grammar Glitch**:
+   Section 2 ("Live Consultation Cancellations & Rescheduling") of [`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx) contained a tautological repetition:
+   ```text
+   "If you schedule a scheduled consultation slot and need to reschedule..."
+   ```
+
+### 49.2 Remediation Actions Taken
+1. **Testimonial Rewrite ([`src/config/placeholderContent.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/placeholderContent.ts))**:
+   - Rewrote the testimonial to remove the duration reference while retaining 100% of the authentic substance (career expansion, investment timing, planetary Dasha prediction accuracy, and reassuring tone):
+     ```typescript
+     {
+       id: "test-4",
+       clientName: "Siddharth Malhotra",
+       city: "Tech Founder, Bengaluru",
+       service: "Career Guidance & Dasha Analysis",
+       stars: 5,
+       text: "Had a live 1-on-1 consultation regarding career expansion and investment timing. The planetary Dasha roadmap Acharya Ji predicted materialized precisely. Transparent, calm, and reassuring.",
+       verified: true,
+     }
+     ```
+2. **Grammar Correction ([`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx))**:
+   - Corrected Section 2 item 1 to:
+     ```text
+     "If you have a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp or Email at least 4 hours prior to the booked appointment. We will gladly accommodate a mutually agreed alternative slot at zero additional charge."
+     ```
+3. **Sitewide Confirmation**:
+   - Grepped sitewide for any other instances of `"45-minute"` or `"schedule a scheduled"`. Confirmed zero occurrences across the entire codebase.
+
+### 49.3 Automated Test Evidence & Verification
+- **Automated Tests Added ([`tests/serviceHandoffAudit.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/serviceHandoffAudit.test.ts))**:
+  - `Testimonial Audit: Siddharth Malhotra testimonial contains no defined session duration claim`: **PASS**
+  - `Grammar Audit: Refund policy does not contain repeated 'schedule a scheduled'`: **PASS**
+- **Full Project Test Suite (`npm test`)**: **289 / 289 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: **99/99 routes compiled cleanly** with zero Turbopack or TypeScript errors.
+
+

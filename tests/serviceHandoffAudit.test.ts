@@ -72,3 +72,32 @@ test("Service Handoff Audit: Vastu consultation confirmation does not imply in-a
     "vastu/page.tsx must NOT show 'Start Live Chat with Acharya Ji Now'"
   );
 });
+
+test("Testimonial Audit: Siddharth Malhotra testimonial contains no defined session duration claim", () => {
+  const filePath = path.join(process.cwd(), "src/config/placeholderContent.ts");
+  const content = fs.readFileSync(filePath, "utf-8");
+
+  assert.ok(
+    !content.includes("45-minute"),
+    "placeholderContent must NOT mention '45-minute' in testimonials"
+  );
+  assert.ok(
+    content.includes("Had a live 1-on-1 consultation regarding career expansion and investment timing"),
+    "placeholderContent must retain career expansion and investment timing substance"
+  );
+});
+
+test("Grammar Audit: Refund policy does not contain repeated 'schedule a scheduled'", () => {
+  const filePath = path.join(process.cwd(), "src/app/refund-policy/page.tsx");
+  const content = fs.readFileSync(filePath, "utf-8");
+
+  assert.ok(
+    !content.includes("schedule a scheduled"),
+    "refund-policy/page.tsx must NOT contain repeated 'schedule a scheduled'"
+  );
+  assert.ok(
+    content.includes("If you have a scheduled consultation slot"),
+    "refund-policy/page.tsx must read 'If you have a scheduled consultation slot'"
+  );
+});
+

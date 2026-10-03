@@ -70,7 +70,7 @@ export default function RefundPolicyPage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Client Rescheduling:</strong> If you schedule a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp or Email at least 4 hours prior to the booked appointment. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
+                <strong>Client Rescheduling:</strong> If you have a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp or Email at least 4 hours prior to the booked appointment. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
               </li>
               <li>
                 <strong>Acharya Ji Emergency Rescheduling:</strong> In the rare event that Acharya Niraj Kumar is summoned for Vedic rituals, temple ceremonies, or unforeseen emergencies, our team will promptly notify you. You will have the option to either reschedule at your preferred time or request a 100% full refund to your original payment method.

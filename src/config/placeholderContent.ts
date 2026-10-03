@@ -402,7 +402,7 @@ export const PLACEHOLDER_TESTIMONIALS = [
     city: "Tech Founder, Bengaluru",
     service: "Career Guidance & Dasha Analysis",
     stars: 5,
-    text: "Had a 45-minute live consultation regarding career expansion and investment timing. The planetary Dasha roadmap Acharya Ji predicted materialized precisely. Transparent, calm, and reassuring.",
+    text: "Had a live 1-on-1 consultation regarding career expansion and investment timing. The planetary Dasha roadmap Acharya Ji predicted materialized precisely. Transparent, calm, and reassuring.",
     verified: true,
   },
   {
