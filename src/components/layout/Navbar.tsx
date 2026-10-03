@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import {
-  Wallet,
   Menu,
   X,
   PhoneCall,
@@ -41,7 +40,6 @@ export const Navbar: React.FC = () => {
   const { isLoaded, isSignedIn, user } = useUser();
 
   const [mounted, setMounted] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(250);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [callbackModalOpen, setCallbackModalOpen] = useState(false);
@@ -54,7 +52,6 @@ export const Navbar: React.FC = () => {
   const isHi = language === "hi" || pathname?.startsWith("/hi");
 
   const syncState = () => {
-    setWalletBalance(AstrologerStateStore.getWalletBalance());
     setStatus(AstrologerStateStore.getStatus());
   };
 

@@ -34,7 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/zodiac-signs",
     "/festivals",
     "/consult",
-    "/wallet",
     "/login",
     "/signup",
   ].map((route) => ({

@@ -2435,4 +2435,44 @@ The cross-promotion section promotes sister initiative **Vihangam Institute of A
 - **Full Project Test Suite (`npm test`)**: **279 / 279 tests passing** across 54 suites with 0 failures.
 - **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
 
+---
 
+## 47. Removal of Leftover Wallet Reference & Sitewide Policy Audit
+
+### 47.1 Context & Bug Description
+During the pricing model overhaul, Aapka Astro transitioned completely from a legacy per-minute metered wallet model to an upfront flat-fee, pay-per-booking consultation model. However, an unpruned remnant was identified in [`src/app/refund-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/refund-policy/page.tsx) under Section 6 ("Refund Process & Timelines"):
+```text
+In-App Wallet Credit: Instant (within 1 hour) upon administrative verification.
+```
+Because no in-app wallet exists for customer credits or balances, this statement was erroneous and misleading.
+
+### 47.2 Remediation & Audit Actions Taken
+1. **Refund & Cancellation Policy (`src/app/refund-policy/page.tsx`)**:
+   - Completely deleted the `In-App Wallet Credit` list item from Section 6.
+   - Retained standard banking timelines for genuine refund channels:
+     - **UPI / Net Banking / Debit Card**: 3 to 7 business days.
+     - **Credit Card**: 5 to 10 business days per card issuer settlement cycles.
+
+2. **Sitewide Legal & Policy Pages Audit**:
+   - Audited all policy and legal pages:
+     - `/terms` ([`src/app/terms/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/terms/page.tsx))
+     - `/privacy-policy` ([`src/app/privacy-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/privacy-policy/page.tsx))
+     - `/disclaimer` ([`src/app/disclaimer/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/disclaimer/page.tsx))
+     - `/pricing-policy` ([`src/app/pricing-policy/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/pricing-policy/page.tsx))
+   - Result: Confirmed zero active references to wallet credits, wallet top-ups, or wallet balances.
+   - Cleaned up phrasing in `pricing-policy/page.tsx` Section 1 to replace legacy "second-by-second wallet exhaustion" with clean "hidden recurring deductions".
+
+3. **Public Components & User Flow Audit**:
+   - **Login Page (`src/app/login/LoginClient.tsx`)**: Cleaned subtitle from `"Access your sacred Vedic consultations, Janam Kundli records & wallet"` to `"Access your sacred Vedic consultations & Janam Kundli records"`.
+   - **Navbar (`src/components/layout/Navbar.tsx`)**: Removed unused `Wallet` icon import and unused `walletBalance` local state.
+   - **Account Dashboard (`src/app/account/page.tsx`)**: Removed unused `wallet` local state.
+   - **Referral Claim API (`src/app/api/referral/claim/route.ts`)**: Updated response messages to state "discount voucher credited to your account" rather than "wallet".
+   - **Search Engine Sitemap (`src/app/sitemap.ts`)**: Removed `/wallet` route from static sitemap indexing.
+
+### 47.3 Automated Test Evidence
+- **Automated Test Suite (`tests/walletPolicyAudit.test.ts`)**:
+  - Test 1: Verifies `Refund & Cancellation Policy has zero wallet credit references`.
+  - Test 2: Verifies `Legal and policy pages contain no wallet credit, balance, or top-up claims`.
+  - Test 3: Verifies `Login header and public components contain zero wallet references`.
+- **Full Project Test Suite (`npm test`)**: **282 / 282 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.

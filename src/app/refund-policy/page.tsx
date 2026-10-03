@@ -145,9 +145,6 @@ export default function RefundPolicyPage() {
               <li>
                 <strong>Credit Card:</strong> 5 to 10 business days as per the card issuer&apos;s settlement cycle.
               </li>
-              <li>
-                <strong>In-App Wallet Credit:</strong> Instant (within 1 hour) upon administrative verification.
-              </li>
             </ul>
           </section>
 

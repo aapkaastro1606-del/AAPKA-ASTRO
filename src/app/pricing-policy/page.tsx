@@ -181,7 +181,7 @@ export default function PricingPolicyPage() {
                 <strong>Kundli Full PDF Report:</strong> Instant online chart viewing is permanently free. A comprehensive, formatted downloadable PDF report is available for a one-time fee of Flat ₹501/-.
               </li>
               <li>
-                <strong>No Surprise Meter Deductions:</strong> You pay a single flat fee upfront per booking. There are no sudden call cut-offs due to second-by-second wallet exhaustion.
+                <strong>No Surprise Meter Deductions:</strong> You pay a single flat fee upfront per booking. There are no sudden call cut-offs or hidden recurring deductions.
               </li>
             </ul>
           </section>

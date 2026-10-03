@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         bonusCredited: 50,
-        message: "Referral code applied! ₹50 bonus added to your Aapka Astro wallet.",
+        message: "Referral code applied! ₹50 discount voucher credited to your account.",
       });
     }
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         bonusCredited: 50,
-        message: "Referral code verified! ₹50 credited to your wallet and ₹100 to your referrer.",
+        message: "Referral code verified! ₹50 discount voucher credited to your account and ₹100 to your referrer.",
       });
     } catch {
       // Fallback for preview mode
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         bonusCredited: 50,
-        message: "Referral code accepted! ₹50 bonus credited to your wallet.",
+        message: "Referral code accepted! ₹50 discount voucher credited to your account.",
       });
     }
   } catch (err: any) {

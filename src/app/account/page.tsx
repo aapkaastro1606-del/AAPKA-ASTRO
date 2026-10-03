@@ -26,7 +26,6 @@ import {
 
 export default function ClientAccountDashboard() {
   const { user, isLoaded } = useUser();
-  const [wallet, setWallet] = useState(0);
   const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
   const profile = ClientAccountStore.getProfile();
   const savedKundlis = ClientAccountStore.getSavedKundlis();
@@ -43,24 +42,14 @@ export default function ClientAccountDashboard() {
   const userInitial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {
-    setWallet(AstrologerStateStore.getWalletBalance());
     const sync = () => {
-      setWallet(AstrologerStateStore.getWalletBalance());
       setActiveBooking(ClientAccountStore.getActiveBooking());
     };
     window.addEventListener("astro_state_changed", sync);
     window.addEventListener("aapka_booking_updated", sync);
 
     if (isLoaded && user) {
-      fetch("/api/auth/sync")
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.user?.walletBalance !== undefined) {
-            setWallet(data.user.walletBalance);
-            AstrologerStateStore.setWalletBalance(data.user.walletBalance);
-          }
-        })
-        .catch(() => {});
+      fetch("/api/auth/sync").catch(() => {});
     }
 
     return () => {

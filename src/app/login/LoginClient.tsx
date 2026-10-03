@@ -34,7 +34,7 @@ export function LoginClient() {
             Seeker Sanctuary Sign-In
           </h1>
           <p className="mt-2 text-xs text-[#6E5545]">
-            Access your sacred Vedic consultations, Janam Kundli records &amp; wallet
+            Access your sacred Vedic consultations &amp; Janam Kundli records
           </p>
           <div className="flex justify-center my-3">
             <MandalaDivider className="w-24 text-[#C1662F]" />
