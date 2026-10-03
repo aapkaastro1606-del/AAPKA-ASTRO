@@ -79,9 +79,9 @@ export default function ServicesPage() {
       title: "Live Consultation",
       hindi: "सीधा व्यक्तिगत परामर्श",
       description:
-        `Immediate 1-on-1 private encrypted chat, audio, or video consultation directly with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
+        `Direct 1-on-1 personal consultation via WhatsApp Call or Google Meet with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
       features: [
-        "Real-time chart display during the consultation",
+        "Direct 1-on-1 session via WhatsApp Call or Google Meet",
         "Upfront flat-fee booking with zero hidden charges or surprise per-minute meters",
         "Automatic 50% discount on your very first consultation (Flat ₹1,051/-)",
         "Direct prescription notes and written remedy summary in your account",

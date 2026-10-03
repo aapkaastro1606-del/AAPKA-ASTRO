@@ -171,7 +171,7 @@ const VastuPage: React.FC = () => {
                   href="/consult"
                   className="rounded-xl bg-[#7B2D26] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#64231D] shadow-sm transition-all"
                 >
-                  Start Live Chat with Acharya Ji Now
+                  Book Direct Consultation with Acharya Ji Now
                 </Link>
               </div>
             </div>

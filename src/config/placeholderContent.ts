@@ -357,10 +357,10 @@ export const CORE_SERVICES = [
     id: "live-consultation",
     title: "Live 1-on-1 Consultation",
     hindi: "सीधा व्यक्तिगत परामर्श",
-    description: "Real-time chat, voice, or video sessions covering Kundli, Vastu, and Gemstones directly with Acharya Niraj Kumar.",
+    description: "Direct 1-on-1 personal sessions via WhatsApp Call or Google Meet covering Kundli, Vastu, and Gemstones directly with Acharya Niraj Kumar.",
     highlights: [
-      "Direct 1-on-1 private encrypted connection",
-      "Audio, video, or real-time text chat",
+      "Direct 1-on-1 session via WhatsApp Call or Google Meet",
+      "Audio, video, or consultation text chat",
       "Transparent flat fee with 50% off first consultation",
     ],
     href: "/consult",

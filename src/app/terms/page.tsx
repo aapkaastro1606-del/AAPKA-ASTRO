@@ -55,7 +55,7 @@ export default function TermsOfServicePage() {
               1. Preamble &amp; Description of Platform
             </h2>
             <p>
-              Aapka Astro (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides authentic classical Vedic astrology (Parashari, Jaimini, Nadi Jyotish), AstroVastu, and Devta Vastu advisory services conducted personally by Acharya Niraj Kumar. Our platform offers free computerized calculation engines (Kundli, Panchang, Compatibility, Astrological Calculators) as well as paid 1-on-1 consultations via encrypted audio call, video call, and real-time chat.
+              Aapka Astro (&quot;Platform&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides authentic classical Vedic astrology (Parashari, Jaimini, Nadi Jyotish), AstroVastu, and Devta Vastu advisory services conducted personally by Acharya Niraj Kumar. Our platform offers free computerized calculation engines (Kundli, Panchang, Compatibility, Astrological Calculators) as well as paid 1-on-1 consultations conducted directly via WhatsApp Call or Google Meet.
             </p>
             <p>
               Aapka Astro is a dedicated private practice and boutique consultation sanctum, not an unvetted public aggregator or freelance marketplace.

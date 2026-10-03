@@ -66,13 +66,13 @@ export const ServicesGrid: React.FC = () => {
       title: "Live Consultation",
       hindi: "सीधा व्यक्तिगत परामर्श",
       description:
-        `Real-time chat, voice, or video sessions covering any of the above with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
+        `Direct 1-on-1 personal consultation via WhatsApp Call or Google Meet with ${PLACEHOLDER_ASTROLOGER.displayName}.`,
       pricing: "Flat ₹1,051 (Regular ₹2,100) — 50% Savings",
       badge: "50% Off 1st Session",
       icon: PhoneCall,
       href: "/consult",
       features: [
-        "Live 1-on-1 direct encrypted connection",
+        "Direct 1-on-1 session via WhatsApp Call or Google Meet",
         "Format choice: Voice Call, Video Call, or Live Chat (Unified Fee)",
         "First consultation: Flat ₹1,051/- (Regular ₹2,100 — 50% savings)",
         "Covers Career, Finance, Marriage Compatibility, Health & Remedies",

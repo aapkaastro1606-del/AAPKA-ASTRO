@@ -2476,3 +2476,81 @@ Because no in-app wallet exists for customer credits or balances, this statement
   - Test 3: Verifies `Login header and public components contain zero wallet references`.
 - **Full Project Test Suite (`npm test`)**: **282 / 282 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
+
+---
+
+## 48. Alignment of Consultation Service Cards to Real WhatsApp / Google Meet Flow
+
+### 48.1 Context & Problem Statement
+The user reported that the "Live Consultation" service card on the homepage included the feature bullet:
+```text
+"Live 1-on-1 direct encrypted connection"
+```
+This copy contradicted the updated FAQ, consultation confirmation flow, and post-booking client view, which accurately describe that:
+1. Seekers complete an upfront flat-fee booking online (`₹1,051` promo / `₹2,100` standard).
+2. They immediately receive their booking reference and direct WhatsApp contact details (`+91 93112 15564`).
+3. Acharya Niraj Kumar or the sanctum desk coordinates the exact time and holds the consultation directly via **WhatsApp Call or Google Meet**.
+4. There is no proprietary in-app WebRTC calling room, plugin, or queue software to join.
+
+Phrases implying a proprietary "encrypted connection" or "in-app encrypted chat" on public service cards caused confusion about how consultations are delivered.
+
+### 48.2 Remediation & Sitewide Alignment Actions Taken
+1. **Homepage Service Card (`src/components/home/ServicesGrid.tsx`)**:
+   - Replaced bullet `"Live 1-on-1 direct encrypted connection"` with:
+     ```text
+     "Direct 1-on-1 session via WhatsApp Call or Google Meet"
+     ```
+   - Replaced description with:
+     ```text
+     `Direct 1-on-1 personal consultation via WhatsApp Call or Google Meet with ${PLACEHOLDER_ASTROLOGER.displayName}.`
+     ```
+
+2. **Service Configuration (`src/config/placeholderContent.ts`)**:
+   - Replaced `"Direct 1-on-1 private encrypted connection"` with:
+     ```text
+     "Direct 1-on-1 session via WhatsApp Call or Google Meet"
+     ```
+   - Replaced description with:
+     ```text
+     "Direct 1-on-1 personal sessions via WhatsApp Call or Google Meet covering Kundli, Vastu, and Gemstones directly with Acharya Niraj Kumar."
+     ```
+
+3. **Services Overview Page (`src/app/services/page.tsx`)**:
+   - Replaced description `"Immediate 1-on-1 private encrypted chat, audio, or video consultation..."` with:
+     ```text
+     `Direct 1-on-1 personal consultation via WhatsApp Call or Google Meet with ${PLACEHOLDER_ASTROLOGER.displayName}.`
+     ```
+   - Replaced feature bullet with:
+     ```text
+     "Direct 1-on-1 session via WhatsApp Call or Google Meet"
+     ```
+
+4. **Terms of Service (`src/app/terms/page.tsx`)**:
+   - Updated Article 1 from `"paid 1-on-1 consultations via encrypted audio call, video call, and real-time chat"` to:
+     ```text
+     "paid 1-on-1 consultations conducted directly via WhatsApp Call or Google Meet"
+     ```
+
+5. **Vastu Form Confirmation (`src/app/vastu/page.tsx`)**:
+   - Updated post-submission CTA button from `"Start Live Chat with Acharya Ji Now"` to:
+     ```text
+     "Book Direct Consultation with Acharya Ji Now"
+     ```
+   - Eliminates false expectation of an immediate in-browser live chat room.
+
+6. **Sitewide Audit for In-App Connection Terms**:
+   - Audited all public routes and confirmed that in-app software references are explicitly clarified to seekers:
+     - `src/components/consult/ClientConsultationStatusView.tsx`: *"There is no in-app calling room or queue software to join."*
+     - `src/components/home/FAQSection.tsx`: *"...every session is a genuine 1-on-1 private reading without requiring any complex in-app software or call plugins."*
+     - `src/app/services/[slug]/page.tsx`: *"...no complex in-app software required."*
+
+### 48.3 Automated Test Evidence & Verification
+- **New Dedicated Test Suite (`tests/serviceHandoffAudit.test.ts`)**:
+  - Test 1: Verifies `ServicesGrid.tsx` specifies WhatsApp Call or Google Meet and contains no `"encrypted connection"` claims.
+  - Test 2: Verifies `placeholderContent.ts` specifies WhatsApp Call or Google Meet and contains no `"encrypted connection"` claims.
+  - Test 3: Verifies `services/page.tsx` reflects WhatsApp Call and Google Meet and contains no `"encrypted chat"` claims.
+  - Test 4: Verifies `terms/page.tsx` states consultations are conducted directly via WhatsApp Call or Google Meet.
+  - Test 5: Verifies `vastu/page.tsx` does not display `"Start Live Chat with Acharya Ji Now"`.
+- **Full Project Test Suite (`npm test`)**: **287 / 287 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: 99/99 routes compiled cleanly with zero Turbopack errors.
+
