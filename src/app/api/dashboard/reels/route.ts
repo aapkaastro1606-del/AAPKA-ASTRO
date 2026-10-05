@@ -4,7 +4,7 @@ import { ReelsStore } from "@/lib/store/reelsStore";
 
 /**
  * GET /api/dashboard/reels
- * Lists reels. Requires VIEW access on "reels".
+ * Lists all curated reels. Requires VIEW access on "reels".
  */
 export async function GET(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/dashboard/reels
- * Toggles pin or hide status on a reel. Requires MANAGE access on "reels".
+ * Modifies reels curation (pin, hide, add, remove, reorder). Requires MANAGE access on "reels".
  */
 export async function POST(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -57,19 +57,42 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { action, reelId } = body;
+    const { action, reelId, reelData, direction } = body;
 
-    if (!reelId) {
+    if (!action) {
       return NextResponse.json(
-        { success: false, message: "Reel ID is required." },
+        { success: false, message: "Action is required." },
         { status: 400 }
       );
     }
 
     if (action === "togglePin") {
+      if (!reelId) {
+        return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
+      }
       ReelsStore.togglePin(reelId);
     } else if (action === "toggleHide") {
+      if (!reelId) {
+        return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
+      }
       ReelsStore.toggleHide(reelId);
+    } else if (action === "addReel") {
+      if (!reelData?.instagramUrl) {
+        return NextResponse.json({ success: false, message: "Instagram URL is required." }, { status: 400 });
+      }
+      ReelsStore.addReel(reelData);
+    } else if (action === "removeReel") {
+      if (!reelId) {
+        return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
+      }
+      ReelsStore.removeReel(reelId);
+    } else if (action === "reorder") {
+      if (!reelId || !direction) {
+        return NextResponse.json({ success: false, message: "Reel ID and direction are required." }, { status: 400 });
+      }
+      ReelsStore.reorderReel(reelId, direction);
+    } else if (action === "reset") {
+      ReelsStore.resetToDefaults();
     } else {
       return NextResponse.json(
         { success: false, message: "Invalid action specified." },

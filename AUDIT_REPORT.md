@@ -2600,4 +2600,56 @@ Phrases implying a proprietary "encrypted connection" or "in-app encrypted chat"
 - **Full Project Test Suite (`npm test`)**: **289 / 289 tests passing** across 54 test suites with 0 failures.
 - **Production Build (`npm run build`)**: **99/99 routes compiled cleanly** with zero Turbopack or TypeScript errors.
 
+---
+
+## 50. Manual Instagram Reel Native oEmbed Integration & Curation Desk Compatibility
+
+### 50.1 Context & Architectural Decision
+1. **Background**:
+   The `/reels` gallery and homepage reel preview previously displayed mock placeholder data (Unsplash stock images, fabricated view/like counts, and a simulated video modal) pending full Meta Graph API auto-sync. Connecting the Meta Graph API requires converting the client's Instagram account into a professional/business account and setting up a verified Facebook Developer App with Graph permissions, which the client has not completed yet.
+2. **Interim Solution Strategy (Deliberate & Reusable)**:
+   Rather than blocking video presentation on developer app setup or continuing to show placeholder stock images, we transitioned to Instagram's official **native oEmbed / embed widget** (`<blockquote class="instagram-media">` + `embed.js`).
+   - **Zero API Tokens or Business Account Required**: Works immediately with any public Instagram post/reel URL from [`@aapkaastrologer`](https://www.instagram.com/aapkaastrologer/).
+   - **Zero Re-Hosting or Mock Data**: Real videos, thumbnails, captions, audio indicators, and author attribution are rendered natively by Instagram.
+   - **Direct Profile Click-Through**: Built-in "View on Instagram" link takes visitors directly to Acharya Niraj Kumar's authentic Instagram profile (`https://www.instagram.com/aapkaastrologer/`).
+   - **Zero Wasted Work**: The curation desk at `/dashboard/reels` was updated to manage this manual configuration list dynamically (add, reorder, pin, hide, remove). When full Meta Graph API auto-sync is configured later, this exact same curation desk and data model will govern both synced and curated items.
+
+### 50.2 Implementation Highlights
+1. **Configurable Featured Reels ([`src/config/featuredReels.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/config/featuredReels.ts))**:
+   - Holds the initial list of featured Instagram reels with real-format URLs (`DEFAULT_FEATURED_REELS`).
+   - Defined constants: `INSTAGRAM_PROFILE_URL = "https://www.instagram.com/aapkaastrologer/"` and `INSTAGRAM_HANDLE = "@aapkaastrologer"`.
+   - Clear inline client notes for updating reel URLs directly in code or via the dashboard.
+2. **Native Embed Widget ([`src/components/reels/InstagramReelEmbed.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/reels/InstagramReelEmbed.tsx))**:
+   - Implements official Instagram embed specification with `<blockquote className="instagram-media" data-instgrm-captioned data-instgrm-permalink={url} data-instgrm-version="14">`.
+   - Handles asynchronous loading of `https://www.instagram.com/embed.js` and calls `window.instgrm.Embeds.process()` on mount and updates.
+   - Renders a graceful fallback card with direct click-through to both the reel and the official profile if scripts are blocked.
+3. **Homepage Integration ([`src/components/home/InstagramFeedSection.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/components/home/InstagramFeedSection.tsx))**:
+   - Replaced mock Unsplash grid with real `InstagramReelEmbed` widgets.
+   - Subscribes to the `"aapka_reels_updated"` store event for reactive updates.
+   - Top header and profile follow button directly link to `https://www.instagram.com/aapkaastrologer/`.
+4. **Dedicated Gallery ([`src/app/reels/page.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/reels/page.tsx))**:
+   - Displays all active curated reels with category filtering (Horoscope, Vastu, Gemstone, Remedy).
+   - Removed the mock modal player in favor of Instagram's native video player.
+   - Added a bottom CTA encouraging visitors to follow `@aapkaastrologer` on Instagram.
+5. **Curation Desk Compatibility ([`src/app/dashboard/reels/ReelsManagerClient.tsx`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/dashboard/reels/ReelsManagerClient.tsx) & [`src/app/api/dashboard/reels/route.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/api/dashboard/reels/route.ts))**:
+   - Extended `ReelsStore` with `addReel`, `removeReel`, `reorderReel`, `togglePin`, `toggleHide`, and `resetToDefaults`.
+   - In browser environments, persists updates to `localStorage` (`aapka_curated_reels`) and broadcasts DOM events across views.
+   - Operator UI includes:
+     - Form to paste any Instagram Reel/Post URL, set Jyotish summary, select category, and toggle homepage pinning.
+     - Up/Down reordering arrows for exact display ranking.
+     - Pin/Unpin, Hide/Unhide, and Delete actions.
+     - Reset to Defaults button for instant recovery.
+     - Informative notice explaining the interim native embed model and future Graph API compatibility.
+
+### 50.3 Automated Test Evidence & Verification
+- **Automated Test Suite ([`tests/featuredReelsAudit.test.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/tests/featuredReelsAudit.test.ts))**:
+  - `Featured Reels Config: contains verified Instagram profile and real-format reel entries`: **PASS**
+  - `Embed Widget: InstagramReelEmbed uses native oEmbed blockquote and embed.js`: **PASS**
+  - `Homepage & Reels Page: Mock Unsplash thumbnails and fake stats are completely eliminated`: **PASS**
+  - `ReelsStore: Supports adding, reordering, pinning, hiding, and removing reels dynamically`: **PASS**
+  - `Dashboard Reels: Curation desk supports manual additions, reordering, and informs about interim oEmbed step`: **PASS**
+- **Full Project Test Suite (`npm test`)**: **294 / 294 tests passing** across 54 test suites with 0 failures.
+- **Production Build (`npm run build`)**: **99/99 routes compiled cleanly** with zero Turbopack or TypeScript errors.
+
+
 
