@@ -196,8 +196,8 @@ export interface NavratriPromoConfig {
 
 export const DEFAULT_NAVRATRI_PROMO_CONFIG: NavratriPromoConfig = {
   enabled: true,
-  startDate: "2026-09-25", // Active for current window / testing
-  endDate: "2026-10-31", // Covers full Navratri festival period
+  startDate: "2026-09-25",
+  endDate: "2026-10-12", // Navratri festive offer concluded
   headline: "Get one abhimantrit Rudraksh on consultation — limited period offer, only for Navratri.",
   subheadline: "Special Festive Blessing • Auspicious Nine Nights of Maa Durga",
   blessingDescription:

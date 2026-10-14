@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, Sparkles, ShieldCheck, Check } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_OFFER, isNavratriPromoActive, NavratriPromoConfig } from "@/config/placeholderContent";
 import { AdminStore } from "@/lib/store/adminStore";
@@ -343,43 +343,87 @@ export function WelcomeConsultationModal({
           {/* Left Column: Offer Details & Value Proposition */}
           <div className="md:col-span-7 p-6 sm:p-7 text-center md:text-left flex flex-col justify-between space-y-3.5">
             {/* 1. Small Logo / Brand Mark with Golden Ornamental Flankers */}
-            <div className="flex items-center justify-center md:justify-start gap-2">
-              <span className="h-px w-5 bg-gradient-to-r from-transparent to-[#E8A33D]" aria-hidden="true" />
-              <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#E8A33D]/60 bg-gradient-to-r from-[#FBF3E7] via-[#FFFDF9] to-[#FBF3E7] px-3.5 py-1 text-[11px] font-bold text-[#7B2D26] shadow-xs">
+            <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+              <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[#E8A33D]/60 bg-gradient-to-r from-[#FBF3E7] via-[#FFFDF9] to-[#FBF3E7] px-3 py-1 text-[11px] font-bold text-[#7B2D26] shadow-xs">
                 <img src="/images/logo-icon.png" alt="Aapka Astro" className="h-4 w-4 object-contain" />
                 <span className="font-temple tracking-widest uppercase">Aapka Astro</span>
               </div>
-              <span className="h-px w-5 bg-gradient-to-l from-transparent to-[#E8A33D]" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#7B2D26]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#7B2D26]">
+                <Sparkles className="h-3 w-3 text-[#E8A33D]" />
+                Limited Period Offer
+              </span>
             </div>
 
-            {/* 2. Headline */}
+            {/* 2. Headline & Subtext */}
             <div>
               <h2
                 id="welcome-modal-title"
                 data-testid="welcome-modal-title"
-                className="font-temple text-xl sm:text-2xl font-black text-[#7B2D26] tracking-tight leading-snug drop-shadow-xs"
+                className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26] tracking-tight leading-tight drop-shadow-xs"
               >
                 50% Off Your First Consultation
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-[#7B2D26] font-semibold italic">
-                Clarity Today, Better Tomorrow.
+              <p className="mt-1 text-xs sm:text-sm text-[#3B2A1E] font-medium leading-relaxed">
+                Start your spiritual journey with a massive <strong className="text-[#7B2D26] font-bold">50% discount</strong> on your very first 1-on-1 session with Acharya Niraj Kumar.
               </p>
             </div>
 
-            {/* 3. One Short Line of Subtext (One Sentence) with Flat Pricing Banner */}
-            <div className="rounded-xl border border-[#E8A33D]/50 bg-gradient-to-br from-[#7B2D26] to-[#5D1F1A] text-[#FFFDF9] p-3 text-center shadow-xs">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8A33D] block">
-                ASTRO CONSULTATION • FIRST CLIENT SPECIAL
-              </span>
-              <div className="flex items-baseline justify-center gap-2 mt-1">
-                <span className="text-2xl sm:text-3xl font-black text-[#FFFDF9] font-temple">
-                  {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}
+            {/* 3. High-Impact Price Drop Comparison Voucher */}
+            <div className="rounded-xl border-2 border-[#E8A33D] bg-gradient-to-br from-[#FFFDF9] via-[#FBF3E7] to-[#FFFDF9] p-3.5 sm:p-4 text-[#3B2A1E] shadow-md relative overflow-hidden">
+              {/* Voucher Header Tag */}
+              <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-2 mb-2.5">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-[#7B2D26] font-temple">
+                  <Sparkles className="h-3 w-3 text-[#E8A33D]" />
+                  Special First Consultation Offer
                 </span>
-                <span className="text-xs text-[#FFFDF9]/60 line-through">
-                  ₹2,100
+                <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-black text-[#E8A33D] uppercase tracking-wider shadow-xs">
+                  Flat 50% Off
                 </span>
               </div>
-              <p className="text-[11px] text-[#FFFDF9]/90 font-body mt-0.5">
+
+              {/* Side-by-side dramatic price slashed comparison */}
+              <div className="grid grid-cols-2 gap-2.5 items-center">
+                {/* Regular Price (Slashed with red/maroon) */}
+                <div className="rounded-lg border border-[#7B2D26]/20 bg-[#7B2D26]/5 p-2.5 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26]/80 block font-body">
+                    Standard Fee
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-[#7B2D26]/60 line-through decoration-red-600 decoration-2 font-temple block mt-0.5">
+                    ₹2,100
+                  </span>
+                  <span className="text-[9px] text-[#6E5545] font-medium block">
+                    Regular Consultation
+                  </span>
+                </div>
+
+                {/* First-Time Seeker Special (Huge Golden Maroon) */}
+                <div className="rounded-lg border-2 border-[#E8A33D] bg-gradient-to-br from-[#7B2D26] to-[#5D1F1A] p-2.5 text-[#FFFDF9] text-center shadow-md">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#E8A33D] block font-body">
+                    First Visit Rate
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-[#FFFDF9] font-temple tracking-tight block">
+                    {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#E8A33D] font-body block">
+                    Save ₹1,049 Instantly
+                  </span>
+                </div>
+              </div>
+
+              {/* Inclusions */}
+              <div className="mt-2.5 pt-2 border-t border-[#E8D8C3] flex items-center justify-between text-[11px] text-[#6E5545] font-medium">
+                <span className="inline-flex items-center gap-1">
+                  <Check className="h-3 w-3 text-emerald-600 font-bold" />
+                  WhatsApp / Google Meet
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Check className="h-3 w-3 text-emerald-600 font-bold" />
+                  Full Kundli &amp; Dasha Analysis
+                </span>
+              </div>
+
+              {/* Descriptive Subtext (Must keep exact text for tests) */}
+              <p className="text-[11px] text-[#6E5545] font-body mt-2 leading-relaxed text-center md:text-left">
                 Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video for Flat {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate} (Regular ₹2,100).
               </p>
             </div>
@@ -387,9 +431,12 @@ export function WelcomeConsultationModal({
             {/* 4. Single Small Line of Trust Phrase */}
             <p
               data-testid="welcome-modal-trust-line"
-              className="text-xs font-semibold text-[#6E5545] font-body tracking-wide text-center md:text-left"
+              className="text-xs font-semibold text-[#6E5545] font-body tracking-wide text-center md:text-left flex items-center justify-center md:justify-start gap-2"
             >
-              20+ years · Certified Jyotish Acharya
+              <ShieldCheck className="h-4 w-4 text-[#E8A33D] shrink-0" />
+              <span>20+ years · Certified Jyotish Acharya</span>
+              <span className="text-[#E8A33D]">•</span>
+              <span className="text-[#7B2D26] font-bold">Limited Period Offer</span>
             </p>
 
             {/* 5. One Primary CTA Button with Radiant Temple Styling */}
@@ -397,15 +444,15 @@ export function WelcomeConsultationModal({
               <Link
                 href={`/consult?offer=${FIRST_CONSULTATION_OFFER.code}`}
                 onClick={handleDismiss}
-                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#7B2D26] via-[#8D342C] to-[#7B2D26] hover:from-[#6B241E] hover:to-[#6B241E] py-3.5 px-5 text-sm font-bold text-[#FFFDF9] shadow-md hover:shadow-xl border border-[#E8A33D]/60 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
+                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#7B2D26] via-[#8D342C] to-[#7B2D26] hover:from-[#6B241E] hover:to-[#6B241E] py-3.5 px-5 text-sm font-bold text-[#FFFDF9] shadow-lg hover:shadow-xl border border-[#E8A33D]/80 transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-[#7B2D26] focus:ring-offset-2 cursor-pointer"
               >
                 {/* Shimmer sweep effect */}
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                  className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                 />
-                <span className="relative z-10 tracking-wide">Claim 50% Off &amp; Start Consultation</span>
-                <ArrowRight className="relative z-10 h-4 w-4 text-[#E8A33D] group-hover:translate-x-0.5 transition-transform" />
+                <span className="relative z-10 tracking-wide font-temple">Claim 50% Off &amp; Start Consultation</span>
+                <ArrowRight className="relative z-10 h-4 w-4 text-[#E8A33D] group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -437,22 +484,31 @@ export function WelcomeConsultationModal({
             </p>
           </div>
 
-          {/* Right Column: Visual Composition with Acharya Niraj Kumar Photo & Celestial Zodiac Wheel */}
-          <div className="md:col-span-5 relative flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#FBF3E7] to-[#F5E6D3] border-t md:border-t-0 md:border-l border-[#E8D8C3] overflow-hidden">
+          {/* Right Column: High-Prestige Consecrated Portrait Composition */}
+          <div className="md:col-span-5 relative flex flex-col items-center justify-center p-6 sm:p-7 bg-gradient-to-b from-[#7B2D26] via-[#64221C] to-[#451510] text-[#FFFDF9] border-t md:border-t-0 md:border-l border-[#E8A33D]/40 overflow-hidden">
+            {/* Sacred Golden Mandala & Radiance Glow */}
+            <div
+              aria-hidden="true"
+              className="absolute -top-12 -right-12 h-44 w-44 rounded-full bg-[#E8A33D]/20 blur-2xl pointer-events-none"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-[#E8A33D]/15 blur-2xl pointer-events-none"
+            />
+
             {/* Celestial Zodiac Wheel SVG Background Element */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-15"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"
             >
               <svg
                 viewBox="0 0 200 200"
-                className="w-72 h-72 text-[#7B2D26] animate-[spin_60s_linear_infinite]"
+                className="w-80 h-80 text-[#E8A33D] animate-[spin_60s_linear_infinite]"
               >
-                <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" strokeWidth="1.2" />
                 <circle cx="100" cy="100" r="78" fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 3" />
                 <circle cx="100" cy="100" r="62" fill="none" stroke="currentColor" strokeWidth="1" />
                 <circle cx="100" cy="100" r="44" fill="none" stroke="currentColor" strokeWidth="0.8" />
-                {/* 12 Celestial Radial Spoke Divisions (Zodiac Houses) */}
                 {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
                   <line
                     key={deg}
@@ -465,43 +521,65 @@ export function WelcomeConsultationModal({
                     transform={`rotate(${deg} 100 100)`}
                   />
                 ))}
-                {/* Celestial Center Dot */}
                 <circle cx="100" cy="100" r="4" fill="#E8A33D" />
               </svg>
             </div>
 
-            {/* Photo Container with Temple Gold Halo Ring */}
-            <div className="relative z-10 mx-auto flex flex-col items-center">
-              <div className="relative h-32 w-32 sm:h-36 sm:w-36 rounded-full p-1 bg-gradient-to-tr from-[#7B2D26] via-[#E8A33D] to-[#7B2D26] shadow-xl ring-4 ring-[#E8A33D]/20">
-                <div className="relative h-full w-full rounded-full overflow-hidden border-2 border-[#FFFDF9] bg-[#FBF3E7]">
-                  <img
-                    src={PLACEHOLDER_ASTROLOGER.avatarUrl}
-                    alt="Acharya Niraj Kumar"
-                    className="h-full w-full object-cover object-top"
-                  />
-                </div>
-                {/* Consecrated Diya Badge */}
+            {/* Golden Frame with Portrait of Acharya Niraj Kumar in Yellow Vedic Attire */}
+            <div className="relative z-10 flex flex-col items-center w-full my-auto">
+              {/* Floating Massive 50% OFF Badge */}
+              <div className="relative mb-3.5">
+                {/* 50% OFF Floating Stamp Badge */}
                 <div
-                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7B2D26] to-[#96372E] border-2 border-[#E8A33D] shadow-md"
-                  title="Auspicious Guidance"
+                  className="absolute -top-3 -right-3 z-30 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-gradient-to-br from-[#E8A33D] via-[#F4BE6C] to-[#C1662F] text-[#3B2A1E] font-black shadow-2xl border-2 border-[#FFFDF9] transform rotate-12 ring-2 ring-[#7B2D26]"
+                  title="50% Off First Consultation"
                 >
-                  <DiyaIcon size={16} className="text-[#E8A33D]" />
+                  <span className="text-[13px] font-black leading-none font-temple">50%</span>
+                  <span className="text-[8px] font-black uppercase tracking-tight leading-none">OFF</span>
+                </div>
+
+                {/* Main Image Container */}
+                <div className="relative h-44 w-44 sm:h-48 sm:w-48 rounded-2xl p-1 bg-gradient-to-tr from-[#E8A33D] via-[#FFFDF9] to-[#E8A33D] shadow-2xl ring-4 ring-[#E8A33D]/30">
+                  <div className="relative h-full w-full rounded-xl overflow-hidden border-2 border-[#7B2D26] bg-[#2A1D15]">
+                    <img
+                      src="/images/acharya-yellow.jpg"
+                      alt="Acharya Niraj Kumar"
+                      className="h-full w-full object-cover object-center"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
+                  </div>
+
+                  {/* Auspicious Consecrated Diya Badge */}
+                  <div
+                    className="absolute -bottom-2 -left-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7B2D26] to-[#96372E] border-2 border-[#E8A33D] shadow-lg"
+                    title="Vedic Guidance &amp; Consecrated Wisdom"
+                  >
+                    <DiyaIcon size={16} className="text-[#E8A33D]" />
+                  </div>
                 </div>
               </div>
 
-              {/* Exact Correct Spelling: "Niraj Kumar" rendered as pure HTML/CSS text */}
-              <div className="mt-3.5 text-center">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7B2D26] text-[#FFFDF9] shadow-xs border border-[#E8A33D]/40">
-                  <span className="font-temple text-xs font-bold tracking-wider">
+              {/* Credentials & Lineage Pill */}
+              <div className="text-center w-full space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFDF9] text-[#7B2D26] shadow-md border border-[#E8A33D]">
+                  <span className="font-temple text-xs font-black tracking-wider uppercase">
                     Acharya Niraj Kumar
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] font-semibold text-[#6E5545] font-body">
+                <p className="mt-1 text-xs font-bold text-[#E8A33D] font-body tracking-wide">
                   Vastu Expert &amp; Jyotish Acharya
                 </p>
-                <p className="text-[10px] text-[#6E5545]/75 font-body">
+                <p className="text-[11px] text-[#FBF3E7]/80 font-body">
                   Baidyanath Dham Heritage
                 </p>
+
+                {/* Trust Tag */}
+                <div className="pt-2">
+                  <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8A33D]/40 bg-black/25 px-3 py-1.5 text-[11px] font-semibold text-[#FBF3E7] shadow-inner">
+                    <Sparkles className="h-3.5 w-3.5 text-[#E8A33D] shrink-0" />
+                    <span>1-on-1 Direct Consultation</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
