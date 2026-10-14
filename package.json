@@ -15,6 +15,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.9.4",
     "@prisma/client": "6.4.1",
+    "@vercel/analytics": "^2.0.1",
     "astronomy-engine": "^2.1.19",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
