@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel, Mukta, Noto_Serif_Devanagari } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AstroClerkProvider as ClerkProvider } from "@/components/auth/ClerkAuthWrapper";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
@@ -124,6 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <WelcomeConsultationModal />
             <NavratriPromotionalModal />
           </LanguageProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
