@@ -85,15 +85,16 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
         </div>
         <h3 className="font-temple text-xl font-bold text-[#7B2D26]">No Active Consultation Booking</h3>
         <p className="text-xs sm:text-sm text-[#6E5545] mt-2 max-w-md mx-auto leading-relaxed">
-          You do not have any pending consultation sessions. Book an Astro Consultation (Flat ₹1,051) or Vaastu Consultation (Flat ₹15,000) to connect directly with Acharya Niraj Kumar.
+          You do not have any pending consultation sessions. Book an Astro Consultation (Regular ₹2,100 ➔ Now Flat ₹1,051) or Vaastu Consultation (Regular ₹25,000 ➔ Now Flat ₹15,000) to connect directly with Acharya Niraj Kumar.
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/consult"
-            className="w-full sm:w-auto rounded-xl bg-[#7B2D26] px-6 py-3 text-xs font-bold text-white hover:bg-[#64221C] transition-all shadow-md text-center"
+            className="w-full sm:w-auto rounded-xl bg-[#7B2D26] px-6 py-3 text-xs font-bold text-white hover:bg-[#64221C] transition-all shadow-md text-center flex items-center justify-center gap-1.5"
           >
-            Book Astro Consultation (₹1,051)
+            <span className="line-through text-red-200/90 text-xs font-bold decoration-red-300">₹2,100</span>
+            <span>Book Astro Consultation (Flat ₹1,051)</span>
           </Link>
           <a
             href="https://wa.me/919311215564"

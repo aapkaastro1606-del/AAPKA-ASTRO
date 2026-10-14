@@ -383,29 +383,32 @@ export function WelcomeConsultationModal({
 
               {/* Side-by-side dramatic price slashed comparison */}
               <div className="grid grid-cols-2 gap-2.5 items-center">
-                {/* Regular Price (Slashed with red/maroon) */}
-                <div className="rounded-lg border border-[#7B2D26]/20 bg-[#7B2D26]/5 p-2.5 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26]/80 block font-body">
-                    Standard Fee
+                {/* Regular Price (Priority Slashed Anchor Price) */}
+                <div className="rounded-lg border-2 border-red-200 bg-red-50/70 p-2.5 text-center relative">
+                  <span className="rounded-xs bg-[#7B2D26] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#FFFDF9] tracking-wider absolute top-1 right-1">
+                    50% OFF
                   </span>
-                  <span className="text-xl sm:text-2xl font-bold text-[#7B2D26]/60 line-through decoration-red-600 decoration-2 font-temple block mt-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] block font-body">
+                    Regular Base Price
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-4 font-temple block mt-0.5">
                     ₹2,100
                   </span>
-                  <span className="text-[9px] text-[#6E5545] font-medium block">
-                    Regular Consultation
+                  <span className="text-[9px] text-[#7B2D26] font-bold block">
+                    Original Price
                   </span>
                 </div>
 
-                {/* First-Time Seeker Special (Huge Golden Maroon) */}
+                {/* First-Time Seeker Special Discounted Price */}
                 <div className="rounded-lg border-2 border-[#E8A33D] bg-gradient-to-br from-[#7B2D26] to-[#5D1F1A] p-2.5 text-[#FFFDF9] text-center shadow-md">
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#E8A33D] block font-body">
-                    First Visit Rate
+                    Discounted Price
                   </span>
                   <span className="text-2xl sm:text-3xl font-black text-[#FFFDF9] font-temple tracking-tight block">
                     {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate}
                   </span>
                   <span className="text-[10px] font-bold text-[#E8A33D] font-body block">
-                    Save ₹1,049 Instantly
+                    You Save ₹1,049
                   </span>
                 </div>
               </div>
@@ -424,7 +427,7 @@ export function WelcomeConsultationModal({
 
               {/* Descriptive Subtext (Must keep exact text for tests) */}
               <p className="text-[11px] text-[#6E5545] font-body mt-2 leading-relaxed text-center md:text-left">
-                Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video for Flat {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate} (Regular ₹2,100).
+                Regular base fee ₹2,100 heavily discounted by 50% down to ₹1,051. Consult 1-on-1 with {PLACEHOLDER_ASTROLOGER.displayName} via private chat, call, or video for Flat {ADMIN_CONFIGURABLE_PRICING.chat.currency}{ADMIN_CONFIGURABLE_PRICING.chat.effectiveFirstTimeRate} (Regular ₹2,100).
               </p>
             </div>
 

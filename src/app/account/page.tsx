@@ -99,11 +99,12 @@ export default function ClientAccountDashboard() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
                   Astro Consultation
                 </span>
-                <div className="font-mono text-xl font-black text-[#7B2D26]">
-                  Flat ₹1,051/-
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-black text-red-700 line-through decoration-red-600">Reg. ₹2,100</span>
+                  <span className="font-mono text-lg font-black text-[#7B2D26]">Now ₹1,051/-</span>
                 </div>
-                <span className="text-[9px] text-[#6B8E5A] font-semibold block">
-                  50% Off First Session (Reg. ₹2,100)
+                <span className="text-[9px] text-[#6B8E5A] font-bold block">
+                  50% Off First Booking
                 </span>
               </div>
               <Link
@@ -120,11 +121,12 @@ export default function ClientAccountDashboard() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
                   Vaastu Consultation
                 </span>
-                <div className="font-mono text-xl font-black text-[#7B2D26]">
-                  Flat ₹15,000/-
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-black text-red-700 line-through decoration-red-600">Reg. ₹25,000</span>
+                  <span className="font-mono text-lg font-black text-[#7B2D26]">Now ₹15,000/-</span>
                 </div>
-                <span className="text-[9px] text-[#6B8E5A] font-semibold block">
-                  ₹10,000 Off (Reg. ₹25,000)
+                <span className="text-[9px] text-[#6B8E5A] font-bold block">
+                  Flat ₹10,000 Savings
                 </span>
               </div>
               <Link

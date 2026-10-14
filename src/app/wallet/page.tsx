@@ -54,10 +54,10 @@ export default function WalletPage() {
                 <span>Pay-Per-Booking Consultation Model</span>
               </div>
               <h2 className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26]">
-                Flat ₹1,051/- for First Consultation
+                Regular ₹2,100 ➔ Now Flat ₹1,051/- (50% Off)
               </h2>
               <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed">
-                Enjoy complete 1-on-1 private guidance with {PLACEHOLDER_ASTROLOGER.displayName} across Voice Call, Video Call, or Live Chat at a single flat fee (Standard ₹2,100 — 50% promotional discount).
+                Enjoy complete 1-on-1 private guidance with {PLACEHOLDER_ASTROLOGER.displayName} across Voice Call, Video Call, or Live Chat at a single flat fee (Standard ₹2,100 discounted by 50% down to ₹1,051).
               </p>
               <div className="flex flex-wrap items-center gap-4 text-xs text-[#6E5545] pt-2">
                 <span className="flex items-center gap-1">
@@ -77,15 +77,18 @@ export default function WalletPage() {
 
             <div className="w-full md:w-auto shrink-0 flex flex-col items-center sm:items-end gap-3">
               <div className="text-right">
-                <span className="text-xs text-[#6E5545] line-through block">Regular ₹2,100</span>
-                <span className="font-mono text-3xl font-black text-[#7B2D26]">₹1,051</span>
-                <span className="text-[10px] text-[#6B8E5A] font-bold block">50% First-Time Savings</span>
+                <div className="flex items-baseline justify-end gap-2">
+                  <span className="font-mono text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                  <span className="font-mono text-2xl sm:text-3xl font-black text-[#7B2D26]">Now ₹1,051</span>
+                </div>
+                <span className="text-[11px] text-[#6B8E5A] font-bold block">Save ₹1,049 (50% Off First Consultation)</span>
               </div>
               <Link
                 href="/consult?offer=FIRST1051"
                 className="w-full sm:w-auto rounded-xl bg-[#7B2D26] hover:bg-[#64221C] px-6 py-3 text-xs sm:text-sm font-bold text-[#FFFDF9] shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <span>Book Consultation (₹1,051)</span>
+                <span className="line-through text-red-200/90 text-xs font-bold decoration-red-300">₹2,100</span>
+                <span>Book Consultation (Now ₹1,051)</span>
                 <ArrowRight className="h-4 w-4 text-[#E8A33D]" />
               </Link>
             </div>

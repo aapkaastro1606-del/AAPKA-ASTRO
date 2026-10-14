@@ -497,10 +497,16 @@ export default function ConsultPage() {
                       </span>
                     </div>
 
-                    <div className="mt-3 flex items-baseline gap-2.5">
-                      <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹1,051/-</span>
-                      <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹2,100</span>
-                      <span className="text-xs font-semibold text-[#6B8E5A]">for first consultation</span>
+                    <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+                      <div className="inline-flex items-baseline gap-1.5 bg-red-50 border border-red-200/80 px-2.5 py-1 rounded-xl">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-800">Regular:</span>
+                        <span className="font-temple text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                      </div>
+                      <div className="inline-flex items-baseline gap-1">
+                        <span className="text-xs font-bold text-[#7B2D26] uppercase">Now:</span>
+                        <span className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26]">₹1,051/-</span>
+                      </div>
+                      <span className="text-xs font-bold text-[#2A4720] bg-[#6B8E5A]/20 px-2 py-0.5 rounded-full">50% Off First Booking</span>
                     </div>
 
                     <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
@@ -518,10 +524,16 @@ export default function ConsultPage() {
                       </span>
                     </div>
 
-                    <div className="mt-3 flex items-baseline gap-2.5">
-                      <span className="font-temple text-3xl font-extrabold text-[#7B2D26]">₹15,000/-</span>
-                      <span className="text-sm font-semibold text-[#7D6B5D] line-through">₹25,000</span>
-                      <span className="text-xs font-semibold text-[#6B8E5A]">standing price for all</span>
+                    <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+                      <div className="inline-flex items-baseline gap-1.5 bg-red-50 border border-red-200/80 px-2.5 py-1 rounded-xl">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-800">Regular:</span>
+                        <span className="font-temple text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-2">₹25,000</span>
+                      </div>
+                      <div className="inline-flex items-baseline gap-1">
+                        <span className="text-xs font-bold text-[#7B2D26] uppercase">Now:</span>
+                        <span className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26]">₹15,000/-</span>
+                      </div>
+                      <span className="text-xs font-bold text-[#2A4720] bg-[#6B8E5A]/20 px-2 py-0.5 rounded-full">Flat ₹10,000 Savings</span>
                     </div>
 
                     <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
@@ -583,8 +595,8 @@ export default function ConsultPage() {
                       </span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-temple font-bold text-xl text-[#7B2D26]">₹1,051</span>
-                      <span className="text-xs line-through text-[#7D6B5D]">₹2,100</span>
+                      <span className="font-temple font-black text-xl text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                      <span className="font-temple font-black text-lg text-[#7B2D26]">Now ₹1,051</span>
                     </div>
                     <span className="text-[10px] text-[#6E5545] block mt-1">
                       Personal Horoscope &amp; Kundli Guidance
@@ -607,8 +619,8 @@ export default function ConsultPage() {
                       </span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-temple font-bold text-xl text-[#7B2D26]">₹15,000</span>
-                      <span className="text-xs line-through text-[#7D6B5D]">₹25,000</span>
+                      <span className="font-temple font-black text-xl text-red-700 line-through decoration-red-600 decoration-2">₹25,000</span>
+                      <span className="font-temple font-black text-lg text-[#7B2D26]">Now ₹15,000</span>
                     </div>
                     <span className="text-[10px] text-[#6E5545] block mt-1">
                       Home, Office &amp; Site Energy Audit
@@ -650,9 +662,14 @@ export default function ConsultPage() {
                       <PhoneCall className="h-5 w-5 mb-1.5 text-[#7B2D26]" />
                       <span className="text-xs font-bold">Voice Call</span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">Direct WhatsApp Audio</span>
-                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
-                        Flat ₹{promoFee.toLocaleString("en-IN")}
-                      </span>
+                      <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                          ₹{standardFee.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                          Now ₹{promoFee.toLocaleString("en-IN")}
+                        </span>
+                      </div>
                     </button>
 
                     <button
@@ -669,9 +686,14 @@ export default function ConsultPage() {
                         {isAstro ? "Video Call" : "Video (Layout Review)"}
                       </span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">Google Meet / Video</span>
-                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
-                        Flat ₹{promoFee.toLocaleString("en-IN")}
-                      </span>
+                      <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                          ₹{standardFee.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                          Now ₹{promoFee.toLocaleString("en-IN")}
+                        </span>
+                      </div>
                     </button>
 
                     <button
@@ -688,9 +710,14 @@ export default function ConsultPage() {
                         {isAstro ? "Live Chat" : "Audit Report Consultation"}
                       </span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">WhatsApp / Client Desk</span>
-                      <span className="text-[11px] font-mono mt-1 font-bold text-[#7B2D26]">
-                        Flat ₹{promoFee.toLocaleString("en-IN")}
-                      </span>
+                      <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                          ₹{standardFee.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                          Now ₹{promoFee.toLocaleString("en-IN")}
+                        </span>
+                      </div>
                     </button>
                   </div>
                 </div>
@@ -866,9 +893,16 @@ export default function ConsultPage() {
                 >
                   <CreditCard className="h-4 w-4 text-[#E8A33D]" />
                   <span>
-                    {isProcessingPayment
-                      ? "Initiating Booking..."
-                      : `Proceed to Pay ₹${promoFee.toLocaleString("en-IN")} & Start Consultation`}
+                    {isProcessingPayment ? (
+                      "Initiating Booking..."
+                    ) : (
+                      <span className="flex items-center gap-1.5 flex-wrap justify-center">
+                        <span className="line-through text-red-200/90 text-xs sm:text-sm font-bold decoration-red-300">
+                          ₹{standardFee.toLocaleString("en-IN")}
+                        </span>
+                        <span>Proceed to Pay ₹{promoFee.toLocaleString("en-IN")} &amp; Start Consultation</span>
+                      </span>
+                    )}
                   </span>
                 </button>
 
@@ -911,8 +945,8 @@ export default function ConsultPage() {
                     onChange={(e) => setSelectedProduct(e.target.value as "astro" | "vaastu")}
                     className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] p-2.5 text-[#3B2A1E]"
                   >
-                    <option value="astro">Astro Consultation (Flat ₹1,051)</option>
-                    <option value="vaastu">Vaastu Consultation (Flat ₹15,000)</option>
+                    <option value="astro">Astro Consultation (Regular ₹2,100 ➔ Now Flat ₹1,051)</option>
+                    <option value="vaastu">Vaastu Consultation (Regular ₹25,000 ➔ Now Flat ₹15,000)</option>
                   </select>
                 </div>
 
@@ -942,11 +976,16 @@ export default function ConsultPage() {
                 </div>
 
                 <div className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] p-3 space-y-1">
-                  <div className="flex justify-between text-[#6B5A4E]">
+                  <div className="flex justify-between items-center text-[#6B5A4E]">
                     <span>Dedicated 1-on-1 Consultation:</span>
-                    <strong className="text-[#7B2D26] font-bold">
-                      Flat ₹{promoFee.toLocaleString("en-IN")}/-
-                    </strong>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs font-black text-red-700 line-through decoration-red-600">
+                        ₹{standardFee.toLocaleString("en-IN")}
+                      </span>
+                      <strong className="text-[#7B2D26] font-bold text-sm">
+                        Now Flat ₹{promoFee.toLocaleString("en-IN")}/-
+                      </strong>
+                    </div>
                   </div>
                   <span className="text-[10px] text-[#7D6B5D] block">
                     {isAstro

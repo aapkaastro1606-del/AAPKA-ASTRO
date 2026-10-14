@@ -75,9 +75,9 @@ export default function PricingPolicyPage() {
                   </span>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-2xl font-bold font-temple text-[#7B2D26]">
-                    Flat ₹1,051
-                    <span className="text-xs font-normal text-[#6E5545] line-through ml-1.5">₹2,100</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl sm:text-2xl font-black font-temple text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                    <span className="text-2xl font-bold font-temple text-[#7B2D26]">Now Flat ₹1,051</span>
                   </div>
                   <div className="text-xs text-[#6B8E5A] font-semibold">
                     First-Time Clients: 50% Savings Applied
@@ -106,9 +106,9 @@ export default function PricingPolicyPage() {
                   </span>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-2xl font-bold font-temple text-[#2A4720]">
-                    Flat ₹15,000
-                    <span className="text-xs font-normal text-[#6E5545] line-through ml-1.5">₹25,000</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl sm:text-2xl font-black font-temple text-red-700 line-through decoration-red-600 decoration-2">₹25,000</span>
+                    <span className="text-2xl font-bold font-temple text-[#2A4720]">Now Flat ₹15,000</span>
                   </div>
                   <div className="text-xs text-[#6B8E5A] font-semibold">
                     Standing Promotional Price for Everyone

@@ -344,12 +344,14 @@ export const Navbar: React.FC = () => {
             className="inline-flex items-center justify-center gap-1 sm:gap-1.5 hover:underline max-w-full"
           >
             <span className="font-bold text-[#E8A33D] shrink-0">
-              {isHi ? "विशेष ऑफर • प्रथम परामर्श मात्र ₹1,051/-" : "Special Offer • 1-on-1 Consultation Now ₹1,051/-"}
+              {isHi
+                ? "विशेष छूट • वास्तविक ₹2,100 ➔ अब मात्र ₹1,051/- (50% छूट)"
+                : "Special Offer • Regular ₹2,100 ➔ Now Flat ₹1,051/- (50% Off)"}
             </span>
             <span className="truncate">
               {isHi
-                ? "(वास्तविक शुल्क ₹2,100 — 50% छूट • कॅरियर, विवाह व स्वास्थ्य)"
-                : "(Regular ₹2,100 — Flat Fee • Career, Wealth & Relationship Guidance)"}
+                ? "(कॅरियर, विवाह, स्वास्थ्य व संपूर्ण कुण्डली मार्गदर्शन)"
+                : "(Flat Fee 1-on-1 Session • Career, Wealth & Relationship Guidance)"}
             </span>
             <span className="font-bold text-[#E8A33D] shrink-0">&rarr;</span>
           </Link>
@@ -559,9 +561,14 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap shrink-0"
               >
                 <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
+                <span className="sm:hidden">
+                  <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
+                  <span>{isHi ? "₹1,051" : "₹1,051"}</span>
+                </span>
                 <span className="hidden sm:inline">
-                  {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}
+                  {isHi ? "परामर्श " : "Book Consultation "}
+                  <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
+                  <span className="text-[#FFE29A]">➔ ₹1,051</span>
                 </span>
               </Link>
             ) : (
@@ -572,9 +579,14 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
                 <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">{isHi ? "बुक ₹1,051" : "Book ₹1,051"}</span>
+                <span className="sm:hidden">
+                  <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
+                  <span>{isHi ? "₹1,051" : "₹1,051"}</span>
+                </span>
                 <span className="hidden sm:inline">
-                  {isHi ? "परामर्श बुक करें (₹1,051)" : "Book Consultation (₹1,051)"}
+                  {isHi ? "परामर्श " : "Book Consultation "}
+                  <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
+                  <span className="text-[#FFE29A]">➔ ₹1,051</span>
                 </span>
               </button>
             )}

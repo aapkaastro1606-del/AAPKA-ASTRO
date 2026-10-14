@@ -112,9 +112,9 @@ export const Hero: React.FC = () => {
                 <span>
                   {status === "AVAILABLE" ? "Book Live Consultation" : status === "BUSY" ? "Book Next Session" : "Book Priority Slot"}
                 </span>
-                {/* PLACEHOLDER: replace with real content */}
-                <span className="rounded-md bg-[#E8A33D] px-2 py-0.5 text-xs font-black text-[#3B2A1E]">
-                  Flat ₹1,051 (Reg. ₹2,100)
+                <span className="rounded-md bg-[#E8A33D] px-2 py-0.5 text-xs font-black text-[#3B2A1E] inline-flex items-center gap-1">
+                  <span className="line-through decoration-red-700 decoration-2 text-red-900 font-black text-xs">₹2,100</span>
+                  <span>Now Flat ₹1,051 (50% Off)</span>
                 </span>
               </Link>
 
