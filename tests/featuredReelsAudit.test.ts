@@ -17,8 +17,8 @@ test("Featured Reels Config: contains verified Instagram profile and real-format
     "Handle must be @aapkaastrologer"
   );
   assert.ok(
-    DEFAULT_FEATURED_REELS.length >= 2,
-    "Must have at least 2 default featured reels"
+    DEFAULT_FEATURED_REELS.length >= 5,
+    "Must have 5 authentic featured reels"
   );
 
   for (const reel of DEFAULT_FEATURED_REELS) {
@@ -33,35 +33,38 @@ test("Featured Reels Config: contains verified Instagram profile and real-format
     assert.strictEqual(typeof reel.pinnedToHome, "boolean");
     assert.strictEqual(typeof reel.isHidden, "boolean");
     assert.strictEqual(typeof reel.order, "number");
+    assert.ok(reel.videoUrl, "Reel must have a videoUrl");
+    assert.ok(reel.posterUrl, "Reel must have a posterUrl");
+    assert.ok(reel.videoDuration, "Reel must have a videoDuration");
   }
 });
 
-test("Embed Widget: InstagramReelEmbed uses native oEmbed blockquote and embed.js", () => {
+test("Embed Widget: InstagramReelEmbed uses optimized HTML5 video with IntersectionObserver lazy loading", () => {
   const embedPath = path.join(process.cwd(), "src/components/reels/InstagramReelEmbed.tsx");
   const content = fs.readFileSync(embedPath, "utf-8");
 
   assert.ok(
-    content.includes('className="instagram-media"'),
-    "Must include official class 'instagram-media'"
+    content.includes("IntersectionObserver"),
+    "Must use IntersectionObserver for zero-lag lazy loading"
   );
   assert.ok(
-    content.includes('data-instgrm-permalink'),
-    "Must include data-instgrm-permalink attribute"
+    content.includes('<video'),
+    "Must render native HTML5 video element"
   );
   assert.ok(
-    content.includes('data-instgrm-version="14"'),
-    "Must specify Instagram oEmbed version"
+    content.includes('preload="metadata"'),
+    "Must specify preload='metadata' for bandwidth optimization"
   );
   assert.ok(
-    content.includes("https://www.instagram.com/embed.js"),
-    "Must dynamically load official Instagram embed.js script"
+    content.includes("playsInline"),
+    "Must support inline mobile video playback"
   );
   assert.ok(
-    content.includes("instgrm.Embeds.process"),
-    "Must invoke window.instgrm.Embeds.process() for hydration"
+    content.includes("toggleMute") || content.includes("isMuted"),
+    "Must provide sound mute/unmute control"
   );
   assert.ok(
-    content.includes(INSTAGRAM_PROFILE_URL),
+    content.includes(INSTAGRAM_PROFILE_URL) || content.includes("INSTAGRAM_PROFILE_URL"),
     "Must link directly to Acharya Niraj Kumar's Instagram profile"
   );
 });

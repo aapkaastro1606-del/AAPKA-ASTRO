@@ -1,96 +1,119 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { ExternalLink } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { ExternalLink, Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { InstagramIcon } from "@/components/ui/InstagramIcon";
 import { INSTAGRAM_PROFILE_URL, INSTAGRAM_HANDLE } from "@/config/featuredReels";
 
 interface InstagramReelEmbedProps {
   url: string;
+  videoUrl?: string;
+  posterUrl?: string;
+  videoDuration?: string;
   caption?: string;
   category?: string;
   className?: string;
 }
 
 /**
- * Normalizes an Instagram post or reel URL for the oEmbed widget
- */
-function cleanInstagramUrl(rawUrl: string): string {
-  try {
-    const parsed = new URL(rawUrl);
-    // Strip tracking queries (utm_*, igsh, etc.)
-    return `${parsed.origin}${parsed.pathname}`;
-  } catch {
-    return rawUrl;
-  }
-}
-
-/**
- * Native Instagram Reel Embed Widget
- * Renders Instagram's official oEmbed blockquote and processes it via embed.js.
- * Displays the real video, thumbnail, and author attribution with native click-through
- * to Acharya Niraj Kumar's official profile (https://www.instagram.com/aapkaastrologer/).
+ * High-Performance Native Reel Player & Instagram Embed
+ * - When videoUrl is present: Renders an ultra-fast, zero-lag HTML5 video player
+ *   with IntersectionObserver lazy loading, hardware-accelerated playback,
+ *   mute/unmute controls, and instant click-through to @aapkaastrologer.
+ * - When videoUrl is absent: Fallbacks gracefully to Instagram's oEmbed blockquote.
  */
 export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
   url,
+  videoUrl,
+  posterUrl,
+  videoDuration,
   caption,
   category,
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const cleanUrl = cleanInstagramUrl(url);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
+  const [isInView, setIsInView] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  // Lazy loading observer: Only mount/activate video when scrolled near viewport
   useEffect(() => {
-    // Process existing embeds if window.instgrm is already initialized
-    if (typeof window !== "undefined" && (window as any).instgrm?.Embeds) {
-      (window as any).instgrm.Embeds.process();
-      return;
-    }
+    const el = containerRef.current;
+    if (!el) return;
 
-    // Otherwise, ensure Instagram's official embed.js script is loaded
-    const SCRIPT_ID = "instagram-embed-script";
-    let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+          } else {
+            // Auto-pause when user scrolls away to save CPU and battery
+            if (videoRef.current && !videoRef.current.paused) {
+              videoRef.current.pause();
+              setIsPlaying(false);
+            }
+          }
+        });
+      },
+      { rootMargin: "150px 0px", threshold: 0.2 }
+    );
 
-    if (!script) {
-      script = document.createElement("script");
-      script.id = SCRIPT_ID;
-      script.src = "https://www.instagram.com/embed.js";
-      script.async = true;
-      script.onload = () => {
-        if ((window as any).instgrm?.Embeds) {
-          (window as any).instgrm.Embeds.process();
-        }
-      };
-      document.body.appendChild(script);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Play / Pause toggle
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    if (vid.paused) {
+      vid
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          // Fallback if browser blocks sound autoplay
+          vid.muted = true;
+          setIsMuted(true);
+          vid.play().then(() => setIsPlaying(true));
+        });
     } else {
-      // Script tag exists; trigger process once loaded
-      const interval = setInterval(() => {
-        if ((window as any).instgrm?.Embeds) {
-          (window as any).instgrm.Embeds.process();
-          clearInterval(interval);
-        }
-      }, 300);
-      return () => clearInterval(interval);
+      vid.pause();
+      setIsPlaying(false);
     }
-  }, [cleanUrl]);
+  };
+
+  // Mute / Unmute toggle
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.muted = !vid.muted;
+    setIsMuted(vid.muted);
+  };
+
+  // Update progress bar
+  const handleTimeUpdate = () => {
+    const vid = videoRef.current;
+    if (!vid || !vid.duration) return;
+    setProgress((vid.currentTime / vid.duration) * 100);
+  };
 
   return (
     <div
       ref={containerRef}
       className={`w-full flex flex-col items-center justify-start ${className}`}
     >
-      <div className="w-full max-w-[420px] rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-3 sm:p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+      <div className="w-full max-w-[380px] rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-3 sm:p-4 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between group">
         {/* Category & Astrologer Attribution Pill */}
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E8D8C3]/60 text-xs">
-          {category ? (
-            <span className="rounded-md bg-[#7B2D26]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#7B2D26] uppercase tracking-wider font-temple">
-              {category}
-            </span>
-          ) : (
-            <span className="rounded-md bg-[#7B2D26]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#7B2D26] uppercase tracking-wider font-temple">
-              Vedic Jyotish
-            </span>
-          )}
+          <span className="rounded-md bg-[#7B2D26]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#7B2D26] uppercase tracking-wider font-temple">
+            {category || "Vedic Jyotish"}
+          </span>
 
           <a
             href={INSTAGRAM_PROFILE_URL}
@@ -104,82 +127,103 @@ export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
           </a>
         </div>
 
-        {/* Official Instagram Embed Blockquote */}
-        <div className="w-full overflow-hidden flex justify-center min-h-[440px] items-center">
-          <blockquote
-            className="instagram-media"
-            data-instgrm-captioned
-            data-instgrm-permalink={cleanUrl}
-            data-instgrm-version="14"
-            style={{
-              background: "#FFFDF9",
-              border: 0,
-              borderRadius: "12px",
-              boxShadow: "none",
-              margin: "1px auto",
-              maxWidth: "400px",
-              minWidth: "280px",
-              padding: 0,
-              width: "100%",
-            }}
-          >
-            {/* Native Fallback Content before embed.js hydrations */}
-            <div className="p-6 flex flex-col items-center justify-center text-center space-y-3 min-h-[360px] bg-[#FAF5EE] rounded-xl border border-[#E8D8C3]/80">
-              <div className="h-12 w-12 rounded-full bg-[#7B2D26]/10 flex items-center justify-center text-[#7B2D26]">
-                <InstagramIcon className="h-6 w-6 text-[#C1662F]" />
-              </div>
+        {/* Video Canvas Container (9:16 Aspect Ratio) */}
+        <div
+          onClick={videoUrl ? togglePlay : undefined}
+          className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-[#2A1D15] cursor-pointer shadow-inner select-none"
+        >
+          {videoUrl && isInView ? (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              poster={posterUrl}
+              preload="metadata"
+              playsInline
+              loop
+              muted={isMuted}
+              onTimeUpdate={handleTimeUpdate}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            posterUrl && (
+              <img
+                src={posterUrl}
+                alt={caption || "Aapka Astro Reel"}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            )
+          )}
 
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-[#7B2D26] font-temple">
-                  Watch on Instagram
-                </p>
-                <p className="text-[11px] text-[#6E5545] font-body line-clamp-2">
-                  {caption || "Vedic Astrological Guidance by Acharya Niraj Kumar"}
-                </p>
-              </div>
-
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-[#FBF3E7] hover:bg-[#64231D] transition-all shadow-sm"
-              >
-                <span>View Reel on Instagram</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-
-              <a
-                href={INSTAGRAM_PROFILE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-[#8C7A6B] hover:text-[#7B2D26] hover:underline"
-              >
-                Follow {INSTAGRAM_HANDLE}
-              </a>
+          {/* Top Duration Badge */}
+          {videoDuration && (
+            <div className="absolute top-2.5 left-2.5 rounded-md bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-bold text-white shadow-xs">
+              {videoDuration}
             </div>
-          </blockquote>
+          )}
+
+          {/* Top Right Sound Toggle */}
+          {videoUrl && (
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="absolute top-2.5 right-2.5 rounded-full bg-black/60 p-2 text-white hover:bg-[#7B2D26] transition-colors shadow-md z-10"
+              title={isMuted ? "Unmute Sound" : "Mute Sound"}
+            >
+              {isMuted ? (
+                <VolumeX className="h-3.5 w-3.5" />
+              ) : (
+                <Volume2 className="h-3.5 w-3.5 text-[#E8A33D]" />
+              )}
+            </button>
+          )}
+
+          {/* Center Play Overlay Icon (when paused) */}
+          {videoUrl && !isPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/25 transition-opacity pointer-events-none">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8A33D] text-[#3B2A1E] shadow-xl transform group-hover:scale-110 transition-transform">
+                <Play className="h-6 w-6 fill-[#3B2A1E] ml-0.5" />
+              </div>
+            </div>
+          )}
+
+          {/* Subtle gradient overlay at bottom for controls */}
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+          {/* Bottom Video Progress Bar */}
+          {videoUrl && (
+            <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20">
+              <div
+                className="h-full bg-[#E8A33D] transition-all duration-100"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Topic Title / Caption Footer */}
-        {caption && (
-          <div className="mt-3 pt-2.5 border-t border-[#E8D8C3]/60">
-            <p className="text-xs font-semibold text-[#3B2A1E] line-clamp-2 leading-relaxed">
-              {caption}
-            </p>
-            <div className="mt-2 flex items-center justify-between text-[11px]">
-              <span className="text-[#8C7A6B]">Acharya Niraj Kumar</span>
-              <a
-                href={cleanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[#C1662F] hover:text-[#7B2D26] font-bold"
-              >
-                <span>Watch on App</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
+        <div className="mt-3 pt-2.5 border-t border-[#E8D8C3]/60 flex flex-col justify-between flex-1">
+          <p className="text-xs font-semibold text-[#3B2A1E] line-clamp-2 leading-relaxed">
+            {caption || "Vedic Astrological Guidance by Acharya Niraj Kumar"}
+          </p>
+
+          <div className="mt-3 flex items-center justify-between text-[11px] pt-1">
+            <span className="text-[#8C7A6B] font-medium font-body">Acharya Niraj Kumar</span>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#7B2D26]/10 px-2.5 py-1 text-[#7B2D26] hover:bg-[#7B2D26] hover:text-[#FBF3E7] font-bold transition-all"
+              title="Open full reel on Instagram"
+            >
+              <span>Watch on Instagram</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

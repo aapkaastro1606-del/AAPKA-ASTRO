@@ -71,6 +71,9 @@ export const InstagramFeedSection: React.FC = () => {
             <InstagramReelEmbed
               key={reel.id}
               url={reel.instagramUrl}
+              videoUrl={reel.videoUrl}
+              posterUrl={reel.posterUrl}
+              videoDuration={reel.videoDuration}
               caption={reel.caption}
               category={reel.category}
             />
