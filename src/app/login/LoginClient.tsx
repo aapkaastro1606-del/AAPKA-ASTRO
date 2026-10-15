@@ -41,12 +41,19 @@ export function LoginClient() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined" && window.location.hostname === "aapkaastro.com") {
+      window.location.replace(`https://www.aapkaastro.com${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
   }, []);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
+      const destination =
+        typeof window !== "undefined" && window.location.hostname === "aapkaastro.com"
+          ? `https://www.aapkaastro.com${targetUrl}`
+          : targetUrl;
       const timer = setTimeout(() => {
-        window.location.replace(targetUrl);
+        window.location.replace(destination);
       }, 150);
       return () => clearTimeout(timer);
     }
@@ -92,7 +99,11 @@ export function LoginClient() {
                 </span>
               </div>
               <a
-                href={targetUrl}
+                href={
+                  typeof window !== "undefined" && window.location.hostname === "aapkaastro.com"
+                    ? `https://www.aapkaastro.com${targetUrl}`
+                    : targetUrl
+                }
                 className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
               >
                 <span>Proceed to {targetUrl.includes("consult") ? "My Bookings" : targetUrl.includes("admin") ? "Admin Panel" : "Account"}</span>

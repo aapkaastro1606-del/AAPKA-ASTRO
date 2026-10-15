@@ -95,8 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       isSatellite={isSatellite}
       signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/login"}
       signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/signup"}
-      signInForceRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL || "/account"}
-      signUpForceRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL || "/account"}
+      signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL || "/account"}
+      signUpFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL || "/account"}
       appearance={{
         variables: {
           colorPrimary: "#7B2D26",
@@ -115,6 +115,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         lang="en"
         className={`${cinzel.variable} ${notoSerifDevanagari.variable} ${mukta.variable} h-full antialiased`}
       >
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `if(typeof window!=="undefined"&&window.location.hostname==="aapkaastro.com"){window.location.replace("https://www.aapkaastro.com"+window.location.pathname+window.location.search+window.location.hash);}`,
+            }}
+          />
+        </head>
         <body className="min-h-full flex flex-col bg-[#FBF3E7] text-[#3B2A1E] font-body selection:bg-[#E8A33D] selection:text-[#3B2A1E]">
           <LanguageProvider>
             <BrandedPreloader />

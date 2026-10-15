@@ -78,9 +78,9 @@ const liveClerkMiddleware = clerkMiddleware(
           sessionClaims?.email || sessionClaims?.primaryEmailAddress || null;
 
         // In Clerk Edge Middleware, sessionClaims does not include email unless custom JWT template is configured.
-        // If email and role metadata are absent, allow request to proceed to the server page handler
+        // If email is absent, allow request to proceed to the server page handler
         // where getServerAuthUser() uses Node.js runtime (currentUser() & Neon PostgreSQL) for accurate verification.
-        if (!email && !sessionClaims?.metadata?.role && !sessionClaims?.publicMetadata?.role) {
+        if (!email) {
           return NextResponse.next();
         }
 
