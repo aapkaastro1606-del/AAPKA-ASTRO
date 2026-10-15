@@ -40,7 +40,11 @@ export function LoginClient({
     try {
       setSigningOut(true);
       await signOut();
-      window.location.href = `/login?redirect_url=${encodeURIComponent(targetUrl)}`;
+      const canonicalHost =
+        typeof window !== "undefined" && window.location.hostname === "aapkaastro.com"
+          ? "https://www.aapkaastro.com"
+          : "";
+      window.location.href = `${canonicalHost}/login?redirect_url=${encodeURIComponent(targetUrl)}`;
     } catch {
       window.location.reload();
     }
