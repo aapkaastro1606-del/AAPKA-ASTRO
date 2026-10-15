@@ -53,8 +53,8 @@ export function LoginClient() {
           ? `https://www.aapkaastro.com${targetUrl}`
           : targetUrl;
       const timer = setTimeout(() => {
-        window.location.replace(destination);
-      }, 150);
+        window.location.href = destination;
+      }, 350);
       return () => clearTimeout(timer);
     }
   }, [isLoaded, isSignedIn, targetUrl]);
