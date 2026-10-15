@@ -51,7 +51,13 @@ export default function ClientAccountDashboard() {
 
   useEffect(() => {
     const sync = () => {
-      fetch("/api/booking/status")
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const params = new URLSearchParams();
+      if (email) params.set("userEmail", email);
+      if (user?.id) params.set("userId", user.id);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+
+      fetch(`/api/booking/status${qs}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.booking) {

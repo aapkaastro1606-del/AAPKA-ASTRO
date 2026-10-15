@@ -285,7 +285,19 @@ export default function ConsultPage() {
     } catch (err: any) {
       console.error("Booking error:", err);
       setIsProcessingPayment(false);
-      alert(err.message || "Encountered an issue processing booking. Please try again.");
+      const msg = err.message || "Encountered an issue processing booking. Please try again.";
+      if (msg.includes("already have an active Astro consultation booking")) {
+        if (
+          confirm(
+            `${msg}\n\nWould you like to open your active consultation now to complete payment or cancel it?`
+          )
+        ) {
+          window.location.href = "/account/consult";
+          return;
+        }
+      } else {
+        alert(msg);
+      }
     }
   };
 

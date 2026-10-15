@@ -743,6 +743,35 @@ export class BookingWorkflowService {
   }
 
   /**
+   * Allows a seeker or operator to cancel a pending unpaid booking so the user can re-book.
+   */
+  static async cancelBooking(bookingId: string, reason?: string) {
+    if (!prisma || !prisma.session) throw new Error("Database service unavailable.");
+
+    const booking = await prisma.session.findUnique({
+      where: { bookingId },
+    });
+
+    if (!booking) {
+      throw new Error(`Booking ${bookingId} not found.`);
+    }
+
+    if (!["PENDING_PAYMENT", "PAYMENT_CLAIMED"].includes(booking.bookingStatus)) {
+      throw new Error(`Only pending bookings can be cancelled. Current status is ${booking.bookingStatus}.`);
+    }
+
+    await prisma.session.update({
+      where: { id: booking.id },
+      data: {
+        bookingStatus: "CANCELLED",
+        rejectionReason: reason || "Cancelled by seeker",
+      },
+    });
+
+    return { success: true, bookingStatus: "CANCELLED" };
+  }
+
+  /**
    * Auto-expire unpaid bookings past their expiration deadline.
    */
   static async expireUnpaidBookings(): Promise<number> {

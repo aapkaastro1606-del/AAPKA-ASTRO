@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { UpiQrModal } from "./UpiQrModal";
 
 export type BookingWorkflowState =
@@ -74,16 +75,23 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   booking: propBooking,
   onBookNew,
 }) => {
+  const { user } = useUser();
   const [activeBooking, setActiveBooking] = useState<UnifiedBooking | null>(propBooking || null);
   const [loading, setLoading] = useState<boolean>(!propBooking);
   const [astrologerStatus, setAstrologerStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [claimUtr, setClaimUtr] = useState<string>("");
   const [claiming, setClaiming] = useState<boolean>(false);
+  const [cancelling, setCancelling] = useState<boolean>(false);
 
   const fetchActiveBooking = async () => {
     try {
-      const res = await fetch("/api/booking/status", { cache: "no-store" });
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const params = new URLSearchParams();
+      if (email) params.set("userEmail", email);
+      if (user?.id) params.set("userId", user.id);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const res = await fetch(`/api/booking/status${qs}`, { cache: "no-store" });
       const data = await res.json();
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
@@ -176,6 +184,40 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
       console.warn("Claim error:", e);
     } finally {
       setClaiming(false);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!bookingId) return;
+    if (
+      !confirm(
+        "Are you sure you want to cancel this booking? Once cancelled, you will be able to book a new consultation slot immediately."
+      )
+    ) {
+      return;
+    }
+    setCancelling(true);
+    try {
+      const res = await fetch("/api/booking/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          reason: "Cancelled by seeker",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActiveBooking(null);
+        if (onBookNew) onBookNew();
+        await fetchActiveBooking();
+      } else {
+        alert(data.message || "Failed to cancel booking.");
+      }
+    } catch {
+      alert("Network error cancelling booking. Please try again.");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -444,6 +486,16 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
               >
                 <QrCode className="h-4 w-4 text-[#E8A33D]" />
                 <span>Show UPI QR Code (₹{amount.toLocaleString("en-IN")})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelBooking}
+                disabled={cancelling}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 px-5 py-3 font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+              >
+                <XCircle className="h-4 w-4 text-red-600" />
+                <span>{cancelling ? "Cancelling..." : "Cancel This Booking"}</span>
               </button>
             </div>
           </div>

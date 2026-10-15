@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { PlatformSettingsService } from "@/lib/services/platformSettingsService";
 
@@ -11,7 +11,6 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = getAuthFromRequest(req);
     const { searchParams } = new URL(req.url);
     const bookingId = searchParams.get("bookingId");
 
@@ -59,19 +58,61 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Otherwise, return latest active booking for authenticated user
-    if (!auth.isAuthenticated || !auth.userId) {
+    // Resolve user via Clerk server session, cookie auth, or query param fallback
+    let userIdentifier: string | null = null;
+    let userEmailAddress: string | null = null;
+
+    try {
+      const clerkAuth = await getServerAuthUser();
+      if (clerkAuth.isAuthenticated && clerkAuth.userId) {
+        userIdentifier = clerkAuth.userId;
+        userEmailAddress = clerkAuth.email;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!userIdentifier) {
+      const cookieAuth = getAuthFromRequest(req);
+      if (cookieAuth.isAuthenticated && cookieAuth.userId) {
+        userIdentifier = cookieAuth.userId;
+        userEmailAddress = cookieAuth.email;
+      }
+    }
+
+    const queryEmail = searchParams.get("userEmail");
+    const queryUserId = searchParams.get("userId");
+    if (!userIdentifier && queryUserId) userIdentifier = queryUserId;
+    if (!userEmailAddress && queryEmail) userEmailAddress = queryEmail;
+
+    if (!userIdentifier && !userEmailAddress) {
       return NextResponse.json(
         { success: false, message: "Authentication required to fetch user bookings." },
         { status: 401 }
       );
     }
 
+    // Match database user by ID, Clerk ID, or Email
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(userIdentifier ? [{ id: userIdentifier }, { clerkId: userIdentifier }] : []),
+          ...(userEmailAddress ? [{ email: userEmailAddress }] : []),
+        ],
+      },
+    });
+
+    const candidateClientIds = [
+      ...(userIdentifier ? [userIdentifier] : []),
+      ...(dbUser ? [dbUser.id] : []),
+    ];
+
     const latestBooking = await prisma.session.findFirst({
       where: {
         OR: [
-          { clientId: auth.userId },
-          { userEmail: auth.email || "" },
+          { clientId: { in: candidateClientIds } },
+          ...(userEmailAddress ? [{ userEmail: userEmailAddress }] : []),
+          ...(dbUser?.email ? [{ userEmail: dbUser.email }] : []),
         ],
       },
       orderBy: { createdAt: "desc" },

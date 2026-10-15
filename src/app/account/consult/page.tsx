@@ -22,7 +22,13 @@ export default function AccountConsultPage() {
 
   const loadBooking = async () => {
     try {
-      const res = await fetch("/api/booking/status", { cache: "no-store" });
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const params = new URLSearchParams();
+      if (email) params.set("userEmail", email);
+      if (user?.id) params.set("userId", user.id);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+
+      const res = await fetch(`/api/booking/status${qs}`, { cache: "no-store" });
       const data = await res.json();
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
@@ -37,6 +43,10 @@ export default function AccountConsultPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadBooking();
+  }, [user]);
 
   useEffect(() => {
     loadBooking();
