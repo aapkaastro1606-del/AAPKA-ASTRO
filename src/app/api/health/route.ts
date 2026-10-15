@@ -9,6 +9,19 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const startTime = Date.now();
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(
+      {
+        status: "unhealthy",
+        database: "disconnected",
+        latencyMs: 0,
+        error: "DATABASE_URL environment variable is missing from Vercel Project Settings.",
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
+  }
+
   try {
     await prisma.$queryRaw`SELECT 1`;
     const latencyMs = Date.now() - startTime;
@@ -34,6 +47,7 @@ export async function GET() {
         status: "unhealthy",
         database: "disconnected",
         latencyMs,
+        error: error?.message || String(error),
         timestamp: new Date().toISOString(),
       },
       {
