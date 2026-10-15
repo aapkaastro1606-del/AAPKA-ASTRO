@@ -56,7 +56,11 @@ describe("Clerk Google OAuth SSO Callback Handshake Verification", () => {
   it("verifies LoginClient and SignupClient configure matching redirect targets to /account", () => {
     const loginClientPath = path.join(rootDir, "src/app/login/LoginClient.tsx");
     const loginContent = fs.readFileSync(loginClientPath, "utf-8");
-    assert.equal(loginContent.includes('forceRedirectUrl="/account"'), true, "LoginClient must force redirect to /account");
+    assert.equal(
+      loginContent.includes('forceRedirectUrl={targetUrl}') || loginContent.includes('forceRedirectUrl="/account"'),
+      true,
+      "LoginClient must force redirect to targetUrl or /account"
+    );
     assert.equal(loginContent.includes('path="/login"'), true, "LoginClient must use path routing at /login");
 
     const signupClientPath = path.join(rootDir, "src/app/signup/SignupClient.tsx");

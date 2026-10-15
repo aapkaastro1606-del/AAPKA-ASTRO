@@ -11,6 +11,7 @@ import {
   AccessLevel,
 } from "./staffPermissions";
 import { syncClerkUserToDatabase } from "./syncUser";
+import { prisma } from "@/lib/db/prisma";
 
 export interface ServerAuthResult {
   isAuthenticated: boolean;
@@ -194,6 +195,20 @@ export async function getServerAuthUser(): Promise<ServerAuthResult> {
         } catch {
           // ignore
         }
+      }
+
+      if (!email && session.userId) {
+        try {
+          if (prisma && prisma.user) {
+            const dbU = await prisma.user.findFirst({
+              where: { clerkId: session.userId },
+              select: { email: true },
+            });
+            if (dbU?.email) {
+              email = dbU.email;
+            }
+          }
+        } catch {}
       }
 
       const isOwner = isOwnerEmail(email);

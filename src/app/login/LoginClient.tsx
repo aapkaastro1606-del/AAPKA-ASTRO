@@ -95,7 +95,7 @@ export function LoginClient() {
                 href={targetUrl}
                 className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
               >
-                <span>Proceed to {targetUrl.includes("consult") ? "My Bookings" : "Account"}</span>
+                <span>Proceed to {targetUrl.includes("consult") ? "My Bookings" : targetUrl.includes("admin") ? "Admin Panel" : "Account"}</span>
                 <ArrowRight className="h-4 w-4" />
               </a>
             </div>
@@ -104,8 +104,8 @@ export function LoginClient() {
               routing="path"
               path="/login"
               signUpUrl="/signup"
-              forceRedirectUrl="/account"
-              fallbackRedirectUrl="/account"
+              forceRedirectUrl={targetUrl}
+              fallbackRedirectUrl={targetUrl}
               appearance={{
                 variables: {
                   colorPrimary: "#7B2D26",

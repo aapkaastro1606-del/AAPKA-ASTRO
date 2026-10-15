@@ -122,12 +122,18 @@ export function getOwnerEmails(): string[] {
   const envVal =
     process.env.OWNER_EMAIL ||
     process.env.NEXT_PUBLIC_OWNER_EMAIL ||
-    "aapkaastro1606@gmail.com";
+    "";
 
-  return envVal
+  const parsed = envVal
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+
+  if (!parsed.includes("aapkaastro1606@gmail.com")) {
+    parsed.push("aapkaastro1606@gmail.com");
+  }
+
+  return parsed.filter((e) => !e.includes("anmol"));
 }
 
 /**

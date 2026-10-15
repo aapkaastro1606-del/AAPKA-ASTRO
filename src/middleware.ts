@@ -31,6 +31,13 @@ const isClerkActive = isClerkConfigured();
  * Strictly enforces RBAC against session cookies rather than passing through unconditionally.
  */
 function fallbackMiddleware(req: NextRequest) {
+  const hostname = req.nextUrl.hostname;
+  if (hostname === "www.aapkaastro.com") {
+    const url = req.nextUrl.clone();
+    url.hostname = "aapkaastro.com";
+    return NextResponse.redirect(url, 308);
+  }
+
   const pathname = req.nextUrl.pathname;
   const isProtected =
     isDashboardRoute(req) ||
@@ -57,6 +64,14 @@ function fallbackMiddleware(req: NextRequest) {
 
 const liveClerkMiddleware = clerkMiddleware(
   async (auth, req) => {
+    // Canonical apex domain redirect: redirect www.aapkaastro.com to aapkaastro.com
+    const hostname = req.nextUrl.hostname;
+    if (hostname === "www.aapkaastro.com") {
+      const url = req.nextUrl.clone();
+      url.hostname = "aapkaastro.com";
+      return NextResponse.redirect(url, 308);
+    }
+
     const pathname = req.nextUrl.pathname;
     const isProtected =
       isDashboardRoute(req) ||
@@ -76,6 +91,14 @@ const liveClerkMiddleware = clerkMiddleware(
         const sessionClaims = session.sessionClaims as any;
         const email =
           sessionClaims?.email || sessionClaims?.primaryEmailAddress || null;
+
+        // In Clerk Edge Middleware, sessionClaims does not include email unless custom JWT template is configured.
+        // If email and role metadata are absent, allow request to proceed to the server page handler
+        // where getServerAuthUser() uses Node.js runtime (currentUser() & Neon PostgreSQL) for accurate verification.
+        if (!email && !sessionClaims?.metadata?.role && !sessionClaims?.publicMetadata?.role) {
+          return NextResponse.next();
+        }
+
         const isOwner = isOwnerEmail(email);
 
         let rawRole =
