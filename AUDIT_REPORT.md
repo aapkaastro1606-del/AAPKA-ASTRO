@@ -255,12 +255,11 @@ To transition the site from its current in-memory / localStorage state to a prod
 
 ### 7.1 Manual UPI Booking Workflow & QR Configuration
 - **Prisma Migration**: `20261015020000_manual_upi_booking_workflow` applied to Neon PostgreSQL.
-- **PNB Merchant Standee Asset**:
-  - Image: `/images/pnb-upi-qr.jpg` (verified merchant Punjab National Bank standee).
-  - Merchant Name: `AAPKA ASTRO`
-  - Real UPI ID: `9310709233m@pnb`
+- **Official Merchant UPI Account**:
+  - Payee Name: `Aapka Astro Official`
+  - UPI ID: `9311215564@okbizaxis`
   - WhatsApp Verification Desk: `+91 93112 15564`
-- **Dynamic UPI Link**: Formats direct deep-links (`upi://pay?pa=9310709233m@pnb&pn=AAPKA%20ASTRO&am={amount}&tn={bookingRef}`) rendering instant scannable QR with amount and reference locked.
+- **Dynamic UPI Link**: Formats direct deep-links (`upi://pay?pa=9311215564@okbizaxis&pn=Aapka%20Astro%20Official&am={amount}&tn={bookingRef}`) rendering instant scannable QR with amount and reference locked without unsigned dynamic 'tr' parameter.
 - **Workflow State Machine**: `PENDING_PAYMENT` → `PAYMENT_CLAIMED` (with optional UTR & auto WhatsApp handoff) → `CONFIRMED` (Owner verifies bank credit) → `SCHEDULED` (Owner assigns time slot & Google Meet/WhatsApp link) → `COMPLETED` / `REFUNDED` / `REJECTED` / `EXPIRED`.
 - **Pricing Enforcement**:
   - First Astro Consultation: **₹1,051** (50% off base ₹2,100).

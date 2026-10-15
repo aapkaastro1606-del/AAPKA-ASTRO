@@ -79,11 +79,9 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   const rawWa = (paymentSettings.whatsappNumber || "919311215564").replace(/[^0-9]/g, "");
 
   // Pre-filled UPI Payment Intent URL with locked amount and booking reference
-  const upiUrl =
-    initialUpiPayLink ||
-    `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiPayee)}&am=${amount}&cu=INR&tr=${bookingId}&tn=${encodeURIComponent(
-      `Booking ${bookingId}`
-    )}`;
+  // Always use clean NPCI format without unsigned dynamic 'tr=' parameter (which triggers PhonePe's "Unable to verify the QR code" error)
+  const cleanBookingRef = (bookingId || "").replace(/[^a-zA-Z0-9-]/g, "");
+  const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiPayee)}&am=${amount}&cu=INR&tn=${encodeURIComponent(cleanBookingRef)}`;
 
   // Construct pre-filled WhatsApp message
   const constructWhatsAppMessage = (utrVal: string) => {
@@ -234,8 +232,22 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
                   </div>
                 )}
                 <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
-                  Scan with GPay, PhonePe, Paytm, BHIM, or Cred
+                  Scan with Google Pay, PhonePe, Paytm, BHIM, or Cred
                 </span>
+              </div>
+
+              {/* Instant Pay / Copy Guidance Box */}
+              <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-left text-xs space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-[#7B2D26]">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <span>UPI Payment Guidance:</span>
+                </div>
+                <p className="text-[#5C4533] text-[11px] leading-relaxed">
+                  • <strong>Scan QR:</strong> Works directly in Google Pay, Paytm, PhonePe, Cred, and BHIM.
+                </p>
+                <p className="text-[#5C4533] text-[11px] leading-relaxed">
+                  • <strong>PhonePe User Tip:</strong> If PhonePe shows a verification warning on your device, simply click <strong>&quot;Copy UPI&quot;</strong> below, open PhonePe &rarr; tap <strong>&quot;To UPI ID&quot;</strong> &rarr; paste <code className="bg-amber-100 text-[#7B2D26] px-1 py-0.5 rounded font-mono font-semibold">{upiId}</code> and enter ₹{amount.toLocaleString("en-IN")}.
+                </p>
               </div>
 
               {/* UPI ID Row */}

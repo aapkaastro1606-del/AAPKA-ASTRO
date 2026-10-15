@@ -188,10 +188,10 @@ export class BookingWorkflowService {
     const prefix = params.productType === "vaastu" ? "VAASTU" : params.productType === "kundli_pdf" ? "KUNDLI" : "ASTRO";
     const bookingRef = `${prefix}-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
 
-    // 6. Generate standard Indian UPI Intent link
+    // 6. Generate standard Indian UPI Intent link (clean NPCI format without unsigned merchant 'tr' parameter to ensure 100% PhonePe / GPay / Paytm compatibility)
     const upiPayLink = `upi://pay?pa=${paymentSettings.upiId}&pn=${encodeURIComponent(
       paymentSettings.payeeName
-    )}&am=${lockedAmount}&cu=INR&tr=${bookingRef}&tn=${encodeURIComponent(`Booking ${bookingRef}`)}`;
+    )}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(bookingRef)}`;
 
     // 7. Persist session booking in PostgreSQL
     const session = await prisma.session.create({

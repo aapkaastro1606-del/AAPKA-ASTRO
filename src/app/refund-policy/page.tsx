@@ -79,7 +79,7 @@ export default function RefundPolicyPage() {
             </div>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Direct UPI Payments:</strong> All fees are paid via direct UPI transfer (to merchant <strong>AAPKA ASTRO</strong>, UPI ID: <code>9310709233m@pnb</code>). We do not employ third-party gateway intermediaries.
+                <strong>Direct UPI Payments:</strong> All fees are paid via direct UPI transfer (to merchant <strong>Aapka Astro Official</strong>, UPI ID: <code>9311215564@okbizaxis</code>). We do not employ third-party gateway intermediaries.
               </li>
               <li>
                 <strong>Bank Statement as Definitive Proof:</strong> Because payments are received manually, our bank or UPI merchant statement is the sole authoritative proof of receipt. Submitting a screenshot or UTR number initiates verification. If funds are not credited in our bank account (e.g., due to bank server downtime or transaction reversal), the booking cannot be confirmed until the credit reflects.
