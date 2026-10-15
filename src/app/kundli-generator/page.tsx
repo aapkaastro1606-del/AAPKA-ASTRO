@@ -32,22 +32,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { PLACEHOLDER_ASTROLOGER, KUNDLI_PDF_PRODUCT } from "@/config/placeholderContent";
-
-// Razorpay SDK Script Loader
-const loadRazorpayScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if ((window as any).Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+import { UpiQrModal } from "@/components/consult/UpiQrModal";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 
 export default function KundliGeneratorPage() {
+  const { user } = useUser();
   const [kundli, setKundli] = useState<KundliData>(() =>
     calculateKundli({
       name: "Seeker",
@@ -88,6 +77,22 @@ export default function KundliGeneratorPage() {
           }
         } catch {}
       }
+
+      // Check if user has an approved or completed Kundli PDF booking
+      fetch("/api/booking/status")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.booking) {
+            if (
+              data.booking.productType === "kundli_pdf" &&
+              ["CONFIRMED", "SCHEDULED", "COMPLETED"].includes(data.booking.bookingStatus)
+            ) {
+              setIsPdfUnlocked(true);
+            }
+          }
+        })
+        .catch(() => {});
+
       setIsPdfUnlocked(false);
     }
   }, [chartSignature, chartStorageKey]);
@@ -98,115 +103,77 @@ export default function KundliGeneratorPage() {
     }
   };
 
+  const [showPdfUpiModal, setShowPdfUpiModal] = useState(false);
+  const [pdfBookingId, setPdfBookingId] = useState("");
+
   const handlePdfPurchase = async () => {
     if (isPdfUnlocked) {
       handleDownloadPdf();
       return;
     }
 
+    if (!user) {
+      setShowSignupPrompt(true);
+      return;
+    }
+
     setIsProcessingPayment(true);
     try {
-      // 1. Create order on server (server enforces ₹501)
-      const res = await fetch("/api/payments/create-order", {
+      const res = await fetch("/api/booking/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: KUNDLI_PDF_PRODUCT.price, // ₹501
-          productId: "kundli_pdf",
-          serviceType: "kundli_pdf_report",
-          clientName: kundli.name,
-          phone: "9876543210",
+          productType: "kundli_pdf",
+          clientName: kundli.name || user.fullName || "Seeker",
+          clientPhone: user.primaryPhoneNumber?.phoneNumber || "WhatsApp Coordinated",
+          clientEmail: user.primaryEmailAddress?.emailAddress || null,
+          format: "WhatsApp call",
+          topic: `Comprehensive Janam Kundli PDF Dossier (${kundli.name})`,
+          intakeDetails: {
+            chartSignature,
+            birthDetails: {
+              name: kundli.name,
+              gender: kundli.gender,
+              dob: kundli.birthDate,
+              timeOfBirth: kundli.birthTime,
+              placeOfBirth: kundli.birthPlace,
+            },
+          },
         }),
       });
 
-      const orderData = await res.json().catch(() => null);
-      if (!res.ok || !orderData?.order) {
-        throw new Error(orderData?.message || "Failed to initiate PDF report order");
-      }
-
-      const orderId = orderData.order.id;
-      const keyId = orderData.keyId || "rzp_test_mock_key_id";
-
-      const completeUnlock = async (paymentId: string, signature: string = "") => {
-        // 2. Verify signature on server
-        await fetch("/api/payments/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            paymentId,
-            signature,
-            productId: "kundli_pdf",
-            amountINR: 501,
-            topic: `Kundli PDF Report for ${kundli.name}`,
-          }),
-        }).catch((err) => console.warn("Verification warning:", err));
-
-        setIsPdfUnlocked(true);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            chartStorageKey,
-            JSON.stringify({
-              unlocked: true,
-              orderId,
-              paymentId,
-              chartSignature,
-              unlockedAt: new Date().toISOString(),
-            })
-          );
-        }
-        setIsProcessingPayment(false);
-
-        // Prompt immediate download / print
-        setTimeout(() => {
-          handleDownloadPdf();
-        }, 300);
-      };
-
-      const isMock = keyId.includes("mock") || keyId.startsWith("rzp_test_mock");
-
-      if (isMock) {
-        setTimeout(async () => {
-          await completeUnlock(`pay_sim_pdf_${Date.now()}`, `sig_mock_${Date.now()}`);
-        }, 1200);
+      const data = await res.json();
+      if (data.success && data.booking) {
+        setPdfBookingId(data.booking.bookingId);
+        setShowPdfUpiModal(true);
       } else {
-        const loaded = await loadRazorpayScript();
-        if (!loaded) {
-          throw new Error("Unable to load Razorpay payment gateway.");
-        }
-
-        const options = {
-          key: keyId,
-          amount: KUNDLI_PDF_PRODUCT.price * 100, // in paise
-          currency: "INR",
-          name: "Aapka Astro",
-          description: `Full PDF Report for ${kundli.name}`,
-          image: "/logo.png",
-          order_id: orderId,
-          handler: async function (response: any) {
-            await completeUnlock(response.razorpay_payment_id, response.razorpay_signature);
-          },
-          prefill: {
-            name: kundli.name,
-          },
-          theme: {
-            color: "#7B2D26",
-          },
-          modal: {
-            ondismiss: function () {
-              setIsProcessingPayment(false);
-            },
-          },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
+        alert(data.message || "Failed to initiate PDF order. Please try again.");
       }
-    } catch (err: any) {
-      console.error("PDF purchase error:", err);
+    } catch (e) {
+      console.error("PDF purchase initiation error:", e);
+      alert("Failed to initiate PDF order. Please try again.");
+    } finally {
       setIsProcessingPayment(false);
-      alert(err.message || "Failed to process PDF report order. Please try again.");
     }
+  };
+
+  const handlePdfUnlockSuccess = () => {
+    setIsPdfUnlocked(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        chartStorageKey,
+        JSON.stringify({
+          unlocked: true,
+          orderId: pdfBookingId,
+          chartSignature,
+          unlockedAt: new Date().toISOString(),
+        })
+      );
+    }
+    setShowPdfUpiModal(false);
+    setTimeout(() => {
+      handleDownloadPdf();
+    }, 400);
   };
 
   const vargaOptions: Array<{ code: DivisionalChartCode; label: string; sub: string }> = [
@@ -747,6 +714,19 @@ export default function KundliGeneratorPage() {
 
       {/* Printable PDF Dossier (Active on Window.Print when unlocked) */}
       <KundliPrintDossier kundli={kundli} isUnlocked={isPdfUnlocked} />
+
+      {/* Direct UPI QR Payment Modal for PDF Dossier Unlock */}
+      <UpiQrModal
+        isOpen={showPdfUpiModal}
+        onClose={() => setShowPdfUpiModal(false)}
+        bookingId={pdfBookingId}
+        amount={501}
+        productType="kundli_pdf"
+        serviceName="Comprehensive Janam Kundli PDF Dossier"
+        clientName={kundli.name || user?.fullName || "Seeker"}
+        clientPhone={user?.primaryPhoneNumber?.phoneNumber || ""}
+        onPaymentSubmitted={handlePdfUnlockSuccess}
+      />
     </div>
   );
 }

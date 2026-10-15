@@ -11,6 +11,7 @@ import {
   Lock,
   RefreshCw,
   Info,
+  Activity,
 } from "lucide-react";
 import {
   STAFF_SECTIONS,
@@ -154,15 +155,24 @@ export default function StaffManagementClient() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={fetchStaff}
-            disabled={loading}
-            className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-xs font-bold text-[#6E5545] hover:text-[#3B2A1E] hover:border-[#7B2D26] transition-all flex items-center gap-1.5 shadow-xs"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/diagnostics"
+              className="rounded-xl border border-[#7B2D26] bg-[#7B2D26] px-3.5 py-2 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all flex items-center gap-1.5 shadow-xs"
+            >
+              <Activity className="h-3.5 w-3.5 text-[#E8A33D]" />
+              <span>System Diagnostics</span>
+            </Link>
+            <button
+              type="button"
+              onClick={fetchStaff}
+              disabled={loading}
+              className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-xs font-bold text-[#6E5545] hover:text-[#3B2A1E] hover:border-[#7B2D26] transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
         {/* Cost & Isolation Highlights */}

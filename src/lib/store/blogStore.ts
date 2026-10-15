@@ -163,6 +163,128 @@ export const BlogStore = {
     return memoryBlogPosts.find((p) => p.slug === slug);
   },
 
+  async getPublishedPostsAsync(): Promise<BlogPost[]> {
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.blogPost) {
+        const count = await prisma.blogPost.count();
+        if (count === 0) {
+          // Seed initial posts
+          for (const p of INITIAL_BLOG_POSTS) {
+            await prisma.blogPost.create({
+              data: {
+                id: p.id,
+                title: p.title,
+                slug: p.slug,
+                excerpt: p.excerpt,
+                content: p.content,
+                category: p.category,
+                tags: p.tags,
+                publishedAt: new Date(p.publishedAt),
+                status: p.status === "published" ? "PUBLISHED" : "DRAFT",
+                views: p.views,
+                coverImage: p.coverImage,
+              },
+            });
+          }
+        }
+
+        const dbPosts = await prisma.blogPost.findMany({
+          where: { status: "PUBLISHED" },
+          orderBy: { publishedAt: "desc" },
+        });
+
+        if (dbPosts.length > 0) {
+          return dbPosts.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt || "",
+            content: p.content,
+            category: p.category as any,
+            author: PLACEHOLDER_ASTROLOGER.displayName,
+            authorAvatar: PLACEHOLDER_ASTROLOGER.avatarUrl,
+            coverImage: p.coverImage || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+            publishedAt: p.publishedAt ? p.publishedAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            readTime: "5 min read",
+            tags: p.tags,
+            status: "published",
+            views: p.views,
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn("BlogStore.getPublishedPostsAsync fallback to memory:", e);
+    }
+    return this.getPublishedPosts();
+  },
+
+  async getAllPostsAsync(): Promise<BlogPost[]> {
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.blogPost) {
+        const dbPosts = await prisma.blogPost.findMany({
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (dbPosts.length > 0) {
+          return dbPosts.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt || "",
+            content: p.content,
+            category: p.category as any,
+            author: PLACEHOLDER_ASTROLOGER.displayName,
+            authorAvatar: PLACEHOLDER_ASTROLOGER.avatarUrl,
+            coverImage: p.coverImage || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+            publishedAt: p.publishedAt ? p.publishedAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            readTime: "5 min read",
+            tags: p.tags,
+            status: p.status === "PUBLISHED" ? "published" : "draft",
+            views: p.views,
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn("BlogStore.getAllPostsAsync fallback to memory:", e);
+    }
+    return this.getAllPosts();
+  },
+
+  async getPostBySlugAsync(slug: string): Promise<BlogPost | undefined> {
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.blogPost) {
+        const p = await prisma.blogPost.findUnique({
+          where: { slug },
+        });
+
+        if (p) {
+          return {
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt || "",
+            content: p.content,
+            category: p.category as any,
+            author: PLACEHOLDER_ASTROLOGER.displayName,
+            authorAvatar: PLACEHOLDER_ASTROLOGER.avatarUrl,
+            coverImage: p.coverImage || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+            publishedAt: p.publishedAt ? p.publishedAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            readTime: "5 min read",
+            tags: p.tags,
+            status: p.status === "PUBLISHED" ? "published" : "draft",
+            views: p.views,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("BlogStore.getPostBySlugAsync fallback to memory:", e);
+    }
+    return this.getPostBySlug(slug);
+  },
+
   savePost: (post: Omit<BlogPost, "id" | "views"> & { id?: string }): BlogPost => {
     if (post.id) {
       const index = memoryBlogPosts.findIndex((p) => p.id === post.id);
@@ -183,9 +305,64 @@ export const BlogStore = {
     return newPost;
   },
 
+  async savePostAsync(post: Omit<BlogPost, "id" | "views"> & { id?: string }): Promise<BlogPost> {
+    const memorySaved = this.savePost(post);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.blogPost) {
+        await prisma.blogPost.upsert({
+          where: { slug: post.slug },
+          create: {
+            title: post.title,
+            slug: post.slug,
+            excerpt: post.excerpt,
+            content: post.content,
+            category: post.category,
+            tags: post.tags,
+            publishedAt: post.publishedAt ? new Date(post.publishedAt) : new Date(),
+            status: post.status === "published" ? "PUBLISHED" : "DRAFT",
+            coverImage: post.coverImage,
+            views: 0,
+          },
+          update: {
+            title: post.title,
+            excerpt: post.excerpt,
+            content: post.content,
+            category: post.category,
+            tags: post.tags,
+            publishedAt: post.publishedAt ? new Date(post.publishedAt) : new Date(),
+            status: post.status === "published" ? "PUBLISHED" : "DRAFT",
+            coverImage: post.coverImage,
+          },
+        });
+      }
+    } catch (e) {
+      console.error("BlogStore.savePostAsync error:", e);
+    }
+    return memorySaved;
+  },
+
   deletePost: (id: string): boolean => {
     const prevLen = memoryBlogPosts.length;
     memoryBlogPosts = memoryBlogPosts.filter((p) => p.id !== id);
     return memoryBlogPosts.length < prevLen;
+  },
+
+  async deletePostAsync(id: string): Promise<boolean> {
+    this.deletePost(id);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.blogPost) {
+        await prisma.blogPost.deleteMany({
+          where: {
+            OR: [{ id }, { slug: id }],
+          },
+        });
+        return true;
+      }
+    } catch (e) {
+      console.error("BlogStore.deletePostAsync error:", e);
+    }
+    return true;
   },
 };

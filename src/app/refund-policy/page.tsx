@@ -136,14 +136,11 @@ export default function RefundPolicyPage() {
               6. Refund Process &amp; Timelines
             </h2>
             <p>
-              Approved refunds will be processed through our payment gateway partners (Razorpay / UPI) back to the original source account:
+              Approved refunds will be processed directly via UPI back to the original source account or UPI VPA:
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
-                <strong>UPI / Net Banking / Debit Card:</strong> 3 to 7 business days depending on your issuing bank.
-              </li>
-              <li>
-                <strong>Credit Card:</strong> 5 to 10 business days as per the card issuer&apos;s settlement cycle.
+                <strong>Direct UPI Transfer:</strong> 1 to 2 business days directly to your verified UPI VPA or bank account upon verification.
               </li>
             </ul>
           </section>

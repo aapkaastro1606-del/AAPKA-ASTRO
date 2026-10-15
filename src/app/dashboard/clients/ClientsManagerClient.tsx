@@ -15,14 +15,30 @@ interface ClientsManagerClientProps {
 
 export default function ClientsManagerClient({ canManage }: ClientsManagerClientProps) {
   const [search, setSearch] = useState("");
+  const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockClients = [
+  React.useEffect(() => {
+    fetch("/api/dashboard/clients")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.clients?.length > 0) {
+          setClients(data.clients);
+        } else {
+          setClients(fallbackClients);
+        }
+      })
+      .catch(() => setClients(fallbackClients))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const fallbackClients = [
     {
       id: "cli-1",
       name: "Aarav Sharma",
       phone: "+91 98765 43210",
       totalSessions: 3,
-      totalSpend: "₹620",
+      totalSpend: "₹1,051",
       lastConsulted: "18 Sep 2026",
       lagna: "Capricorn",
       rashi: "Libra",
@@ -34,7 +50,7 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
       name: "Pooja Deshmukh",
       phone: "+91 98220 11223",
       totalSessions: 2,
-      totalSpend: "₹450",
+      totalSpend: "₹1,051",
       lastConsulted: "14 Sep 2026",
       lagna: "Taurus",
       rashi: "Pisces",
@@ -46,7 +62,7 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
       name: "Vikram Singhania",
       phone: "+91 94250 99887",
       totalSessions: 4,
-      totalSpend: "₹1,850",
+      totalSpend: "₹15,000",
       lastConsulted: "02 Sep 2026",
       lagna: "Leo",
       rashi: "Aries",
@@ -58,20 +74,20 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
       name: "Sunita Aggarwal",
       phone: "+91 98140 33445",
       totalSessions: 1,
-      totalSpend: "₹210",
+      totalSpend: "Free Kundli Lead",
       lastConsulted: "28 Aug 2026",
       lagna: "Virgo",
       rashi: "Cancer",
-      primaryConcern: "Son Higher Education Visa",
+      primaryConcern: "Free Janam Kundli generated",
       notes: "Timing aligned with Sun Mahadasha commencement.",
     },
   ];
 
-  const filtered = mockClients.filter(
+  const filtered = clients.filter(
     (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      c.primaryConcern.toLowerCase().includes(search.toLowerCase())
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.includes(search) ||
+      c.primaryConcern?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

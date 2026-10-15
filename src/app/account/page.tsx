@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   Gift,
   MessageCircle,
+  Video,
+  Calendar,
 } from "lucide-react";
 
 export default function ClientAccountDashboard() {
@@ -43,8 +45,20 @@ export default function ClientAccountDashboard() {
 
   useEffect(() => {
     const sync = () => {
-      setActiveBooking(ClientAccountStore.getActiveBooking());
+      fetch("/api/booking/status")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.booking) {
+            setActiveBooking(data.booking);
+          } else {
+            setActiveBooking(ClientAccountStore.getActiveBooking());
+          }
+        })
+        .catch(() => {
+          setActiveBooking(ClientAccountStore.getActiveBooking());
+        });
     };
+    sync();
     window.addEventListener("astro_state_changed", sync);
     window.addEventListener("aapka_booking_updated", sync);
 
@@ -153,29 +167,52 @@ export default function ClientAccountDashboard() {
                       {activeBooking.bookingId}
                     </span>
                     <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30 font-temple">
-                      PAID &bull; {activeBooking.status === "COMPLETED" ? "SESSION COMPLETED" : activeBooking.status === "AWAITING_SESSION" ? "AWAITING SESSION" : "BOOKING CONFIRMED"}
+                      {(activeBooking.bookingStatus || activeBooking.status) === "SCHEDULED"
+                        ? "SESSION SCHEDULED"
+                        : (activeBooking.bookingStatus || activeBooking.status) === "PAYMENT_CLAIMED"
+                        ? "VERIFYING PAYMENT"
+                        : (activeBooking.bookingStatus || activeBooking.status) === "PENDING_PAYMENT"
+                        ? "AWAITING PAYMENT"
+                        : (activeBooking.bookingStatus || activeBooking.status) === "COMPLETED"
+                        ? "COMPLETED"
+                        : "CONFIRMED"}
                     </span>
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold font-temple text-[#7B2D26] mt-1">
-                    {activeBooking.productName || (activeBooking.productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation")}
+                    {activeBooking.productName || (activeBooking.productType === "vaastu" || activeBooking.productId === "vaastu" ? "Vaastu Consultation" : activeBooking.productType === "kundli_pdf" ? "Janam Kundli PDF Dossier" : "Astro Consultation")}
                   </h2>
                   <p className="text-xs text-[#6E5545] mt-0.5 font-body">
-                    Format: <strong>{activeBooking.format}</strong> &bull; Amount Paid: <strong>Flat ₹{activeBooking.amountPaid.toLocaleString("en-IN")}</strong> &bull; Astrologer status: <span className="font-bold text-[#6B8E5A]">{astrologerStatus}</span>
+                    Format: <strong>{activeBooking.format || "WhatsApp call"}</strong> &bull; Locked Amount: <strong>Flat ₹{(activeBooking.lockedAmount || activeBooking.amount || activeBooking.amountPaid || 1051).toLocaleString("en-IN")}</strong>
+                    {activeBooking.scheduledSlot && (
+                      <span className="ml-2 font-bold text-emerald-800">&bull; Slot: {activeBooking.scheduledSlot}</span>
+                    )}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons: WhatsApp Coordination (No In-App Room) */}
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-                <a
-                  href={`https://wa.me/919311215564?text=${encodeURIComponent(`Pranam Acharya Ji, I am coordinating my booked consultation (Booking Ref: ${activeBooking.bookingId}). Please let me know when we can connect on WhatsApp Call / Google Meet.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-[#25D366] hover:bg-[#20ba5a] px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Message on WhatsApp (+91 93112 15564)</span>
-                </a>
+                {activeBooking.meetingLink && activeBooking.meetingLink.startsWith("http") ? (
+                  <a
+                    href={activeBooking.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-emerald-700 hover:bg-emerald-800 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Video className="h-4 w-4" />
+                    <span>Join Google Meet</span>
+                  </a>
+                ) : (
+                  <a
+                    href={`https://wa.me/919311215564?text=${encodeURIComponent(`Pranam Acharya Ji, I am coordinating my consultation (Booking Ref: ${activeBooking.bookingId}). Please let me know when we can connect.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-[#25D366] hover:bg-[#20ba5a] px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Message on WhatsApp (+91 93112 15564)</span>
+                  </a>
+                )}
 
                 <Link
                   href="/account/consult"
@@ -187,29 +224,35 @@ export default function ClientAccountDashboard() {
               </div>
             </div>
 
-            {/* 3-State Progress Indicators */}
-            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#2A4720] bg-[#F4F9F2] p-2.5 rounded-xl border border-[#B8DCB0]">
-                <CheckCircle2 className="h-4 w-4 text-[#6B8E5A] shrink-0" />
-                <span>1. Confirmed (Paid)</span>
+            {/* Stepper summary */}
+            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+              <div className="flex items-center gap-2 p-2 rounded-xl border border-[#B8DCB0] bg-[#F4F9F2] text-[#2A4720] font-semibold">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A] shrink-0" />
+                <span>1. Initiated</span>
               </div>
-              <div className={`flex items-center gap-2 text-xs font-semibold p-2.5 rounded-xl border ${
-                activeBooking.status === "AWAITING_SESSION"
-                  ? "bg-[#FFF8ED] text-[#C1662F] border-[#E8A33D]"
-                  : activeBooking.status === "COMPLETED"
-                  ? "bg-[#F4F9F2] text-[#2A4720] border-[#B8DCB0]"
-                  : "bg-[#FAF5EE] text-[#6E5545] border-[#E8D8C3]"
+              <div className={`flex items-center gap-2 p-2 rounded-xl border font-semibold ${
+                ["PAYMENT_CLAIMED", "CONFIRMED", "SCHEDULED", "COMPLETED"].includes(activeBooking.bookingStatus || activeBooking.status)
+                  ? "border-[#B8DCB0] bg-[#F4F9F2] text-[#2A4720]"
+                  : "border-[#E8D8C3] bg-[#FAF5EE] text-[#6E5545]"
               }`}>
-                <Clock className={`h-4 w-4 shrink-0 ${activeBooking.status === "AWAITING_SESSION" ? "text-[#C1662F] animate-spin" : "text-[#A8988B]"}`} />
-                <span>2. Awaiting Session</span>
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span>2. Bank Verified</span>
               </div>
-              <div className={`flex items-center gap-2 text-xs font-semibold p-2.5 rounded-xl border ${
-                activeBooking.status === "COMPLETED"
-                  ? "bg-[#F4F9F2] text-[#2A4720] border-[#B8DCB0]"
-                  : "bg-[#FAF5EE] text-[#6E5545] border-[#E8D8C3] opacity-75"
+              <div className={`flex items-center gap-2 p-2 rounded-xl border font-semibold ${
+                ["SCHEDULED", "COMPLETED"].includes(activeBooking.bookingStatus || activeBooking.status)
+                  ? "border-[#B8DCB0] bg-[#F4F9F2] text-[#2A4720]"
+                  : "border-[#E8D8C3] bg-[#FAF5EE] text-[#6E5545]"
               }`}>
-                <Sparkles className={`h-4 w-4 shrink-0 ${activeBooking.status === "COMPLETED" ? "text-[#6B8E5A]" : "text-[#A8988B]"}`} />
-                <span>3. Completed</span>
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span>3. Scheduled</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-xl border font-semibold ${
+                (activeBooking.bookingStatus || activeBooking.status) === "COMPLETED"
+                  ? "border-[#B8DCB0] bg-[#F4F9F2] text-[#2A4720]"
+                  : "border-[#E8D8C3] bg-[#FAF5EE] text-[#6E5545] opacity-75"
+              }`}>
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span>4. Completed</span>
               </div>
             </div>
           </div>

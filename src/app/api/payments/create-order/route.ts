@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       success: true,
       order,
       rate: rateCalculation,
-      keyId: env.RAZORPAY_KEY_ID || "rzp_test_mock_key_id",
+      upiId: env.NEXT_PUBLIC_UPI_ID || "9311215564@okbizaxis",
     });
   } catch (err: any) {
     return NextResponse.json(

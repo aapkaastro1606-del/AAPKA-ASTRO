@@ -39,7 +39,7 @@ export interface ConfirmedBookingItem {
   format: string;
   concern: string;
   amountPaid: number;
-  paymentStatus: "PAID";
+  paymentStatus: "PAID" | "AWAITING_VERIFICATION";
   bookingState: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED";
   bookedAt: string;
   preferredSlot?: string;

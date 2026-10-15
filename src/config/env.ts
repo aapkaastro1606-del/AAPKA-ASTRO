@@ -39,11 +39,11 @@ const envSchema = z.object({
   // Site Owner Elevation (Comma-separated emails elevated to platform ADMIN)
   OWNER_EMAIL: z.string().optional().default("anmol@aapkaastro.com,acharya@aapkaastro.com"),
 
-  // Swappable Payments (Razorpay)
-  PAYMENT_PROVIDER: z.enum(["razorpay", "mock"]).default("mock"),
-  RAZORPAY_KEY_ID: z.string().optional().default("rzp_test_mock_key_id"),
-  RAZORPAY_KEY_SECRET: z.string().optional().default("rzp_test_mock_secret"),
-  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  // Payments (Direct UPI / Mock)
+  PAYMENT_PROVIDER: z.enum(["upi", "mock"]).default("upi"),
+  NEXT_PUBLIC_UPI_ID: z.string().optional().default("9311215564@okbizaxis"),
+  NEXT_PUBLIC_UPI_NAME: z.string().optional().default("Aapka Astro"),
+  NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional().default("919311215564"),
 
   // Swappable Call Provider (Agora / ZegoCloud)
   CALL_PROVIDER: z.enum(["agora", "zegocloud", "mock"]).default("mock"),

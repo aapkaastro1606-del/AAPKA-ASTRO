@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
-import { AdminStore, PricingSettings } from "@/lib/store/adminStore";
+import { PricingSettings } from "@/lib/store/adminStore";
+import { PlatformSettingsService } from "@/lib/services/platformSettingsService";
 
 /**
  * GET /api/admin/pricing
- * Reads current consultation pricing settings. Requires VIEW on "pricing".
+ * Reads current consultation pricing settings from Neon database. Requires VIEW on "pricing".
  */
 export async function GET(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const pricing = AdminStore.getPricing();
+    const pricing = await PlatformSettingsService.getPricing();
     return NextResponse.json({ success: true, pricing });
   } catch (error: any) {
     return NextResponse.json(
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/admin/pricing
- * Updates consultation pricing rules. Requires MANAGE on "pricing".
+ * Updates consultation pricing rules in Neon database. Requires MANAGE on "pricing".
  */
 export async function POST(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -57,11 +58,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = (await req.json()) as PricingSettings;
-    AdminStore.updatePricing(body);
+    const updatedPricing = await PlatformSettingsService.updatePricing(body);
     return NextResponse.json({
       success: true,
-      message: "Pricing updated successfully.",
-      pricing: AdminStore.getPricing(),
+      message: "Pricing updated successfully in database.",
+      pricing: updatedPricing,
     });
   } catch (error: any) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 export interface PaymentOrder {
-  id: string; // Razorpay order_id or mock order id
-  amount: number; // In Paise (e.g. 49900 for ₹499)
+  id: string; // Order ID or UPI reference id
+  amount: number; // In Paise (e.g. 105100 for ₹1,051)
   currency: string;
   receipt: string;
   status: string;

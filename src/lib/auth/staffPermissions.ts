@@ -8,7 +8,8 @@ export type StaffSection =
   | "consultations"
   | "pricing"
   | "analytics"
-  | "staff";
+  | "staff"
+  | "bookings";
 
 export type AccessLevel = "VIEW" | "MANAGE";
 
@@ -94,6 +95,13 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     name: "Staff Permissions",
     path: "/admin/staff",
     description: "Assign or revoke per-section access for site employees (Owner Only).",
+    ownerOnly: true,
+  },
+  {
+    id: "bookings",
+    name: "UPI Verification Queue",
+    path: "/admin/bookings",
+    description: "Verify direct UPI bank receipts, approve/reject bookings, and schedule consultation links (Owner Only).",
     ownerOnly: true,
   },
 ];

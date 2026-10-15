@@ -426,7 +426,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
                   />
                 </div>
                 <span className="mt-2 block text-[10px] text-[#6E5545]">
-                  Instant unlocked PDF generation upon successful Razorpay payment.
+                  Instant unlocked PDF generation upon successful UPI payment.
                 </span>
               </div>
 

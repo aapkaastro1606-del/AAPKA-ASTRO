@@ -5,7 +5,7 @@ import { LocationResult } from "@/lib/services/locationService";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { KundliData } from "@/lib/astrology/types";
 import { calculateKundli } from "@/lib/astrology/chartCalculations";
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, User, Phone } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
@@ -18,6 +18,7 @@ interface KundliFormProps {
 export const KundliForm: React.FC<KundliFormProps> = ({ onCalculated, className = "" }) => {
   const { user } = useUser();
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
   const [birthDate, setBirthDate] = useState("1995-10-24");
   const [birthTime, setBirthTime] = useState("14:35");
@@ -46,20 +47,33 @@ export const KundliForm: React.FC<KundliFormProps> = ({ onCalculated, className 
     e.preventDefault();
     setIsCalculating(true);
 
-    setTimeout(() => {
-      const kundli = calculateKundli({
-        name: name.trim() || "Seeker",
-        gender,
-        birthDate,
-        birthTime,
-        birthPlace: selectedLocation.displayName,
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-        timezone: selectedLocation.timezone,
-      });
+    const calculationInput = {
+      name: name.trim() || "Seeker",
+      gender,
+      birthDate,
+      birthTime,
+      birthPlace: selectedLocation.displayName,
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
+      timezone: selectedLocation.timezone,
+      phone: phone.trim() || undefined,
+      userId: user?.id || undefined,
+    };
 
+    setTimeout(() => {
+      const kundli = calculateKundli(calculationInput);
       onCalculated(kundli);
       setIsCalculating(false);
+
+      // Persist lead directly in Neon PostgreSQL database
+      fetch("/api/kundli/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: calculationInput,
+          tier: "free",
+        }),
+      }).catch((err) => console.warn("Background lead capture note:", err));
     }, 350);
   };
 
@@ -131,6 +145,26 @@ export const KundliForm: React.FC<KundliFormProps> = ({ onCalculated, className 
                 Female
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Mobile / WhatsApp Number (Lead Capture) */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#3B2A1E] mb-1.5 flex items-center justify-between">
+            <span>Mobile / WhatsApp Number</span>
+            <span className="text-[10px] text-[#A3681F] font-normal">To receive Kundli highlights &amp; muhurat</span>
+          </label>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#6E5545]">
+              <Phone className="h-4 w-4" />
+            </div>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. +91 98765 43210"
+              className="w-full rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] pl-10 pr-4 py-2.5 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none transition-all font-medium"
+            />
           </div>
         </div>
 

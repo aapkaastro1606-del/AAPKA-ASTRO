@@ -16,9 +16,20 @@ import {
 } from "lucide-react";
 
 export default function BlogPage() {
-  const allPosts = BlogStore.getPublishedPosts();
+  const [allPosts, setAllPosts] = useState<BlogPost[]>(() => BlogStore.getPublishedPosts());
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  React.useEffect(() => {
+    fetch("/api/blog")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.posts?.length > 0) {
+          setAllPosts(data.posts);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const categories = [
     "All",

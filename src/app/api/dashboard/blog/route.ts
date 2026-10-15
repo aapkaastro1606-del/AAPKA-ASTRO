@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const posts = BlogStore.getAllPosts();
+    const posts = await BlogStore.getAllPostsAsync();
     return NextResponse.json({ success: true, posts });
   } catch (error: any) {
     return NextResponse.json(
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       views: body.views || 0,
     };
 
-    BlogStore.savePost(postToSave);
+    await BlogStore.savePostAsync(postToSave);
 
     return NextResponse.json({
       success: true,
@@ -159,7 +159,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    BlogStore.deletePost(id);
+    await BlogStore.deletePostAsync(id);
 
     return NextResponse.json({
       success: true,

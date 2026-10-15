@@ -10,10 +10,31 @@ import ConsultPageComponent from "@/app/consult/page";
 export default function AccountConsultPage() {
   const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const loadBooking = async () => {
+    try {
+      const res = await fetch("/api/booking/status", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && data.booking) {
+        setActiveBooking(data.booking);
+      } else {
+        const local = ClientAccountStore.getActiveBooking();
+        if (local) setActiveBooking(local);
+      }
+    } catch {
+      const local = ClientAccountStore.getActiveBooking();
+      if (local) setActiveBooking(local);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    loadBooking();
+
     const sync = () => {
-      setActiveBooking(ClientAccountStore.getActiveBooking());
+      loadBooking();
     };
     window.addEventListener("aapka_booking_updated", sync);
     return () => {
@@ -39,7 +60,7 @@ export default function AccountConsultPage() {
               <button
                 type="button"
                 onClick={() => setShowBookingForm((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7B2D26] bg-[#FFFDF9] border border-[#E8D8C3] px-3.5 py-1.5 rounded-xl hover:bg-[#FAF5EE] transition-all"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7B2D26] bg-[#FFFDF9] border border-[#E8D8C3] px-3.5 py-1.5 rounded-xl hover:bg-[#FAF5EE] transition-all cursor-pointer"
               >
                 <PlusCircle className="h-3.5 w-3.5 text-[#C1662F]" />
                 <span>{showBookingForm ? "View Active Consultation Status" : "Book Another Consultation"}</span>
@@ -59,7 +80,7 @@ export default function AccountConsultPage() {
         {/* Content: Show Consultation Status View or New Booking Intake */}
         {showBookingForm || !activeBooking ? (
           <div>
-            {!activeBooking && (
+            {!activeBooking && !loading && (
               <div className="mb-6">
                 <ClientConsultationStatusView onBookNew={() => setShowBookingForm(true)} />
               </div>

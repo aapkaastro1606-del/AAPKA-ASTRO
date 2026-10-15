@@ -51,20 +51,7 @@ import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
 import { ConsultationConfirmationScreen } from "@/components/consult/ConsultationConfirmationScreen";
-
-// Razorpay Script Loader helper (Viar Checkout Pattern)
-const loadRazorpayScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") return resolve(false);
-    if ((window as any).Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+import { UpiQrModal } from "@/components/consult/UpiQrModal";
 
 export default function ConsultPage() {
   const { isAstrologer } = useCurrentUserRole();
@@ -100,6 +87,12 @@ export default function ConsultPage() {
   const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(() =>
     ClientAccountStore.getActiveBooking()
   );
+  const [showUpiModal, setShowUpiModal] = useState(false);
+  const [upiBookingInfo, setUpiBookingInfo] = useState<{
+    bookingId: string;
+    amount: number;
+    serviceName: string;
+  } | null>(null);
 
   // In-Queue state for current user
   const [myQueueItem, setMyQueueItem] = useState<QueueItem | null>(null);
@@ -197,7 +190,7 @@ export default function ConsultPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle Pay-Per-Booking Checkout (Mirroring Viar Checkout Pattern)
+  // Handle Direct Commission-Free UPI QR Booking Workflow
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -209,165 +202,90 @@ export default function ConsultPage() {
     setIsProcessingPayment(true);
 
     try {
-      const userId = user?.id || `user_${Date.now()}`;
       const topicText = isAstro ? concern : `${propertyType} in ${propertyCity}: ${vaastuConcern}`;
 
-      // 1. Create order on server via payment endpoint (server validates rate)
-      const res = await fetch("/api/payments/create-order", {
+      // 1. Create booking in Neon PostgreSQL database
+      const res = await fetch("/api/consultation/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: promoFee,
-          userId,
-          productId: selectedProduct,
+          userId: user?.id,
           clientName: userName,
-          phone: userPhone,
+          clientPhone: userPhone,
+          clientEmail: userEmail || user?.primaryEmailAddress?.emailAddress,
+          productId: selectedProduct,
           format: consultFormat,
-          serviceType: "consultation_booking",
+          concern: topicText,
+          birthDetails: isAstro
+            ? { birthDate, birthTime, birthPlace }
+            : undefined,
+          propertyDetails: !isAstro
+            ? { propertyType, propertyCity, vaastuConcern }
+            : undefined,
         }),
       });
 
-      const orderData = await res.json().catch(() => null);
-      if (!res.ok || !orderData?.order) {
-        throw new Error(orderData?.message || "Failed to create order");
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to create consultation booking");
       }
 
-      const orderId = orderData.order.id;
-      const keyId = orderData.keyId || "rzp_test_mock_key_id";
+      const bookingRef = data.bookingId;
+      const chargedAmount = data.amount;
 
-      // 2. Execute Payment Verification & Post-Payment Handoff
-      const completeBooking = async (paymentId: string, signature: string = "") => {
-        // Verify payment on server & trigger confirmation email with direct WhatsApp link
-        await fetch("/api/payments/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            paymentId,
-            signature,
-            userId,
-            clientName: userName,
-            clientEmail: userEmail,
-            clientPhone: userPhone,
-            productId: selectedProduct,
-            amountINR: promoFee,
-            format: consultFormat,
-            topic: topicText,
-          }),
-        }).catch((err) => console.warn("Verification warning:", err));
+      // 2. Register local booking records for immediate optimistic UI
+      const booking = ConsultationBookingService.createBooking({
+        userId: user?.id || `user_${Date.now()}`,
+        clientName: userName,
+        phone: userPhone,
+        productId: selectedProduct,
+        format: consultFormat,
+        topic: topicText,
+        preferredSlot: "Direct WhatsApp / Google Meet Coordination",
+        dateOfBirth: isAstro ? birthDate : undefined,
+        timeOfBirth: isAstro ? birthTime : undefined,
+        placeOfBirth: isAstro ? birthPlace : undefined,
+        propertyType: !isAstro ? propertyType : undefined,
+        propertyLocation: !isAstro ? propertyCity : undefined,
+        isFirstTime: isAstro,
+      });
 
-        // Generate verified local ConsultationBooking record
-        const booking = ConsultationBookingService.createBooking({
-          userId,
-          clientName: userName,
-          phone: userPhone,
-          productId: selectedProduct,
-          format: consultFormat,
-          topic: topicText,
-          preferredSlot: "Direct WhatsApp / Google Meet Coordination",
-          dateOfBirth: isAstro ? birthDate : undefined,
-          timeOfBirth: isAstro ? birthTime : undefined,
-          placeOfBirth: isAstro ? birthPlace : undefined,
-          propertyType: !isAstro ? propertyType : undefined,
-          propertyLocation: !isAstro ? propertyCity : undefined,
-          isFirstTime: isAstro,
-        });
+      booking.bookingId = bookingRef;
+      booking.status = "CONFIRMED";
+      booking.orderId = bookingRef;
+      booking.confirmedAt = new Date().toISOString();
 
-        booking.status = "CONFIRMED";
-        booking.orderId = orderId;
-        booking.paymentId = paymentId;
-        booking.confirmedAt = new Date().toISOString();
+      AstrologerStateStore.addConfirmedBooking({
+        id: `bk-${Date.now()}`,
+        bookingId: bookingRef,
+        userId: user?.id || `user_${Date.now()}`,
+        userName,
+        userPhone,
+        userEmail: userEmail || user?.primaryEmailAddress?.emailAddress || "",
+        productId: selectedProduct,
+        productName: data.serviceName,
+        format: consultFormat,
+        concern: topicText,
+        amountPaid: chargedAmount,
+        paymentStatus: "AWAITING_VERIFICATION",
+        bookingState: "CONFIRMED",
+        bookedAt: new Date().toISOString(),
+        preferredSlot: "Immediate Next Window",
+      });
 
-        // Register in Astrologer store so it appears instantly on the Astrologer's dashboard
-        AstrologerStateStore.addConfirmedBooking({
-          id: `bk-${Date.now()}`,
-          bookingId: booking.bookingId,
-          userId,
-          userName,
-          userPhone,
-          userEmail,
-          productId: selectedProduct,
-          productName: booking.productName,
-          format: consultFormat,
-          concern: topicText,
-          amountPaid: promoFee,
-          paymentStatus: "PAID",
-          bookingState: "CONFIRMED",
-          bookedAt: new Date().toISOString(),
-          preferredSlot: "Immediate Next Window",
-          birthDetails: isAstro
-            ? {
-                name: userName,
-                gender: "male",
-                birthDate,
-                birthTime,
-                birthPlace,
-                latitude: 28.6139,
-                longitude: 77.209,
-                timezone: 5.5,
-              }
-            : undefined,
-          propertyDetails: !isAstro
-            ? {
-                propertyType,
-                propertyLocation: propertyCity,
-              }
-            : undefined,
-        });
+      ClientAccountStore.setActiveBooking(booking);
 
-        // Set confirmed booking to immediately show the Post-Payment Handoff Confirmation Screen
-        setConfirmedBooking(booking);
-        ClientAccountStore.setActiveBooking(booking);
-        setIsProcessingPayment(false);
-      };
-
-      // Check if running in mock/preview mode or live Razorpay
-      const isMock = keyId.includes("mock") || keyId.startsWith("rzp_test_mock");
-
-      if (isMock) {
-        // Smooth simulated one-time payment for test/dev
-        setTimeout(async () => {
-          await completeBooking(`pay_sim_${Date.now()}`, `sig_mock_${Date.now()}`);
-        }, 1200);
-      } else {
-        const loaded = await loadRazorpayScript();
-        if (!loaded) {
-          throw new Error("Unable to load Razorpay payment gateway. Please check connection.");
-        }
-
-        const options = {
-          key: keyId,
-          amount: promoFee * 100, // paise
-          currency: "INR",
-          name: "Aapka Astro",
-          description: `${productConfig.name} - 1-on-1 Consultation`,
-          image: "/logo.png",
-          order_id: orderId,
-          handler: async function (response: any) {
-            await completeBooking(response.razorpay_payment_id, response.razorpay_signature);
-          },
-          prefill: {
-            name: userName,
-            contact: userPhone,
-            email: user?.primaryEmailAddress?.emailAddress || "",
-          },
-          theme: {
-            color: "#7B2D26",
-          },
-          modal: {
-            ondismiss: function () {
-              setIsProcessingPayment(false);
-            },
-          },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      }
-    } catch (err: any) {
-      console.error("Payment or booking error:", err);
+      setUpiBookingInfo({
+        bookingId: bookingRef,
+        amount: chargedAmount,
+        serviceName: data.serviceName,
+      });
+      setShowUpiModal(true);
       setIsProcessingPayment(false);
-      alert(err.message || "Encountered an issue processing booking. Please try again or reach out to support.");
+    } catch (err: any) {
+      console.error("Booking error:", err);
+      setIsProcessingPayment(false);
+      alert(err.message || "Encountered an issue processing booking. Please try again.");
     }
   };
 
@@ -909,7 +827,7 @@ export default function ConsultPage() {
                 <div className="flex items-center justify-center gap-4 text-[11px] text-[#7D6B5D]">
                   <span className="flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5 text-[#6B8E5A]" />
-                    <span>PCI-DSS Secure Razorpay Checkout</span>
+                    <span>100% Direct Secure UPI Payment</span>
                   </span>
                   <span>&bull;</span>
                   <span className="flex items-center gap-1">
@@ -999,11 +917,33 @@ export default function ConsultPage() {
                   disabled={scheduleSuccess}
                   className="w-full rounded-xl bg-[#7B2D26] py-3 font-bold text-white hover:bg-[#64231D] transition-all shadow-sm cursor-pointer"
                 >
-                  {scheduleSuccess ? "Booking Confirmed..." : `Confirm & Pay ₹${promoFee.toLocaleString("en-IN")} via UPI / Card`}
+                  {scheduleSuccess ? "Booking Confirmed..." : `Confirm & Pay ₹${promoFee.toLocaleString("en-IN")} via UPI QR`}
                 </button>
               </form>
             </div>
           </div>
+        )}
+
+        {/* Direct UPI QR Payment Modal */}
+        {upiBookingInfo && (
+          <UpiQrModal
+            isOpen={showUpiModal}
+            onClose={() => {
+              setShowUpiModal(false);
+              const active = ClientAccountStore.getActiveBooking();
+              if (active) setConfirmedBooking(active);
+            }}
+            bookingId={upiBookingInfo.bookingId}
+            amount={upiBookingInfo.amount}
+            productType={selectedProduct}
+            serviceName={upiBookingInfo.serviceName}
+            clientName={userName}
+            clientPhone={userPhone}
+            onPaymentSubmitted={() => {
+              const active = ClientAccountStore.getActiveBooking();
+              if (active) setConfirmedBooking(active);
+            }}
+          />
         )}
       </div>
     </div>

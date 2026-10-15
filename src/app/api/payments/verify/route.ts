@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
             userId,
             amount: paidAmount,
             type: "CREDIT",
-            razorpayOrderId: orderId,
-            razorpayPaymentId: paymentId,
+            orderId: orderId,
+            paymentId: paymentId,
             provider: paymentProvider.name,
             description:
               productId === "kundli_pdf"

@@ -78,7 +78,7 @@ export const TrustCredentialsSection: React.FC = () => {
             </div>
             <div>
               <div className="font-temple text-xs font-bold text-[#7B2D26]">Secure Payments</div>
-              <div className="text-[10px] text-[#6E5545]">Encrypted via Razorpay &bull; UPI / Cards</div>
+              <div className="text-[10px] text-[#6E5545]">Direct Verified UPI &bull; GPay / PhonePe / Paytm</div>
             </div>
           </div>
         </div>

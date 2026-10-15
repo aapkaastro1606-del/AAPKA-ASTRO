@@ -54,7 +54,7 @@ describe("Kundli Full PDF Report — Paid Product (₹501) & Free Tool Integrity
 
     assert.equal(res.status, 200);
     assert.equal(data.success, true);
-    // Server enforces ₹501 (50,100 paise in Razorpay format)
+    // Server enforces ₹501 (50,100 paise)
     assert.equal(data.order.amount, 50100);
     assert.equal(data.order.notes.productId, "kundli_pdf");
     assert.equal(data.order.notes.amountINR, "501");

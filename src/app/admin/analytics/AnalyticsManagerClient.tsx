@@ -90,7 +90,7 @@ export default function AnalyticsManagerClient() {
               {analytics.totalRecharges.toLocaleString("en-IN")}
             </div>
             <span className="text-[10px] text-[#6B8E5A] font-semibold mt-1 block">
-              Via Razorpay Orders API
+              Via Direct UPI &amp; Online Booking
             </span>
           </div>
         </div>

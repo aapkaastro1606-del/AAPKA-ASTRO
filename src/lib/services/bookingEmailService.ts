@@ -285,4 +285,197 @@ Website: ${this.WEBSITE_URL}
       messageId,
     };
   }
+
+  /**
+   * Dispatches a high-priority security alert to the Site Owner whenever payment settings are altered.
+   */
+  public static async sendOwnerPaymentSettingsAlert(params: {
+    actorEmail: string;
+    previousSettings: any;
+    newSettings: any;
+    ipAddress?: string | null;
+  }): Promise<{ success: boolean; simulated: boolean }> {
+    const ownerEmails = (process.env.OWNER_EMAIL || "anmol@aapkaastro.com,acharya@aapkaastro.com")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const subject = `[SECURITY ALERT] Aapka Astro UPI Payment Settings Modified by ${params.actorEmail}`;
+    const text = `SECURITY ALERT: Payment settings for Aapka Astro were modified.\n\nActor: ${params.actorEmail}\nIP: ${params.ipAddress || "Unknown"}\nTimestamp: ${new Date().toISOString()}\n\nNew UPI ID: ${params.newSettings.upiId}\nNew Payee Name: ${params.newSettings.payeeName}\nNew WhatsApp: ${params.newSettings.whatsappNumber}\n\nIf you did not authorize this change, immediately inspect your database and credentials!`;
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 2px solid #7B2D26; border-radius: 12px; background: #FFFDF9;">
+        <h2 style="color: #7B2D26; margin-top: 0;">🚨 Critical Security Notification: Payment Settings Updated</h2>
+        <p style="font-size: 14px; color: #3B2A1E;">
+          The official UPI receipt and payee settings on <strong>Aapka Astro</strong> were just updated.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0;">
+          <tr style="background: #FBF3E7;"><td style="padding: 8px; font-weight: bold;">Modified By:</td><td style="padding: 8px;">${params.actorEmail}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">New UPI ID:</td><td style="padding: 8px; color: #7B2D26; font-weight: bold;">${params.newSettings.upiId}</td></tr>
+          <tr style="background: #FBF3E7;"><td style="padding: 8px; font-weight: bold;">New Payee Name:</td><td style="padding: 8px;">${params.newSettings.payeeName}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">WhatsApp Routing:</td><td style="padding: 8px;">${params.newSettings.whatsappNumber}</td></tr>
+          <tr style="background: #FBF3E7;"><td style="padding: 8px; font-weight: bold;">Timestamp:</td><td style="padding: 8px;">${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</td></tr>
+        </table>
+        <p style="font-size: 12px; color: #6E5545;">
+          Audit logs have recorded this event in PostgreSQL with actor context.
+        </p>
+      </div>
+    `;
+
+    if (process.env.RESEND_API_KEY && ownerEmails.length > 0) {
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Aapka Astro Security <security@aapkaastro.com>",
+            to: ownerEmails,
+            subject,
+            html,
+            text,
+          }),
+        });
+        return { success: true, simulated: false };
+      } catch (err) {
+        console.warn("[BookingEmailService] Owner alert email failed, logged in server:", err);
+      }
+    }
+
+    console.info(`[BookingEmailService] (Simulated) Owner payment alert logged for ${ownerEmails.join(", ")}`);
+    return { success: true, simulated: true };
+  }
+
+  /**
+   * Alerts the Owner when a seeker clicks "I have paid".
+   */
+  public static async sendOwnerPaymentClaimedAlert(params: {
+    bookingId: string;
+    clientName: string;
+    clientPhone: string;
+    clientEmail?: string | null;
+    productName: string;
+    amount: number;
+    utr?: string | null;
+  }): Promise<{ success: boolean; simulated: boolean }> {
+    const ownerEmails = (process.env.OWNER_EMAIL || "anmol@aapkaastro.com,acharya@aapkaastro.com")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const subject = `[PAYMENT CLAIMED] ${params.clientName} reported UPI payment for ${params.bookingId} (₹${params.amount})`;
+    const text = `New UPI payment claimed by seeker!\n\nBooking ID: ${params.bookingId}\nClient: ${params.clientName} (${params.clientPhone})\nService: ${params.productName}\nAmount: ₹${params.amount}\nUTR / Ref: ${params.utr || "Not provided"}\n\nPlease verify your bank/UPI app and approve in the Owner Verification Queue: https://aapkaastro.com/admin/bookings`;
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
+        <h3 style="color: #7B2D26; margin-top: 0;">⚡ New UPI Payment Claimed for Verification</h3>
+        <p style="font-size: 14px; color: #3B2A1E;">
+          A seeker has submitted their consultation payment proof.
+        </p>
+        <div style="background: #FAF5EE; padding: 16px; border-radius: 8px; border: 1px solid #E8D8C3; margin: 16px 0;">
+          <p style="margin: 4px 0;"><strong>Booking ID:</strong> <span style="font-family: monospace; font-size: 15px; color: #7B2D26;">${params.bookingId}</span></p>
+          <p style="margin: 4px 0;"><strong>Seeker:</strong> ${params.clientName} (${params.clientPhone})</p>
+          <p style="margin: 4px 0;"><strong>Service:</strong> ${params.productName}</p>
+          <p style="margin: 4px 0;"><strong>Amount Locked:</strong> ₹${params.amount.toLocaleString("en-IN")}</p>
+          <p style="margin: 4px 0;"><strong>UTR / Txn Ref:</strong> <span style="font-family: monospace;">${params.utr || "None provided (screenshot sent on WhatsApp)"}</span></p>
+        </div>
+        <p style="font-size: 13px; color: #6E5545;">
+          Please open your bank or UPI business app to confirm credit before approving:
+        </p>
+        <a href="https://aapkaastro.com/admin/bookings" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+          Open Verification Queue &rarr;
+        </a>
+      </div>
+    `;
+
+    if (process.env.RESEND_API_KEY && ownerEmails.length > 0) {
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Aapka Astro Queue <bookings@aapkaastro.com>",
+            to: ownerEmails,
+            subject,
+            html,
+            text,
+          }),
+        });
+        return { success: true, simulated: false };
+      } catch (err) {
+        console.warn("[BookingEmailService] Owner payment claimed alert error:", err);
+      }
+    }
+
+    console.info(`[BookingEmailService] (Simulated) Payment claimed notification for ${params.bookingId}`);
+    return { success: true, simulated: true };
+  }
+
+  /**
+   * Dispatches confirmed time slot and meeting link directly to the seeker.
+   */
+  public static async sendClientBookingScheduledEmail(params: {
+    clientEmail?: string | null;
+    clientName: string;
+    bookingId: string;
+    productName: string;
+    scheduledSlot: string;
+    meetingLink: string;
+  }): Promise<{ success: boolean; simulated: boolean }> {
+    if (!params.clientEmail) return { success: false, simulated: true };
+
+    const subject = `Your Consultation is Scheduled: ${params.productName} (Ref: ${params.bookingId})`;
+    const text = `Pranam ${params.clientName},\n\nYour consultation with Acharya Niraj Kumar has been confirmed and scheduled.\n\n• Booking Reference: ${params.bookingId}\n• Service: ${params.productName}\n• Scheduled Time Window: ${params.scheduledSlot}\n• Consultation Link / Format: ${params.meetingLink}\n\nPlease be ready with your birth details or questions 5 minutes prior.\n\nView details in your account: https://aapkaastro.com/account/consult`;
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
+        <h2 style="color: #7B2D26; margin-top: 0;">Pranam ${params.clientName},</h2>
+        <p style="font-size: 15px; color: #3B2A1E; line-height: 1.5;">
+          Your consultation with <strong>Acharya Niraj Kumar</strong> has been confirmed and scheduled.
+        </p>
+        <div style="background: #FBF3E7; border: 1px solid #E8D8C3; padding: 18px; border-radius: 10px; margin: 20px 0;">
+          <h4 style="margin: 0 0 10px 0; color: #7B2D26;">Consultation Schedule &amp; Access</h4>
+          <p style="margin: 6px 0; font-size: 14px;"><strong>Booking ID:</strong> <span style="font-family: monospace; color: #7B2D26;">${params.bookingId}</span></p>
+          <p style="margin: 6px 0; font-size: 14px;"><strong>Scheduled Time Slot:</strong> <span style="font-weight: bold; color: #2A4720;">${params.scheduledSlot}</span></p>
+          <p style="margin: 6px 0; font-size: 14px;"><strong>Meeting Format / Link:</strong> <a href="${params.meetingLink}" style="color: #7B2D26; font-weight: bold;">${params.meetingLink}</a></p>
+        </div>
+        <p style="font-size: 13px; color: #6E5545; line-height: 1.5;">
+          Please ensure you have good internet connectivity and your quiet environment prepared. If connecting via WhatsApp call, Acharya Ji will initiate the call directly at the scheduled time.
+        </p>
+        <a href="https://aapkaastro.com/account/consult" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; margin-top: 10px;">
+          View in My Account &rarr;
+        </a>
+      </div>
+    `;
+
+    if (process.env.RESEND_API_KEY) {
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Aapka Astro <bookings@aapkaastro.com>",
+            to: params.clientEmail,
+            subject,
+            html,
+            text,
+          }),
+        });
+        return { success: true, simulated: false };
+      } catch (err) {
+        console.warn("[BookingEmailService] Live scheduling email dispatch warning:", err);
+      }
+    }
+
+    console.info(`[BookingEmailService] (Simulated) Scheduled email prepared for ${params.clientEmail}`);
+    return { success: true, simulated: true };
+  }
 }

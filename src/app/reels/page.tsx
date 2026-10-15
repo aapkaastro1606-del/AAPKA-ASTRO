@@ -18,7 +18,16 @@ export default function ReelsPage() {
 
   useEffect(() => {
     const updateReels = () => {
-      setAllReels(ReelsStore.getVisibleReels());
+      fetch("/api/reels")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.visibleReels?.length > 0) {
+            setAllReels(data.visibleReels);
+          } else {
+            setAllReels(ReelsStore.getVisibleReels());
+          }
+        })
+        .catch(() => setAllReels(ReelsStore.getVisibleReels()));
     };
 
     updateReels();

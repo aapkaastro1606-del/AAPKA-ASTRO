@@ -108,7 +108,7 @@ export default function TermsOfServicePage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                All monetary transactions on Aapka Astro are processed securely through certified PCI-DSS compliant payment aggregators (Razorpay / UPI / Net Banking).
+                All monetary transactions on Aapka Astro are processed directly via secure UPI QR transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) with zero gateway commission markups.
               </li>
               <li>
                 <strong>Pay-Per-Booking Model:</strong> All consultations operate on a transparent flat-fee, pay-per-booking model with zero hidden charges and zero per-minute debits.

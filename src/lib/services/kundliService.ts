@@ -24,6 +24,9 @@ export interface KundliCalculationInput {
   latitude: number;
   longitude: number;
   timezone: number;
+  phone?: string;
+  email?: string;
+  relation?: string;
   userId?: string;
 }
 
@@ -85,12 +88,38 @@ export class KundliService {
   private static provider: IKundliCalculationProvider = new SelfHostedKundliProvider();
 
   /**
-   * Generates the Free Tier Kundli (Accessible to all visitors without gating)
+   * Generates the Free Tier Kundli and records seeker details in PostgreSQL as a lead
    */
   public static async generateFreeChart(
     input: KundliCalculationInput
   ): Promise<FreeTierKundliReport> {
     const chart = await this.provider.calculate(input);
+
+    // Capture Free Kundli Lead into Database
+    try {
+      if (prisma && prisma.kundliRecord) {
+        await prisma.kundliRecord.create({
+          data: {
+            userId: input.userId && input.userId !== "guest" ? input.userId : null,
+            name: input.name?.trim() || "Seeker",
+            phone: input.phone?.trim() || null,
+            email: input.email?.trim() || null,
+            relation: input.relation || "Self",
+            gender: input.gender || "male",
+            dob: new Date(input.birthDate),
+            timeOfBirth: input.birthTime,
+            placeOfBirth: input.birthPlace,
+            latitude: input.latitude,
+            longitude: input.longitude,
+            timezone: input.timezone,
+            chartDataJson: chart as any,
+            isFreeChart: true,
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[KundliService] Automatic free lead capture error:", e);
+    }
 
     return {
       isFreeTier: true,
@@ -179,29 +208,28 @@ export class KundliService {
 
   /**
    * Saves Kundli record to PostgreSQL database.
-   * Enforces Section 6.5 lead-gen rule: Requires an authenticated user ID.
+   * Preserves lead details whether logged-in or guest.
    */
   public static async saveKundli(
     input: KundliCalculationInput,
     chartData: KundliData,
     userId?: string
   ): Promise<{ saved: boolean; recordId?: string; requiresSignup?: boolean }> {
-    if (!userId || userId === "guest") {
-      return {
-        saved: false,
-        requiresSignup: true,
-      };
-    }
-
     try {
       const record = await prisma.kundliRecord.create({
         data: {
-          userId,
+          userId: userId && userId !== "guest" ? userId : null,
           name: input.name,
+          phone: input.phone || null,
+          email: input.email || null,
+          relation: input.relation || "Self",
           gender: input.gender,
           dob: new Date(input.birthDate),
           timeOfBirth: input.birthTime,
           placeOfBirth: input.birthPlace,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          timezone: input.timezone,
           chartDataJson: chartData as any,
           isFreeChart: true,
         },

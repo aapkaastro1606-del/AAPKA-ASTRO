@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
-import {
-  CONSULTATION_PRODUCTS,
-  FLAT_CONSULTATION_PRICING,
-  FIRST_CONSULTATION_OFFER,
-} from "@/config/placeholderContent";
+import { PlatformSettingsService } from "@/lib/services/platformSettingsService";
+import { CONSULTATION_PRODUCTS, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
 
 export interface ConsultationRateCalculation {
   userId: string;
@@ -23,43 +20,44 @@ export interface ConsultationRateCalculation {
 
 /**
  * Server-side determination of user consultation fee for both consultation products:
- * 1. Astro Consultation: Standard ₹2,100, First-time ₹1,051 (confirmed server-side per user ID, one-time only).
+ * 1. Astro Consultation: Standard ₹2,100, First-time ₹1,051 (confirmed server-side in Neon DB, one-time only).
  * 2. Vaastu Consultation: Flat ₹15,000 (discounted from ₹25,000) — standing price for everyone, NOT gated by first-time check.
+ * All base and promotional prices are retrieved live from PostgreSQL (Neon).
  */
 export async function calculateUserConsultationRate(
   userId: string,
   productId: "astro" | "vaastu" = "astro",
   type: string = "voice"
 ): Promise<ConsultationRateCalculation> {
+  const settings = await PlatformSettingsService.getPricing();
+
   // Product 2: Vaastu Consultation (Standing price for everyone)
   if (productId === "vaastu") {
-    const vaastuConfig = CONSULTATION_PRODUCTS.vaastu;
-    const baseFee = vaastuConfig.standardPrice; // ₹25,000
-    const effectiveFee = vaastuConfig.promoPrice; // ₹15,000
-    const discountAmount = baseFee - effectiveFee; // ₹10,000
-    const discountPercentage = Math.round((discountAmount / baseFee) * 100); // 40%
+    const baseFee = settings.vaastuStandardFee ?? 25000;
+    const effectiveFee = settings.vaastuPromoFee ?? 15000;
+    const discountAmount = Math.max(0, baseFee - effectiveFee);
+    const discountPercentage = baseFee > 0 ? Math.round((discountAmount / baseFee) * 100) : 40;
 
     return {
       userId,
       productId: "vaastu",
-      productName: vaastuConfig.name,
+      productName: "Vaastu Shastra Consultation",
       consultationType: type,
       baseFee,
       effectiveFee,
       baseRatePerMin: 0,
       effectiveRatePerMin: 0,
-      isFirstConsultation: false, // Not relevant for Vaastu, no gate
+      isFirstConsultation: false,
       firstTimeOnlyGated: false,
       discountPercentage,
       discountAmount,
-      discountReason: "Vaastu Consultation Standing Offer: Flat ₹15,000/- (Regular ₹25,000 - Open to all clients)",
+      discountReason: `Vaastu Consultation Standing Offer: Flat ₹${effectiveFee.toLocaleString("en-IN")}/- (Regular ₹${baseFee.toLocaleString("en-IN")})`,
     };
   }
 
   // Product 1: Astro Consultation (First-time clients: Flat ₹1,051; Returning clients: Flat ₹2,100)
-  const astroConfig = CONSULTATION_PRODUCTS.astro;
-  const standardFee = astroConfig.standardPrice; // ₹2,100
-  const promoFee = astroConfig.promoPrice; // ₹1,051
+  const standardFee = settings.flatStandardFee ?? 2100;
+  const promoFee = settings.flatFirstConsultationFee ?? 1051;
 
   let isFirstConsultation = true;
 
@@ -68,25 +66,27 @@ export async function calculateUserConsultationRate(
       const priorSessionCount = await prisma.session.count({
         where: {
           clientId: userId,
-          status: "COMPLETED",
+          paymentStatus: { in: ["CONFIRMED", "COMPLETED"] },
         },
       });
 
       isFirstConsultation = priorSessionCount === 0;
     }
   } catch {
-    // If DB is offline or mock in preview, default to first consultation promo
+    // If DB check fails, default to first consultation promo
     isFirstConsultation = true;
   }
 
   const effectiveFee = isFirstConsultation ? promoFee : standardFee;
   const discountAmount = isFirstConsultation ? standardFee - promoFee : 0;
-  const discountPercentage = isFirstConsultation ? FIRST_CONSULTATION_OFFER.discountPercentage : 0;
+  const discountPercentage = isFirstConsultation && standardFee > 0
+    ? Math.round((discountAmount / standardFee) * 100)
+    : 0;
 
   return {
     userId,
     productId: "astro",
-    productName: astroConfig.name,
+    productName: "Vedic Astrology Consultation",
     consultationType: type,
     baseFee: standardFee,
     effectiveFee,
@@ -97,7 +97,7 @@ export async function calculateUserConsultationRate(
     discountPercentage,
     discountAmount,
     discountReason: isFirstConsultation
-      ? "First Consultation Special Offer: Flat ₹1,051/- (Regular ₹2,100)"
-      : "Standard Vedic Astro Consultation Tariff: Flat ₹2,100/-",
+      ? `First Consultation Special Offer: Flat ₹${promoFee.toLocaleString("en-IN")}/- (Regular ₹${standardFee.toLocaleString("en-IN")})`
+      : `Standard Consultation Fee: Flat ₹${standardFee.toLocaleString("en-IN")}/-`,
   };
 }

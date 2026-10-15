@@ -6,6 +6,28 @@ import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { PLACEHOLDER_TESTIMONIALS } from "@/config/placeholderContent";
 
 export const Testimonials: React.FC = () => {
+  const [reviews, setReviews] = React.useState<any[]>(PLACEHOLDER_TESTIMONIALS);
+
+  React.useEffect(() => {
+    fetch("/api/reviews")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.reviews?.length > 0) {
+          setReviews(
+            data.reviews.map((r: any, idx: number) => ({
+              id: r.id || `rev-${idx}`,
+              stars: r.rating || r.stars || 5,
+              text: r.comment || r.text || "",
+              clientName: r.clientName || "Seeker",
+              city: r.city || "Verified Seeker",
+              service: r.service || "Vedic Astrology",
+              verified: true,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
   return (
     <section className="border-t border-[#E8D8C3] bg-[#FFFDF9] py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -27,7 +49,7 @@ export const Testimonials: React.FC = () => {
         {/* 4-5 Realistic Placeholder Testimonials */}
         {/* PLACEHOLDER: replace with real content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PLACEHOLDER_TESTIMONIALS.map((r) => (
+          {reviews.map((r) => (
             <div
               key={r.id}
               className="relative rounded-2xl border-2 border-[#E8D8C3] bg-[#FBF3E7]/60 p-6 sm:p-8 shadow-sm hover:border-[#C1662F] transition-all flex flex-col justify-between"

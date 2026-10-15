@@ -72,8 +72,8 @@ export const Footer: React.FC = () => {
             </div>
             <div className="flex flex-col items-center">
               <ShieldCheck className="h-6 w-6 text-[#E8A33D] mb-1.5" />
-              <span className="font-temple font-bold text-[#FBF3E7]">Secure Payments via Razorpay</span>
-              <span className="text-[11px] text-[#FBF3E7]/70">256-Bit SSL &bull; UPI, Cards, NetBanking</span>
+              <span className="font-temple font-bold text-[#FBF3E7]">Direct Secure Payments via UPI</span>
+              <span className="text-[11px] text-[#FBF3E7]/70">Zero Gateway Commission &bull; Instant Verified</span>
             </div>
             <div className="flex flex-col items-center">
               <Heart className="h-6 w-6 text-[#E8A33D] mb-1.5" />
@@ -352,13 +352,13 @@ export const Footer: React.FC = () => {
             </div>
 
             <div className="mt-4 rounded-lg border border-[#FBF3E7]/15 bg-[#64221C] p-2.5">
-              <div className="text-[10px] text-[#FBF3E7]/70">Secure Payment Gateways:</div>
+              <div className="text-[10px] text-[#FBF3E7]/70">Direct UPI Payments:</div>
               <div className="mt-1 flex flex-wrap gap-1 font-mono text-[9px] font-bold text-[#FBF3E7]">
-                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">Razorpay</span>
-                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">UPI</span>
+                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">UPI QR</span>
                 <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">GPay</span>
                 <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">PhonePe</span>
-                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">Cards</span>
+                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">Paytm</span>
+                <span className="rounded bg-[#7B2D26] px-1.5 py-0.5">BHIM</span>
               </div>
             </div>
           </div>

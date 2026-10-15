@@ -232,7 +232,7 @@ export default function PricingPolicyPage() {
                 <strong>Goods &amp; Services Tax (GST):</strong> Displayed rates are inclusive of all applicable statutory taxes where required.
               </li>
               <li>
-                <strong>Currency Conversion:</strong> Indian users are billed in Indian Rupees (INR ₹). International seekers may pay via international credit cards or global gateways in USD, EUR, or GBP calculated via real-time market exchange rates.
+                <strong>Payment Method:</strong> All consultations and digital reports are payable via Direct UPI (Google Pay, PhonePe, Paytm, BHIM, Cred) directly to our verified UPI ID or by scanning the official QR code with zero intermediary gateway fees.
               </li>
             </ul>
           </section>

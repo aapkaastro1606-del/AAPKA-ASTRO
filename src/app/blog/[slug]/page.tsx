@@ -61,13 +61,14 @@ export default async function BlogPostDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = BlogStore.getPostBySlug(slug);
+  const post = (await BlogStore.getPostBySlugAsync(slug)) || BlogStore.getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = BlogStore.getPublishedPosts()
+  const publishedPosts = await BlogStore.getPublishedPostsAsync();
+  const relatedPosts = publishedPosts
     .filter((p) => p.id !== post.id)
     .slice(0, 2);
 

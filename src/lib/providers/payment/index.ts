@@ -1,13 +1,13 @@
 import { PaymentProvider } from "./PaymentProvider";
-import { RazorpayPaymentProvider } from "./RazorpayPaymentProvider";
+import { UpiPaymentProvider } from "./UpiPaymentProvider";
 import { MockPaymentProvider } from "./MockPaymentProvider";
 import { env } from "@/config/env";
 
 export * from "./PaymentProvider";
 
 function createPaymentProvider(): PaymentProvider {
-  if (env.PAYMENT_PROVIDER === "razorpay" && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET) {
-    return new RazorpayPaymentProvider();
+  if (env.PAYMENT_PROVIDER === "upi") {
+    return new UpiPaymentProvider();
   }
   return new MockPaymentProvider();
 }

@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
           description: tx.description || `${tx.type} Transaction`,
           amount: tx.amount,
           balanceAfter: user.walletBalance,
-          referenceId: tx.razorpayPaymentId || tx.razorpayOrderId || "N/A",
+          referenceId: tx.paymentId || tx.orderId || "N/A",
         }));
       }
     } catch {
@@ -55,10 +55,10 @@ export async function GET(req: NextRequest) {
           id: "TXN-89012",
           date: "2026-09-18 10:15:00",
           type: "RECHARGE",
-          description: "Consultation Payment via UPI (Razorpay)",
+          description: "Consultation Payment via Direct UPI QR",
           amount: 1051,
           balanceAfter: 1051,
-          referenceId: "pay_rzp_demo_88219",
+          referenceId: "upi_txn_demo_88219",
         },
       ];
     }

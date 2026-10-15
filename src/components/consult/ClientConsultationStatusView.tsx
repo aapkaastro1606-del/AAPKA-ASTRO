@@ -8,24 +8,65 @@ import {
   Sparkles,
   MessageCircle,
   FileText,
-  PhoneCall,
   Calendar,
   ShieldCheck,
-  Star,
-  Download,
-  ArrowRight,
+  AlertCircle,
   ExternalLink,
+  Video,
+  XCircle,
+  RotateCcw,
+  QrCode,
+  ArrowRight,
 } from "lucide-react";
-import { ConsultationBooking } from "@/lib/services/consultationBilling";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
-import { BookingEmailService } from "@/lib/services/bookingEmailService";
+import { UpiQrModal } from "./UpiQrModal";
 
-export type BookingDisplayState = "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED";
+export type BookingWorkflowState =
+  | "PENDING_PAYMENT"
+  | "PAYMENT_CLAIMED"
+  | "CONFIRMED"
+  | "SCHEDULED"
+  | "COMPLETED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "EXPIRED";
+
+export interface UnifiedBooking {
+  id?: string;
+  bookingId: string;
+  userName?: string;
+  clientName?: string;
+  userPhone?: string;
+  phone?: string;
+  userEmail?: string | null;
+  productType?: "astro" | "vaastu" | "kundli_pdf" | string;
+  productId?: string;
+  productName?: string;
+  format?: string;
+  concern?: string | null;
+  topic?: string | null;
+  amount?: number;
+  amountPaid?: number;
+  lockedAmount?: number;
+  isFirstTimeAstro?: boolean;
+  bookingStatus?: BookingWorkflowState;
+  status?: string;
+  paymentStatus?: string;
+  utr?: string | null;
+  preferredDay?: string | null;
+  preferredTimeWindow?: string | null;
+  preferredSlot?: string | null;
+  scheduledSlot?: string | null;
+  meetingLink?: string | null;
+  rejectionReason?: string | null;
+  intakeDetails?: any;
+  createdAt?: string;
+  expiresAt?: string | null;
+}
 
 interface ClientConsultationStatusViewProps {
-  booking?: ConsultationBooking | null;
+  booking?: UnifiedBooking | null;
   onBookNew?: () => void;
 }
 
@@ -33,50 +74,122 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   booking: propBooking,
   onBookNew,
 }) => {
-  const [activeBooking, setActiveBooking] = useState<ConsultationBooking | null>(
-    () => propBooking || ClientAccountStore.getActiveBooking()
-  );
+  const [activeBooking, setActiveBooking] = useState<UnifiedBooking | null>(propBooking || null);
+  const [loading, setLoading] = useState<boolean>(!propBooking);
   const [astrologerStatus, setAstrologerStatus] = useState<AstrologerStatus>("AVAILABLE");
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const [claimUtr, setClaimUtr] = useState<string>("");
+  const [claiming, setClaiming] = useState<boolean>(false);
+
+  const fetchActiveBooking = async () => {
+    try {
+      const res = await fetch("/api/booking/status", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && data.booking) {
+        setActiveBooking(data.booking);
+      } else if (!propBooking) {
+        setActiveBooking(null);
+      }
+    } catch (err) {
+      console.warn("Failed to load active booking status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    if (propBooking) {
+      setActiveBooking(propBooking);
+      setLoading(false);
+    } else {
+      fetchActiveBooking();
+    }
+
     setAstrologerStatus(AstrologerStateStore.getStatus());
-    const sync = () => {
+
+    const handleSync = () => {
       setAstrologerStatus(AstrologerStateStore.getStatus());
-      if (!propBooking) {
-        setActiveBooking(ClientAccountStore.getActiveBooking());
-      }
+      fetchActiveBooking();
     };
-    window.addEventListener("astro_state_changed", sync);
-    window.addEventListener("aapka_booking_updated", sync);
+
+    window.addEventListener("astro_state_changed", handleSync);
+    window.addEventListener("aapka_booking_updated", handleSync);
     return () => {
-      window.removeEventListener("astro_state_changed", sync);
-      window.removeEventListener("aapka_booking_updated", sync);
+      window.removeEventListener("astro_state_changed", handleSync);
+      window.removeEventListener("aapka_booking_updated", handleSync);
     };
   }, [propBooking]);
 
   const booking = propBooking || activeBooking;
 
-  // Determine current lifecycle step (1: Confirmed, 2: Awaiting Session, 3: Completed)
-  let currentState: BookingDisplayState = "CONFIRMED";
-  if (booking) {
-    if (booking.status === "COMPLETED") {
-      currentState = "COMPLETED";
-    } else if ((booking.status as string) === "AWAITING_SESSION" || booking.status === "IN_SESSION") {
-      currentState = "AWAITING_SESSION";
-    } else {
-      currentState = "CONFIRMED";
+  // Resolve normalized fields across legacy and unified booking types
+  const bookingId = booking?.bookingId || "";
+  const clientName = booking?.userName || booking?.clientName || "Seeker";
+  const clientPhone = booking?.userPhone || booking?.phone || "";
+  const productType = booking?.productType || booking?.productId || "astro";
+  const productName =
+    booking?.productName ||
+    (productType === "vaastu"
+      ? "Comprehensive Devta & Energy Vaastu Audit"
+      : productType === "kundli_pdf"
+      ? "Janam Kundli Full PDF Dossier"
+      : "1-on-1 Vedic Astro Consultation");
+  const amount = booking?.lockedAmount || booking?.amount || booking?.amountPaid || (productType === "vaastu" ? 15000 : 1051);
+  const format = booking?.format || "WhatsApp call";
+  const preferredDay = booking?.preferredDay || "Earliest Available";
+  const preferredTime = booking?.preferredTimeWindow || "Morning";
+  const topic = booking?.topic || booking?.concern || "";
+  const scheduledSlot = booking?.scheduledSlot;
+  const meetingLink = booking?.meetingLink;
+  const rejectionReason = booking?.rejectionReason;
+  const isFirstTime = Boolean(booking?.isFirstTimeAstro);
+
+  // Normalize booking status
+  let rawStatus = (booking?.bookingStatus || booking?.status || "CONFIRMED").toUpperCase();
+  if (rawStatus === "AWAITING_SESSION" || rawStatus === "IN_SESSION") {
+    rawStatus = "CONFIRMED";
+  }
+  const status: BookingWorkflowState = (rawStatus as BookingWorkflowState) || "PENDING_PAYMENT";
+
+  const rawWaNumber = "919311215564";
+  const whatsappCoordinationUrl = `https://wa.me/${rawWaNumber}?text=${encodeURIComponent(
+    `Pranam Acharya Ji,\n\nI am contacting regarding my consultation booking.\n• Booking Ref: ${bookingId}\n• Seeker: ${clientName}\n• Service: ${productName}\n• Status: ${status}\n\nPlease let me know our consultation timing and details.`
+  )}`;
+
+  const handleClaimPayment = async () => {
+    if (!bookingId) return;
+    setClaiming(true);
+    try {
+      await fetch("/api/booking/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId,
+          utr: claimUtr.trim() || undefined,
+        }),
+      });
+      // Open WhatsApp with proof confirmation
+      const waMsg = `Pranam Acharya Ji,\n\nI have completed payment for my consultation.\n• Booking Ref: ${bookingId}\n• Seeker: ${clientName}\n• Amount: ₹${amount.toLocaleString("en-IN")}\n• UTR: ${claimUtr.trim() || "Attached in screenshot"}\n\nAttached is my payment screenshot for bank verification.`;
+      window.open(`https://wa.me/${rawWaNumber}?text=${encodeURIComponent(waMsg)}`, "_blank");
+      await fetchActiveBooking();
+    } catch (e) {
+      console.warn("Claim error:", e);
+    } finally {
+      setClaiming(false);
     }
+  };
+
+  if (loading) {
+    return (
+      <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-12 text-center max-w-2xl mx-auto shadow-sm">
+        <Clock className="h-8 w-8 text-[#C1662F] animate-spin mx-auto mb-3" />
+        <h3 className="font-temple text-lg font-bold text-[#7B2D26]">Loading Booking Details...</h3>
+        <p className="text-xs text-[#6E5545] mt-1">Checking live status with sanctum server.</p>
+      </div>
+    );
   }
 
-  const whatsappCoordinationUrl = booking
-    ? BookingEmailService.getWhatsAppCoordinationLink({
-        bookingId: booking.bookingId,
-        clientName: booking.clientName,
-        productName: booking.productName,
-      })
-    : "https://wa.me/919311215564";
-
-  // Fallback if no booking exists in storage
+  // Fallback if no booking exists
   if (!booking) {
     return (
       <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-sm">
@@ -85,7 +198,7 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
         </div>
         <h3 className="font-temple text-xl font-bold text-[#7B2D26]">No Active Consultation Booking</h3>
         <p className="text-xs sm:text-sm text-[#6E5545] mt-2 max-w-md mx-auto leading-relaxed">
-          You do not have any pending consultation sessions. Book an Astro Consultation (Regular ₹2,100 ➔ Now Flat ₹1,051) or Vaastu Consultation (Regular ₹25,000 ➔ Now Flat ₹15,000) to connect directly with Acharya Niraj Kumar.
+          You do not have any pending consultation sessions. Book an Astro Consultation (Regular ₹2,100 ➔ First-time Flat ₹1,051) or Vaastu Consultation (Regular ₹25,000 ➔ Now Flat ₹15,000) to connect directly with Acharya Niraj Kumar.
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -97,7 +210,7 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
             <span>Book Astro Consultation (Flat ₹1,051)</span>
           </Link>
           <a
-            href="https://wa.me/919311215564"
+            href={`https://wa.me/${rawWaNumber}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] px-5 py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#E8D8C3] transition-all text-center flex items-center justify-center gap-1.5"
@@ -110,32 +223,72 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
     );
   }
 
-  const isVaastu = booking.productId === "vaastu";
+  // Stepper Stage Calculation
+  // 1: PENDING_PAYMENT, 2: PAYMENT_CLAIMED, 3: CONFIRMED, 4: SCHEDULED, 5: COMPLETED
+  let currentStepIndex = 1;
+  if (status === "PAYMENT_CLAIMED") currentStepIndex = 2;
+  else if (status === "CONFIRMED") currentStepIndex = 3;
+  else if (status === "SCHEDULED") currentStepIndex = 4;
+  else if (status === "COMPLETED") currentStepIndex = 5;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Main Status Container */}
       <div className="rounded-3xl border-2 border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-md">
-        {/* Top Header Strip: Ref ID & Astrologer Status */}
+        {/* Top Header Strip */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8D8C3]">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-bold text-[#7B2D26] bg-[#FBF3E7] px-2.5 py-1 rounded-md border border-[#E8D8C3]">
-                {booking.bookingId}
+                {bookingId}
               </span>
-              <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30">
-                PAID &amp; CONFIRMED
-              </span>
+
+              {status === "PENDING_PAYMENT" && (
+                <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-500/30">
+                  PAYMENT PENDING
+                </span>
+              )}
+              {status === "PAYMENT_CLAIMED" && (
+                <span className="rounded-full bg-orange-500/15 px-2.5 py-0.5 text-[10px] font-bold text-orange-900 border border-orange-500/30">
+                  PAYMENT CLAIMED &bull; VERIFICATION IN PROGRESS
+                </span>
+              )}
+              {status === "CONFIRMED" && (
+                <span className="rounded-full bg-[#6B8E5A]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] border border-[#6B8E5A]/30">
+                  PAYMENT VERIFIED &bull; SCHEDULING
+                </span>
+              )}
+              {status === "SCHEDULED" && (
+                <span className="rounded-full bg-emerald-600/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-900 border border-emerald-600/40">
+                  CONSULTATION SCHEDULED
+                </span>
+              )}
+              {status === "COMPLETED" && (
+                <span className="rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[10px] font-bold text-blue-900 border border-blue-500/30">
+                  CONSULTATION COMPLETED
+                </span>
+              )}
+              {status === "REJECTED" && (
+                <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-bold text-red-900 border border-red-500/30">
+                  PAYMENT REJECTED
+                </span>
+              )}
+              {status === "EXPIRED" && (
+                <span className="rounded-full bg-gray-500/15 px-2.5 py-0.5 text-[10px] font-bold text-gray-700 border border-gray-500/30">
+                  BOOKING EXPIRED
+                </span>
+              )}
             </div>
+
             <h2 className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26] mt-2">
-              {booking.productName}
+              {productName}
             </h2>
             <p className="text-xs text-[#6E5545] mt-0.5">
-              Consulting with <strong>{PLACEHOLDER_ASTROLOGER.displayName}</strong> • Flat ₹{booking.amountPaid.toLocaleString("en-IN")} Paid
+              Consulting with <strong>{PLACEHOLDER_ASTROLOGER.displayName}</strong> • Locked Amount: <strong>₹{amount.toLocaleString("en-IN")}</strong>
+              {isFirstTime && <span className="ml-2 font-bold text-[#6B8E5A]">(First-Time 50% Off Applied)</span>}
             </p>
           </div>
 
-          {/* Astrologer Desk Presence Signal */}
+          {/* Sanctum Presence Desk */}
           <div className="flex items-center gap-3 bg-[#FAF5EE] px-3.5 py-2 rounded-2xl border border-[#E8D8C3] self-start sm:self-auto">
             <div className="relative">
               <img
@@ -171,138 +324,343 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
           </div>
         </div>
 
-        {/* =========================================================================
-            3-STAGE BOOKING LIFECYCLE STEPPER
-            1. CONFIRMED -> 2. AWAITING SESSION -> 3. COMPLETED
-        ========================================================================= */}
-        <div className="py-6 border-b border-[#E8D8C3]">
-          <div className="flex items-center justify-between text-xs font-bold mb-3">
-            <span className="text-[11px] uppercase tracking-wider text-[#7B2D26] font-temple">
-              Consultation Lifecycle State
-            </span>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                currentState === "COMPLETED"
-                  ? "bg-[#6B8E5A]/20 text-[#2A4720] border border-[#6B8E5A]/30"
-                  : currentState === "AWAITING_SESSION"
-                  ? "bg-[#E8A33D]/20 text-[#C1662F] border border-[#E8A33D]/30"
-                  : "bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20"
-              }`}
-            >
-              Current State: {currentState === "CONFIRMED" ? "Confirmed" : currentState === "AWAITING_SESSION" ? "Awaiting Session" : "Completed"}
-            </span>
+        {/* 4-Step Lifecycle Visual Progress Bar (Only for non-rejected/non-expired) */}
+        {status !== "REJECTED" && status !== "EXPIRED" && status !== "CANCELLED" && (
+          <div className="py-6 border-b border-[#E8D8C3]">
+            <div className="flex items-center justify-between text-xs font-bold mb-3">
+              <span className="text-[11px] uppercase tracking-wider text-[#7B2D26] font-temple">
+                Consultation Lifecycle Progress
+              </span>
+              <span className="text-[11px] text-[#6E5545] font-semibold">
+                Step {currentStepIndex} of 5
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {/* Step 1: Payment */}
+              <div
+                className={`rounded-xl p-2.5 border text-center transition-all ${
+                  currentStepIndex === 1
+                    ? "border-[#7B2D26] bg-[#FAF1E4] shadow-xs"
+                    : currentStepIndex > 1
+                    ? "border-[#B8DCB0] bg-[#F4F9F2]"
+                    : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
+                }`}
+              >
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">1. Payment</div>
+                <div className="text-[10px] text-[#6E5545] mt-0.5">
+                  {currentStepIndex > 1 ? "Paid" : "Pending UPI"}
+                </div>
+              </div>
+
+              {/* Step 2: Verification */}
+              <div
+                className={`rounded-xl p-2.5 border text-center transition-all ${
+                  currentStepIndex === 2
+                    ? "border-[#E8A33D] bg-[#FFF8ED] shadow-xs ring-1 ring-[#E8A33D]"
+                    : currentStepIndex > 2
+                    ? "border-[#B8DCB0] bg-[#F4F9F2]"
+                    : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
+                }`}
+              >
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">2. Verification</div>
+                <div className="text-[10px] text-[#6E5545] mt-0.5">
+                  {currentStepIndex === 2 ? "Bank Checking" : currentStepIndex > 2 ? "Matched" : "Awaiting"}
+                </div>
+              </div>
+
+              {/* Step 3: Confirmed */}
+              <div
+                className={`rounded-xl p-2.5 border text-center transition-all ${
+                  currentStepIndex === 3
+                    ? "border-[#6B8E5A] bg-[#F4F9F2] shadow-xs ring-1 ring-[#6B8E5A]"
+                    : currentStepIndex > 3
+                    ? "border-[#B8DCB0] bg-[#F4F9F2]"
+                    : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
+                }`}
+              >
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">3. Confirmed</div>
+                <div className="text-[10px] text-[#6E5545] mt-0.5">
+                  {currentStepIndex >= 3 ? "Approved" : "Pending"}
+                </div>
+              </div>
+
+              {/* Step 4: Scheduled */}
+              <div
+                className={`rounded-xl p-2.5 border text-center transition-all ${
+                  currentStepIndex === 4
+                    ? "border-[#6B8E5A] bg-[#F4F9F2] shadow-xs ring-1 ring-[#6B8E5A]"
+                    : currentStepIndex > 4
+                    ? "border-[#B8DCB0] bg-[#F4F9F2]"
+                    : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
+                }`}
+              >
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">4. Scheduled</div>
+                <div className="text-[10px] text-[#6E5545] mt-0.5">
+                  {currentStepIndex >= 4 ? "Slot Fixed" : "Pending"}
+                </div>
+              </div>
+
+              {/* Step 5: Completed */}
+              <div
+                className={`col-span-2 sm:col-span-1 rounded-xl p-2.5 border text-center transition-all ${
+                  currentStepIndex === 5
+                    ? "border-[#6B8E5A] bg-[#F4F9F2] shadow-xs ring-1 ring-[#6B8E5A]"
+                    : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
+                }`}
+              >
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">5. Completed</div>
+                <div className="text-[10px] text-[#6E5545] mt-0.5">
+                  {currentStepIndex === 5 ? "Concluded" : "Upcoming"}
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Step 1: Confirmed */}
-            <div
-              className={`rounded-2xl p-4 border transition-all ${
-                currentState === "CONFIRMED"
-                  ? "border-[#7B2D26] bg-[#FAF1E4] shadow-xs"
-                  : "border-[#B8DCB0] bg-[#F4F9F2]"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <CheckCircle2
-                  className={`h-5 w-5 ${
-                    currentState === "CONFIRMED" ? "text-[#7B2D26]" : "text-[#6B8E5A]"
-                  }`}
-                />
-                <span className="font-temple font-bold text-xs text-[#3B2A1E]">1. Confirmed</span>
-              </div>
-              <p className="text-[11px] text-[#6E5545] leading-relaxed">
-                Payment verified &bull; Priority slot reserved at Acharya Ji&apos;s desk.
-              </p>
-            </div>
-
-            {/* Step 2: Awaiting Session */}
-            <div
-              className={`rounded-2xl p-4 border transition-all ${
-                currentState === "AWAITING_SESSION"
-                  ? "border-[#E8A33D] bg-[#FFF8ED] shadow-xs ring-1 ring-[#E8A33D]"
-                  : currentState === "COMPLETED"
-                  ? "border-[#B8DCB0] bg-[#F4F9F2]"
-                  : "border-[#E8D8C3] bg-[#FAF5EE] opacity-80"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <Clock
-                  className={`h-5 w-5 ${
-                    currentState === "AWAITING_SESSION"
-                      ? "text-[#C1662F] animate-spin"
-                      : currentState === "COMPLETED"
-                      ? "text-[#6B8E5A]"
-                      : "text-[#A8988B]"
-                  }`}
-                />
-                <span className="font-temple font-bold text-xs text-[#3B2A1E]">2. Awaiting Session</span>
-              </div>
-              <p className="text-[11px] text-[#6E5545] leading-relaxed">
-                Sanctum coordination &bull; WhatsApp call / Google Meet link scheduled.
-              </p>
-            </div>
-
-            {/* Step 3: Completed */}
-            <div
-              className={`rounded-2xl p-4 border transition-all ${
-                currentState === "COMPLETED"
-                  ? "border-[#6B8E5A] bg-[#F4F9F2] shadow-xs ring-1 ring-[#6B8E5A]"
-                  : "border-[#E8D8C3] bg-[#FAF5EE] opacity-70"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <Sparkles
-                  className={`h-5 w-5 ${
-                    currentState === "COMPLETED" ? "text-[#6B8E5A]" : "text-[#A8988B]"
-                  }`}
-                />
-                <span className="font-temple font-bold text-xs text-[#3B2A1E]">3. Completed</span>
-              </div>
-              <p className="text-[11px] text-[#6E5545] leading-relaxed">
-                Session conducted &bull; Remedies &amp; summary preserved in account history.
-              </p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* =========================================================================
-            CORE ACTION & DELIVERY NOTICE
-            Direct WhatsApp Coordination Link
+            STATE-SPECIFIC ACTION & NOTIFICATION CARDS
         ========================================================================= */}
-        <div className="my-6 rounded-2xl border-2 border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-6 text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26] font-temple block mb-1.5">
-            How Your Session Takes Place
-          </span>
-          <p className="text-sm text-[#3B2A1E] leading-relaxed font-body max-w-xl mx-auto">
-            The consultation is confirmed, and it will be conducted directly via <strong>WhatsApp call</strong> or <strong>Google Meet</strong>, as you prefer or as arranged with Acharya Ji&apos;s sanctum desk.
-          </p>
 
-          {/* Direct WhatsApp Call/Chat Button */}
-          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={whatsappCoordinationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-6 py-3.5 font-bold text-sm shadow-md transition-all w-full sm:w-auto cursor-pointer"
-            >
-              <MessageCircle className="h-5 w-5" />
-              <span>Message on WhatsApp (+91 93112 15564)</span>
-            </a>
+        {/* 1. PENDING_PAYMENT */}
+        {status === "PENDING_PAYMENT" && (
+          <div className="my-6 rounded-2xl border-2 border-amber-300 bg-gradient-to-br from-[#FFF9EE] to-[#FFFDF9] p-6 text-center space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Payment Pending</span>
+            </div>
+            <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
+              Complete Your UPI Payment to Lock Your Consultation Slot
+            </h3>
+            <p className="text-xs text-[#6E5545] max-w-lg mx-auto">
+              Scan our official UPI QR code for <strong>₹{amount.toLocaleString("en-IN")}</strong> using GPay, PhonePe, Paytm, or BHIM. Zero gateway commissions charged.
+            </p>
 
-            {currentState === "COMPLETED" && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-white px-6 py-3 font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                <QrCode className="h-4 w-4 text-[#E8A33D]" />
+                <span>Show UPI QR Code (₹{amount.toLocaleString("en-IN")})</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 2. PAYMENT_CLAIMED: "Payment received for verification. Promise no time." */}
+        {status === "PAYMENT_CLAIMED" && (
+          <div className="my-6 rounded-2xl border-2 border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-6 text-center space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-900 text-xs font-bold border border-orange-200">
+              <Clock className="h-3.5 w-3.5 text-orange-600 animate-spin" />
+              <span>Payment Received for Verification</span>
+            </div>
+
+            <h3 className="font-temple text-xl font-bold text-[#7B2D26]">
+              Payment Received for Verification
+            </h3>
+
+            <div className="max-w-xl mx-auto rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] p-4 text-xs text-[#3B2A1E] leading-relaxed text-left space-y-2">
+              <p className="font-semibold text-[#7B2D26]">Important Note on Verification:</p>
+              <p>
+                Our sanctum desk reconciles all payments directly against official bank statements during working hours. Because bank settlements can take time to reflect, <strong>we do not promise a fixed wait minute or automated timer</strong>.
+              </p>
+              <p className="text-[#6E5545]">
+                As soon as our Owner verifies the credit in our bank account, your consultation time slot and Google Meet or WhatsApp call link will be published here and emailed to you.
+              </p>
+              {booking.utr && (
+                <div className="pt-2 border-t border-[#E8D8C3] font-mono text-[11px] text-[#7D6B5D]">
+                  Submitted UTR / Ref: <strong className="text-[#3B2A1E]">{booking.utr}</strong>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <a
+                href={whatsappCoordinationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-6 py-3 font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Send / Update Proof on WhatsApp (+91 93112 15564)</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 3. CONFIRMED */}
+        {status === "CONFIRMED" && (
+          <div className="my-6 rounded-2xl border-2 border-[#6B8E5A] bg-gradient-to-br from-[#F4F9F2] to-[#FFFDF9] p-6 text-center space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6B8E5A]/20 text-[#2A4720] text-xs font-bold border border-[#6B8E5A]/30">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A]" />
+              <span>Payment Verified &amp; Approved</span>
+            </div>
+
+            <h3 className="font-temple text-xl font-bold text-[#2A4720]">
+              Bank Credit Confirmed! Scheduling Your Slot
+            </h3>
+            <p className="text-xs text-[#6E5545] max-w-lg mx-auto leading-relaxed">
+              Acharya Ji&apos;s sanctum desk has verified your payment against bank records. Your consultation slot and meeting link are being scheduled right now.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <a
+                href={whatsappCoordinationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-6 py-3 font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Message Sanctum Desk on WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 4. SCHEDULED */}
+        {status === "SCHEDULED" && (
+          <div className="my-6 rounded-2xl border-2 border-emerald-500 bg-gradient-to-br from-[#F0FDF4] to-[#FFFDF9] p-6 text-center space-y-4 shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300">
+              <Calendar className="h-3.5 w-3.5 text-emerald-700" />
+              <span>Consultation Scheduled</span>
+            </div>
+
+            <h3 className="font-temple text-2xl font-bold text-emerald-900">
+              Your Session is Confirmed &amp; Scheduled!
+            </h3>
+
+            {/* Scheduled Slot Highlight Box */}
+            <div className="max-w-md mx-auto rounded-2xl bg-white border-2 border-emerald-400 p-5 text-center shadow-xs space-y-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 block">
+                Confirmed Consultation Time Slot
+              </span>
+              <div className="font-temple text-lg sm:text-xl font-bold text-[#3B2A1E]">
+                {scheduledSlot || "Confirmed with Acharya Ji"}
+              </div>
+              <p className="text-[11px] text-[#6E5545]">
+                Please ensure you are ready 5 minutes prior to the scheduled slot.
+              </p>
+            </div>
+
+            {/* Meeting Link / WhatsApp Call Action */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              {meetingLink && meetingLink.startsWith("http") ? (
+                <a
+                  href={meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3.5 font-bold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  <Video className="h-4 w-4 text-emerald-200" />
+                  <span>Join Google Meet Consultation</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                <div className="rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] px-5 py-3 text-xs text-[#3B2A1E]">
+                  <strong>Consultation Mode:</strong> WhatsApp Call to{" "}
+                  <span className="font-bold text-[#7B2D26]">{clientPhone || "your registered number"}</span>. Acharya Ji will initiate the call directly.
+                </div>
+              )}
+
+              <a
+                href={whatsappCoordinationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] text-[#3B2A1E] px-5 py-3.5 font-bold text-xs transition-all text-center"
+              >
+                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                <span>Message on WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 5. COMPLETED */}
+        {status === "COMPLETED" && (
+          <div className="my-6 rounded-2xl border-2 border-[#6B8E5A] bg-gradient-to-br from-[#F4F9F2] to-[#FFFDF9] p-6 text-center space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6B8E5A]/20 text-[#2A4720] text-xs font-bold border border-[#6B8E5A]/30">
+              <Sparkles className="h-3.5 w-3.5 text-[#6B8E5A]" />
+              <span>Consultation Completed</span>
+            </div>
+            <h3 className="font-temple text-xl font-bold text-[#2A4720]">
+              Consultation Successfully Concluded
+            </h3>
+            <p className="text-xs text-[#6E5545] max-w-md mx-auto">
+              May the divine remedies and planetary alignments guide you with harmony and peace.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 href="/account/history"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-white px-5 py-3.5 font-bold text-xs shadow-md transition-all w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-white px-5 py-3 font-bold text-xs shadow-md transition-all"
               >
                 <FileText className="h-4 w-4 text-[#E8A33D]" />
                 <span>View Summary &amp; Remedies</span>
               </Link>
-            )}
+              <Link
+                href="/consult"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] text-[#3B2A1E] px-5 py-3 font-bold text-xs transition-all"
+              >
+                <span>Book Another Consultation</span>
+              </Link>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-[#7D6B5D]">
-            Tap the button above to coordinate your exact time and preferred session format directly. There is no in-app calling room or queue software to join.
-          </p>
-        </div>
+        )}
+
+        {/* 6. REJECTED */}
+        {status === "REJECTED" && (
+          <div className="my-6 rounded-2xl border-2 border-red-300 bg-red-50 p-6 text-center space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-900 text-xs font-bold border border-red-200">
+              <XCircle className="h-3.5 w-3.5 text-red-600" />
+              <span>Payment Verification Rejected</span>
+            </div>
+            <h3 className="font-temple text-lg font-bold text-red-900">
+              Payment Could Not Be Reconciled
+            </h3>
+            <p className="text-xs text-red-800 max-w-md mx-auto">
+              {rejectionReason || "The payment transaction could not be verified against our official bank statement. Please verify your transaction reference."}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <a
+                href={whatsappCoordinationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white px-5 py-2.5 font-bold text-xs shadow-md transition-all"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Contact Sanctum Desk on WhatsApp</span>
+              </a>
+              <Link
+                href="/consult"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-white hover:bg-red-100 text-red-900 px-5 py-2.5 font-bold text-xs transition-all"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Initiate New Booking</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* 7. EXPIRED / CANCELLED */}
+        {(status === "EXPIRED" || status === "CANCELLED") && (
+          <div className="my-6 rounded-2xl border border-gray-300 bg-gray-50 p-6 text-center space-y-3">
+            <h3 className="font-temple text-lg font-bold text-gray-800">
+              Booking Request Expired
+            </h3>
+            <p className="text-xs text-gray-600 max-w-md mx-auto">
+              This consultation booking expired because payment was not claimed within the required window.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/consult"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-white px-5 py-2.5 font-bold text-xs shadow-md transition-all"
+              >
+                <span>Book a New Consultation</span>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Detailed Booking Summary Grid */}
         <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 text-xs text-left space-y-2">
@@ -311,55 +669,73 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
               Consultation Intake Details
             </span>
             <span className="text-[11px] text-[#7D6B5D]">
-              Format: <strong>{booking.format}</strong>
+              Format: <strong>{format}</strong>
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 pt-1">
             <div>
               <span className="text-[#7D6B5D] block">Client Name:</span>
-              <strong className="text-[#3B2A1E]">{booking.clientName}</strong>
+              <strong className="text-[#3B2A1E]">{clientName}</strong>
             </div>
             <div>
               <span className="text-[#7D6B5D] block">Contact Phone:</span>
-              <strong className="text-[#3B2A1E]">{booking.phone}</strong>
+              <strong className="text-[#3B2A1E]">{clientPhone || "Provided on WhatsApp"}</strong>
             </div>
             <div>
-              <span className="text-[#7D6B5D] block">Amount Paid:</span>
-              <strong className="text-[#2A4720]">Flat ₹{booking.amountPaid.toLocaleString("en-IN")} (Paid in Full)</strong>
+              <span className="text-[#7D6B5D] block">Amount:</span>
+              <strong className="text-[#2A4720]">Flat ₹{amount.toLocaleString("en-IN")}</strong>
             </div>
             <div>
               <span className="text-[#7D6B5D] block">Preferred Window:</span>
-              <strong className="text-[#3B2A1E]">{booking.preferredSlot || "Immediate / Coordinated via WhatsApp"}</strong>
+              <strong className="text-[#3B2A1E]">{preferredDay} ({preferredTime})</strong>
             </div>
           </div>
 
-          {booking.topic && (
+          {topic && (
             <div className="border-t border-[#E8D8C3]/60 pt-2 text-[11px]">
               <span className="text-[#7D6B5D] block">Consultation Focus / Concern:</span>
-              <p className="text-[#3B2A1E] font-medium mt-0.5">{booking.topic}</p>
+              <p className="text-[#3B2A1E] font-medium mt-0.5">{topic}</p>
             </div>
           )}
 
-          {!isVaastu && booking.dateOfBirth && (
+          {booking.intakeDetails?.birthDetails && (
             <div className="border-t border-[#E8D8C3]/60 pt-2 text-[11px]">
               <span className="text-[#7D6B5D] block">Birth Details:</span>
               <p className="text-[#3B2A1E] font-medium mt-0.5">
-                {booking.dateOfBirth} ({booking.timeOfBirth || "N/A"}) &bull; {booking.placeOfBirth || "N/A"}
+                {booking.intakeDetails.birthDetails.dob} ({booking.intakeDetails.birthDetails.timeOfBirth || "N/A"}) &bull; {booking.intakeDetails.birthDetails.placeOfBirth || "N/A"}
               </p>
             </div>
           )}
 
-          {isVaastu && booking.propertyType && (
+          {booking.intakeDetails?.propertyDetails && (
             <div className="border-t border-[#E8D8C3]/60 pt-2 text-[11px]">
               <span className="text-[#7D6B5D] block">Property Details:</span>
               <p className="text-[#3B2A1E] font-medium mt-0.5">
-                {booking.propertyType} &bull; {booking.propertyLocation || "N/A"}
+                {booking.intakeDetails.propertyDetails.propertyType || "Property"} &bull; {booking.intakeDetails.propertyDetails.city || "N/A"}
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* UPI QR Modal if user wants to view QR or claim payment */}
+      {showQrModal && (
+        <UpiQrModal
+          isOpen={showQrModal}
+          onClose={() => setShowQrModal(false)}
+          bookingId={bookingId}
+          amount={amount}
+          productType={productType as any}
+          serviceName={productName}
+          clientName={clientName}
+          clientPhone={clientPhone}
+          onPaymentSubmitted={() => {
+            setShowQrModal(false);
+            fetchActiveBooking();
+          }}
+        />
+      )}
     </div>
   );
 };

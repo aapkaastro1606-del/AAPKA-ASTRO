@@ -15,7 +15,16 @@ export const InstagramFeedSection: React.FC = () => {
 
   useEffect(() => {
     const updateReels = () => {
-      setReels(ReelsStore.getPinnedReels().slice(0, 4));
+      fetch("/api/reels")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.pinnedReels?.length > 0) {
+            setReels(data.pinnedReels.slice(0, 4));
+          } else {
+            setReels(ReelsStore.getPinnedReels().slice(0, 4));
+          }
+        })
+        .catch(() => setReels(ReelsStore.getPinnedReels().slice(0, 4)));
     };
 
     updateReels();

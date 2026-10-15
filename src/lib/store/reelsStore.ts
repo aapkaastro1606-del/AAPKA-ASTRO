@@ -38,14 +38,13 @@ function persist() {
   }
 }
 
-// Attempt initialization immediately if on client
 if (typeof window !== "undefined") {
   initClientStorage();
 }
 
 export const ReelsStore = {
   /**
-   * Returns all visible (non-hidden) reels sorted by order
+   * Returns all visible (non-hidden) reels sorted by order (synchronous fallback)
    */
   getVisibleReels: (): AstroReel[] => {
     initClientStorage();
@@ -55,7 +54,7 @@ export const ReelsStore = {
   },
 
   /**
-   * Returns visible reels pinned to homepage sorted by order
+   * Returns visible reels pinned to homepage sorted by order (synchronous fallback)
    */
   getPinnedReels: (): AstroReel[] => {
     initClientStorage();
@@ -65,7 +64,7 @@ export const ReelsStore = {
   },
 
   /**
-   * Returns all reels regardless of pin or hidden status
+   * Returns all reels regardless of pin or hidden status (synchronous fallback)
    */
   getAllReels: (): AstroReel[] => {
     initClientStorage();
@@ -73,8 +72,115 @@ export const ReelsStore = {
   },
 
   /**
-   * Adds a new curated Instagram reel
+   * DATABASE ASYNC METHODS: Prisma backed source of truth in PostgreSQL (Neon)
    */
+  async ensureSeededAsync() {
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (!prisma || !prisma.instagramMedia) return;
+
+      const count = await prisma.instagramMedia.count();
+      if (count === 0) {
+        for (const r of DEFAULT_FEATURED_REELS) {
+          await prisma.instagramMedia.create({
+            data: {
+              externalId: r.id,
+              permalink: r.instagramUrl,
+              thumbnailUrl: r.posterUrl || null,
+              caption: r.caption,
+              category: r.category,
+              pinned: r.pinnedToHome,
+              hidden: r.isHidden,
+              displayOrder: r.order,
+              mediaType: "REEL",
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[ReelsStore] Seed check warning:", e);
+    }
+  },
+
+  async getAllReelsAsync(): Promise<AstroReel[]> {
+    try {
+      await this.ensureSeededAsync();
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        const rows = await prisma.instagramMedia.findMany({
+          orderBy: { displayOrder: "asc" },
+        });
+
+        if (rows.length > 0) {
+          return rows.map((r) => {
+            const defaultMatch = DEFAULT_FEATURED_REELS.find(
+              (df) => df.id === r.externalId || df.instagramUrl === r.permalink
+            );
+            return {
+              id: r.externalId,
+              instagramUrl: r.permalink,
+              videoUrl: defaultMatch?.videoUrl || undefined,
+              posterUrl: r.thumbnailUrl || defaultMatch?.posterUrl || undefined,
+              videoDuration: defaultMatch?.videoDuration || "1:00",
+              caption: r.caption || "Vedic Guidance",
+              category: (r.category as any) || "Horoscope",
+              pinnedToHome: r.pinned,
+              isHidden: r.hidden,
+              order: r.displayOrder,
+              date: "Recent Guidance",
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[ReelsStore] Database query error, using memory fallback:", e);
+    }
+    return this.getAllReels();
+  },
+
+  async getVisibleReelsAsync(): Promise<AstroReel[]> {
+    const all = await this.getAllReelsAsync();
+    return all.filter((r) => !r.isHidden).sort((a, b) => a.order - b.order);
+  },
+
+  async getPinnedReelsAsync(): Promise<AstroReel[]> {
+    const all = await this.getAllReelsAsync();
+    return all.filter((r) => r.pinnedToHome && !r.isHidden).sort((a, b) => a.order - b.order);
+  },
+
+  /**
+   * Adds a new curated Instagram reel to database
+   */
+  async addReelAsync(data: {
+    instagramUrl: string;
+    caption?: string;
+    category?: "Horoscope" | "Vastu" | "Gemstone" | "Remedy";
+    pinnedToHome?: boolean;
+  }): Promise<AstroReel> {
+    const newReel = this.addReel(data);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        await prisma.instagramMedia.create({
+          data: {
+            externalId: newReel.id,
+            permalink: newReel.instagramUrl,
+            thumbnailUrl: newReel.posterUrl || null,
+            caption: newReel.caption,
+            category: newReel.category,
+            pinned: newReel.pinnedToHome,
+            hidden: newReel.isHidden,
+            displayOrder: newReel.order,
+            mediaType: "REEL",
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB create failed:", e);
+    }
+    return newReel;
+  },
+
   addReel: (data: {
     instagramUrl: string;
     caption?: string;
@@ -98,18 +204,44 @@ export const ReelsStore = {
     return newReel;
   },
 
-  /**
-   * Removes a reel by ID
-   */
+  async removeReelAsync(id: string): Promise<void> {
+    this.removeReel(id);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        await prisma.instagramMedia.deleteMany({
+          where: { externalId: id },
+        });
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB delete failed:", e);
+    }
+  },
+
   removeReel: (id: string): void => {
     initClientStorage();
     memoryReels = memoryReels.filter((r) => r.id !== id);
     persist();
   },
 
-  /**
-   * Moves a reel up or down in display order
-   */
+  async reorderReelAsync(id: string, direction: "up" | "down"): Promise<void> {
+    this.reorderReel(id, direction);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        const sorted = [...memoryReels].sort((a, b) => a.order - b.order);
+        for (let i = 0; i < sorted.length; i++) {
+          await prisma.instagramMedia.updateMany({
+            where: { externalId: sorted[i].id },
+            data: { displayOrder: i + 1 },
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB reorder failed:", e);
+    }
+  },
+
   reorderReel: (id: string, direction: "up" | "down"): void => {
     initClientStorage();
     const sorted = [...memoryReels].sort((a, b) => a.order - b.order);
@@ -130,9 +262,24 @@ export const ReelsStore = {
     persist();
   },
 
-  /**
-   * Toggles the pinnedToHome flag
-   */
+  async togglePinAsync(id: string): Promise<void> {
+    this.togglePin(id);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        const target = memoryReels.find((r) => r.id === id);
+        if (target) {
+          await prisma.instagramMedia.updateMany({
+            where: { externalId: id },
+            data: { pinned: target.pinnedToHome },
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB togglePin failed:", e);
+    }
+  },
+
   togglePin: (id: string): void => {
     initClientStorage();
     const reel = memoryReels.find((r) => r.id === id);
@@ -142,9 +289,24 @@ export const ReelsStore = {
     }
   },
 
-  /**
-   * Toggles the isHidden flag
-   */
+  async toggleHideAsync(id: string): Promise<void> {
+    this.toggleHide(id);
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        const target = memoryReels.find((r) => r.id === id);
+        if (target) {
+          await prisma.instagramMedia.updateMany({
+            where: { externalId: id },
+            data: { hidden: target.isHidden },
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB toggleHide failed:", e);
+    }
+  },
+
   toggleHide: (id: string): void => {
     initClientStorage();
     const reel = memoryReels.find((r) => r.id === id);
@@ -154,9 +316,19 @@ export const ReelsStore = {
     }
   },
 
-  /**
-   * Resets the store back to initial default configuration
-   */
+  async resetToDefaultsAsync(): Promise<void> {
+    this.resetToDefaults();
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (prisma && prisma.instagramMedia) {
+        await prisma.instagramMedia.deleteMany({});
+        await this.ensureSeededAsync();
+      }
+    } catch (e) {
+      console.error("[ReelsStore] DB reset failed:", e);
+    }
+  },
+
   resetToDefaults: (): void => {
     memoryReels = [...DEFAULT_FEATURED_REELS];
     persist();

@@ -65,7 +65,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Account &amp; Contact Credentials:</strong> Phone Number, Email Address, and encrypted authentication tokens.
               </li>
               <li>
-                <strong>Billing &amp; Transaction Details:</strong> Order IDs, consultation bookings, report purchases, and transaction references provided by our payment gateway (Razorpay). <em>Note: We never view or store sensitive debit/credit card numbers or UPI PINs.</em>
+                <strong>Billing &amp; Transaction Details:</strong> Booking IDs, consultation records, and UPI payment verification details. <em>Note: We never handle, view, or store bank credentials or UPI PINs.</em>
               </li>
               <li>
                 <strong>Consultation Content:</strong> Written notes, charts, or query submissions uploaded for Acharya Ji&apos;s review during live chat or scheduled sessions.
@@ -126,7 +126,7 @@ export default function PrivacyPolicyPage() {
                 <strong>In-Transit Encryption:</strong> All data transmitted between your browser and our servers is encrypted using 256-bit SSL/TLS protocols.
               </li>
               <li>
-                <strong>Payment Compliance:</strong> Payment transactions are executed via PCI-DSS Level 1 certified payment partners (Razorpay).
+                <strong>Payment Security:</strong> Payment transactions are executed directly via verified UPI applications (Google Pay, PhonePe, Paytm, BHIM, Cred) with end-to-end bank encryption.
               </li>
               <li>
                 <strong>Database Protection:</strong> Backend databases are housed in secure enterprise cloud centers with role-based access control.

@@ -25,7 +25,7 @@ Aapka Astro uses two distinct, decoupled systems:
        │    (Identity & Login Only)    │ │      (All Application Data)        │
        ├───────────────────────────────┤ ├────────────────────────────────────┤
        │ • User sign-up & sign-in      │ │ • Seeker wallet balances (₹)       │
-       │ • Google OAuth / Email OTP    │ │ • Razorpay payment transactions    │
+       │ • Google OAuth / Email OTP    │ │ • Direct UPI payment transactions  │
        │ • Passwords & session tokens  │ │ • Consultation history & minutes   │
        │ • Email address verification  │ │ • Prescribed remedies & notes      │
        │ • Multi-factor authentication │ │ • Per-section staff permissions    │
@@ -63,7 +63,7 @@ During testing without a live PostgreSQL database running:
 | User email & phone identity | **Clerk** | Clerk Auth Cloud | **No**. |
 | Active session JWT cookies | **Clerk** | Clerk Auth Cloud | **No**. |
 | **Seeker wallet balance (₹)** | **PostgreSQL** (`User.walletBalance`) | App Prisma Engine | **Yes**. Requires live database to persist. |
-| **Razorpay recharge transactions** | **PostgreSQL** (`Transaction` table) | App Prisma Engine | **Yes**. Requires live database to record receipts. |
+| **Direct UPI payment transactions** | **PostgreSQL** (`WalletTransaction` table) | App Prisma Engine | **Yes**. Requires live database to record receipts. |
 | **Consultation session history** | **PostgreSQL** (`Consultation` table) | App Prisma Engine | **Yes**. Requires live database to retain history. |
 | **Astrologer remedies & notes** | **PostgreSQL** (`Consultation.remedy`) | App Prisma Engine | **Yes**. Requires live database to deliver to client. |
 | **Per-section staff permissions** | **PostgreSQL** (`StaffPermission` table) | App Prisma Engine | **Yes**. Stored in app's free DB (avoids paid Clerk orgs). |

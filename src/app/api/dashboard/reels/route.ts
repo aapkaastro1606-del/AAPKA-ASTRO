@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
 import { ReelsStore } from "@/lib/store/reelsStore";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/dashboard/reels
- * Lists all curated reels. Requires VIEW access on "reels".
+ * Lists all curated reels directly from PostgreSQL (Neon). Requires VIEW access on "reels".
  */
 export async function GET(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const reels = ReelsStore.getAllReels();
+    const reels = await ReelsStore.getAllReelsAsync();
     return NextResponse.json({ success: true, reels });
   } catch (error: any) {
     return NextResponse.json(
@@ -36,7 +38,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/dashboard/reels
- * Modifies reels curation (pin, hide, add, remove, reorder). Requires MANAGE access on "reels".
+ * Modifies reels curation in PostgreSQL (pin, hide, add, remove, reorder). Requires MANAGE access on "reels".
  */
 export async function POST(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -70,29 +72,29 @@ export async function POST(req: NextRequest) {
       if (!reelId) {
         return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
       }
-      ReelsStore.togglePin(reelId);
+      await ReelsStore.togglePinAsync(reelId);
     } else if (action === "toggleHide") {
       if (!reelId) {
         return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
       }
-      ReelsStore.toggleHide(reelId);
+      await ReelsStore.toggleHideAsync(reelId);
     } else if (action === "addReel") {
       if (!reelData?.instagramUrl) {
         return NextResponse.json({ success: false, message: "Instagram URL is required." }, { status: 400 });
       }
-      ReelsStore.addReel(reelData);
+      await ReelsStore.addReelAsync(reelData);
     } else if (action === "removeReel") {
       if (!reelId) {
         return NextResponse.json({ success: false, message: "Reel ID is required." }, { status: 400 });
       }
-      ReelsStore.removeReel(reelId);
+      await ReelsStore.removeReelAsync(reelId);
     } else if (action === "reorder") {
       if (!reelId || !direction) {
         return NextResponse.json({ success: false, message: "Reel ID and direction are required." }, { status: 400 });
       }
-      ReelsStore.reorderReel(reelId, direction);
+      await ReelsStore.reorderReelAsync(reelId, direction);
     } else if (action === "reset") {
-      ReelsStore.resetToDefaults();
+      await ReelsStore.resetToDefaultsAsync();
     } else {
       return NextResponse.json(
         { success: false, message: "Invalid action specified." },
@@ -100,10 +102,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const updatedReels = await ReelsStore.getAllReelsAsync();
     return NextResponse.json({
       success: true,
       message: `Reel ${action} successful.`,
-      reels: ReelsStore.getAllReels(),
+      reels: updatedReels,
     });
   } catch (error: any) {
     return NextResponse.json(
