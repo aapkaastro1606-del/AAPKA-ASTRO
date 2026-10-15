@@ -49,6 +49,12 @@ export const Navbar: React.FC = () => {
   const navRef = useRef<HTMLElement | null>(null);
 
   const isAuthenticatedUser = Boolean(mounted && isLoaded && isSignedIn && user);
+  const userEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+  const isOwner = Boolean(
+    isAuthenticatedUser &&
+      (userEmail === "aapkaastro1606@gmail.com" ||
+        (user as any)?.publicMetadata?.role === "OWNER")
+  );
   const isHi = language === "hi" || pathname?.startsWith("/hi");
 
   const syncState = () => {
@@ -519,6 +525,17 @@ export const Navbar: React.FC = () => {
             {/* STRICT AUTH STATE (Positioned right after Language Pill, before Consult CTA) */}
             {isAuthenticatedUser ? (
               <div className="hidden sm:flex items-center gap-2.5">
+                {isOwner && (
+                  <Link
+                    href="/admin/bookings"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8A33D]/25 border border-[#E8A33D] px-2.5 py-1 text-xs font-bold text-[#7B2D26] hover:bg-[#E8A33D]/40 transition-all shadow-xs"
+                    title="Owner Verification Queue & Admin Desk"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#C1662F]" />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+
                 <Link
                   href="/account/consult"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A4332] hover:text-[#7B2D26] transition-colors"
@@ -818,7 +835,20 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* Mobile Auth Footer (Strict Guest vs. Signed-In Separation) */}
-            <div className="border-t border-[#E8D8C3] pt-3">
+            <div className="border-t border-[#E8D8C3] pt-3 space-y-2">
+              {isOwner && (
+                <Link
+                  href="/admin/bookings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between rounded-xl bg-[#E8A33D]/25 border border-[#E8A33D] p-2.5 text-xs font-bold text-[#7B2D26]"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#C1662F]" />
+                    <span>Owner Admin Panel</span>
+                  </div>
+                  <span className="text-[10px] bg-[#7B2D26] text-white px-2 py-0.5 rounded-full font-bold">Desk</span>
+                </Link>
+              )}
               {isAuthenticatedUser ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

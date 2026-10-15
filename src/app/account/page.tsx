@@ -41,6 +41,9 @@ export default function ClientAccountDashboard() {
     user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
     "Seeker";
   const displayEmail = user?.primaryEmailAddress?.emailAddress || profile.email;
+  const isOwner =
+    displayEmail?.toLowerCase() === "aapkaastro1606@gmail.com" ||
+    (user as any)?.publicMetadata?.role === "OWNER";
   const userInitial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {
@@ -106,10 +109,17 @@ export default function ClientAccountDashboard() {
                 <h1 className="font-temple text-2xl font-bold text-[#7B2D26]">
                   Namaste, {displayName}
                 </h1>
-                <span className="rounded-full bg-[#6B8E5A]/15 border border-[#6B8E5A]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" />
-                  Verified Seeker
-                </span>
+                {isOwner ? (
+                  <span className="rounded-full bg-[#E8A33D]/25 border border-[#E8A33D] px-2.5 py-0.5 text-[10px] font-bold text-[#7B2D26] flex items-center gap-1 shadow-xs">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#C1662F]" />
+                    Platform Owner &amp; Acharya
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-[#6B8E5A]/15 border border-[#6B8E5A]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#2A4720] flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    Verified Seeker
+                  </span>
+                )}
               </div>
               <p className="text-xs text-[#6E5545] mt-1">
                 {displayEmail} {(user as any)?.createdAt ? `• Member since ${new Date((user as any).createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}` : profile.joinedDate ? `• Member since ${profile.joinedDate}` : ""}
@@ -164,6 +174,88 @@ export default function ClientAccountDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Owner Sanctum Desk & Admin Console Banner */}
+        {isOwner && (
+          <div className="rounded-3xl border-2 border-[#E8A33D] bg-gradient-to-r from-[#FFFDF9] via-[#FDF6EA] to-[#FFFDF9] p-6 sm:p-7 shadow-md space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7B2D26] text-[#E8A33D] shadow-sm">
+                  <DiyaIcon size={24} />
+                </div>
+                <div>
+                  <h2 className="font-temple text-xl font-bold text-[#7B2D26]">
+                    Owner &amp; Astrologer Administration Desk
+                  </h2>
+                  <p className="text-xs text-[#6E5545] mt-0.5">
+                    Welcome Acharya Ji. Access your verification queue, leads, and platform controls.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/admin/bookings"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#64221C] transition-all shrink-0"
+              >
+                <ShieldCheck className="h-4 w-4 text-[#E8A33D]" />
+                <span>Open Verification Queue &rarr;</span>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              <Link
+                href="/admin/bookings"
+                className="p-4 rounded-2xl border border-[#E8D8C3] bg-white hover:border-[#7B2D26] hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#7B2D26] group-hover:underline">UPI Bookings Queue</span>
+                  <ShieldCheck className="h-4 w-4 text-[#C1662F]" />
+                </div>
+                <p className="text-[11px] text-[#6E5545] mt-1.5 leading-relaxed">
+                  Verify bank credit, approve claims &amp; schedule Google Meet / WhatsApp slots.
+                </p>
+              </Link>
+
+              <Link
+                href="/admin/leads"
+                className="p-4 rounded-2xl border border-[#E8D8C3] bg-white hover:border-[#7B2D26] hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#7B2D26] group-hover:underline">Kundli Leads</span>
+                  <FileText className="h-4 w-4 text-[#6B8E5A]" />
+                </div>
+                <p className="text-[11px] text-[#6E5545] mt-1.5 leading-relaxed">
+                  View free Kundli generation leads with consent &amp; export to CSV.
+                </p>
+              </Link>
+
+              <Link
+                href="/admin/pricing"
+                className="p-4 rounded-2xl border border-[#E8D8C3] bg-white hover:border-[#7B2D26] hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#7B2D26] group-hover:underline">Pricing &amp; Rates</span>
+                  <Gem className="h-4 w-4 text-[#E8A33D]" />
+                </div>
+                <p className="text-[11px] text-[#6E5545] mt-1.5 leading-relaxed">
+                  Manage flat-fee consultation products, festive promotions &amp; UPI settings.
+                </p>
+              </Link>
+
+              <Link
+                href="/admin/diagnostics"
+                className="p-4 rounded-2xl border border-[#E8D8C3] bg-white hover:border-[#7B2D26] hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#7B2D26] group-hover:underline">System Health</span>
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                </div>
+                <p className="text-[11px] text-[#6E5545] mt-1.5 leading-relaxed">
+                  Monitor Neon PostgreSQL latency, migrations &amp; webhook activity.
+                </p>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Active Consultation Status Banner */}
         {activeBooking && (
