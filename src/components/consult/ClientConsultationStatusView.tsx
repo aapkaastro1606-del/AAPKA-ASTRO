@@ -210,13 +210,13 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
             <span>Book Astro Consultation (Flat ₹1,051)</span>
           </Link>
           <a
-            href={`https://wa.me/${rawWaNumber}`}
+            href="https://wa.me/919311215564"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] px-5 py-3 text-xs font-bold text-[#3B2A1E] hover:bg-[#E8D8C3] transition-all text-center flex items-center justify-center gap-1.5"
           >
             <MessageCircle className="h-4 w-4 text-[#25D366]" />
-            <span>Chat on WhatsApp (+91 93112 15564)</span>
+            <span>Message on WhatsApp (+91 93112 15564)</span>
           </a>
         </div>
       </div>
@@ -395,7 +395,7 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
                     : "border-[#E8D8C3] bg-[#FAF5EE] opacity-60"
                 }`}
               >
-                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">4. Scheduled</div>
+                <div className="font-temple font-bold text-[11px] text-[#3B2A1E]">4. Scheduled / Awaiting Session</div>
                 <div className="text-[10px] text-[#6E5545] mt-0.5">
                   {currentStepIndex >= 4 ? "Slot Fixed" : "Pending"}
                 </div>

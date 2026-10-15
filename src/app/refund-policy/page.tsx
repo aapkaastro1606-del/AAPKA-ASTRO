@@ -123,7 +123,7 @@ export default function RefundPolicyPage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Client Rescheduling Notice:</strong> If you have a confirmed consultation slot and need to reschedule, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the booked slot. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
+                <strong>Client Rescheduling Notice:</strong> If you have a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the booked slot. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
               </li>
               <li>
                 <strong>Acharya Ji Emergency Rescheduling:</strong> In the rare event that Acharya Niraj Kumar is summoned for Vedic rituals, temple ceremonies, or unforeseen emergencies, our team will promptly notify you. You will have the option to either reschedule at your preferred time or request a 100% full refund directly to your original UPI account.
