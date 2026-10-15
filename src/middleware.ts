@@ -31,13 +31,6 @@ const isClerkActive = isClerkConfigured();
  * Strictly enforces RBAC against session cookies rather than passing through unconditionally.
  */
 function fallbackMiddleware(req: NextRequest) {
-  const hostname = req.nextUrl.hostname;
-  if (hostname === "www.aapkaastro.com") {
-    const url = req.nextUrl.clone();
-    url.hostname = "aapkaastro.com";
-    return NextResponse.redirect(url, 308);
-  }
-
   const pathname = req.nextUrl.pathname;
   const isProtected =
     isDashboardRoute(req) ||
@@ -64,14 +57,6 @@ function fallbackMiddleware(req: NextRequest) {
 
 const liveClerkMiddleware = clerkMiddleware(
   async (auth, req) => {
-    // Canonical apex domain redirect: redirect www.aapkaastro.com to aapkaastro.com
-    const hostname = req.nextUrl.hostname;
-    if (hostname === "www.aapkaastro.com") {
-      const url = req.nextUrl.clone();
-      url.hostname = "aapkaastro.com";
-      return NextResponse.redirect(url, 308);
-    }
-
     const pathname = req.nextUrl.pathname;
     const isProtected =
       isDashboardRoute(req) ||
