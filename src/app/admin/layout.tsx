@@ -10,7 +10,7 @@ export default async function AdminLayout({
   const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
-    redirect("/login?redirect_url=/admin");
+    redirect("/login?redirect_url=/admin/bookings");
   }
 
   // Admin section strictly requires Owner or staff with active pricing/analytics/staff permissions
