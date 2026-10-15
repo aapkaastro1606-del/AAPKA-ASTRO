@@ -6,7 +6,7 @@ import { prisma } from "../src/lib/db/prisma";
 
 describe("Resend Email Workflows & Resilience", () => {
   const testBookingId = `TEST-EMAIL-${Date.now()}`;
-  const ownerEmail = "anmol@aapkaastro.com";
+  const ownerEmail = "aapkaastro1606@gmail.com";
   const clientEmail = "seeker.test@example.com";
 
   test("fails loudly and records audit log when RESEND_API_KEY is misconfigured without throwing", async () => {

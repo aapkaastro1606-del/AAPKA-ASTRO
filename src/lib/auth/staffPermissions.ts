@@ -122,7 +122,7 @@ export function getOwnerEmails(): string[] {
   const envVal =
     process.env.OWNER_EMAIL ||
     process.env.NEXT_PUBLIC_OWNER_EMAIL ||
-    "anmol@aapkaastro.com,acharya@aapkaastro.com";
+    "aapkaastro1606@gmail.com";
 
   return envVal
     .split(",")

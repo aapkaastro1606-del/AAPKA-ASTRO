@@ -115,8 +115,8 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   });
 
   test("4. Owner approval requires bankCreditConfirmed checkbox and owner privileges", async () => {
-    const ownerEmail = "anmol@aapkaastro.com";
-    assert.strictEqual(isOwnerEmail(ownerEmail), true, "anmol@aapkaastro.com must be identified as Owner");
+    const ownerEmail = "aapkaastro1606@gmail.com";
+    assert.strictEqual(isOwnerEmail(ownerEmail), true, "aapkaastro1606@gmail.com must be identified as Owner");
     assert.strictEqual(isOwnerEmail("intruder@example.com"), false, "Non-owner email must be false");
 
     // Non-owner should be rejected
@@ -170,7 +170,7 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   });
 
   test("5. Owner schedules consultation slot & meeting link", async () => {
-    const ownerEmail = "anmol@aapkaastro.com";
+    const ownerEmail = "aapkaastro1606@gmail.com";
     const scheduledSlot = "18 Oct 2026 at 4:00 PM IST";
     const meetingLink = "https://meet.google.com/xyz-abcd-efg";
 
@@ -217,7 +217,7 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   });
 
   test("7. Duplicate UTR check blocks approval if another booking used same transaction ID", async () => {
-    const ownerEmail = "anmol@aapkaastro.com";
+    const ownerEmail = "aapkaastro1606@gmail.com";
 
     // Set second booking to claimed using the exact same UTR as the first booking
     await BookingWorkflowService.claimPayment(secondAstroBookingId, mockUtr1);
@@ -290,7 +290,7 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   });
 
   test("10. Payment settings update requires Owner role and generates audit log", async () => {
-    const ownerEmail = "anmol@aapkaastro.com";
+    const ownerEmail = "aapkaastro1606@gmail.com";
 
     // Non-owner rejected
     await assert.rejects(

@@ -323,8 +323,8 @@ describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection
   test("authenticated user with OWNER_EMAIL is recognized as OWNER with isOwner=true", () => {
     const ownerUser = {
       id: "usr_owner_real",
-      name: "Anmol Garg",
-      email: "anmol@aapkaastro.com",
+      name: "Aapka Astro Admin",
+      email: "aapkaastro1606@gmail.com",
       role: "CLIENT", // Even if client-side session initially said CLIENT
     };
 
@@ -392,7 +392,7 @@ describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection
         "OWNER",
         true,
         [],
-        "anmol@aapkaastro.com"
+        "aapkaastro1606@gmail.com"
       );
       assert.strictEqual(access.allowed, true, `Owner must have access to ${route}`);
     }

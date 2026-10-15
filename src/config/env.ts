@@ -37,7 +37,7 @@ const envSchema = z.object({
   SIGNUP_EMAIL_BLOCKLIST: z.string().optional(),
 
   // Site Owner Elevation (Comma-separated emails elevated to platform ADMIN)
-  OWNER_EMAIL: z.string().optional().default("anmol@aapkaastro.com,acharya@aapkaastro.com"),
+  OWNER_EMAIL: z.string().optional().default("aapkaastro1606@gmail.com"),
 
   // Payments (Direct UPI / Mock)
   PAYMENT_PROVIDER: z.enum(["upi", "mock"]).default("upi"),

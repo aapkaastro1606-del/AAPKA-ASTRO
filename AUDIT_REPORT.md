@@ -202,7 +202,7 @@ public static async saveKundli(input, chartData, userId) {
 
 ### 5.2 Owner-Only Diagnostics API (`/api/admin/diagnostics`)
 - **File**: [`src/app/api/admin/diagnostics/route.ts`](file:///c:/Users/anmol/OneDrive/Desktop/AAPKA%20ASTRO/src/app/api/admin/diagnostics/route.ts)
-- **Access Control**: Strictly gated to `isOwner` (`anmol@aapkaastro.com` or role `OWNER`). Unauthenticated callers receive `403 Forbidden`.
+- **Access Control**: Strictly gated to `isOwner` (`aapkaastro1606@gmail.com` or role `OWNER`). Unauthenticated callers receive `403 Forbidden`.
 - **Payload Contents**:
   1. `database`: Reachability (`true`), ping latency, database name (`neondb`), version, and masked Neon host.
   2. `migrations`: `tableExists` boolean, applied migration count, and exact drift error.

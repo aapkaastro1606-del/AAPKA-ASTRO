@@ -99,8 +99,8 @@ describe("User Database Synchronization Engine", () => {
   it("recognizes owner email and provisions user with OWNER role", async () => {
     const mockOwnerUser = {
       clerkId: "user_test_owner_001",
-      email: "anmol@aapkaastro.com",
-      name: "Anmol Garg",
+      email: "aapkaastro1606@gmail.com",
+      name: "Aapka Astro Admin",
     };
 
     const synced = await syncClerkUserToDatabase(mockOwnerUser);

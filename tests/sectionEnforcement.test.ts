@@ -29,8 +29,8 @@ describe("Strict Section-Level Route Enforcement (Automated Verification Suite)"
   };
 
   const ownerUser = {
-    id: "usr_owner_anmol",
-    email: "anmol@aapkaastro.com",
+    id: "usr_owner_official",
+    email: "aapkaastro1606@gmail.com",
     role: "OWNER" as const,
     grants: [] as StaffGrant[],
   };
@@ -178,7 +178,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
 
   const ownerUser = {
     id: "usr_owner_001",
-    email: "anmol@aapkaastro.com",
+    email: "aapkaastro1606@gmail.com",
     role: "OWNER",
     permissions: ["blog", "reels", "clients", "earnings", "pricing", "analytics", "staff"],
     grants: [],

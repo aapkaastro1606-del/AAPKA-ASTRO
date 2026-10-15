@@ -192,7 +192,7 @@ describe("Free Kundli Lead Capture & DPDP Compliance", () => {
   });
 
   test("owner can query leads, export RFC 4180 CSV, and delete-on-request with audit logging", async () => {
-    const ownerEmail = "anmol@aapkaastro.com";
+    const ownerEmail = "aapkaastro1606@gmail.com";
 
     // Create a lead to test export & deletion
     const lead = await KundliLeadService.captureLead({

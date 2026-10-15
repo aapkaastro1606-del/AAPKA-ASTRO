@@ -34,7 +34,7 @@ describe("System Health & Diagnostics Audit Suite", () => {
     const ownerCookie = encodeURIComponent(
       JSON.stringify({
         role: "OWNER",
-        email: "anmol@aapkaastro.com",
+        email: "aapkaastro1606@gmail.com",
       })
     );
 

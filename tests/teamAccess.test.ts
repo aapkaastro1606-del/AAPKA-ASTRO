@@ -74,7 +74,7 @@ describe("Team Access Management - Server-Side Owner-Only Route Access", () => {
       "OWNER",
       true,
       [],
-      "anmol@aapkaastro.com"
+      "aapkaastro1606@gmail.com"
     );
     assert.strictEqual(access.allowed, true);
   });
@@ -106,7 +106,7 @@ describe("Team Access Management - Section & Access Level Logic (VIEW vs MANAGE)
 
   test("Owner unconditionally passes all section and access-level checks", () => {
     const ownerUser = {
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "OWNER",
     };
 
@@ -222,7 +222,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   test("GET /api/admin/team returns 200 OK with staff and audit logs for Owner", async () => {
     const ownerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "OWNER",
     };
 
@@ -244,7 +244,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   test("POST /api/admin/team allows Owner to invite a staff member with access level", async () => {
     const ownerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "OWNER",
     };
 
@@ -271,7 +271,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   test("DELETE /api/admin/team allows Owner to revoke access", async () => {
     const ownerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "OWNER",
     };
 

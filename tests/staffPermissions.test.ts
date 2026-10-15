@@ -17,9 +17,8 @@ import {
 
 describe("Site Owner Recognition Engine", () => {
   test("isOwnerEmail correctly identifies configured owner emails (case-insensitive)", () => {
-    assert.strictEqual(isOwnerEmail("anmol@aapkaastro.com"), true);
-    assert.strictEqual(isOwnerEmail("ANMOL@AAPKAASTRO.COM"), true);
-    assert.strictEqual(isOwnerEmail("  acharya@aapkaastro.com  "), true);
+    assert.strictEqual(isOwnerEmail("aapkaastro1606@gmail.com"), true);
+    assert.strictEqual(isOwnerEmail("AAPKAASTRO1606@GMAIL.COM"), true);
   });
 
   test("isOwnerEmail returns false for non-owner accounts and falsy values", () => {
@@ -35,7 +34,7 @@ describe("Site Owner Recognition Engine", () => {
 describe("Per-Section Staff Permissions Evaluation", () => {
   test("Owner account has unrestricted access to all sections including 'staff'", () => {
     const ownerUser = {
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "ADMIN",
       permissions: [],
     };
@@ -177,7 +176,7 @@ describe("Route-Level Access Control for Scoped Staff", () => {
       "ADMIN",
       true,
       STAFF_SECTIONS.map((s) => s.id),
-      "anmol@aapkaastro.com"
+      "aapkaastro1606@gmail.com"
     );
     assert.strictEqual(access.allowed, true);
   });
@@ -221,7 +220,7 @@ describe("StaffPermissionService Lifecycle (CRUD & Memory Fallback)", () => {
   });
 
   test("cannot revoke platform Owner account", async () => {
-    const revoked = await StaffPermissionService.revokeStaff("anmol@aapkaastro.com");
+    const revoked = await StaffPermissionService.revokeStaff("aapkaastro1606@gmail.com");
     assert.strictEqual(revoked, false);
   });
 });
@@ -244,7 +243,7 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   test("GET /api/admin/staff returns 200 OK for Owner", async () => {
     const mockOwnerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "ADMIN",
     };
 
@@ -279,7 +278,7 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   test("POST /api/admin/staff allows Owner to assign sections", async () => {
     const mockOwnerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "ADMIN",
     };
 
@@ -304,7 +303,7 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   test("DELETE /api/admin/staff allows Owner to revoke permissions", async () => {
     const mockOwnerUser = {
       id: "usr_owner_001",
-      email: "anmol@aapkaastro.com",
+      email: "aapkaastro1606@gmail.com",
       role: "ADMIN",
     };
 

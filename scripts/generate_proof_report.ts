@@ -137,7 +137,7 @@ async function main() {
   console.log("\nStep 3.3: Owner verifies bank credit in PNB UPI and approves booking...");
   const approveRes = await BookingWorkflowService.approveBooking({
     bookingId: booking1.bookingId,
-    actorEmail: "anmol@aapkaastro.com",
+    actorEmail: "aapkaastro1606@gmail.com",
     bankCreditConfirmed: true,
   });
   console.log("Approval Result:", {
@@ -157,7 +157,7 @@ async function main() {
   console.log("\nStep 3.4: Owner schedules slot 'Tomorrow 5:30 PM IST' and Meet link...");
   const scheduleRes = await BookingWorkflowService.scheduleBooking({
     bookingId: booking1.bookingId,
-    actorEmail: "anmol@aapkaastro.com",
+    actorEmail: "aapkaastro1606@gmail.com",
     scheduledSlot: "Tomorrow, 5:30 PM IST",
     meetingLink: "https://meet.google.com/aap-kast-ast",
   });
@@ -180,7 +180,7 @@ async function main() {
   console.log("\nStep 3.5: Owner marks consultation COMPLETED after session...");
   await BookingWorkflowService.completeBooking({
     bookingId: booking1.bookingId,
-    actorEmail: "anmol@aapkaastro.com",
+    actorEmail: "aapkaastro1606@gmail.com",
     notes: "Consultation conducted successfully. Remedies given.",
   });
   let rowStep5 = await prisma.session.findUnique({
@@ -261,7 +261,7 @@ async function main() {
   }]);
 
   console.log("\nGenerating CSV Export for Owner Console...");
-  const csvContent = await KundliLeadService.exportLeadsCsv("anmol@aapkaastro.com");
+  const csvContent = await KundliLeadService.exportLeadsCsv("aapkaastro1606@gmail.com");
   console.log("CSV Export Stats:", {
     csvByteLength: csvContent.length,
     csvHeader: csvContent.split("\r\n")[0],
