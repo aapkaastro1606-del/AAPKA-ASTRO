@@ -15,11 +15,11 @@ export interface PaymentSettings {
 }
 
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
-  upiId: "9311215564@okbizaxis",
-  payeeName: "Aapka Astro",
-  qrImageUrl: null,
+  upiId: "9310709233m@pnb",
+  payeeName: "AAPKA ASTRO",
+  qrImageUrl: "/images/pnb-upi-qr.jpg",
   whatsappNumber: "+91 93112 15564",
-  whatsappConfirmed: false,
+  whatsappConfirmed: true,
   unpaidExpiryDays: 2,
 };
 

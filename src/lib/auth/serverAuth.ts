@@ -56,7 +56,8 @@ export function hasStaffSectionAccess(
 ): boolean {
   if (!auth || !auth.isAuthenticated) return false;
   if (auth.isOwner || isOwnerEmail(auth.email)) return true;
-  if (section === "staff") return false; // Strictly Owner-only
+  const sectionMeta = STAFF_SECTIONS.find((s) => s.id === section);
+  if (sectionMeta?.ownerOnly) return false; // Strictly Owner-only sections (staff, bookings, leads)
 
   if (auth.grants && auth.grants.length > 0) {
     const grant = auth.grants.find((g) => g.section === section);

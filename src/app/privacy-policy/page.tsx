@@ -134,10 +134,63 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 5 */}
+          {/* Section 5: Free Kundli Lead Capture */}
+          <section id="kundli-leads" className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-3">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                5. Free Kundli Lead Capture &amp; Ephemeris Processing
+              </h2>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+
+            <p>
+              When you generate a free Janam Kundli on Aapka Astro, we collect your basic contact details and astrological birth coordinates to generate your ephemeris chart and enable follow-up consultations.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <strong className="block text-xs uppercase tracking-wider text-[#3B2A1E]">What We Collect:</strong>
+                <p className="text-xs text-[#6E5545] mt-0.5">
+                  Full Name, WhatsApp / mobile telephone number, optional email address, gender, exact date of birth, exact time of birth, and birth place coordinates (city, latitude, longitude, timezone).
+                </p>
+              </div>
+
+              <div>
+                <strong className="block text-xs uppercase tracking-wider text-[#3B2A1E]">Why We Collect It &amp; Lawful Basis:</strong>
+                <p className="text-xs text-[#6E5545] mt-0.5">
+                  Collected solely upon your explicit opt-in consent (recorded with date, time, and version timestamp) to calculate your planetary positions, generate astrological charts, and allow Acharya Ji&apos;s sanctum desk to coordinate with you regarding consultations, planetary remedies, or muhurat timings.
+                </p>
+              </div>
+
+              <div>
+                <strong className="block text-xs uppercase tracking-wider text-[#3B2A1E]">Zero Automated Marketing Guarantee:</strong>
+                <p className="text-xs text-[#6E5545] mt-0.5">
+                  Aapka Astro maintains an absolute prohibition against automated marketing robocalls, blast SMS marketing, automated promotional WhatsApp bots, and third-party syndication. All communications are initiated individually and manually by Acharya Ji&apos;s team.
+                </p>
+              </div>
+
+              <div>
+                <strong className="block text-xs uppercase tracking-wider text-[#3B2A1E]">Retention Period:</strong>
+                <p className="text-xs text-[#6E5545] mt-0.5">
+                  Lead and chart calculation data is stored securely in encrypted cloud storage for up to 24 months of account inactivity, or until you request its deletion.
+                </p>
+              </div>
+
+              <div>
+                <strong className="block text-xs uppercase tracking-wider text-[#3B2A1E]">How to Withdraw Consent &amp; Request Deletion:</strong>
+                <p className="text-xs text-[#6E5545] mt-0.5">
+                  You may withdraw your consent or exercise your Right to Erasure at any time by messaging our desk on WhatsApp (+91 93112 15564) or emailing <a href="mailto:support@aapkaastro.com" className="text-[#7B2D26] underline font-semibold">support@aapkaastro.com</a>. Upon receipt, your contact and birth coordinates are permanently deleted from our leads directory.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 6 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              5. User Rights &amp; Data Deletion
+              6. User Rights &amp; Data Deletion
             </h2>
             <p>
               You maintain sovereign ownership of your personal data. At any time, you may:
@@ -151,10 +204,10 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 6 */}
+          {/* Section 7 */}
           <section className="bg-[#FBF3E7] p-6 rounded-2xl border border-[#E8D8C3] space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              6. Privacy Grievance Officer
+              7. Privacy Grievance Officer
             </h2>
             <p>
               For questions, privacy compliance inquiries, or to exercise your data protection rights under the Digital Personal Data Protection Act (DPDPA), please reach out:

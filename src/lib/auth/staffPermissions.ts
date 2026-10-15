@@ -9,7 +9,8 @@ export type StaffSection =
   | "pricing"
   | "analytics"
   | "staff"
-  | "bookings";
+  | "bookings"
+  | "leads";
 
 export type AccessLevel = "VIEW" | "MANAGE";
 
@@ -102,6 +103,13 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     name: "UPI Verification Queue",
     path: "/admin/bookings",
     description: "Verify direct UPI bank receipts, approve/reject bookings, and schedule consultation links (Owner Only).",
+    ownerOnly: true,
+  },
+  {
+    id: "leads",
+    name: "Kundli Leads",
+    path: "/admin/leads",
+    description: "Manage seekers who generated free Kundlis with consent, filter leads, and export to CSV (Owner Only).",
     ownerOnly: true,
   },
 ];

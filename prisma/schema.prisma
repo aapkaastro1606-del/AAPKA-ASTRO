@@ -101,6 +101,7 @@ model User {
   clientSessions     Session[]           @relation("ClientSessions")
   astrologerSessions Session[]           @relation("AstrologerSessions")
   kundliRecords      KundliRecord[]
+  kundliLeads        KundliLead[]
   staffPermissions   StaffPermission[]
   referredBy         User?               @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals          User[]              @relation("UserReferrals")
@@ -483,5 +484,40 @@ model AuditLog {
   @@index([targetId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ------------------------------------------------------------------------------
+// 17. KundliLead (Pre-chart generation lead capture with GDPR/DPDP explicit consent)
+// ------------------------------------------------------------------------------
+model KundliLead {
+  id               String    @id @default(cuid())
+  name             String    @map("name")
+  phone            String    @map("phone")
+  email            String?   @map("email")
+  gender           String    @default("male") @map("gender")
+  dob              DateTime  @map("dob")
+  timeOfBirth      String    @map("time_of_birth")
+  placeOfBirth     String    @map("place_of_birth")
+  latitude         Float?    @map("latitude")
+  longitude        Float?    @map("longitude")
+  timezone         Float?    @map("timezone")
+  sourcePage       String    @default("/kundli-generator") @map("source_page")
+  userId           String?   @map("user_id")
+  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  consentGiven     Boolean   @default(true) @map("consent_given")
+  consentText      String    @map("consent_text") @db.Text
+  consentVersion   String    @default("v1.0") @map("consent_version")
+  consentTimestamp DateTime  @default(now()) @map("consent_timestamp")
+  ipAddress        String?   @map("ip_address")
+  userAgent        String?   @map("user_agent")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([phone])
+  @@index([email])
+  @@index([userId])
+  @@index([consentTimestamp])
+  @@index([createdAt])
+  @@map("kundli_leads")
 }
 
