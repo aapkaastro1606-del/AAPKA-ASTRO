@@ -42,8 +42,8 @@ export default function ClientAccountDashboard() {
     "Seeker";
   const displayEmail = user?.primaryEmailAddress?.emailAddress || profile.email;
   const isOwner =
-    displayEmail?.toLowerCase() === "aapkaastro1606@gmail.com" ||
-    (user as any)?.publicMetadata?.role === "OWNER";
+    displayEmail?.toLowerCase() ===
+    (process.env.NEXT_PUBLIC_OWNER_EMAIL?.toLowerCase() || "aapkaastro1606@gmail.com");
   const userInitial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {

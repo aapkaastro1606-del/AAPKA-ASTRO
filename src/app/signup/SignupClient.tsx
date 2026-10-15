@@ -1,29 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { SignUp, useAuth } from "@clerk/nextjs";
+import React from "react";
+import { SignUp } from "@clerk/nextjs";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
-import { ShieldCheck, Gift, Sparkles, Loader2 } from "lucide-react";
+import { ShieldCheck, Gift, Sparkles } from "lucide-react";
 
 export function SignupClient() {
-  const router = useRouter();
-  const { isSignedIn, isLoaded } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.replace("/account");
-    }
-  }, [isLoaded, isSignedIn, router]);
-
   return (
-    <div className="min-h-[85vh] bg-[#FBF3E7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[85vh] bg-[#FBF3E7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-body">
       <div className="w-full max-w-md">
         {/* Sacred Header */}
         <div className="text-center mb-6">
@@ -51,51 +35,32 @@ export function SignupClient() {
 
         {/* Clerk Sign-Up Component Container */}
         <div className="flex justify-center min-h-[460px] items-center">
-          {!mounted || !isLoaded ? (
-            <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#C1662F]" />
-              <span className="text-xs font-semibold text-[#6E5545]">
-                Preparing Sacred Registration...
-              </span>
-            </div>
-          ) : isSignedIn ? (
-            <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-3 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#6B8E5A]" />
-              <span className="text-sm font-bold text-[#7B2D26]">
-                Signed In Successfully
-              </span>
-              <span className="text-xs text-[#6E5545]">
-                Redirecting to your account dashboard...
-              </span>
-            </div>
-          ) : (
-            <SignUp
-              routing="path"
-              path="/signup"
-              signInUrl="/login"
-              forceRedirectUrl="/account"
-              fallbackRedirectUrl="/account"
-              appearance={{
-                variables: {
-                  colorPrimary: "#7B2D26",
-                  colorForeground: "#3B2A1E",
-                  colorBackground: "#FFFDF9",
-                  borderRadius: "0.75rem",
-                },
-                elements: {
-                  rootBox: "w-full",
-                  card: "border border-[#E8D8C3] shadow-xl bg-[#FFFDF9] rounded-2xl w-full",
-                  formButtonPrimary:
-                    "bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] font-bold text-sm shadow-sm py-2.5",
-                  socialButtonsBlockButton:
-                    "border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FBF3E7] text-[#3B2A1E] font-medium py-2",
-                  headerTitle: "font-temple text-[#7B2D26] text-xl font-bold",
-                  headerSubtitle: "text-xs text-[#6E5545]",
-                  footerActionLink: "text-[#7B2D26] hover:text-[#64221C] font-bold",
-                },
-              }}
-            />
-          )}
+          <SignUp
+            routing="path"
+            path="/signup"
+            signInUrl="/login"
+            forceRedirectUrl="/account"
+            fallbackRedirectUrl="/account"
+            appearance={{
+              variables: {
+                colorPrimary: "#7B2D26",
+                colorForeground: "#3B2A1E",
+                colorBackground: "#FFFDF9",
+                borderRadius: "0.75rem",
+              },
+              elements: {
+                rootBox: "w-full",
+                card: "border border-[#E8D8C3] shadow-xl bg-[#FFFDF9] rounded-2xl w-full",
+                formButtonPrimary:
+                  "bg-[#7B2D26] hover:bg-[#64221C] text-[#FBF3E7] font-bold text-sm shadow-sm py-2.5",
+                socialButtonsBlockButton:
+                  "border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FBF3E7] text-[#3B2A1E] font-medium py-2",
+                headerTitle: "font-temple text-[#7B2D26] text-xl font-bold",
+                headerSubtitle: "text-xs text-[#6E5545]",
+                footerActionLink: "text-[#7B2D26] hover:text-[#64221C] font-bold",
+              },
+            }}
+          />
         </div>
 
         {/* Reassurance Features */}

@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * /admin/diagnostics
- * Strictly Owner-Only System Diagnostics Console.
+ * Owner-Only System Diagnostics Console.
+ * Access is strictly restricted to aapkaastro1606@gmail.com (fail-closed server-side).
  */
 export default async function AdminDiagnosticsPage() {
   const auth = await getServerAuthUser();
@@ -15,8 +16,8 @@ export default async function AdminDiagnosticsPage() {
     redirect("/login?redirect_url=/admin/diagnostics");
   }
 
-  // Strictly Owner-only
-  if (!auth.isOwner && auth.role !== "OWNER") {
+  // Strictly Owner only
+  if (!auth.isOwner) {
     redirect("/dashboard");
   }
 

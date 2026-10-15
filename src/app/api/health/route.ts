@@ -15,10 +15,14 @@ export async function GET() {
         status: "unhealthy",
         database: "disconnected",
         latencyMs: 0,
-        error: "DATABASE_URL environment variable is missing from Vercel Project Settings.",
         timestamp: new Date().toISOString(),
       },
-      { status: 503 }
+      {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
     );
   }
 
@@ -40,14 +44,13 @@ export async function GET() {
         },
       }
     );
-  } catch (error: any) {
+  } catch {
     const latencyMs = Date.now() - startTime;
     return NextResponse.json(
       {
         status: "unhealthy",
         database: "disconnected",
         latencyMs,
-        error: error?.message || String(error),
         timestamp: new Date().toISOString(),
       },
       {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest, getOwnerEmail } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { KundliLeadService } from "@/lib/services/kundliLeadService";
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
 
     const csvContent = await KundliLeadService.exportLeadsCsv(
-      auth.email || "owner@aapkaastro.com"
+      auth.email || getOwnerEmail()
     );
 
     const filename = `aapka-astro-kundli-leads-${new Date().toISOString().split("T")[0]}.csv`;

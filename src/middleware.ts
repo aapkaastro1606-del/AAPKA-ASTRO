@@ -1,38 +1,25 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { isClerkConfigured, getClerkPublishableKey } from "@/lib/auth/clerkConfig";
-import { evaluateRouteAccess, UserRole } from "@/lib/auth/roles";
+import { evaluateRouteAccess } from "@/lib/auth/roles";
 import { getAuthFromRequest } from "@/lib/auth/serverAuth";
-import {
-  isOwnerEmail,
-  StaffPermissionService,
-  STAFF_SECTIONS,
-  StaffSection,
-} from "@/lib/auth/staffPermissions";
+import { validateRedirectUrl } from "@/lib/auth/redirectValidation";
 
 const isAccountRoute = createRouteMatcher(["/account(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAstrologerRoute = createRouteMatcher(["/astrologer(.*)"]);
 
-const publishableKey = getClerkPublishableKey();
-const isProduction = process.env.NODE_ENV === "production";
-const isSatelliteDomain =
-  publishableKey.startsWith("pk_live_") &&
-  process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === "true";
-const clerkDomain = isSatelliteDomain ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || undefined) : undefined;
-const signInPath = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/login";
-const signUpPath = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/signup";
-
 const isClerkActive = isClerkConfigured();
 
 /**
  * Fallback middleware when Clerk credentials are unconfigured or in local preview.
- * Strictly enforces RBAC against session cookies rather than passing through unconditionally.
+ * Strictly enforces RBAC against session cookies.
  */
 function fallbackMiddleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isProtected =
+    isAccountRoute(req) ||
     isDashboardRoute(req) ||
     isAdminRoute(req) ||
     isAstrologerRoute(req);
@@ -48,26 +35,59 @@ function fallbackMiddleware(req: NextRequest) {
     );
 
     if (!access.allowed) {
-      return NextResponse.redirect(new URL(access.redirectUrl, req.url));
+      const validRedirect = validateRedirectUrl(access.redirectUrl);
+      return NextResponse.redirect(new URL(validRedirect, req.url));
     }
   }
 
   return NextResponse.next();
 }
 
+/**
+ * Standard Clerk Middleware with Server-Side Route Protection.
+ * Protects /account/*, /admin/*, /dashboard/*, and /astrologer/* at the edge.
+ */
 const liveClerkMiddleware = clerkMiddleware(
   async (auth, req) => {
+    const pathname = req.nextUrl.pathname;
+    const isProtected =
+      isAccountRoute(req) ||
+      isAdminRoute(req) ||
+      isDashboardRoute(req) ||
+      isAstrologerRoute(req);
+
+    if (isProtected) {
+      const session = await auth();
+      if (!session || !session.userId) {
+        const rawTarget = pathname + (req.nextUrl.search || "");
+        const validRedirect = validateRedirectUrl(rawTarget);
+        const loginUrl = new URL("/login", req.url);
+        loginUrl.searchParams.set("redirect_url", validRedirect);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
     return NextResponse.next();
   },
   {
-    domain: clerkDomain,
-    isSatellite: isSatelliteDomain,
-    signInUrl: signInPath,
-    signUpUrl: signUpPath,
+    publishableKey: getClerkPublishableKey(),
+    signInUrl: "/login",
+    signUpUrl: "/signup",
   }
 );
 
 export default function middleware(req: NextRequest, event: any) {
+  // 1. Canonical Host Enforcement: apex (aapkaastro.com) -> canonical (www.aapkaastro.com) via 308
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  if (host === "aapkaastro.com") {
+    const canonicalUrl = req.nextUrl.clone();
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.host = "www.aapkaastro.com";
+    canonicalUrl.port = "";
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
+  // 2. Delegate to appropriate authentication middleware
   if (isClerkActive) {
     return (liveClerkMiddleware as any)(req, event);
   }

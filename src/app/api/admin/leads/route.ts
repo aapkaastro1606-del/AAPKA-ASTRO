@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest, getOwnerEmail } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { KundliLeadService } from "@/lib/services/kundliLeadService";
 
@@ -78,7 +78,7 @@ export async function DELETE(req: NextRequest) {
 
     const result = await KundliLeadService.deleteLead(
       leadId,
-      auth.email || "owner@aapkaastro.com",
+      auth.email || getOwnerEmail(),
       reason
     );
 

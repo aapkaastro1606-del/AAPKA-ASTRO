@@ -3,8 +3,10 @@ import { syncClerkUserToDatabase, deleteClerkUserFromDatabase } from "../src/lib
 import { POST as clerkWebhookPost } from "../src/app/api/webhooks/clerk/route";
 import { NextRequest } from "next/server";
 import { Webhook } from "svix";
+import { enforceStagingDatabase } from "../src/lib/db/stagingGuard";
 
 async function runVerification() {
+  enforceStagingDatabase("verify-db-user-sync");
   console.log("=== STARTING LIVE POSTGRESQL USER SYNC VERIFICATION ===");
   
   const timestamp = Date.now();

@@ -5,6 +5,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
   APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_SITE_URL: z.string().default("https://www.aapkaastro.com"),
 
   // PostgreSQL Database (Neon Serverless PostgreSQL)
   DATABASE_URL: z
@@ -19,15 +20,14 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default("aapka-astro-super-secure-jwt-secret-key-change-in-production"),
   JWT_EXPIRES_IN: z.string().default("30d"),
 
-  // Clerk Authentication (Email/Password + Google OAuth, Multi-Domain SSO)
+  // Clerk Authentication (Email/Password + Google OAuth)
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
     .string()
-    .default("pk_test_Y2xlcmsuYWFwa2Fhc3Ryby5jb20k"),
+    .default("pk_test_cHJvZm91bmQtY2ljYWRhLTk2OTQuY2xlcmsuYWNjb3VudHMuZGV2JA"),
   CLERK_SECRET_KEY: z.string().optional().default("sk_test_clerk_secret_key_change_in_production"),
+  CLERK_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().default("/login"),
   NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().default("/signup"),
-  NEXT_PUBLIC_CLERK_DOMAIN: z.string().default("aapkaastro.com"),
-  NEXT_PUBLIC_CLERK_IS_SATELLITE: z.string().default("false"),
   NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL: z.string().default("/account"),
   NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL: z.string().default("/account"),
 
@@ -36,8 +36,9 @@ const envSchema = z.object({
   SIGNUP_EMAIL_ALLOWLIST: z.string().optional(),
   SIGNUP_EMAIL_BLOCKLIST: z.string().optional(),
 
-  // Site Owner Elevation (Comma-separated emails elevated to platform ADMIN)
+  // Site Owner Elevation (Designated site owner email)
   OWNER_EMAIL: z.string().optional().default("aapkaastro1606@gmail.com"),
+  NEXT_PUBLIC_OWNER_EMAIL: z.string().optional().default("aapkaastro1606@gmail.com"),
 
   // Payments (Direct UPI / Mock)
   PAYMENT_PROVIDER: z.enum(["upi", "mock"]).default("upi"),

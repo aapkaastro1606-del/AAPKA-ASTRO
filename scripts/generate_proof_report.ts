@@ -3,8 +3,10 @@ import { BookingWorkflowService } from "../src/lib/services/bookingWorkflowServi
 import { KundliLeadService } from "../src/lib/services/kundliLeadService";
 import { syncClerkUserToDatabase } from "../src/lib/auth/syncUser";
 import { ClerkWebhookTracker } from "../src/lib/auth/clerkWebhookTracker";
+import { enforceStagingDatabase } from "../src/lib/db/stagingGuard";
 
 async function main() {
+  enforceStagingDatabase("generate_proof_report");
   console.log("================================================================================");
   console.log("AAPKA ASTRO LIVE PRODUCTION VERIFICATION & PROOF SUITE");
   console.log("Neon PostgreSQL Database: neondb (ep-restless-wildflower-b4r94suj)");

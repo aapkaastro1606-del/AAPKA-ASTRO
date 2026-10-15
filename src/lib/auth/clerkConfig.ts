@@ -12,7 +12,6 @@ export function getClerkPublishableKey(): string {
   const envKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (
     !envKey ||
-    envKey.includes("Y2xlcmsuYWFwa2Fhc3Ryby5jb20k") ||
     envKey.includes("change_in_production") ||
     envKey === "pk_test_placeholder" ||
     envKey === "pk_live_Y2xlcmsudmlhci5pbiQ"

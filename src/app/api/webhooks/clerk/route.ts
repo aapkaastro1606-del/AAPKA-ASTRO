@@ -25,6 +25,15 @@ export async function POST(req: NextRequest) {
 
     const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
+    if (!webhookSecret && process.env.NODE_ENV === "production") {
+      console.error("Clerk webhook error: CLERK_WEBHOOK_SECRET is not configured in production");
+      await ClerkWebhookTracker.recordFailure("unknown", "CLERK_WEBHOOK_SECRET not configured in production");
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 500 }
+      );
+    }
+
     if (webhookSecret) {
       const svixId = req.headers.get("svix-id");
       const svixTimestamp = req.headers.get("svix-timestamp");

@@ -352,7 +352,7 @@ export class StaffPermissionService {
           }
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -405,7 +405,7 @@ export class StaffPermissionService {
           }
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -451,7 +451,7 @@ export class StaffPermissionService {
           }
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -555,7 +555,7 @@ export class StaffPermissionService {
           }
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -679,7 +679,7 @@ export class StaffPermissionService {
           newGrant.id = created.id;
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -709,7 +709,7 @@ export class StaffPermissionService {
           });
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -747,7 +747,7 @@ export class StaffPermissionService {
           });
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -779,7 +779,7 @@ export class StaffPermissionService {
           return true;
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
     return true;
@@ -880,7 +880,7 @@ export class StaffPermissionService {
           }
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 
@@ -919,7 +919,7 @@ export class StaffPermissionService {
           });
         }
       } catch {
-        isDbReachable = false;
+        // DB query fallback
       }
     }
 

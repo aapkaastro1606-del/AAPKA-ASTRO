@@ -1,66 +1,53 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { SignIn, useAuth } from "@clerk/nextjs";
+import { SignIn, useAuth, useClerk } from "@clerk/nextjs";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
-import { ShieldCheck, CheckCircle2, Lock, Loader2, ArrowRight } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Lock, Loader2, AlertTriangle, LogOut } from "lucide-react";
 
-function getSafeRedirectUrl(rawUrl: string | null): string {
-  if (!rawUrl) return "/account";
-  try {
-    if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
-      const parsed = new URL(rawUrl);
-      if (
-        parsed.hostname === "aapkaastro.com" ||
-        parsed.hostname === "www.aapkaastro.com" ||
-        parsed.hostname === "localhost" ||
-        parsed.hostname.endsWith(".aapkaastro.com")
-      ) {
-        return parsed.pathname + parsed.search + parsed.hash;
-      }
-      return "/account";
-    }
-    if (rawUrl.startsWith("/")) {
-      return rawUrl;
-    }
-  } catch {
-    // fallback
-  }
-  return "/account";
-}
-
-export function LoginClient() {
-  const searchParams = useSearchParams();
-  const rawRedirect = searchParams.get("redirect_url");
-  const targetUrl = getSafeRedirectUrl(rawRedirect);
-
+export function LoginClient({
+  targetUrl,
+  serverSessionValid,
+}: {
+  targetUrl: string;
+  serverSessionValid: boolean;
+}) {
   const { isSignedIn, isLoaded } = useAuth();
+  const { signOut } = useClerk();
   const [mounted, setMounted] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined" && window.location.hostname === "aapkaastro.com") {
-      window.location.replace(`https://www.aapkaastro.com${window.location.pathname}${window.location.search}${window.location.hash}`);
-    }
   }, []);
 
+  // Log diagnostic event when browser holds a session but server does not recognize it
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      const destination =
-        typeof window !== "undefined" && window.location.hostname === "aapkaastro.com"
-          ? `https://www.aapkaastro.com${targetUrl}`
-          : targetUrl;
-      const timer = setTimeout(() => {
-        window.location.href = destination;
-      }, 350);
-      return () => clearTimeout(timer);
+    if (isLoaded && isSignedIn && !serverSessionValid) {
+      fetch("/api/auth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "SESSION_SYNC_MISMATCH",
+          targetUrl,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(() => {});
     }
-  }, [isLoaded, isSignedIn, targetUrl]);
+  }, [isLoaded, isSignedIn, serverSessionValid, targetUrl]);
+
+  const handleSignOutAndRetry = async () => {
+    try {
+      setSigningOut(true);
+      await signOut();
+      window.location.href = `/login?redirect_url=${encodeURIComponent(targetUrl)}`;
+    } catch {
+      window.location.reload();
+    }
+  };
 
   return (
-    <div className="min-h-[85vh] bg-[#FBF3E7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[85vh] bg-[#FBF3E7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-body">
       <div className="w-full max-w-md">
         {/* Sacred Header */}
         <div className="text-center mb-6">
@@ -78,7 +65,7 @@ export function LoginClient() {
           </div>
         </div>
 
-        {/* Clerk Sign-In Component Container */}
+        {/* Content Container */}
         <div className="flex justify-center min-h-[420px] items-center">
           {!mounted || !isLoaded ? (
             <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-3">
@@ -87,30 +74,38 @@ export function LoginClient() {
                 Connecting to Seeker Sanctuary...
               </span>
             </div>
-          ) : isSignedIn ? (
-            <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-4 text-center bg-[#FFFDF9] rounded-2xl border border-[#E8D8C3] shadow-sm w-full">
-              <Loader2 className="h-8 w-8 animate-spin text-[#6B8E5A]" />
-              <div>
-                <span className="text-base font-bold text-[#7B2D26] block">
-                  Signed In Successfully
-                </span>
-                <span className="text-xs text-[#6E5545] mt-1 block">
-                  Redirecting to your account dashboard...
-                </span>
+          ) : isSignedIn && !serverSessionValid ? (
+            /* Browser says signed in, but server session is not recognized.
+               Show clear message with "Sign out and try again" button. Never loop! */
+            <div className="flex flex-col items-center justify-center p-8 bg-[#FFFDF9] rounded-2xl border-2 border-amber-300 shadow-md w-full text-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700">
+                <AlertTriangle className="h-6 w-6" />
               </div>
-              <a
-                href={
-                  typeof window !== "undefined" && window.location.hostname === "aapkaastro.com"
-                    ? `https://www.aapkaastro.com${targetUrl}`
-                    : targetUrl
-                }
-                className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
+              <div>
+                <h3 className="text-base font-bold text-[#7B2D26] font-temple">
+                  Session Out of Sync
+                </h3>
+                <p className="text-xs text-[#6E5545] mt-1.5 leading-relaxed">
+                  Your browser holds an existing session, but our server could not verify it with our security provider.
+                  This happens if cookies are blocked, expired, or running across environments.
+                </p>
+              </div>
+
+              <button
+                onClick={handleSignOutAndRetry}
+                disabled={signingOut}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] px-6 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75"
               >
-                <span>Proceed to {targetUrl.includes("consult") ? "My Bookings" : targetUrl.includes("admin") ? "Admin Panel" : "Account"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </a>
+                {signingOut ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[#E8A33D]" />
+                ) : (
+                  <LogOut className="h-4 w-4 text-[#E8A33D]" />
+                )}
+                <span>{signingOut ? "Signing Out..." : "Sign out and try again"}</span>
+              </button>
             </div>
           ) : (
+            /* Standard Clerk SignIn flow styled with site's theme */
             <SignIn
               routing="path"
               path="/login"
@@ -150,10 +145,6 @@ export function LoginClient() {
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A] shrink-0" />
               <span>Sign in seamlessly via Google or your verified email</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A] shrink-0" />
-              <span>Unified Single Sign-On across Aapka Astro, Viar &amp; DOW</span>
             </li>
             <li className="flex items-center gap-2">
               <Lock className="h-3.5 w-3.5 text-[#C1662F] shrink-0" />

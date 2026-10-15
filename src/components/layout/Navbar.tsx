@@ -46,16 +46,52 @@ export const Navbar: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const [mobileAccordion, setMobileAccordion] = useState<DropdownKey>("horoscope");
 
+  const [serverNavState, setServerNavState] = useState<{
+    isOwner: boolean;
+    hasAdminAccess: boolean;
+    adminUrl: string | null;
+    label: string | null;
+  }>({
+    isOwner: false,
+    hasAdminAccess: false,
+    adminUrl: null,
+    label: null,
+  });
+
   const navRef = useRef<HTMLElement | null>(null);
 
   const isAuthenticatedUser = Boolean(mounted && isLoaded && isSignedIn && user);
-  const userEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
-  const isOwner = Boolean(
-    isAuthenticatedUser &&
-      (userEmail === "aapkaastro1606@gmail.com" ||
-        (user as any)?.publicMetadata?.role === "OWNER")
-  );
   const isHi = language === "hi" || pathname?.startsWith("/hi");
+
+  // Server-authoritative nav check: never advertise /admin publicly
+  useEffect(() => {
+    if (!isSignedIn || !user) {
+      setServerNavState({ isOwner: false, hasAdminAccess: false, adminUrl: null, label: null });
+      return;
+    }
+    let isCurrent = true;
+    fetch("/api/auth/nav-state")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isCurrent && data) {
+          setServerNavState({
+            isOwner: Boolean(data.isOwner),
+            hasAdminAccess: Boolean(data.hasAdminAccess),
+            adminUrl: data.adminUrl || null,
+            label: data.label || null,
+          });
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setServerNavState({ isOwner: false, hasAdminAccess: false, adminUrl: null, label: null });
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [isSignedIn, user]);
 
   const syncState = () => {
     setStatus(AstrologerStateStore.getStatus());
@@ -525,14 +561,14 @@ export const Navbar: React.FC = () => {
             {/* STRICT AUTH STATE (Positioned right after Language Pill, before Consult CTA) */}
             {isAuthenticatedUser ? (
               <div className="hidden sm:flex items-center gap-2.5">
-                {isOwner && (
+                {serverNavState.hasAdminAccess && serverNavState.adminUrl && (
                   <Link
-                    href="/admin/bookings"
+                    href={serverNavState.adminUrl}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8A33D]/25 border border-[#E8A33D] px-2.5 py-1 text-xs font-bold text-[#7B2D26] hover:bg-[#E8A33D]/40 transition-all shadow-xs"
-                    title="Owner Verification Queue & Admin Desk"
+                    title={serverNavState.isOwner ? "Owner Verification Queue & Admin Desk" : "Staff Portal Desk"}
                   >
                     <ShieldCheck className="h-3.5 w-3.5 text-[#C1662F]" />
-                    <span>Admin Panel</span>
+                    <span>{serverNavState.label || "Admin Panel"}</span>
                   </Link>
                 )}
 
@@ -836,17 +872,19 @@ export const Navbar: React.FC = () => {
 
             {/* Mobile Auth Footer (Strict Guest vs. Signed-In Separation) */}
             <div className="border-t border-[#E8D8C3] pt-3 space-y-2">
-              {isOwner && (
+              {serverNavState.hasAdminAccess && serverNavState.adminUrl && (
                 <Link
-                  href="/admin/bookings"
+                  href={serverNavState.adminUrl}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-between rounded-xl bg-[#E8A33D]/25 border border-[#E8A33D] p-2.5 text-xs font-bold text-[#7B2D26]"
                 >
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-[#C1662F]" />
-                    <span>Owner Admin Panel</span>
+                    <span>{serverNavState.label || "Admin Panel"}</span>
                   </div>
-                  <span className="text-[10px] bg-[#7B2D26] text-white px-2 py-0.5 rounded-full font-bold">Desk</span>
+                  <span className="text-[10px] bg-[#7B2D26] text-white px-2 py-0.5 rounded-full font-bold">
+                    {serverNavState.isOwner ? "Desk" : "Staff"}
+                  </span>
                 </Link>
               )}
               {isAuthenticatedUser ? (

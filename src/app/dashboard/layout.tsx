@@ -2,6 +2,8 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

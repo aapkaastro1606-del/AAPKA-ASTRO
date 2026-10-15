@@ -5,8 +5,10 @@ import { LiveQueueService } from "../src/lib/redis/queue";
 import { ClientAccountStore } from "../src/lib/store/clientAccountStore";
 import { NextRequest } from "next/server";
 import { Webhook } from "svix";
+import { enforceStagingDatabase } from "../src/lib/db/stagingGuard";
 
 async function executeFullCoreFlowWalkthrough() {
+  enforceStagingDatabase("e2e-core-flow-walkthrough");
   console.log("\n================================================================================");
   console.log("   AAPKA ASTRO — FULL CORE-FLOW VERIFICATION WALKTHROUGH");
   console.log("================================================================================\n");

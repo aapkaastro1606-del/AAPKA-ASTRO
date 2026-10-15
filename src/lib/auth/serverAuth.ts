@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { isClerkConfigured } from "./clerkConfig";
@@ -36,6 +37,10 @@ const UNAUTHENTICATED_RESULT: ServerAuthResult = {
   permissions: [],
   grants: [],
 };
+
+export function getOwnerEmail(): string {
+  return process.env.OWNER_EMAIL?.trim().toLowerCase() || "aapkaastro1606@gmail.com";
+}
 
 /**
  * Checks whether an authenticated user has authorization for a specific section and access level.
@@ -174,88 +179,131 @@ export function getAuthFromRequest(req: NextRequest): ServerAuthResult {
 /**
  * Extracts and verifies authentication and role on the server inside Server Components,
  * Layouts, and Server Actions.
+ *
+ * Cached per request using React cache() to avoid duplicate API and DB calls.
+ * Strictly verifies the primary email via currentUser() or the Clerk Backend API
+ * and confirms it is marked verified. Never relies on session-token claims or
+ * browser-supplied emails.
  */
-export async function getServerAuthUser(): Promise<ServerAuthResult> {
+export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
   // If Clerk is configured with valid production/test keys, inspect Clerk session
   if (isClerkConfigured()) {
     try {
-      const { auth, currentUser } = await import("@clerk/nextjs/server");
+      const { auth, currentUser, clerkClient } = await import("@clerk/nextjs/server");
       const session = await auth();
 
       if (!session || !session.userId) {
         return UNAUTHENTICATED_RESULT;
       }
 
-      const claims = session.sessionClaims as any;
-      let email = claims?.email || claims?.primaryEmailAddress || null;
-      if (!email) {
+      // DO NOT rely on session-token claims (the default token has no email)
+      // DO NOT trust any email supplied by the browser
+      // Read verified primary email via currentUser() or the Clerk Backend API
+      let verifiedEmail: string | null = null;
+      let fullName: string | undefined;
+
+      try {
+        const u = await currentUser();
+        if (u) {
+          const primaryId = u.primaryEmailAddressId;
+          const primaryObj =
+            u.emailAddresses?.find((e) => e.id === primaryId) ||
+            u.emailAddresses?.[0];
+          if (primaryObj && primaryObj.verification?.status === "verified") {
+            verifiedEmail = primaryObj.emailAddress.toLowerCase().trim();
+          }
+          fullName = [u.firstName, u.lastName].filter(Boolean).join(" ") || undefined;
+        }
+      } catch {
+        // Fallback to clerkClient() API
         try {
-          const u = await currentUser();
-          email = u?.emailAddresses?.[0]?.emailAddress || null;
+          const client = await clerkClient();
+          const u = await client.users.getUser(session.userId);
+          if (u) {
+            const primaryId = u.primaryEmailAddressId;
+            const primaryObj =
+              u.emailAddresses?.find((e) => e.id === primaryId) ||
+              u.emailAddresses?.[0];
+            if (primaryObj && primaryObj.verification?.status === "verified") {
+              verifiedEmail = primaryObj.emailAddress.toLowerCase().trim();
+            }
+            fullName = [u.firstName, u.lastName].filter(Boolean).join(" ") || undefined;
+          }
         } catch {
           // ignore
         }
       }
 
-      if (!email && session.userId) {
+      // If backend API could not be reached, query database user row for this clerkId
+      if (!verifiedEmail && session.userId && prisma?.user) {
         try {
-          if (prisma && prisma.user) {
-            const dbU = await prisma.user.findFirst({
-              where: { clerkId: session.userId },
-              select: { email: true },
-            });
-            if (dbU?.email) {
-              email = dbU.email;
-            }
+          const dbU = await prisma.user.findFirst({
+            where: { clerkId: session.userId },
+            select: { email: true, name: true, role: true },
+          });
+          if (dbU?.email) {
+            verifiedEmail = dbU.email.toLowerCase().trim();
+            fullName = fullName || dbU.name || undefined;
           }
         } catch {}
       }
 
-      const isOwner = isOwnerEmail(email);
-      let rawRole =
-        claims?.metadata?.role ||
-        claims?.publicMetadata?.role ||
-        claims?.unsafeMetadata?.role ||
-        "CLIENT";
-
-      // Anti-tamper: metadata claiming OWNER without matching OWNER_EMAIL is disallowed
-      if (String(rawRole).toUpperCase() === "OWNER" && !isOwner) {
-        rawRole = "CLIENT";
-      }
-
+      // 1. Just-in-time sync on first authenticated server request:
+      // Awaited synchronously so sign-in creates or updates the row and wallet in Neon
+      // even if the webhook is missing, delayed, or failed.
+      let dbUser: any = null;
       if (session.userId) {
-        const uName =
-          claims?.name ||
-          claims?.fullName ||
-          claims?.first_name ||
-          undefined;
-
-        syncClerkUserToDatabase({
-          clerkId: session.userId,
-          email,
-          name: uName,
-        }).catch((err) => console.warn("Background user sync notice:", err?.message || err));
-      }
-
-      if (isOwner) {
-        rawRole = "OWNER";
-        // Auto-assign and persist OWNER role in PostgreSQL database on sign-up / first login
-        if (email) {
-          StaffPermissionService.ensureOwnerRoleInDatabase(email).catch(() => {});
+        try {
+          dbUser = await syncClerkUserToDatabase({
+            clerkId: session.userId,
+            email: verifiedEmail,
+            name: fullName,
+          });
+        } catch (syncErr: any) {
+          console.warn("Just-in-time database sync warning:", syncErr?.message || syncErr);
         }
       }
 
-      const role = String(rawRole).toUpperCase() as UserRole;
+      // 2. Roles are computed, never trusted from the database:
+      // OWNER only when the verified email equals OWNER_EMAIL.
+      const isOwner = Boolean(verifiedEmail && isOwnerEmail(verifiedEmail));
+      let role: UserRole = "CLIENT";
+
+      if (isOwner) {
+        role = "OWNER";
+        if (verifiedEmail) {
+          StaffPermissionService.ensureOwnerRoleInDatabase(verifiedEmail).catch(() => {});
+        }
+      } else {
+        // If not the Owner, inspect database role for anomalies
+        const dbRole = dbUser?.role;
+        if (dbRole === "OWNER") {
+          console.warn(
+            `[SECURITY ANOMALY] User "${verifiedEmail || session.userId}" has role OWNER in database but verified email does not match OWNER_EMAIL. Demoted to CLIENT.`
+          );
+          role = "CLIENT";
+          if (prisma?.user && dbUser?.id) {
+            prisma.user.update({
+              where: { id: dbUser.id },
+              data: { role: "CLIENT" },
+            }).catch(() => {});
+          }
+        } else if (dbRole === "ASTROLOGER") {
+          role = "ASTROLOGER";
+        } else {
+          role = "CLIENT";
+        }
+      }
       const grants = isOwner
         ? (STAFF_SECTIONS.map((s) => ({
             id: `owner_${s.id}`,
-            email: email || "",
+            email: verifiedEmail || "",
             section: s.id,
             accessLevel: "MANAGE" as AccessLevel,
             grantedAt: new Date().toISOString(),
             revokedAt: null,
           })) as StaffGrant[])
-        : await StaffPermissionService.getGrantsForEmail(email || "");
+        : await StaffPermissionService.getGrantsForEmail(verifiedEmail || "");
 
       const permissions = isOwner
         ? (STAFF_SECTIONS.map((s) => s.id) as StaffSection[])
@@ -271,7 +319,7 @@ export async function getServerAuthUser(): Promise<ServerAuthResult> {
         isAstrologer,
         isAdmin,
         isOwner,
-        email,
+        email: verifiedEmail,
         permissions,
         grants,
       };
@@ -280,7 +328,7 @@ export async function getServerAuthUser(): Promise<ServerAuthResult> {
     }
   }
 
-  // Fallback to cookie-based session verification
+  // Fallback to cookie-based session verification (for tests / preview)
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("aapka_astro_session")?.value;
@@ -333,8 +381,11 @@ export async function getServerAuthUser(): Promise<ServerAuthResult> {
 
     const isOwner = isOwnerEmail(email);
 
-    // Anti-tamper: cookie claiming OWNER without matching OWNER_EMAIL is disallowed
+    // Roles are computed, never trusted: OWNER only when email matches OWNER_EMAIL
     if (role === "OWNER" && !isOwner) {
+      console.warn(
+        `[SECURITY ANOMALY] Session claimed role OWNER for non-owner email "${email}". Demoted to CLIENT.`
+      );
       role = "CLIENT";
     }
 
@@ -377,4 +428,4 @@ export async function getServerAuthUser(): Promise<ServerAuthResult> {
   } catch (err: any) {
     return UNAUTHENTICATED_RESULT;
   }
-}
+});
