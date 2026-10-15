@@ -248,3 +248,49 @@ To transition the site from its current in-memory / localStorage state to a prod
 5. **Clerk Production Upgrade**:
    - Switch Clerk keys in Vercel to production live keys (`pk_live_...` / `sk_live_...`).
    - Configure webhook endpoint `https://aapkaastro.com/api/webhooks/clerk` in Clerk Dashboard and set `CLERK_WEBHOOK_SECRET`.
+
+---
+
+## 7. Implementation Deliverables & Production Hardening
+
+### 7.1 Manual UPI Booking Workflow & QR Configuration
+- **Prisma Migration**: `20261015020000_manual_upi_booking_workflow` applied to Neon PostgreSQL.
+- **PNB Merchant Standee Asset**:
+  - Image: `/images/pnb-upi-qr.jpg` (verified merchant Punjab National Bank standee).
+  - Merchant Name: `AAPKA ASTRO`
+  - Real UPI ID: `9310709233m@pnb`
+  - WhatsApp Verification Desk: `+91 93112 15564`
+- **Dynamic UPI Link**: Formats direct deep-links (`upi://pay?pa=9310709233m@pnb&pn=AAPKA%20ASTRO&am={amount}&tn={bookingRef}`) rendering instant scannable QR with amount and reference locked.
+- **Workflow State Machine**: `PENDING_PAYMENT` → `PAYMENT_CLAIMED` (with optional UTR & auto WhatsApp handoff) → `CONFIRMED` (Owner verifies bank credit) → `SCHEDULED` (Owner assigns time slot & Google Meet/WhatsApp link) → `COMPLETED` / `REFUNDED` / `REJECTED` / `EXPIRED`.
+- **Pricing Enforcement**:
+  - First Astro Consultation: **₹1,051** (50% off base ₹2,100).
+  - Returning Astro Consultation: **₹2,100**.
+  - Vaastu Consultation: Flat **₹15,000**.
+  - Kundli Full PDF Report: Flat **₹501**.
+- **Owner Verification Queue**: Live at `/admin/bookings` with UTR duplicate prevention and audit logging.
+
+### 7.2 Free Kundli Lead Capture & DPDP Compliance
+- **Prisma Migration**: `20261015030000_free_kundli_lead_capture` applied to Neon PostgreSQL.
+- **Lead Capture Form (`KundliForm.tsx`)**:
+  - Mandatory Fields: Full Name, WhatsApp / Mobile phone number, Date of Birth, Time of Birth, Place of Birth.
+  - Optional Field: Email address.
+  - Mandatory Unticked Consent Checkbox: *"I agree to be contacted about consultations and services, and I can withdraw consent any time."* with direct anchor to `/privacy-policy#kundli-leads`. Chart calculation is strictly blocked without consent.
+  - Anti-Spam: Invisible honeypot field (`website_hp`), form submission velocity check (> 1.2s required), and IP rate limiting.
+  - Zero Automated Marketing: Strictly coordinates manual inquiries from Acharya Ji's sanctum desk.
+- **Deduplication**: Automatically upserts by phone number to prevent duplicate spam rows while updating birth coordinates and consent timestamps.
+- **Owner-Only Leads Console (`/admin/leads`)**:
+  - Search across name, phone, email, place.
+  - Date range filtering.
+  - Direct WhatsApp outreach buttons with prefilled Vedic greetings.
+  - RFC 4180 CSV export with mandatory `AuditLog` logging of exporter email and timestamp.
+  - Seeker Right to Erasure (Delete on Request) with audit trail logging.
+- **Privacy Policy**: Section 5 added with explicit details on collection, retention, and erasure rights (marked "Pending Lawyer Review").
+
+### 7.3 Automated Test Verification Summary
+1. `tests/manualUpiBookingWorkflow.test.ts`: **10/10 PASSING**
+2. `tests/kundliLeadCapture.test.ts`: **7/7 PASSING**
+3. `tests/kundliPdfOrder.test.ts`: **5/5 PASSING**
+4. `tests/diagnosticsAndHealth.test.ts`: **3/3 PASSING**
+5. `tests/unifiedDatabaseLayer.test.ts`: **13/13 PASSING**
+6. Production Build (`npm run build`): **97/97 pages static & dynamic compiled cleanly with 0 TypeScript errors.**
+
