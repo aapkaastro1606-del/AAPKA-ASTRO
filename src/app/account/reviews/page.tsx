@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ClientAccountStore, ClientReview, ConsultationRecord } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
@@ -17,9 +18,16 @@ import {
 } from "lucide-react";
 
 export default function AccountReviewsPage() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const profile = ClientAccountStore.getProfile();
   const pastReviews = ClientAccountStore.getReviews();
   const completedConsultations = ClientAccountStore.getConsultations();
+
+  useEffect(() => {
+    if (isUserLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account/reviews");
+    }
+  }, [isUserLoaded, user]);
 
   const [selectedSessionId, setSelectedSessionId] = useState<string>(
     completedConsultations[0]?.id || ""

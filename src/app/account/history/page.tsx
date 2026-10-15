@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
@@ -19,7 +20,14 @@ import {
 } from "lucide-react";
 
 export default function AccountHistoryPage() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const consultations = ClientAccountStore.getConsultationHistory();
+
+  useEffect(() => {
+    if (isUserLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account/history");
+    }
+  }, [isUserLoaded, user]);
 
   const handleDownloadSummary = (id: string) => {
     alert(`Downloading Official Astrological Prescription & Summary for session ${id} in PDF format...`);

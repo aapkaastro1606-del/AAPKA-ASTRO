@@ -44,6 +44,12 @@ export default function ClientAccountDashboard() {
   const userInitial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {
+    if (isLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account");
+    }
+  }, [isLoaded, user]);
+
+  useEffect(() => {
     const sync = () => {
       fetch("/api/booking/status")
         .then((res) => res.json())

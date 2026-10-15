@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ClientAccountStore, SavedKundli } from "@/lib/store/clientAccountStore";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -19,9 +20,16 @@ import {
 } from "lucide-react";
 
 export default function AccountKundliPage() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [savedKundlis, setSavedKundlis] = useState<SavedKundli[]>(() =>
     ClientAccountStore.getSavedKundlis()
   );
+
+  useEffect(() => {
+    if (isUserLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account/kundli");
+    }
+  }, [isUserLoaded, user]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",

@@ -2,13 +2,40 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { SignIn, useAuth } from "@clerk/nextjs";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
-import { ShieldCheck, CheckCircle2, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Lock, Loader2, ArrowRight } from "lucide-react";
+
+function getSafeRedirectUrl(rawUrl: string | null): string {
+  if (!rawUrl) return "/account";
+  try {
+    if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+      const parsed = new URL(rawUrl);
+      if (
+        parsed.hostname === "aapkaastro.com" ||
+        parsed.hostname === "www.aapkaastro.com" ||
+        parsed.hostname === "localhost" ||
+        parsed.hostname.endsWith(".aapkaastro.com")
+      ) {
+        return parsed.pathname + parsed.search + parsed.hash;
+      }
+      return "/account";
+    }
+    if (rawUrl.startsWith("/")) {
+      return rawUrl;
+    }
+  } catch {
+    // fallback
+  }
+  return "/account";
+}
 
 export function LoginClient() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawRedirect = searchParams.get("redirect_url");
+  const targetUrl = getSafeRedirectUrl(rawRedirect);
+
   const { isSignedIn, isLoaded } = useAuth();
   const [mounted, setMounted] = useState(false);
 
@@ -18,9 +45,12 @@ export function LoginClient() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.replace("/account");
+      const timer = setTimeout(() => {
+        window.location.replace(targetUrl);
+      }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, targetUrl]);
 
   return (
     <div className="min-h-[85vh] bg-[#FBF3E7] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -51,14 +81,23 @@ export function LoginClient() {
               </span>
             </div>
           ) : isSignedIn ? (
-            <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-3 text-center">
+            <div className="flex flex-col items-center justify-center p-8 text-[#7B2D26] space-y-4 text-center bg-[#FFFDF9] rounded-2xl border border-[#E8D8C3] shadow-sm w-full">
               <Loader2 className="h-8 w-8 animate-spin text-[#6B8E5A]" />
-              <span className="text-sm font-bold text-[#7B2D26]">
-                Signed In Successfully
-              </span>
-              <span className="text-xs text-[#6E5545]">
-                Redirecting to your account dashboard...
-              </span>
+              <div>
+                <span className="text-base font-bold text-[#7B2D26] block">
+                  Signed In Successfully
+                </span>
+                <span className="text-xs text-[#6E5545] mt-1 block">
+                  Redirecting to your account dashboard...
+                </span>
+              </div>
+              <a
+                href={targetUrl}
+                className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#64221C] text-[#FFFDF9] px-5 py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer"
+              >
+                <span>Proceed to {targetUrl.includes("consult") ? "My Bookings" : "Account"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </a>
             </div>
           ) : (
             <SignIn

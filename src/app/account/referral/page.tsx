@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import {
@@ -17,10 +18,17 @@ import {
 } from "lucide-react";
 
 export default function ReferralPage() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [copied, setCopied] = useState(false);
   const [friendCode, setFriendCode] = useState("");
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
   const [claimLoading, setClaimLoading] = useState(false);
+
+  useEffect(() => {
+    if (isUserLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account/referral");
+    }
+  }, [isUserLoaded, user]);
 
   const referralCode = "ASTRO1051";
   const referralLink = `https://aapkaastro.com/consult?ref=${referralCode}&offer=FIRST1051`;

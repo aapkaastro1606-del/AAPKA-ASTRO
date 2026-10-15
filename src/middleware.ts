@@ -33,7 +33,6 @@ const isClerkActive = isClerkConfigured();
 function fallbackMiddleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isProtected =
-    isAccountRoute(req) ||
     isDashboardRoute(req) ||
     isAdminRoute(req) ||
     isAstrologerRoute(req);
@@ -60,7 +59,6 @@ const liveClerkMiddleware = clerkMiddleware(
   async (auth, req) => {
     const pathname = req.nextUrl.pathname;
     const isProtected =
-      isAccountRoute(req) ||
       isDashboardRoute(req) ||
       isAdminRoute(req) ||
       isAstrologerRoute(req);

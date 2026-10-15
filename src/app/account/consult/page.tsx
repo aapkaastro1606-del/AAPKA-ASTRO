@@ -3,14 +3,22 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, PlusCircle, FileText } from "lucide-react";
+import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { ClientConsultationStatusView } from "@/components/consult/ClientConsultationStatusView";
 import ConsultPageComponent from "@/app/consult/page";
 
 export default function AccountConsultPage() {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isUserLoaded && !user) {
+      window.location.replace("/login?redirect_url=/account/consult");
+    }
+  }, [isUserLoaded, user]);
 
   const loadBooking = async () => {
     try {
