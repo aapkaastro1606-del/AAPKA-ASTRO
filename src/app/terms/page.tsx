@@ -37,14 +37,18 @@ export default function TermsOfServicePage() {
           </p>
         </header>
 
-        {/* Placeholder Advisory Alert */}
-        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
-          <div>
-            <strong className="block font-bold">Legal Notice:</strong>
-            {/* PLACEHOLDER: replace with client-approved legal text */}
-            By accessing aapkaastro.com, creating a seeker account, or booking a consultation with {PLACEHOLDER_ASTROLOGER.displayName}, you agree to abide by these terms. This document constitutes a binding electronic agreement.
+        {/* Pending Lawyer Review Notice */}
+        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-bold">Terms of Service &amp; Consultation Agreement:</strong>
+              By accessing aapkaastro.com, creating a seeker account, or booking a consultation with Acharya Niraj Kumar, you agree to abide by these terms. This document constitutes a binding electronic agreement.
+            </div>
           </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20">
+            Pending Lawyer Review
+          </span>
         </div>
 
         {/* Terms Articles */}
@@ -102,36 +106,68 @@ export default function TermsOfServicePage() {
           </section>
 
           {/* Article 4 */}
-          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
-            <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Consultation Booking, Pricing &amp; Payment Terms
-            </h2>
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                4. Direct UPI Payments, Manual Verification &amp; Pricing Rules
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                All monetary transactions on Aapka Astro are processed directly via secure UPI QR transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) with zero gateway commission markups.
+                <strong>Direct UPI Payment Model:</strong> All consultations and reports on Aapka Astro are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the official merchant standee QR code or using our verified merchant UPI ID (<code>9310709233m@pnb</code>, Payee: <strong>AAPKA ASTRO</strong>). We do not employ third-party payment gateway aggregators; there are zero transaction markups or gateway fees.
               </li>
               <li>
-                <strong>Pay-Per-Booking Model:</strong> All consultations operate on a transparent flat-fee, pay-per-booking model with zero hidden charges and zero per-minute debits.
+                <strong>Manual Bank Verification Standard:</strong> Because payments are received directly by UPI without automated gateway callbacks, <em>the bank or UPI business account credit record is the sole and ultimate proof of payment</em>. Submitting a transaction reference (UTR) or payment screenshot via WhatsApp (+91 93112 15564) initiates manual verification. Bookings transition to &quot;CONFIRMED&quot; only after our accounts desk verifies that the funds have physically cleared in our bank account.
               </li>
               <li>
-                <strong>Astro Consultation:</strong> First-time seekers are eligible for our introductory offer of Flat ₹1,051/- (Regular ₹2,100). The unified flat fee applies across all formats: Voice Call, Video Call, and Live Chat.
+                <strong>First-Time Astro Consultation Rule (₹1,051 vs ₹2,100):</strong>
+                First-time seekers are eligible for our promotional introductory rate of Flat ₹1,051/- (50% discount on regular ₹2,100). Eligibility is strictly evaluated server-side: a user qualifies as a first-time client only if they have zero previously confirmed, scheduled, or completed Astro consultations. All subsequent Astro consultations are charged at the standard rate of Flat ₹2,100/-. Only one open Astro booking is permitted per user at a time.
               </li>
               <li>
-                <strong>Vaastu Consultation:</strong> Flat ₹15,000/- (discounted from ₹25,000) is the standing promotional fee for all residential, commercial, and industrial property audits.
+                <strong>Vaastu Consultation Pricing:</strong> Flat ₹15,000/- (discounted from ₹25,000) is the standing promotional fee for all residential, commercial, and industrial property audits, with no first-time restriction.
               </li>
               <li>
-                <strong>Kundli PDF Report:</strong> Free online chart generation remains 100% complimentary. Full downloadable formatted PDF reports are available for a one-time charge of Flat ₹501/-.
+                <strong>Kundli Full PDF Report:</strong> Free online chart generation is permanently complimentary. Comprehensive, multi-page downloadable PDF reports are available for Flat ₹501/- one-time fee, unlocked following manual payment verification.
               </li>
               <li>
-                Promotional discounts, special booking vouchers, and introductory offers are non-transferable and valid for one consultation booking per verified user.
+                <strong>Booking Expiration:</strong> Unpaid bookings that remain unclaimed automatically expire after a configurable validity window (default 3 days) to free consultation queue capacity.
               </li>
             </ul>
           </section>
 
           {/* Article 5 */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                5. Cancellation, Rescheduling &amp; Consultation Delivery
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <strong>Delivery Channels:</strong> Consultations are conducted exclusively via WhatsApp Call or Google Meet, arranged after bank payment verification. There is no in-app calling or proprietary client download required.
+              </li>
+              <li>
+                <strong>Client Rescheduling Notice:</strong> If you need to reschedule your confirmed consultation slot, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the scheduled time. We will arrange a mutually agreed alternative slot at zero additional charge.
+              </li>
+              <li>
+                <strong>No-Show Policy:</strong> Acharya Ji reserves 15 minutes of grace time for each appointment. If a seeker fails to join the Google Meet or answer the WhatsApp call within 15 minutes of the confirmed start time without prior intimation, the session will be marked as completed, and fees will not be refunded.
+              </li>
+              <li>
+                <strong>Emergency Rescheduling by Acharya Ji:</strong> In the rare event of urgent Vedic rituals, temple ceremonies, or medical emergencies, our sanctum desk will notify you immediately. You may choose between priority rescheduling at your preferred time or a 100% full refund directly to your UPI/bank account.
+              </li>
+            </ul>
+          </section>
+
+          {/* Article 6 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              5. Intellectual Property &amp; Content Rights
+              6. Intellectual Property &amp; Content Rights
             </h2>
             <p>
               All proprietary algorithms, Panchang calculation engines, astronomical ephemeris models, articles, media reels, infographics, and website design trademarks are the exclusive intellectual property of Aapka Astro and Acharya Niraj Kumar.
@@ -141,20 +177,20 @@ export default function TermsOfServicePage() {
             </p>
           </section>
 
-          {/* Article 6 */}
+          {/* Article 7 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              6. Limitation of Liability
+              7. Limitation of Liability
             </h2>
             <p>
               Under no circumstances shall Aapka Astro, Acharya Niraj Kumar, or its associates be liable for any direct, indirect, incidental, punitive, or consequential damages resulting from decisions made by the client regarding medical, legal, financial, or personal life choices. Astrological counsel is spiritual advisory in nature and must never substitute for licensed medical treatment, psychiatric care, or legal counsel.
             </p>
           </section>
 
-          {/* Article 7 */}
+          {/* Article 8 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              7. Governing Law &amp; Jurisdiction
+              8. Governing Law &amp; Jurisdiction
             </h2>
             <p>
               These Terms of Service shall be governed by and construed in accordance with the substantive laws of India. Any legal dispute, grievance, or arbitration arising out of or related to these terms shall fall under the exclusive jurisdiction of the competent courts in New Delhi, India.
@@ -164,7 +200,7 @@ export default function TermsOfServicePage() {
           {/* Contact Details */}
           <section className="bg-[#FBF3E7] p-6 rounded-2xl border border-[#E8D8C3] space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              8. Grievance Officer &amp; Communication
+              9. Grievance Officer &amp; Communication
             </h2>
             <p>
               If you have inquiries regarding these Terms of Service, please reach out to our administration desk:

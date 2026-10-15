@@ -38,14 +38,18 @@ export default function RefundPolicyPage() {
           </p>
         </header>
 
-        {/* Placeholder Advisory Alert */}
-        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
-          <div>
-            <strong className="block font-bold">Legal Policy Notice:</strong>
-            {/* PLACEHOLDER: replace with client-approved legal text */}
-            The following terms govern billing, cancellations, and refunds across live audio/video/chat consultations, Janam Kundli reports, and customized Vastu site visits conducted by {PLACEHOLDER_ASTROLOGER.displayName}.
+        {/* Pending Lawyer Review Notice */}
+        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-bold">Refund, Cancellation &amp; Billing Policy:</strong>
+              The following terms govern billing, manual UPI verification, cancellations, and refunds across consultations, Janam Kundli reports, and customized Vastu audits conducted by Acharya Niraj Kumar.
+            </div>
           </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20">
+            Pending Lawyer Review
+          </span>
         </div>
 
         {/* Main Content Sections */}
@@ -53,27 +57,76 @@ export default function RefundPolicyPage() {
           {/* Section 1 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              1. Nature of Astrological Services
+              1. Nature of Astrological Services &amp; Finality of Consultations
             </h2>
             <p>
               Astrological interpretations, Kundli analyses, and Vastu recommendations provided on Aapka Astro are advisory spiritual consultations based on classical Vedic scriptures (Brihat Parashara Hora Shastra, Jaimini Sutras, and Vishwakarma Prakash). Astrology is an interpretative science; outcomes depend on individual Karma, free will, and unforeseen worldly circumstances.
             </p>
             <p>
-              Once a live consultation (Chat, Voice Call, or Video Call) has commenced or concluded, fees paid for the astrologer&apos;s personal time, research, and expertise are generally non-refundable.
+              Once a live consultation (Chat, Voice Call, or Video Call) has commenced or concluded, fees paid for the astrologer&apos;s personal time, research, and expertise are non-refundable.
             </p>
           </section>
 
-          {/* Section 2 */}
+          {/* Section 2: Manual UPI Verification & Bank Statement Rule */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                2. Manual UPI Payment Verification &amp; Failed Claims
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <strong>Direct UPI Payments:</strong> All fees are paid via direct UPI transfer (to merchant <strong>AAPKA ASTRO</strong>, UPI ID: <code>9310709233m@pnb</code>). We do not employ third-party gateway intermediaries.
+              </li>
+              <li>
+                <strong>Bank Statement as Definitive Proof:</strong> Because payments are received manually, our bank or UPI merchant statement is the sole authoritative proof of receipt. Submitting a screenshot or UTR number initiates verification. If funds are not credited in our bank account (e.g., due to bank server downtime or transaction reversal), the booking cannot be confirmed until the credit reflects.
+              </li>
+              <li>
+                <strong>Rejection of Unverified Claims:</strong> If a payment claim is submitted without corresponding funds in our account, or if a duplicate or fraudulent UTR is detected, the booking will be marked &quot;REJECTED&quot;. If the seeker was debited by their issuing bank, they may submit their official bank statement on WhatsApp (+91 93112 15564) for manual reconciliation.
+              </li>
+              <li>
+                <strong>Double Payments or Accidental Transfers:</strong> In the event of a verified double payment or accidental duplicate transfer for the same booking, a 100% full refund of the duplicate amount will be processed directly to your UPI VPA within 1 to 2 business days.
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 3: First-Time Rule & Rate Eligibility Adjustments */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                3. First-Time Astro Pricing Eligibility Adjustments
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <p>
+              The promotional introductory price of <strong>Flat ₹1,051/-</strong> (50% discount on regular ₹2,100) is strictly reserved for a seeker&apos;s very first Astro Consultation. Our system automatically checks eligibility across all historical sessions.
+            </p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                If a returning client attempts to book an Astro Consultation at the ₹1,051 rate, the booking will be placed on hold during verification.
+              </li>
+              <li>
+                The seeker will be notified via WhatsApp or Email and given the option to pay the balance difference of ₹1,049/- to confirm the consultation at the standard ₹2,100 rate, or request a complete cancellation with a 100% refund.
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 4 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              2. Live Consultation Cancellations &amp; Rescheduling
+              4. Live Consultation Cancellations &amp; Rescheduling
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Client Rescheduling:</strong> If you have a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp or Email at least 4 hours prior to the booked appointment. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
+                <strong>Client Rescheduling Notice:</strong> If you have a confirmed consultation slot and need to reschedule, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the booked slot. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
               </li>
               <li>
-                <strong>Acharya Ji Emergency Rescheduling:</strong> In the rare event that Acharya Niraj Kumar is summoned for Vedic rituals, temple ceremonies, or unforeseen emergencies, our team will promptly notify you. You will have the option to either reschedule at your preferred time or request a 100% full refund to your original payment method.
+                <strong>Acharya Ji Emergency Rescheduling:</strong> In the rare event that Acharya Niraj Kumar is summoned for Vedic rituals, temple ceremonies, or unforeseen emergencies, our team will promptly notify you. You will have the option to either reschedule at your preferred time or request a 100% full refund directly to your original UPI account.
               </li>
               <li>
                 <strong>No-Show Policy:</strong> If a client fails to attend a pre-booked scheduled consultation without prior intimation within 15 minutes of the slot start time, the session will be marked as delivered and fees will not be refunded.
@@ -81,10 +134,10 @@ export default function RefundPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 3 */}
+          {/* Section 5 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              3. Telecommunication Disconnections &amp; Session Continuity
+              5. Telecommunication Disconnections &amp; Session Continuity
             </h2>
             <p>
               All consultations operate on an upfront flat-fee, pay-per-booking model conducted via WhatsApp Call or Google Meet. If a call drops prematurely due to cellular network glitch, Wi-Fi outage, or carrier interruption:
@@ -94,15 +147,15 @@ export default function RefundPolicyPage() {
                 Acharya Ji or his desk will immediately redial or re-share the meeting link to resume your booked session at zero additional charge.
               </li>
               <li>
-                If reconnection is impossible due to verified prolonged network failure, our desk will reschedule your consultation at your convenience or issue a 100% full refund directly to your original payment method (Bank / UPI / Card) within 24–48 business hours.
+                If reconnection is impossible due to verified prolonged network failure, our desk will reschedule your consultation at your convenience or issue a 100% full refund directly to your original payment method (Bank / UPI) within 24–48 business hours.
               </li>
             </ul>
           </section>
 
-          {/* Section 4 */}
+          {/* Section 6 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Customized Kundli PDF Reports &amp; Vastu Audits
+              6. Customized Kundli PDF Reports &amp; Vastu Audits
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -117,10 +170,10 @@ export default function RefundPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 5 */}
+          {/* Section 7 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              5. Energized Gemstones &amp; Sacred Yantras
+              7. Energized Gemstones &amp; Sacred Yantras
             </h2>
             <p>
               Natural Vedic gemstones (such as Yellow Sapphire, Blue Sapphire, Emerald, Ruby) and energized Yantras undergo personalized Vedic consecration (Prana Pratishtha) invoking the seeker&apos;s specific Gotra, Nakshatra, and birth coordinates.
@@ -130,10 +183,10 @@ export default function RefundPolicyPage() {
             </p>
           </section>
 
-          {/* Section 6 */}
+          {/* Section 8 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              6. Refund Process &amp; Timelines
+              8. Refund Process &amp; Timelines
             </h2>
             <p>
               Approved refunds will be processed directly via UPI back to the original source account or UPI VPA:
@@ -145,10 +198,10 @@ export default function RefundPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 7 */}
+          {/* Section 9 */}
           <section className="bg-[#FBF3E7] p-6 rounded-2xl border border-[#E8D8C3] space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              7. Contact Our Grievance Desk
+              9. Contact Our Grievance Desk
             </h2>
             <p>
               To initiate a refund request, report a dropped session billing discrepancy, or clarify your order status, please contact our helpline with your registered phone number and Transaction ID:

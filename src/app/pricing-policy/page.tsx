@@ -37,13 +37,18 @@ export default function PricingPolicyPage() {
           </p>
         </header>
 
-        {/* Pricing Transparency Notice */}
-        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
-          <div>
-            <strong className="block font-bold">Pricing Transparency Notice:</strong>
-            Aapka Astro operates on a clear, upfront pay-per-booking flat-fee consultation model. For your first consultation, you enjoy a special promotional rate of Flat ₹1,051/- (Regular ₹2,100 — 50% discount). All rates published on this page are inclusive of statutory taxes. There are never surge fees, convenience markups, hidden per-minute debits, or surprise subscriptions.
+        {/* Pending Lawyer Review Notice */}
+        <div className="p-4 rounded-xl bg-[#FBF3E7] border border-[#E8A33D]/60 text-xs text-[#7B2D26] flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-[#C1662F] shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-bold">Pricing Transparency &amp; Fee Policy:</strong>
+              Aapka Astro operates on a clear, upfront pay-per-booking flat-fee consultation model. For your first consultation, you enjoy a special promotional rate of Flat ₹1,051/- (Regular ₹2,100 — 50% discount). All rates published on this page are inclusive of statutory taxes. There are never surge fees, convenience markups, hidden per-minute debits, or surprise subscriptions.
+            </div>
           </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20">
+            Pending Lawyer Review
+          </span>
         </div>
 
         {/* Active Consultation Rates Table */}
@@ -54,7 +59,7 @@ export default function PricingPolicyPage() {
                 Consultation Products &amp; Fee Structure
               </h2>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#6B8E5A]/15 text-[#2A4720] font-bold">
-                100% Upfront Pay-Per-Booking &bull; No Surprise Meter Debits
+                100% Upfront Pay-Per-Booking &bull; Direct Zero-Commission UPI
               </span>
             </div>
             <p className="text-xs text-[#6E5545] mt-1">
@@ -89,6 +94,7 @@ export default function PricingPolicyPage() {
               </div>
               <ul className="text-xs text-[#6E5545] space-y-1 pt-2 border-t border-[#E8D8C3]">
                 <li>&bull; Choice of Voice Call, Video Call, or Live Chat</li>
+                <li>&bull; First-time seekers: Flat ₹1,051 (Server-verified)</li>
                 <li>&bull; Returning clients: Flat ₹2,100 standard</li>
                 <li>&bull; Written remedy summary in your account</li>
               </ul>
@@ -150,7 +156,7 @@ export default function PricingPolicyPage() {
               </div>
               <ul className="text-xs text-[#6E5545] space-y-1 pt-2 border-t border-[#E8D8C3]">
                 <li>&bull; High-precision Swiss Ephemeris calculations</li>
-                <li>&bull; Instant download unlocked upon payment</li>
+                <li>&bull; Download unlocked upon payment verification</li>
                 <li>&bull; Lifetime access in your client portal</li>
               </ul>
             </div>
@@ -160,10 +166,15 @@ export default function PricingPolicyPage() {
         {/* Detailed Policy Clauses */}
         <div className="prose max-w-none text-xs sm:text-sm text-[#6E5545] space-y-6 leading-relaxed">
           {/* Section 1 */}
-          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
-            <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              1. Pay-Per-Booking Consultation Model
-            </h2>
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                1. Pay-Per-Booking Model &amp; First-Time Client Rules
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
             <p>
               Aapka Astro provides transparent, respectful consultations without the stress of per-minute meters:
             </p>
@@ -172,10 +183,10 @@ export default function PricingPolicyPage() {
                 <strong>Unified Flat Fee:</strong> For Astro Consultations, whether you prefer Voice Call, Video Call, or Live Chat, the fee remains identical. You select your preferred format when booking.
               </li>
               <li>
-                <strong>Astro Consultation Pricing:</strong> First-time clients pay Flat ₹1,051/- (Regular ₹2,100 — 50% introductory discount). Returning clients pay the standard Flat ₹2,100/-.
+                <strong>First-Time Astro Consultation Rule (₹1,051 vs ₹2,100):</strong> First-time clients pay Flat ₹1,051/- (Regular ₹2,100 — 50% introductory discount). Our server strictly validates whether the authenticated account has any prior confirmed, scheduled, or completed consultations. All returning clients pay the standard Flat ₹2,100/-. Only one open Astro booking is allowed per user at a time.
               </li>
               <li>
-                <strong>Vaastu Consultation Pricing:</strong> Flat ₹15,000/- (discounted from ₹25,000) is the current standing promotional price available to all clients (residential, commercial, or industrial).
+                <strong>Vaastu Consultation Pricing:</strong> Flat ₹15,000/- (discounted from ₹25,000) is the standing promotional price available to all clients (residential, commercial, or industrial) with no first-time restriction.
               </li>
               <li>
                 <strong>Kundli Full PDF Report:</strong> Instant online chart viewing is permanently free. A comprehensive, formatted downloadable PDF report is available for a one-time fee of Flat ₹501/-.
@@ -222,25 +233,59 @@ export default function PricingPolicyPage() {
             </div>
           </section>
 
-          {/* Section 3 */}
-          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
-            <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              3. Taxes, Currency &amp; International Payments
-            </h2>
-            <ul className="list-disc pl-5 space-y-1.5">
+          {/* Section 3: Direct UPI QR Payment & Manual Verification Standard */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                3. Direct UPI QR Payment &amp; Manual Bank Verification
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Goods &amp; Services Tax (GST):</strong> Displayed rates are inclusive of all applicable statutory taxes where required.
+                <strong>Zero Gateway Fees:</strong> All consultations and digital reports are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the scannable QR code pre-filled with the exact booking amount and reference, or paying to our verified UPI ID: <code>9310709233m@pnb</code> (Payee: <strong>AAPKA ASTRO</strong>).
               </li>
               <li>
-                <strong>Payment Method:</strong> All consultations and digital reports are payable via Direct UPI (Google Pay, PhonePe, Paytm, BHIM, Cred) directly to our verified UPI ID or by scanning the official QR code with zero intermediary gateway fees.
+                <strong>Manual Bank Verification:</strong> To ensure zero transaction commissions for our seekers, we avoid third-party payment gateways. Bookings are manually verified by our sanctum desk against physical bank account credit. Screenshots submitted via WhatsApp (+91 93112 15564) and UTR entries are verified before consultation slots are confirmed.
+              </li>
+              <li>
+                <strong>Outside India Payments:</strong> International seekers without Indian UPI access may click &quot;Message us on WhatsApp&quot; during checkout to coordinate alternative international transfer methods.
+              </li>
+              <li>
+                <strong>Goods &amp; Services Tax (GST):</strong> Displayed rates are inclusive of all applicable statutory taxes where required.
               </li>
             </ul>
           </section>
 
-          {/* Section 4 */}
+          {/* Section 4: Cancellation, Rescheduling & Refunds */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                4. Cancellation, Rescheduling &amp; Refund Terms
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <strong>Rescheduling Notice:</strong> Clients may reschedule confirmed consultations at zero fee by providing at least <strong>4 hours&apos; prior notice</strong> on WhatsApp (+91 93112 15564) or Email.
+              </li>
+              <li>
+                <strong>No-Show Policy:</strong> Appointments carry a 15-minute grace period. If a client fails to attend without prior notice, the session is marked completed.
+              </li>
+              <li>
+                <strong>Refund Turnaround:</strong> Verified eligible refunds are returned directly via UPI to your source account within 1 to 2 business days. For full details, consult our <Link href="/refund-policy" className="text-[#7B2D26] underline font-semibold">Refund &amp; Cancellation Policy</Link>.
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 5 */}
           <section className="bg-[#FBF3E7] p-6 rounded-2xl border border-[#E8D8C3] space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Billing Inquiries &amp; Payment Support
+              5. Billing Inquiries &amp; Payment Support
             </h2>
             <p>
               If you experience any payment processing issue, require an updated GST invoice, or have billing inquiries, please contact our payments desk:

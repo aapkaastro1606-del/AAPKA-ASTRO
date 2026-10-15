@@ -461,6 +461,26 @@ export class BookingWorkflowService {
       userAgent: params.userAgent,
     });
 
+    // Dispatch confirmation email to client (background, non-blocking)
+    if (booking.userEmail) {
+      const productName =
+        booking.productType === "vaastu"
+          ? "Vaastu Consultation"
+          : booking.productType === "kundli_pdf"
+          ? "Kundli PDF Report"
+          : "Astro Consultation";
+
+      BookingEmailService.sendClientBookingConfirmedEmail({
+        clientEmail: booking.userEmail,
+        clientName: booking.userName || "Seeker",
+        clientPhone: booking.userPhone || "",
+        bookingId: booking.bookingId || "N/A",
+        productName,
+        amount: booking.lockedAmount || booking.totalCost,
+        format: booking.format || "WhatsApp Call",
+      }).catch((e) => console.error("[BookingWorkflow] Failed to dispatch confirmed email to user:", e));
+    }
+
     return {
       success: true,
       bookingStatus: "CONFIRMED",
@@ -649,6 +669,25 @@ export class BookingWorkflowService {
       ipAddress: params.ipAddress,
       userAgent: params.userAgent,
     });
+
+    // Dispatch rejection notice email to client (background, non-blocking)
+    if (booking.userEmail) {
+      const productName =
+        booking.productType === "vaastu"
+          ? "Vaastu Consultation"
+          : booking.productType === "kundli_pdf"
+          ? "Kundli PDF Report"
+          : "Astro Consultation";
+
+      BookingEmailService.sendClientBookingRejectedEmail({
+        clientEmail: booking.userEmail,
+        clientName: booking.userName || "Seeker",
+        bookingId: booking.bookingId || "N/A",
+        productName,
+        amount: booking.lockedAmount || booking.totalCost,
+        reason: params.reason.trim(),
+      }).catch((e) => console.error("[BookingWorkflow] Failed to dispatch rejection email to user:", e));
+    }
 
     return {
       success: true,

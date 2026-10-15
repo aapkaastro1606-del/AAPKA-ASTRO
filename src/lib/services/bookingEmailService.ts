@@ -1,15 +1,24 @@
 /**
  * ============================================================================
- * BOOKING CONFIRMATION EMAIL SERVICE
+ * BOOKING EMAIL DISPATCH SERVICE (RESEND)
  * ============================================================================
- * Dispatches formal booking confirmation emails to clients upon successful
- * payment for Astro Consultation or Vaastu Consultation.
+ * Dispatches transactional notifications for manual UPI booking workflows:
+ * 1. Claimed Payment (to Owner)
+ * 2. Booking Confirmed (to User)
+ * 3. Booking Rejected (to User)
+ * 4. Slot & Meeting Link Scheduled (to User)
+ * 5. Payment Settings Modification Alert (to Owner)
  *
- * Core requirement:
- * - States clearly that consultation will be conducted via WhatsApp call or Google Meet.
- * - Provides a direct, one-tap "Message on WhatsApp" link (https://wa.me/919311215564).
- * - Delivers complete booking metadata, receipt reference, and next steps.
+ * RESILIENCE CONTRACT:
+ * - Fails loudly with descriptive error logging & AuditLog entries when
+ *   RESEND_API_KEY is unconfigured or when Resend returns an error.
+ * - NEVER throws an uncaught error to callers. A booking state transition in
+ *   PostgreSQL will NEVER be rolled back or lost because an email failed.
+ * ============================================================================
  */
+
+import { AuditLogService } from "./auditLogService";
+import { getOwnerEmails } from "@/lib/auth/staffPermissions";
 
 export interface BookingConfirmationEmailParams {
   bookingId: string;
@@ -28,6 +37,12 @@ export interface BookingConfirmationEmailParams {
   propertyType?: string;
   propertyLocation?: string;
   topic?: string;
+}
+
+export interface DispatchEmailResult {
+  success: boolean;
+  simulated: boolean;
+  error?: string;
 }
 
 export class BookingEmailService {
@@ -49,16 +64,202 @@ export class BookingEmailService {
   }
 
   /**
-   * Generates email subject, plain text version, and HTML template
+   * Core dispatcher that handles communication with Resend API.
+   * Enforces loud failure logging and never-throw resilience.
    */
-  public static generateEmailContent(params: BookingConfirmationEmailParams): {
+  private static async dispatchResendEmail(params: {
+    to: string | string[];
     subject: string;
-    text: string;
     html: string;
-    whatsappUrl: string;
-  } {
-    const isVaastu = params.productId === "vaastu";
-    const subject = `Booking Confirmed: ${params.productName} with Acharya Niraj Kumar [${params.bookingId}]`;
+    text: string;
+    templateName: string;
+    bookingId?: string;
+  }): Promise<DispatchEmailResult> {
+    const apiKey = process.env.RESEND_API_KEY;
+    const toList = Array.isArray(params.to)
+      ? params.to.map((e) => e.trim()).filter(Boolean)
+      : [params.to.trim()];
+    const toDisplay = toList.join(", ");
+
+    if (toList.length === 0) {
+      console.warn(`[BookingEmailService] No recipient address provided for template '${params.templateName}'. Skipping dispatch.`);
+      return { success: false, simulated: true, error: "No recipient address provided." };
+    }
+
+    // 1. Fail loudly if unconfigured or placeholder
+    if (!apiKey || apiKey.startsWith("re_placeholder") || apiKey === "placeholder" || apiKey.trim().length === 0) {
+      const errorMsg = `[RESEND EMAIL MISCONFIGURATION] RESEND_API_KEY is not configured or is a placeholder in process.env. Transactional email '${params.templateName}' for booking ${params.bookingId || "N/A"} could not be delivered to: ${toDisplay}. Add a valid RESEND_API_KEY in Vercel/env to enable live delivery.`;
+      console.error(errorMsg);
+
+      await AuditLogService.log({
+        action: "EMAIL_CONFIG_MISSING",
+        actorEmail: "system@aapkaastro.com",
+        targetId: params.bookingId || null,
+        targetType: "EMAIL",
+        notes: errorMsg,
+      }).catch((e) => console.warn("[BookingEmailService] Failed to record email audit log:", e));
+
+      return { success: false, simulated: true, error: errorMsg };
+    }
+
+    // 2. Network dispatch to Resend
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.trim()}`,
+        },
+        body: JSON.stringify({
+          from: "Aapka Astro <bookings@aapkaastro.com>",
+          to: toList,
+          subject: params.subject,
+          html: params.html,
+          text: params.text,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        const errorMsg = `[RESEND DELIVERY FAILURE] Resend API returned HTTP ${res.status} (${res.statusText}) for template '${params.templateName}' to ${toDisplay}. Response body: ${errText}`;
+        console.error(errorMsg);
+
+        await AuditLogService.log({
+          action: "EMAIL_DELIVERY_FAILED",
+          actorEmail: "system@aapkaastro.com",
+          targetId: params.bookingId || null,
+          targetType: "EMAIL",
+          notes: errorMsg,
+        }).catch(() => {});
+
+        return { success: false, simulated: false, error: errorMsg };
+      }
+
+      console.info(`[RESEND SUCCESS] Dispatched '${params.templateName}' email to ${toDisplay} for booking ${params.bookingId || "N/A"}`);
+
+      await AuditLogService.log({
+        action: "EMAIL_DELIVERED",
+        actorEmail: "system@aapkaastro.com",
+        targetId: params.bookingId || null,
+        targetType: "EMAIL",
+        notes: `Successfully dispatched email '${params.templateName}' to ${toDisplay}`,
+      }).catch(() => {});
+
+      return { success: true, simulated: false };
+    } catch (networkErr: any) {
+      const errorMsg = `[RESEND NETWORK EXCEPTION] Network exception while dispatching '${params.templateName}' to ${toDisplay}: ${networkErr?.message || networkErr}`;
+      console.error(errorMsg);
+
+      await AuditLogService.log({
+        action: "EMAIL_DELIVERY_EXCEPTION",
+        actorEmail: "system@aapkaastro.com",
+        targetId: params.bookingId || null,
+        targetType: "EMAIL",
+        notes: errorMsg,
+      }).catch(() => {});
+
+      return { success: false, simulated: false, error: errorMsg };
+    }
+  }
+
+  /**
+   * 1. CLAIMED PAYMENT (to Owner)
+   * Dispatched when user clicks "I have paid" in the manual UPI checkout.
+   */
+  public static async sendOwnerPaymentClaimedAlert(params: {
+    bookingId: string;
+    clientName: string;
+    clientPhone: string;
+    clientEmail?: string | null;
+    productName: string;
+    amount: number;
+    utr?: string | null;
+  }): Promise<DispatchEmailResult> {
+    const ownerEmails = getOwnerEmails();
+    const subject = `[PAYMENT CLAIMED] ${params.clientName} reported UPI payment for ${params.bookingId} (₹${params.amount})`;
+
+    const text = `
+PRANAM ACHARYA JI / ADMIN DESK,
+
+A seeker has reported their UPI payment for manual bank verification.
+
+BOOKING DETAILS:
+- Booking Reference: ${params.bookingId}
+- Seeker Name: ${params.clientName}
+- WhatsApp / Phone: ${params.clientPhone}
+- Email: ${params.clientEmail || "Not provided"}
+- Service: ${params.productName}
+- Amount Locked: ₹${params.amount.toLocaleString("en-IN")}
+- UTR / Reference: ${params.utr || "Not entered (submitted via WhatsApp screenshot)"}
+- Claim Timestamp: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+
+ACTION REQUIRED:
+1. Open your bank app or UPI business application to verify receipt of ₹${params.amount.toLocaleString("en-IN")}.
+2. Check the Owner Verification Queue to approve and schedule:
+   https://aapkaastro.com/admin/bookings
+
+Aapka Astro Sanctum Desk
+`.trim();
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 2px solid #7B2D26; border-radius: 12px; background: #FFFDF9;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <h3 style="color: #7B2D26; margin: 0; font-size: 18px;">⚡ New UPI Payment Claimed for Bank Verification</h3>
+        </div>
+        <p style="font-size: 14px; color: #3B2A1E; line-height: 1.5;">
+          A seeker has completed their UPI QR transfer and submitted their payment reference for verification.
+        </p>
+        <div style="background: #FBF3E7; padding: 18px; border-radius: 10px; border: 1px solid #E8D8C3; margin: 18px 0;">
+          <table style="width: 100%; font-size: 13px; line-height: 1.6;">
+            <tr><td style="font-weight: bold; width: 40%; color: #6E5545;">Booking Reference:</td><td style="font-family: monospace; font-size: 14px; font-weight: bold; color: #7B2D26;">${params.bookingId}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Seeker Name:</td><td><strong>${params.clientName}</strong></td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Contact Phone:</td><td>${params.clientPhone}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Email:</td><td>${params.clientEmail || "Not provided"}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Service:</td><td>${params.productName}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Amount:</td><td><strong style="color: #2A4720; font-size: 15px;">₹${params.amount.toLocaleString("en-IN")}</strong></td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">UTR / Txn Ref:</td><td style="font-family: monospace;">${params.utr || "None (screenshot on WhatsApp)"}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Claimed At:</td><td>${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</td></tr>
+          </table>
+        </div>
+        <p style="font-size: 13px; color: #6E5545; line-height: 1.5;">
+          <strong>Important Verification Notice:</strong> Screenshots can be digitally altered. Only approve after confirming that the funds are actually credited in your Punjab National Bank or UPI merchant account.
+        </p>
+        <div style="margin-top: 20px;">
+          <a href="https://aapkaastro.com/admin/bookings" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            Open Verification Queue &rarr;
+          </a>
+        </div>
+      </div>
+    `;
+
+    return this.dispatchResendEmail({
+      to: ownerEmails,
+      subject,
+      html,
+      text,
+      templateName: "CLAIMED_PAYMENT_TO_OWNER",
+      bookingId: params.bookingId,
+    });
+  }
+
+  /**
+   * 2. CONFIRMED (to User)
+   * Dispatched to the seeker when the Owner confirms bank credit receipt.
+   */
+  public static async sendClientBookingConfirmedEmail(params: {
+    clientEmail?: string | null;
+    clientName: string;
+    clientPhone?: string;
+    bookingId: string;
+    productName: string;
+    amount: number;
+    format: string;
+  }): Promise<DispatchEmailResult> {
+    if (!params.clientEmail || !params.clientEmail.trim()) {
+      return { success: false, simulated: true, error: "No client email provided." };
+    }
+
+    const subject = `Payment Verified: Your Consultation is Confirmed [${params.bookingId}]`;
     const whatsappUrl = this.getWhatsAppCoordinationLink({
       bookingId: params.bookingId,
       clientName: params.clientName,
@@ -68,238 +269,291 @@ export class BookingEmailService {
     const text = `
 PRANAM ${params.clientName.toUpperCase()},
 
-YOUR CONSULTATION IS CONFIRMED
-Thank you for booking with Aapka Astro. Your payment of ₹${params.amountPaid.toLocaleString("en-IN")} has been verified successfully.
+YOUR PAYMENT IS VERIFIED & BOOKING CONFIRMED!
 
-CONSULTATION DETAILS:
+We are pleased to inform you that your UPI payment of ₹${params.amount.toLocaleString("en-IN")} has been verified by Acharya Niraj Kumar's sanctum desk.
+
+BOOKING SUMMARY:
 - Booking Reference: ${params.bookingId}
-- Consultation Type: ${params.productName}
-- Delivery Channels: WhatsApp Call or Google Meet
-- Client Contact: ${params.phone}
-- Format Preference: ${params.format}
-- Payment Reference: ${params.paymentId || params.orderId || "Verified"}
-${!isVaastu && params.dateOfBirth ? `- Birth Details: ${params.dateOfBirth} ${params.timeOfBirth || ""} (${params.placeOfBirth || ""})` : ""}
-${isVaastu && params.propertyType ? `- Property Type: ${params.propertyType} (${params.propertyLocation || ""})` : ""}
+- Service: ${params.productName}
+- Preferred Format: ${params.format}
+- Amount Paid: ₹${params.amount.toLocaleString("en-IN")}
+- Status: Confirmed & Queued for Scheduling
 
-HOW YOUR CONSULTATION WILL BE CONDUCTED:
-Your consultation is confirmed, and it will be conducted via WhatsApp call or Google Meet, as you prefer or as arranged with Acharya Ji's sanctum. There are no proprietary apps or complex browser plugins required.
+WHAT HAPPENS NEXT:
+Acharya Ji's sanctum desk is reviewing your intake preferences. Our team will assign your exact consultation time slot and provide your Google Meet or WhatsApp call link shortly.
 
-COORDINATE IMMEDIATELY ON WHATSAPP:
-Click the link below to message Acharya Ji's sanctum directly and coordinate your preferred time and format:
+MESSAGE US ON WHATSAPP:
+If you would like to expedite slot confirmation or share additional questions, you may message Acharya Ji's desk directly:
 ${whatsappUrl}
 
-Alternatively, our desk will reach out to you directly at ${params.phone}.
+View your live booking status in your account:
+https://aapkaastro.com/account/consult
 
-Warm regards,
-Acharya Niraj Kumar & Sanctum Desk
-Aapka Astro | Viar.in
-WhatsApp: ${this.SANCTUM_PHONE_DISPLAY}
-Email: ${this.SUPPORT_EMAIL}
-Website: ${this.WEBSITE_URL}
+With warm blessings,
+Acharya Niraj Kumar & Sanctum Team
+Aapka Astro | WhatsApp: ${this.SANCTUM_PHONE_DISPLAY}
 `.trim();
 
     const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #FAF5EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #3B2A1E;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FAF5EE; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #E8D8C3; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 16px rgba(123, 45, 38, 0.08);">
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #7B2D26; padding: 28px 32px; text-align: center; border-bottom: 3px solid #E8A33D;">
-              <h1 style="margin: 0; font-size: 24px; color: #FFFFFF; letter-spacing: 0.5px;">AAPKA ASTRO</h1>
-              <p style="margin: 6px 0 0 0; font-size: 13px; color: #F5DEC3; font-style: italic;">Authentic Vedic Astrology &amp; Devta Vaastu</p>
-            </td>
-          </tr>
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
+        <h2 style="color: #7B2D26; margin-top: 0;">Pranam ${params.clientName},</h2>
+        <div style="background: #F4F9F2; border: 1px solid #6B8E5A; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 15px; font-weight: bold; color: #2A4720;">
+            ✓ Payment Verified — Your Consultation is Confirmed
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #3B2A1E;">
+            Your UPI payment of <strong>₹${params.amount.toLocaleString("en-IN")}</strong> has been verified by Acharya Ji&apos;s sanctum desk.
+          </p>
+        </div>
 
-          <!-- Confirmation Banner -->
-          <tr>
-            <td style="padding: 32px 32px 20px 32px; text-align: center;">
-              <div style="display: inline-block; background-color: #F4F9F2; border: 1px solid #B8DCB0; color: #2A4720; font-size: 12px; font-weight: bold; padding: 6px 16px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
-                &#10003; Payment Verified &bull; Booking Confirmed
-              </div>
-              <h2 style="margin: 16px 0 8px 0; font-size: 22px; color: #7B2D26; line-height: 1.3;">
-                Your Consultation is Confirmed
-              </h2>
-              <p style="margin: 0; font-size: 14px; color: #6E5545; line-height: 1.5;">
-                Pranam <strong>${params.clientName}</strong>, your <strong>${params.productName}</strong> with <strong>Acharya Niraj Kumar</strong> has been received and scheduled.
-              </p>
-            </td>
-          </tr>
+        <div style="background: #FBF3E7; border: 1px solid #E8D8C3; padding: 18px; border-radius: 10px; margin: 18px 0;">
+          <h4 style="margin: 0 0 10px 0; color: #7B2D26; font-size: 14px;">Booking Summary</h4>
+          <table style="width: 100%; font-size: 13px; line-height: 1.6;">
+            <tr><td style="font-weight: bold; width: 40%; color: #6E5545;">Booking Reference:</td><td style="font-family: monospace; font-size: 14px; font-weight: bold; color: #7B2D26;">${params.bookingId}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Consultation Type:</td><td>${params.productName}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Delivery Mode:</td><td>${params.format}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Payment Status:</td><td><span style="color: #2A4720; font-weight: bold;">PAID &amp; VERIFIED</span></td></tr>
+          </table>
+        </div>
 
-          <!-- Important Delivery Notice -->
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-              <div style="background-color: #FAF5EE; border-left: 4px solid #E8A33D; border-radius: 8px; padding: 16px 20px;">
-                <p style="margin: 0; font-size: 14px; color: #3B2A1E; line-height: 1.6;">
-                  <strong>How Your Consultation Will Be Conducted:</strong><br />
-                  Your consultation is confirmed, and it will be conducted via <strong>WhatsApp call</strong> or <strong>Google Meet</strong>, as you prefer or as arranged with Acharya Ji's sanctum.
-                </p>
-              </div>
-            </td>
-          </tr>
+        <h4 style="color: #7B2D26; margin: 18px 0 8px 0; font-size: 14px;">Next Steps: Scheduling Your Slot</h4>
+        <p style="font-size: 13px; color: #6E5545; line-height: 1.5; margin: 0 0 16px 0;">
+          Acharya Ji&apos;s team is reviewing your preferred day and time window. We will assign your consultation slot and dispatch your meeting link shortly via email and your account dashboard.
+        </p>
 
-          <!-- One-Tap WhatsApp Action Button -->
-          <tr>
-            <td style="padding: 0 32px 28px 32px; text-align: center;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 15px; font-weight: bold; text-decoration: none; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);">
-                      &#128172; Message on WhatsApp (+91 93112 15564)
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 10px 0 0 0; font-size: 12px; color: #7D6B5D;">
-                Tap above to coordinate your exact preferred time and format directly with the sanctum desk.
-              </p>
-            </td>
-          </tr>
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+          <a href="${whatsappUrl}" style="display: inline-block; background: #25D366; color: #FFF; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            Message Desk on WhatsApp &rarr;
+          </a>
+          <a href="https://aapkaastro.com/account/consult" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            View in My Bookings
+          </a>
+        </div>
+      </div>
+    `;
 
-          <!-- Booking Summary Table -->
-          <tr>
-            <td style="padding: 0 32px 28px 32px;">
-              <table width="100%" cellpadding="8" cellspacing="0" style="font-size: 13px; border: 1px solid #E8D8C3; border-radius: 12px; background-color: #FFFDF9; border-collapse: separate;">
-                <tr style="border-bottom: 1px solid #E8D8C3;">
-                  <td style="color: #7D6B5D; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Booking Reference:</td>
-                  <td style="color: #3B2A1E; font-weight: bold; font-family: monospace; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">${params.bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="color: #7D6B5D; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Consultation Type:</td>
-                  <td style="color: #7B2D26; font-weight: bold; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">${params.productName}</td>
-                </tr>
-                <tr>
-                  <td style="color: #7D6B5D; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Client Phone:</td>
-                  <td style="color: #3B2A1E; font-weight: bold; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">${params.phone}</td>
-                </tr>
-                <tr>
-                  <td style="color: #7D6B5D; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Selected Preference:</td>
-                  <td style="color: #3B2A1E; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">${params.format}</td>
-                </tr>
-                <tr>
-                  <td style="color: #7D6B5D; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Amount Paid:</td>
-                  <td style="color: #2A4720; font-weight: bold; padding: 10px 14px; border-bottom: 1px solid #F0E6D8;">Flat &#8377;${params.amountPaid.toLocaleString("en-IN")} (Paid in Full)</td>
-                </tr>
-                ${
-                  params.paymentId
-                    ? `<tr>
-                        <td style="color: #7D6B5D; padding: 10px 14px;">Transaction ID:</td>
-                        <td style="color: #7D6B5D; font-family: monospace; font-size: 11px; padding: 10px 14px;">${params.paymentId}</td>
-                      </tr>`
-                    : ""
-                }
-              </table>
-            </td>
-          </tr>
-
-          <!-- Next Steps -->
-          <tr>
-            <td style="padding: 0 32px 32px 32px;">
-              <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #7B2D26; text-transform: uppercase; letter-spacing: 0.5px;">What Happens Next</h3>
-              <ol style="margin: 0; padding-left: 20px; font-size: 13px; color: #5C4535; line-height: 1.7;">
-                <li><strong>One-Tap Coordination:</strong> Use the WhatsApp button above to message our desk anytime.</li>
-                <li><strong>Desk Outreach:</strong> If you don't message right away, Acharya Ji's sanctum desk will contact your number (${params.phone}) to confirm your preferred slot.</li>
-                <li><strong>Sacred Chart Preparation:</strong> Acharya Ji personally erects your horoscope or 16-zone Devta Vaastu grid in advance.</li>
-                <li><strong>Live Guidance:</strong> Connect directly on WhatsApp call or Google Meet for your focused 1-on-1 reading.</li>
-              </ol>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #FAF5EE; padding: 24px 32px; text-align: center; border-top: 1px solid #E8D8C3; font-size: 12px; color: #7D6B5D; line-height: 1.6;">
-              <p style="margin: 0 0 6px 0;"><strong>Aapka Astro</strong> &bull; Authentic Vedic Astrology &amp; Devta Vaastu Consultations</p>
-              <p style="margin: 0 0 6px 0;">Direct WhatsApp Desk: <a href="https://wa.me/${this.SANCTUM_PHONE}" style="color: #7B2D26; text-decoration: none; font-weight: bold;">${this.SANCTUM_PHONE_DISPLAY}</a> &bull; Email: <a href="mailto:${this.SUPPORT_EMAIL}" style="color: #7B2D26; text-decoration: none;">${this.SUPPORT_EMAIL}</a></p>
-              <p style="margin: 8px 0 0 0; font-size: 11px; color: #A89888;">&copy; ${new Date().getFullYear()} Aapka Astro. In association with Viar.in. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`.trim();
-
-    return { subject, text, html, whatsappUrl };
+    return this.dispatchResendEmail({
+      to: params.clientEmail,
+      subject,
+      html,
+      text,
+      templateName: "BOOKING_CONFIRMED_TO_USER",
+      bookingId: params.bookingId,
+    });
   }
 
   /**
-   * Dispatches the booking confirmation email.
-   * If an external email provider is configured, it sends live; otherwise,
-   * it provides a logged/simulated dispatch that never blocks checkout.
+   * 3. REJECTED (to User)
+   * Dispatched when Owner rejects a payment claim with a required reason.
+   */
+  public static async sendClientBookingRejectedEmail(params: {
+    clientEmail?: string | null;
+    clientName: string;
+    bookingId: string;
+    productName: string;
+    amount: number;
+    reason: string;
+  }): Promise<DispatchEmailResult> {
+    if (!params.clientEmail || !params.clientEmail.trim()) {
+      return { success: false, simulated: true, error: "No client email provided." };
+    }
+
+    const subject = `Payment Verification Update for Booking [${params.bookingId}]`;
+    const helpWaText = encodeURIComponent(
+      `Pranam Acharya Ji, my payment verification for Booking ID ${params.bookingId} (${params.productName}) was rejected. Reason: ${params.reason}. Please find attached my bank statement proof.`
+    );
+    const helpWaUrl = `https://wa.me/${this.SANCTUM_PHONE}?text=${helpWaText}`;
+
+    const text = `
+PRANAM ${params.clientName.toUpperCase()},
+
+UPDATE REGARDING YOUR PAYMENT VERIFICATION
+
+Our accounts desk was unable to verify the UPI payment submitted for your consultation booking.
+
+DETAILS:
+- Booking Reference: ${params.bookingId}
+- Service: ${params.productName}
+- Amount Claimed: ₹${params.amount.toLocaleString("en-IN")}
+- Verification Outcome: Not Verified / Rejected
+- Reason Provided: ${params.reason}
+
+WHAT YOU CAN DO:
+If the funds were debited from your bank account, please reply with your bank statement screenshot or official 12-digit UTR number directly to our sanctum desk on WhatsApp:
+${helpWaUrl}
+
+Alternatively, you may initiate a fresh booking and retry your payment via the official UPI QR:
+https://aapkaastro.com/consult
+
+Aapka Astro Sanctum Desk
+WhatsApp: ${this.SANCTUM_PHONE_DISPLAY}
+Email: ${this.SUPPORT_EMAIL}
+`.trim();
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
+        <h2 style="color: #7B2D26; margin-top: 0;">Pranam ${params.clientName},</h2>
+        <div style="background: #FDF2F0; border: 1px solid #E0A899; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 15px; font-weight: bold; color: #7B2D26;">
+            Payment Verification Notice
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #3B2A1E;">
+            Our accounts desk could not confirm credit in our bank statement for booking <strong>${params.bookingId}</strong>.
+          </p>
+        </div>
+
+        <div style="background: #FBF3E7; border: 1px solid #E8D8C3; padding: 18px; border-radius: 10px; margin: 18px 0;">
+          <h4 style="margin: 0 0 10px 0; color: #7B2D26; font-size: 14px;">Reason for Rejection</h4>
+          <p style="margin: 0; font-size: 13px; color: #3B2A1E; background: #FFF; padding: 10px 14px; border-radius: 6px; border: 1px dashed #C1662F;">
+            &ldquo;${params.reason}&rdquo;
+          </p>
+        </div>
+
+        <h4 style="color: #7B2D26; margin: 18px 0 8px 0; font-size: 14px;">How to Resolve</h4>
+        <p style="font-size: 13px; color: #6E5545; line-height: 1.5; margin: 0 0 16px 0;">
+          If the amount was debited from your bank or UPI application, please share your official bank transaction statement or 12-digit UTR with our desk. Our accounts team will manually match and credit your booking.
+        </p>
+
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+          <a href="${helpWaUrl}" style="display: inline-block; background: #25D366; color: #FFF; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            Share Proof on WhatsApp &rarr;
+          </a>
+          <a href="https://aapkaastro.com/consult" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            Retry Booking
+          </a>
+        </div>
+      </div>
+    `;
+
+    return this.dispatchResendEmail({
+      to: params.clientEmail,
+      subject,
+      html,
+      text,
+      templateName: "BOOKING_REJECTED_TO_USER",
+      bookingId: params.bookingId,
+    });
+  }
+
+  /**
+   * 4. SLOT-AND-LINK (to User)
+   * Dispatched when Owner schedules the confirmed consultation slot and meeting link.
+   */
+  public static async sendClientBookingScheduledEmail(params: {
+    clientEmail?: string | null;
+    clientName: string;
+    bookingId: string;
+    productName: string;
+    scheduledSlot: string;
+    meetingLink: string;
+  }): Promise<DispatchEmailResult> {
+    if (!params.clientEmail || !params.clientEmail.trim()) {
+      return { success: false, simulated: true, error: "No client email provided." };
+    }
+
+    const subject = `Your Consultation is Scheduled: ${params.productName} (Ref: ${params.bookingId})`;
+
+    const text = `
+PRANAM ${params.clientName.toUpperCase()},
+
+YOUR CONSULTATION IS CONFIRMED & SCHEDULED
+
+Your 1-on-1 consultation with Acharya Niraj Kumar has been confirmed and scheduled.
+
+SCHEDULE DETAILS:
+- Booking Reference: ${params.bookingId}
+- Service: ${params.productName}
+- Confirmed Time Slot: ${params.scheduledSlot}
+- Meeting Link / Channel: ${params.meetingLink}
+
+HOW TO PREPARE:
+1. Please be present in a quiet environment 5 minutes before the scheduled time.
+2. Have your exact birth questions or architectural concerns ready.
+3. If connecting via WhatsApp call, Acharya Ji's sanctum will initiate the call directly at your phone number.
+4. If connecting via Google Meet, click the link above at the appointed time.
+
+View booking details in your account:
+https://aapkaastro.com/account/consult
+
+With warm blessings,
+Acharya Niraj Kumar & Sanctum Team
+Aapka Astro | WhatsApp: ${this.SANCTUM_PHONE_DISPLAY}
+`.trim();
+
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
+        <h2 style="color: #7B2D26; margin-top: 0;">Pranam ${params.clientName},</h2>
+        <p style="font-size: 15px; color: #3B2A1E; line-height: 1.5;">
+          Your 1-on-1 consultation with <strong>Acharya Niraj Kumar</strong> has been confirmed and scheduled.
+        </p>
+
+        <div style="background: #FBF3E7; border: 1px solid #E8D8C3; padding: 18px; border-radius: 10px; margin: 20px 0;">
+          <h4 style="margin: 0 0 10px 0; color: #7B2D26; font-size: 14px;">Consultation Schedule &amp; Access</h4>
+          <table style="width: 100%; font-size: 13px; line-height: 1.6;">
+            <tr><td style="font-weight: bold; width: 40%; color: #6E5545;">Booking Reference:</td><td style="font-family: monospace; font-size: 14px; font-weight: bold; color: #7B2D26;">${params.bookingId}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Service:</td><td>${params.productName}</td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Confirmed Slot:</td><td><strong style="color: #2A4720; font-size: 14px;">${params.scheduledSlot}</strong></td></tr>
+            <tr><td style="font-weight: bold; color: #6E5545;">Meeting Channel / Link:</td><td><a href="${params.meetingLink}" style="color: #7B2D26; font-weight: bold;">${params.meetingLink}</a></td></tr>
+          </table>
+        </div>
+
+        <h4 style="color: #7B2D26; margin: 18px 0 8px 0; font-size: 14px;">Preparation Guidance</h4>
+        <ul style="font-size: 13px; color: #6E5545; line-height: 1.6; padding-left: 20px; margin: 0 0 16px 0;">
+          <li>Please ensure you have quiet surroundings and good internet connectivity 5 minutes prior to the start time.</li>
+          <li>If joining via Google Meet, ensure camera and microphone permissions are enabled.</li>
+          <li>If connecting via WhatsApp Call, Acharya Ji will initiate the call directly to your registered phone.</li>
+        </ul>
+
+        <div style="margin-top: 16px;">
+          <a href="https://aapkaastro.com/account/consult" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            View in My Account &rarr;
+          </a>
+        </div>
+      </div>
+    `;
+
+    return this.dispatchResendEmail({
+      to: params.clientEmail,
+      subject,
+      html,
+      text,
+      templateName: "BOOKING_SCHEDULED_TO_USER",
+      bookingId: params.bookingId,
+    });
+  }
+
+  /**
+   * Backward-compatible alias for sendClientBookingConfirmedEmail
    */
   public static async sendBookingConfirmationEmail(
     params: BookingConfirmationEmailParams
-  ): Promise<{ success: boolean; simulated: boolean; messageId: string }> {
-    const { subject, text, html, whatsappUrl } = this.generateEmailContent(params);
-    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    // Log the generated confirmation dispatch for transparency and auditing
-    console.info(
-      `[BookingEmailService] Booking confirmation email prepared for ${params.clientEmail || params.clientName} (${params.bookingId}) -> WhatsApp Bridge: ${whatsappUrl}`
-    );
-
-    // If external mail provider (e.g. RESEND_API_KEY) is configured:
-    if (process.env.RESEND_API_KEY && params.clientEmail) {
-      try {
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Aapka Astro <bookings@aapkaastro.com>",
-            to: params.clientEmail,
-            subject,
-            html,
-            text,
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          return {
-            success: true,
-            simulated: false,
-            messageId: data.id || messageId,
-          };
-        }
-      } catch (err) {
-        console.warn("[BookingEmailService] Live email dispatch warning, falling back to simulated:", err);
-      }
-    }
-
-    // Default resilient simulated dispatch
-    return {
-      success: true,
-      simulated: true,
-      messageId,
-    };
+  ): Promise<DispatchEmailResult> {
+    return this.sendClientBookingConfirmedEmail({
+      clientEmail: params.clientEmail,
+      clientName: params.clientName,
+      clientPhone: params.phone,
+      bookingId: params.bookingId,
+      productName: params.productName,
+      amount: params.amountPaid,
+      format: params.format,
+    });
   }
 
   /**
-   * Dispatches a high-priority security alert to the Site Owner whenever payment settings are altered.
+   * 5. PAYMENT SETTINGS MODIFIED (to Owner)
    */
   public static async sendOwnerPaymentSettingsAlert(params: {
     actorEmail: string;
-    previousSettings: any;
-    newSettings: any;
     ipAddress?: string | null;
-  }): Promise<{ success: boolean; simulated: boolean }> {
-    const ownerEmails = (process.env.OWNER_EMAIL || "anmol@aapkaastro.com,acharya@aapkaastro.com")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
+    previousSettings?: any;
+    newSettings: {
+      upiId: string;
+      payeeName: string;
+      whatsappNumber: string;
+    };
+  }): Promise<DispatchEmailResult> {
+    const ownerEmails = getOwnerEmails();
     const subject = `[SECURITY ALERT] Aapka Astro UPI Payment Settings Modified by ${params.actorEmail}`;
     const text = `SECURITY ALERT: Payment settings for Aapka Astro were modified.\n\nActor: ${params.actorEmail}\nIP: ${params.ipAddress || "Unknown"}\nTimestamp: ${new Date().toISOString()}\n\nNew UPI ID: ${params.newSettings.upiId}\nNew Payee Name: ${params.newSettings.payeeName}\nNew WhatsApp: ${params.newSettings.whatsappNumber}\n\nIf you did not authorize this change, immediately inspect your database and credentials!`;
 
@@ -322,160 +576,12 @@ Website: ${this.WEBSITE_URL}
       </div>
     `;
 
-    if (process.env.RESEND_API_KEY && ownerEmails.length > 0) {
-      try {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Aapka Astro Security <security@aapkaastro.com>",
-            to: ownerEmails,
-            subject,
-            html,
-            text,
-          }),
-        });
-        return { success: true, simulated: false };
-      } catch (err) {
-        console.warn("[BookingEmailService] Owner alert email failed, logged in server:", err);
-      }
-    }
-
-    console.info(`[BookingEmailService] (Simulated) Owner payment alert logged for ${ownerEmails.join(", ")}`);
-    return { success: true, simulated: true };
-  }
-
-  /**
-   * Alerts the Owner when a seeker clicks "I have paid".
-   */
-  public static async sendOwnerPaymentClaimedAlert(params: {
-    bookingId: string;
-    clientName: string;
-    clientPhone: string;
-    clientEmail?: string | null;
-    productName: string;
-    amount: number;
-    utr?: string | null;
-  }): Promise<{ success: boolean; simulated: boolean }> {
-    const ownerEmails = (process.env.OWNER_EMAIL || "anmol@aapkaastro.com,acharya@aapkaastro.com")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    const subject = `[PAYMENT CLAIMED] ${params.clientName} reported UPI payment for ${params.bookingId} (₹${params.amount})`;
-    const text = `New UPI payment claimed by seeker!\n\nBooking ID: ${params.bookingId}\nClient: ${params.clientName} (${params.clientPhone})\nService: ${params.productName}\nAmount: ₹${params.amount}\nUTR / Ref: ${params.utr || "Not provided"}\n\nPlease verify your bank/UPI app and approve in the Owner Verification Queue: https://aapkaastro.com/admin/bookings`;
-
-    const html = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
-        <h3 style="color: #7B2D26; margin-top: 0;">⚡ New UPI Payment Claimed for Verification</h3>
-        <p style="font-size: 14px; color: #3B2A1E;">
-          A seeker has submitted their consultation payment proof.
-        </p>
-        <div style="background: #FAF5EE; padding: 16px; border-radius: 8px; border: 1px solid #E8D8C3; margin: 16px 0;">
-          <p style="margin: 4px 0;"><strong>Booking ID:</strong> <span style="font-family: monospace; font-size: 15px; color: #7B2D26;">${params.bookingId}</span></p>
-          <p style="margin: 4px 0;"><strong>Seeker:</strong> ${params.clientName} (${params.clientPhone})</p>
-          <p style="margin: 4px 0;"><strong>Service:</strong> ${params.productName}</p>
-          <p style="margin: 4px 0;"><strong>Amount Locked:</strong> ₹${params.amount.toLocaleString("en-IN")}</p>
-          <p style="margin: 4px 0;"><strong>UTR / Txn Ref:</strong> <span style="font-family: monospace;">${params.utr || "None provided (screenshot sent on WhatsApp)"}</span></p>
-        </div>
-        <p style="font-size: 13px; color: #6E5545;">
-          Please open your bank or UPI business app to confirm credit before approving:
-        </p>
-        <a href="https://aapkaastro.com/admin/bookings" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">
-          Open Verification Queue &rarr;
-        </a>
-      </div>
-    `;
-
-    if (process.env.RESEND_API_KEY && ownerEmails.length > 0) {
-      try {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Aapka Astro Queue <bookings@aapkaastro.com>",
-            to: ownerEmails,
-            subject,
-            html,
-            text,
-          }),
-        });
-        return { success: true, simulated: false };
-      } catch (err) {
-        console.warn("[BookingEmailService] Owner payment claimed alert error:", err);
-      }
-    }
-
-    console.info(`[BookingEmailService] (Simulated) Payment claimed notification for ${params.bookingId}`);
-    return { success: true, simulated: true };
-  }
-
-  /**
-   * Dispatches confirmed time slot and meeting link directly to the seeker.
-   */
-  public static async sendClientBookingScheduledEmail(params: {
-    clientEmail?: string | null;
-    clientName: string;
-    bookingId: string;
-    productName: string;
-    scheduledSlot: string;
-    meetingLink: string;
-  }): Promise<{ success: boolean; simulated: boolean }> {
-    if (!params.clientEmail) return { success: false, simulated: true };
-
-    const subject = `Your Consultation is Scheduled: ${params.productName} (Ref: ${params.bookingId})`;
-    const text = `Pranam ${params.clientName},\n\nYour consultation with Acharya Niraj Kumar has been confirmed and scheduled.\n\n• Booking Reference: ${params.bookingId}\n• Service: ${params.productName}\n• Scheduled Time Window: ${params.scheduledSlot}\n• Consultation Link / Format: ${params.meetingLink}\n\nPlease be ready with your birth details or questions 5 minutes prior.\n\nView details in your account: https://aapkaastro.com/account/consult`;
-
-    const html = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #E8D8C3; border-radius: 12px; background: #FFFDF9;">
-        <h2 style="color: #7B2D26; margin-top: 0;">Pranam ${params.clientName},</h2>
-        <p style="font-size: 15px; color: #3B2A1E; line-height: 1.5;">
-          Your consultation with <strong>Acharya Niraj Kumar</strong> has been confirmed and scheduled.
-        </p>
-        <div style="background: #FBF3E7; border: 1px solid #E8D8C3; padding: 18px; border-radius: 10px; margin: 20px 0;">
-          <h4 style="margin: 0 0 10px 0; color: #7B2D26;">Consultation Schedule &amp; Access</h4>
-          <p style="margin: 6px 0; font-size: 14px;"><strong>Booking ID:</strong> <span style="font-family: monospace; color: #7B2D26;">${params.bookingId}</span></p>
-          <p style="margin: 6px 0; font-size: 14px;"><strong>Scheduled Time Slot:</strong> <span style="font-weight: bold; color: #2A4720;">${params.scheduledSlot}</span></p>
-          <p style="margin: 6px 0; font-size: 14px;"><strong>Meeting Format / Link:</strong> <a href="${params.meetingLink}" style="color: #7B2D26; font-weight: bold;">${params.meetingLink}</a></p>
-        </div>
-        <p style="font-size: 13px; color: #6E5545; line-height: 1.5;">
-          Please ensure you have good internet connectivity and your quiet environment prepared. If connecting via WhatsApp call, Acharya Ji will initiate the call directly at the scheduled time.
-        </p>
-        <a href="https://aapkaastro.com/account/consult" style="display: inline-block; background: #7B2D26; color: #FFF; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; margin-top: 10px;">
-          View in My Account &rarr;
-        </a>
-      </div>
-    `;
-
-    if (process.env.RESEND_API_KEY) {
-      try {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Aapka Astro <bookings@aapkaastro.com>",
-            to: params.clientEmail,
-            subject,
-            html,
-            text,
-          }),
-        });
-        return { success: true, simulated: false };
-      } catch (err) {
-        console.warn("[BookingEmailService] Live scheduling email dispatch warning:", err);
-      }
-    }
-
-    console.info(`[BookingEmailService] (Simulated) Scheduled email prepared for ${params.clientEmail}`);
-    return { success: true, simulated: true };
+    return this.dispatchResendEmail({
+      to: ownerEmails,
+      subject,
+      html,
+      text,
+      templateName: "PAYMENT_SETTINGS_MODIFIED_TO_OWNER",
+    });
   }
 }
