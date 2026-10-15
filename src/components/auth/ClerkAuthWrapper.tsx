@@ -29,6 +29,8 @@ export const AstroClerkProvider: React.FC<{
   signUpUrl?: string;
   signInForceRedirectUrl?: string;
   signUpForceRedirectUrl?: string;
+  signInFallbackRedirectUrl?: string;
+  signUpFallbackRedirectUrl?: string;
   appearance?: any;
 }> = (props) => {
   return (
