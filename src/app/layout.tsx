@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { WelcomeConsultationModal } from "@/components/home/WelcomeConsultationModal";
 import { NavratriPromotionalModal } from "@/components/promotions/NavratriPromotionalModal";
 import { BrandedPreloader } from "@/components/layout/BrandedPreloader";
+import { FloatingAssistant } from "@/components/assistant/FloatingAssistant";
 import { getClerkPublishableKey } from "@/lib/auth/clerkConfig";
 
 const cinzel = Cinzel({
@@ -120,6 +121,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
             <WelcomeConsultationModal />
             <NavratriPromotionalModal />
+            <FloatingAssistant />
           </LanguageProvider>
         </body>
       </html>

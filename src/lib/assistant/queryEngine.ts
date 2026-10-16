@@ -1,0 +1,661 @@
+import { ASSISTANT_KNOWLEDGE, ServiceDetail } from "./knowledgeBase";
+
+export type AssistantLanguage = "en" | "hi" | "hinglish";
+
+export interface AssistantAction {
+  label: string;
+  url: string;
+  type: "primary" | "whatsapp" | "call" | "secondary";
+}
+
+export interface AssistantResponse {
+  answer: string;
+  language: AssistantLanguage;
+  intent: string;
+  confidence: "high" | "medium" | "fallback";
+  actions: AssistantAction[];
+}
+
+/**
+ * Detects whether the input message is in Hindi (Devanagari), Hinglish, or English.
+ */
+export function detectLanguage(text: string): AssistantLanguage {
+  // 1. Check for Devanagari Unicode block (\u0900-\u097F)
+  if (/[\u0900-\u097F]/.test(text)) {
+    return "hi";
+  }
+
+  // 2. Check for common Hinglish keywords
+  const hinglishTokens = [
+    "kya", "hai", "kaise", "kitna", "kitne", "shadi", "vivah", "batao", "namaste", "pranam",
+    "chahiye", "kab", "kaha", "fees", "mujhe", "aap", "hota", "milega", "karna", "paise",
+    "karo", "bhi", "hoga", "nahin", "nhi", "achha", "suno", "bataiye", "h", "krna", "btao",
+    "radhe", "ram", "shubh", "samay", "kundali", "kundli", "janna", "baat"
+  ];
+
+  const lower = text.toLowerCase();
+  const words = lower.split(/[^a-z0-9]+/);
+  let hinglishCount = 0;
+
+  for (const w of words) {
+    if (hinglishTokens.includes(w)) {
+      hinglishCount++;
+    }
+  }
+
+  if (hinglishCount >= 1) {
+    return "hinglish";
+  }
+
+  return "en";
+}
+
+/**
+ * Standard Action Buttons
+ */
+const ACTION_BOOK_ASTRO: AssistantAction = {
+  label: "Book Astro Session (₹1,051)",
+  url: "/consult?product=astro&offer=FIRST1051",
+  type: "primary",
+};
+
+const ACTION_BOOK_VAASTU: AssistantAction = {
+  label: "Book Vaastu Audit (₹15,000)",
+  url: "/consult?product=vaastu",
+  type: "primary",
+};
+
+const ACTION_WHATSAPP: AssistantAction = {
+  label: "Chat on WhatsApp",
+  url: "https://wa.me/919311215564?text=" + encodeURIComponent("Namaste Acharya Ji, I would like to inquire about a consultation on Aapka Astro."),
+  type: "whatsapp",
+};
+
+const ACTION_CALL: AssistantAction = {
+  label: "Call +91 93112 15564",
+  url: "tel:+919311215564",
+  type: "call",
+};
+
+const ACTION_FREE_KUNDLI: AssistantAction = {
+  label: "Free Janam Kundli",
+  url: "/kundli-generator",
+  type: "secondary",
+};
+
+const ACTION_PANCHANG: AssistantAction = {
+  label: "Today's Panchang",
+  url: "/panchang",
+  type: "secondary",
+};
+
+/**
+ * Deterministic, grounded question-answering engine.
+ * Zero-latency, zero-cost, strictly adheres to verified site content.
+ */
+export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
+  const query = rawQuery.trim().toLowerCase();
+  const lang = detectLanguage(rawQuery);
+
+  // --------------------------------------------------------------------------
+  // 1. GREETING
+  // --------------------------------------------------------------------------
+  if (
+    /^(hi|hello|hey|namaste|pranam|namashkar|radhe radhe|jai shri ram|ram ram|halo)\b/i.test(query) ||
+    query === "hi" || query === "hello" || query === "namaste" || query === "pranam"
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "नमस्ते! आपका एस्ट्रो (Aapka Astro) में आपका हार्दिक स्वागत है। मैं आचार्य नीरज कुमार जी का डिजिटल सहायक हूँ। मैं आपको परामर्श शुल्क (₹1,051 में 50% छूट), सेवाएं, मुफ्त कुंडली या बुकिंग प्रक्रिया के बारे में सटीक जानकारी दे सकता हूँ। आप क्या जानना चाहते हैं?",
+        language: "hi",
+        intent: "greeting",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_FREE_KUNDLI],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Namaste! Aapka Astro par aapka swagat hai. Main Acharya Niraj Kumar ji ka digital sahayak hoon. Main aapko consultation charges (50% Off par ₹1,051), services, free kundli, ya appointment booking ke baare mein sahi jaankari de sakta hoon. Aap kya jaanna chahte hain?",
+        language: "hinglish",
+        intent: "greeting",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_FREE_KUNDLI],
+      };
+    }
+    return {
+      answer: "Namaste! Welcome to Aapka Astro. I am the digital assistant for Acharya Niraj Kumar. I can provide verified details on our consultation pricing (₹1,051 first-booking offer), Vedic services, free Kundli tools, or booking steps. How may I assist you today?",
+      language: "en",
+      intent: "greeting",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_FREE_KUNDLI],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 2. PRICING, FEES, CHARGES & OFFERS
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("fee") ||
+    query.includes("fees") ||
+    query.includes("price") ||
+    query.includes("pricing") ||
+    query.includes("cost") ||
+    query.includes("charge") ||
+    query.includes("charges") ||
+    query.includes("kitna") ||
+    query.includes("kitne") ||
+    query.includes("rate") ||
+    query.includes("discount") ||
+    query.includes("offer") ||
+    query.includes("1051") ||
+    query.includes("first1051") ||
+    query.includes("free consultation") ||
+    query.includes("muft") ||
+    query.includes("paisa") ||
+    query.includes("शुल्क") ||
+    query.includes("फीस") ||
+    query.includes("फ़ीस") ||
+    query.includes("लागत") ||
+    query.includes("दाम") ||
+    query.includes("खर्च") ||
+    query.includes("चार्ज") ||
+    query.includes("छूट") ||
+    query.includes("ऑफर")
+  ) {
+    const isFreeInquiry =
+      query.includes("free consultation") ||
+      query.includes("muft") ||
+      query.includes("मुफ्त") ||
+      query.includes("मुफ़्त") ||
+      query.includes("फ्री") ||
+      (query.includes("free") && (query.includes("consult") || query.includes("baat")));
+
+    if (lang === "hi") {
+      const freeClarification = isFreeInquiry
+        ? "ध्यान दें: व्यक्तिगत 1-on-1 परामर्श निःशुल्क (Free) नहीं है। "
+        : "";
+      return {
+        answer: `${freeClarification}आपका एस्ट्रो पर परामर्श शुल्क पूरी तरह पारदर्शी और निश्चित (Flat Pay-Per-Booking) है:\n\n• **वैदिक ज्योतिष परामर्श (1-on-1):** प्रथम परामर्श पर 50% की विशेष छूट के साथ मात्र **₹1,051/-** (सामान्य शुल्क ₹2,100)। इसमें जन्म कुंडली, दशा एवं वैदिक उपायों का संपूर्ण विश्लेषण शामिल है।\n• **देवता वास्तु परामर्श:** फ्लैट ₹10,000 की बचत के साथ **₹15,000/-** (सामान्य शुल्क ₹25,000)। 16-जोन बिना तोड़फोड़ का वैज्ञानिक वास्तु समाधान।\n• **ऑनलाइन कुंडली व पंचांग:** हमारी वेबसाइट पर जन्म कुंडली निर्माण, कुंडली मिलान और दैनिक पंचांग 100% मुफ़्त हैं।\n\nयहाँ कोई छिपा हुआ वॉलेट बैलेंस या कॉइन सिस्टम नहीं है।`,
+        language: "hi",
+        intent: "pricing",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+      };
+    }
+
+    if (lang === "hinglish") {
+      const freeClarification = isFreeInquiry
+        ? "Dhyan dein: Personal 1-on-1 consultation free nahi hai. "
+        : "";
+      return {
+        answer: `${freeClarification}Aapka Astro par consultation charges bilkul transparent aur flat pay-per-booking hain:\n\n• **Vedic Astro Consultation (1-on-1):** First consultation par 50% discount ke sath flat **₹1,051/-** (Regular fee ₹2,100). Isme Janam Kundli, Dasha timeline, career, marriage aur non-destructive Vedic remedies shamil hain.\n• **Devta Vaastu Consultation:** Flat ₹10,000 savings ke sath **₹15,000/-** (Regular fee ₹25,000) for complete 16-zone zero-demolition audit.\n• **Free Tools:** Website par Janam Kundli banana, Kundli Milan (Matching), aur Aaj Ka Panchang 100% free hain.\n\nAapka Astro par koi wallet coin ya subscription recharge nahi hai; aap direct pay karte hain.`,
+        language: "hinglish",
+        intent: "pricing",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+      };
+    }
+
+    const freeClarification = isFreeInquiry
+      ? "Please note: 1-on-1 personal consultations are not free. "
+      : "";
+    return {
+      answer: `${freeClarification}Aapka Astro operates on a transparent, flat pay-per-booking model with zero hidden fees:\n\n• **Vedic Astro Consultation (1-on-1):** Flat **₹1,051/-** for your first consultation (50% off regular ₹2,100 with code FIRST1051). Includes comprehensive birth chart, D9/D10, dasha timing, and non-destructive remedies.\n• **Devta Vaastu Consultation:** Flat **₹15,000/-** (save ₹10,000, regular ₹25,000) for a 16-zone zero-demolition residential or commercial audit.\n• **Free Calculators:** Online Kundli generation, Kundli Matching (Milan), Daily Panchang, and Rashifal are 100% free on our site.\n\nWe do NOT use wallet recharges or coin deductions.`,
+      language: "en",
+      intent: "pricing",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 3. ACHARYA NIRAJ KUMAR CREDENTIALS & BACKGROUND
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("who is") ||
+    query.includes("astrologer") ||
+    query.includes("acharya") ||
+    query.includes("niraj") ||
+    query.includes("credentials") ||
+    query.includes("qualification") ||
+    query.includes("experience") ||
+    query.includes("guru") ||
+    query.includes("lineage") ||
+    query.includes("kaun hai") ||
+    query.includes("degrees") ||
+    query.includes("background") ||
+    query.includes("आचार्य") ||
+    query.includes("नीरज") ||
+    query.includes("ज्योतिषी") ||
+    query.includes("अनुभव") ||
+    query.includes("योग्यता") ||
+    query.includes("कौन हैं") ||
+    query.includes("कौन है")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आचार्य नीरज कुमार जी **20+ वर्षों के वैदिक अनुभव** और **15,000+ कुंडली परामर्शों** के साथ एक प्रतिष्ठित ज्योतिषाचार्य और वास्तु विशेषज्ञ हैं:\n\n• **परंपरा व गुरु:** वैद्यनाथ धाम (देवघर) की आध्यात्मिक भूमि से संबंध; स्वर्गीय गुरु श्री बी. बी. तिवारी जी के सानिध्य में पारंपरिक दीक्षा।\n• **शैक्षणिक व ज्योतिषीय उपाधियाँ:** भारतीय विद्या भवन (के. एन. राव संस्थान) से ज्योतिषाचार्य, इग्नू से ज्योतिष में एम.ए. (2024), आईकास (ICAS) से नाड़ी प्रवीण, तथा दिव्य वास्तु से प्रमाणित वास्तु विशेषज्ञ।\n• **कॉरपोरेट नेतृत्व:** रिलायंस रिटेल एवं मेट्रो कैश एंड कैरी में वाइस प्रेसिडेंट (VP) व बिजनेस हेड रह चुके हैं। वे वैदिक ज्योतिष को आधुनिक रणनीतिक जीवन निर्णयों के साथ जोड़ते हैं।",
+        language: "hi",
+        intent: "acharya_credentials",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Acharya Niraj Kumar ji **20+ saal ke Vedic experience** aur **15,000+ chart analyses** ke sath ek highly respected Jyotish Acharya aur Vastu Expert hain:\n\n• **Lineage & Guru:** Baidyanath Dham (Deoghar) se judaav; Late Guru Shri B. B. Tiwari ji ke guidance mein classical training.\n• **Degrees & Certifications:** Bhartiya Vidya Bhawan (K.N. Rao Institute) se Jyotish Acharya, IGNOU se M.A. in Jyotish (2024), ICAS se Nadi Parveen, aur DivyVastu se Certified Logical Vastu Expert.\n• **Corporate Leadership:** Reliance Retail aur Metro Cash & Carry mein Vice President (VP) aur Business Head ke roop mein 20+ saal ka senior leadership background.\n\nVe shuddh Vedic gyan aur practical corporate insight ka adbhut sangam pradan karte hain.",
+        language: "hinglish",
+        intent: "acharya_credentials",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    return {
+      answer: "Acharya Niraj Kumar brings together over **20 years of classical Vedic mastery** and **15,000+ consultations**:\n\n• **Lineage & Training:** Rooted in Baidyanath Dham (Deoghar); classical discipleship under Late Guru Shri B. B. Tiwari.\n• **Vedic Credentials:** Jyotish Acharya from Bharatiya Vidya Bhawan (K.N. Rao Institute), M.A. in Jyotish from IGNOU (2024), Nadi Parveen from ICAS, and certified Logical Vastu Expert from DivyVastu.\n• **Corporate Track Record:** Former Vice President and Business Head at Reliance Retail and Metro Cash & Carry, combining rigorous mathematical Vedic analysis with practical, actionable life and business strategy.",
+      language: "en",
+      intent: "acharya_credentials",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 4. HOW TO BOOK / CONSULTATION PROCESS & FORMATS
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("how to book") ||
+    query.includes("book kaise") ||
+    query.includes("appointment") ||
+    query.includes("process") ||
+    query.includes("format") ||
+    query.includes("video call") ||
+    query.includes("voice call") ||
+    query.includes("google meet") ||
+    query.includes("kaise consult") ||
+    query.includes("kaise kare") ||
+    query.includes("steps") ||
+    query.includes("बुक") ||
+    query.includes("बुकिंग") ||
+    query.includes("अपॉइंटमेंट") ||
+    query.includes("परामर्श कैसे") ||
+    query.includes("video call") ||
+    query.includes("voice call") ||
+    query.includes("google meet") ||
+    query.includes("kaise consult") ||
+    query.includes("kaise kare") ||
+    query.includes("steps")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आचार्य नीरज कुमार जी के साथ परामर्श बुक करने की प्रक्रिया अत्यंत सरल है:\n\n1. **/consult** पेज पर जाएं और 'Astro Consultation' (₹1,051) या 'Vaastu Consultation' (₹15,000) चुनें।\n2. अपनी जन्म तिथि, सही जन्म समय, जन्म स्थान और अपनी मुख्य समस्या/प्रश्न दर्ज करें।\n3. अपना पसंदीदा समय स्लॉट चुनें और डायरेक्ट UPI (GPay/PhonePe/Paytm/QR) द्वारा भुगतान पूरा करें।\n4. पुष्टि होते ही आपको WhatsApp Call या Google Meet का सीधा लिंक प्राप्त हो जाएगा।",
+        language: "hi",
+        intent: "booking_process",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Acharya Niraj Kumar ji ke sath consultation book karna bahut simple hai:\n\n1. **/consult** page par jaiye aur 'Astro Consultation' (₹1,051) ya 'Vaastu Consultation' (₹15,000) select kijiye.\n2. Apna naam, birth date, exact birth time, birth place aur apna sawal fill kijiye.\n3. Preferred date aur time window select karke direct UPI (GPay, PhonePe, Paytm ya QR code) se payment confirm kijiye.\n4. Booking confirm hote hi aapko WhatsApp Call ya Google Meet ka direct link mil jata hai.",
+        language: "hinglish",
+        intent: "booking_process",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    return {
+      answer: "Booking a 1-on-1 session with Acharya Niraj Kumar is quick and direct:\n\n1. Visit **/consult** and select your consultation type (Astro Consultation at ₹1,051 or Vaastu at ₹15,000).\n2. Enter your birth details (date, exact time, place) and your primary concerns.\n3. Choose your preferred slot and complete the flat pay-per-booking payment via direct UPI (GPay, PhonePe, Paytm, or QR).\n4. You will receive immediate confirmation with your direct WhatsApp Call or Google Meet joining link.",
+      language: "en",
+      intent: "booking_process",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 5. PAYMENT, UPI & WALLET POLICY
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("payment") ||
+    query.includes("upi") ||
+    query.includes("gpay") ||
+    query.includes("phonepe") ||
+    query.includes("paytm") ||
+    query.includes("wallet") ||
+    query.includes("coin") ||
+    query.includes("recharge") ||
+    query.includes("bhim")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "भुगतान एवं वॉलेट नीति:\n\n• **भुगतान का माध्यम:** हम सुरक्षित डायरेक्ट UPI बैंक ट्रांसफर स्वीकार करते हैं। आप Google Pay, PhonePe, Paytm, BHIM या किसी भी बैंकिंग UPI ऐप से **9311215564@okbizaxis** (Payee: Aapka Astro) पर अथवा स्क्रीन पर दिए गए QR कोड को स्कैन करके भुगतान कर सकते हैं।\n• **वॉलेट नीति:** आपका एस्ट्रो पर कोई वॉलेट रिचार्ज या कॉइन कटौती प्रणाली नहीं है। आप केवल अपनी बुकिंग के समय पारदर्शी रूप से निश्चित शुल्क का भुगतान करते हैं।",
+        language: "hi",
+        intent: "payment_methods",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Payment aur Wallet Policy:\n\n• **Payment Method:** Direct UPI payment accepted hai. Aap Google Pay, PhonePe, Paytm, BHIM ya kisi bhi UPI app se **9311215564@okbizaxis** (Payee: Aapka Astro) par ya dynamic QR code scan karke pay kar sakte hain.\n• **Zero Wallet Policy:** Aapka Astro par koi wallet coin, balance ya top-up recharge system NAHI hai. Aap sirf transparent flat pay-per-booking karte hain bina kisi hidden charges ke.",
+        language: "hinglish",
+        intent: "payment_methods",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    return {
+      answer: "Payment & Wallet Policy:\n\n• **Direct UPI Payment:** We accept instant UPI bank transfers via Google Pay, PhonePe, Paytm, BHIM, or any banking app directly to **9311215564@okbizaxis** (Payee: Aapka Astro) or via instant dynamic QR code.\n• **No Wallet Policy:** Aapka Astro does NOT use a wallet recharge or coin deduction system. All services are flat pay-per-booking with zero commissions or hidden fees.",
+      language: "en",
+      intent: "payment_methods",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 6. REFUND & CANCELLATION POLICY
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("refund") ||
+    query.includes("cancellation") ||
+    query.includes("cancel") ||
+    query.includes("reschedule") ||
+    query.includes("paisa wapas") ||
+    query.includes("guarantee")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "रिफंड एवं रद्दीकरण नीति:\n\n• यदि किसी अपरिहार्य कारणवश आचार्य नीरज कुमार जी निर्धारित समय पर सत्र में उपस्थित नहीं हो पाते हैं, तो आपकी **100% फीस 2-3 कार्यदिवसों में आपके मूल बैंक खाते में वापस (Refund)** कर दी जाती है।\n• यदि आप समय बदलना चाहते हैं, तो सत्र से कम से कम 2 घंटे पूर्व WhatsApp पर सूचित करके निःशुल्क रिशेड्यूल करा सकते हैं।\n• सत्र संपन्न होने के पश्चात कोई रिफंड देय नहीं होता है।",
+        language: "hi",
+        intent: "refund_policy",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Refund aur Cancellation Policy:\n\n• Agar kisi unexpected reason se Acharya Niraj Kumar ji scheduled session attend nahi kar paate, to aapki **100% fees 2-3 working days mein directly aapke bank account mein refund** ho jaati hai.\n• Session se kam se kam 2 ghante pehle WhatsApp par inform karke aap free mein slot reschedule kara sakte hain.\n• Session successfully complete hone ke baad refund applicable nahi hota.",
+        language: "hinglish",
+        intent: "refund_policy",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    return {
+      answer: "Refund & Cancellation Policy:\n\n• **100% Missed Session Guarantee:** If Acharya Niraj Kumar is unable to attend your scheduled session, 100% of your consultation fee is refunded to your bank account within 2-3 business days.\n• **Free Rescheduling:** You can reschedule your slot for free with at least 2 hours prior notice via WhatsApp.\n• No refunds are provided once a consultation has successfully taken place.",
+      language: "en",
+      intent: "refund_policy",
+      confidence: "high",
+      actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 7. CONTACT, PHONE, WHATSAPP, SANCTUM ADDRESS & TIMINGS
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("contact") ||
+    query.includes("phone") ||
+    query.includes("mobile") ||
+    query.includes("whatsapp") ||
+    query.includes("number") ||
+    query.includes("address") ||
+    query.includes("location") ||
+    query.includes("sanctum") ||
+    query.includes("office") ||
+    query.includes("noida") ||
+    query.includes("timing") ||
+    query.includes("hours") ||
+    query.includes("kaha hai") ||
+    query.includes("kahan")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "संपर्क एवं केंद्र का विवरण:\n\n• **फ़ोन व WhatsApp:** +91 93112 15564\n• **ईमेल:** aapkaastro1606@gmail.com\n• **समय:** सोमवार से रविवार, प्रातः 7:00 बजे से रात्रि 11:00 बजे तक (IST)\n• **कार्यालय/केंद्र पता:** यूनिट नं. A-1212 D, टावर A, स्पेक्ट्रम@मेट्रो फेज 1, सेक्टर 75, नोएडा, उ.प्र. 201301\n• **सोशल मीडिया:** Instagram: @aapkaastrologer | YouTube: @aapkaastro7900",
+        language: "hi",
+        intent: "contact_info",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Aapka Astro Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** aapkaastro1606@gmail.com\n• **Consultation Timings:** Monday to Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Media:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
+        language: "hinglish",
+        intent: "contact_info",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    return {
+      answer: "Aapka Astro Official Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** aapkaastro1606@gmail.com\n• **Operating Hours:** Monday – Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Channels:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
+      language: "en",
+      intent: "contact_info",
+      confidence: "high",
+      actions: [ACTION_WHATSAPP, ACTION_CALL],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 8. VAASTU CONSULTATION DETAILS
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("vastu") ||
+    query.includes("vaastu") ||
+    query.includes("house") ||
+    query.includes("office") ||
+    query.includes("factory") ||
+    query.includes("floorplan") ||
+    query.includes("tod phod") ||
+    query.includes("demolition")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "देवता वास्तु एवं ऊर्जा वास्तु परामर्श (Acharya Niraj Kumar):\n\n• **शुल्क:** केवल **₹15,000/-** (सामान्य शुल्क ₹25,000, सीधे ₹10,000 की बचत)।\n• **बिना तोड़-फोड़ (Zero-Demolition):** किसी भी दीवार या संरचना को तोड़े बिना 16-जोन दिशात्मक ऊर्जा संतुलन, पंचतत्व (अग्नि, जल, वायु, पृथ्वी, आकाश) संतुलन एवं पिरामिड/धातु स्ट्रिप्स द्वारा उपचार।\n• **उपयुक्त:** आवासीय घर, व्यावसायिक कार्यालय, दुकान, एवं औद्योगिक कारखाने।\n• **परामर्श माध्यम:** फ्लोरप्लान का विस्तृत वीडियो कॉल रिव्यू अथवा स्थल डिजिटल रिपोर्ट।",
+        language: "hi",
+        intent: "vaastu_details",
+        confidence: "high",
+        actions: [ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Devta Vaastu Consultation (Acharya Niraj Kumar):\n\n• **Fee:** Flat **₹15,000/-** (Regular ₹25,000, flat ₹10,000 off).\n• **Zero-Demolition Approach:** Bina kisi deewar ya structure ko tode, 16-directional micro-zones aur Panch Tattva ko Vedic energy balance remedies se align kiya jata hai.\n• **Coverage:** Residence, corporate office, shop, ya factory layouts.\n• **Format:** Video Call par floorplan review ya digital audit consultation.",
+        language: "hinglish",
+        intent: "vaastu_details",
+        confidence: "high",
+        actions: [ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+      };
+    }
+
+    return {
+      answer: "Devta Vaastu Consultation (Acharya Niraj Kumar):\n\n• **Fee:** Flat **₹15,000/-** (save ₹10,000, regular ₹25,000).\n• **Zero Demolition:** Complete 16-zone directional micro-energy mapping and elemental balancing without breaking a single wall or structure.\n• **Scope:** Residential homes, commercial offices, retail shops, and industrial plants.\n• **Format:** Live video floorplan examination, voice review, or digital audit consultation.",
+      language: "en",
+      intent: "vaastu_details",
+      confidence: "high",
+      actions: [ACTION_BOOK_VAASTU, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 9. GEMSTONES & REMEDIES
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("gemstone") ||
+    query.includes("gemstones") ||
+    query.includes("ratna") ||
+    query.includes("pukhraj") ||
+    query.includes("ruby") ||
+    query.includes("emerald") ||
+    query.includes("sapphire") ||
+    query.includes("heera") ||
+    query.includes("manik") ||
+    query.includes("moti") ||
+    query.includes("prana pratishtha")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "प्रमाणित प्राकृतिक रत्न परामर्श (Aapka Astro):\n\n• **100% प्राकृतिक व अप्रसंस्कृत:** सभी रत्न सरकारी मान्यता प्राप्त प्रयोगशालाओं से प्रमाणित होते हैं।\n• **वैदिक प्राण-प्रतिष्ठा:** आचार्य नीरज कुमार जी द्वारा शुभ मुहूर्त में वैदिक स्त्रोतों एवं मंत्रों से अभिमंत्रित (Pran Pratishtha) कर धारण करने की विधि, उपयुक्त धातु व अंगुली का निर्देश दिया जाता है।\n• किसी भी रत्न को धारण करने से पहले कुंडली में ग्रहों की अनुकूलता की जांच अनिवार्य होती है।",
+        language: "hi",
+        intent: "gemstones",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, { label: "View Gemstones", url: "/gemstones", type: "secondary" }, ACTION_WHATSAPP],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Certified Vedic Gemstones (Aapka Astro):\n\n• **100% Natural & Lab Certified:** Hamare sabhi gemstones government-recognized lab se certified hote hain, zero synthetic treatment.\n• **Vedic Pran Pratishtha:** Acharya Niraj Kumar ji dwara shubh muhurat mein Vedic stotras se abhimantrit kiya jata hai, sahi metal aur finger guidance ke sath.\n• Koi bhi ratna dharan karne se pehle apni Kundli dikhana zaroori hota hai taaki galat prabhav na pade.",
+        language: "hinglish",
+        intent: "gemstones",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, { label: "View Gemstones", url: "/gemstones", type: "secondary" }, ACTION_WHATSAPP],
+      };
+    }
+
+    return {
+      answer: "Certified Vedic Gemstones (Aapka Astro):\n\n• **100% Natural & Untreated:** Lab-certified natural gemstones with zero artificial heating or treatment.\n• **Vedic Prana Pratishtha:** Consecrated under auspicious planetary Muhurats with authentic Vedic stotras by Acharya Niraj Kumar, along with metal and wearing instructions.\n• Accurate gemstone prescription requires birth chart analysis to confirm functional benefic planetary alignment.",
+      language: "en",
+      intent: "gemstones",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, { label: "View Gemstones", url: "/gemstones", type: "secondary" }, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 10. FREE TOOLS (KUNDLI, PANCHANG, HOROSCOPE, MATCHING)
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("free kundli") ||
+    query.includes("kundli generator") ||
+    query.includes("kundali") ||
+    query.includes("panchang") ||
+    query.includes("matching") ||
+    query.includes("milan") ||
+    query.includes("gun milan") ||
+    query.includes("rashifal") ||
+    query.includes("horoscope") ||
+    query.includes("calculator")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आप हमारी वेबसाइट पर निम्नलिखित वैदिक साधन 100% मुफ़्त उपयोग कर सकते हैं:\n\n• **मुफ़्त जन्म कुंडली निर्माण:** /kundli-generator\n• **36 गुण कुंडली मिलान (Kundli Milan):** /kundli-matching\n• **आज का पंचांग (सूर्योदय, तिथि, नक्षत्र, राहुकाल):** /panchang\n• **दैनिक राशिफल (12 राशियां):** /horoscope\n• **अंक ज्योतिष व चंद्र राशि कैलकुलेटर:** /numerology-calculator",
+        language: "hi",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_FREE_KUNDLI, ACTION_PANCHANG, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Aap hamari website par ye sabhi Vedic tools 100% FREE use kar sakte hain:\n\n• **Free Janam Kundli Generator:** /kundli-generator\n• **36 Gun Kundli Milan (Horoscope Matching):** /kundli-matching\n• **Aaj Ka Hindu Panchang (Tithi, Nakshatra, Rahukaal):** /panchang\n• **Daily Rashifal (12 Rashi):** /horoscope\n• **Ank Jyotish & Moon Sign Calculator:** /numerology-calculator",
+        language: "hinglish",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_FREE_KUNDLI, ACTION_PANCHANG, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    return {
+      answer: "You can access the following authentic Vedic tools 100% FREE on our website:\n\n• **Free Janam Kundli Generator:** /kundli-generator\n• **Kundli Milan (36 Guna Horoscope Matching):** /kundli-matching\n• **Daily Hindu Panchang (Tithi, Nakshatra, Rahukaal):** /panchang\n• **Daily Horoscope (All 12 Zodiac Signs):** /horoscope\n• **Moon Sign & Numerology Calculators:** /moon-sign-calculator",
+      language: "en",
+      intent: "free_tools",
+      confidence: "high",
+      actions: [ACTION_FREE_KUNDLI, ACTION_PANCHANG, ACTION_BOOK_ASTRO],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 11. PERSONAL FUTURE PREDICTION / CHART ANALYSIS INQUIRY
+  // (e.g. "Meri shadi kab hogi?", "Job kab lagegi?", "Will I get married?", "Bhavishya batao")
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("shadi") ||
+    query.includes("vivah") ||
+    query.includes("marriage") ||
+    query.includes("naukri") ||
+    query.includes("job") ||
+    query.includes("career") ||
+    query.includes("future") ||
+    query.includes("bhavishya") ||
+    query.includes("batao") ||
+    query.includes("pata chalega") ||
+    query.includes("meri kundli") ||
+    query.includes("pariwar") ||
+    query.includes("divorce") ||
+    query.includes("relationship")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "व्यक्तिगत जीवन, विवाह, करियर या स्वास्थ्य संबंधी सटीक भविष्यवाणी के लिए आपकी जन्म कुंडली के ग्रहों की डिग्री, नवमांश (D9), और विंशोत्तरी महादशा-अंतर्दशा की गहन गणना आवश्यक होती है।\n\nAI द्वारा बिना पूर्ण कुंडली गणना के भविष्य बताना भ्रामक हो सकता है। आचार्य नीरज कुमार जी के साथ 1-on-1 सीधा परामर्श (मात्र ₹1,051/- प्रथम सत्र) बुक करें या WhatsApp पर अपनी जन्म तिथि, समय और स्थान साझा करें।",
+        language: "hi",
+        intent: "personal_prediction_handoff",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Personal life, marriage, career ya future se jude sawalon ke sahi jawab ke liye aapki Janam Kundli ki exact planetary degrees, D9 Navamsha chart aur Vimshottari Dasha ki mathematical calculation zaroori hoti hai.\n\nAI bina poori kundli dekhe andaza nahi lagata. Sahi aur pramanit guidance ke liye aap Acharya Niraj Kumar ji ke sath 1-on-1 consultation (50% Off par ₹1,051) book kar sakte hain ya WhatsApp par apni birth details share kar sakte hain.",
+        language: "hinglish",
+        intent: "personal_prediction_handoff",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    return {
+      answer: "Accurate predictions regarding your marriage, career, finances, or personal life require precise mathematical calculations of your Lagna chart, planetary degrees, D9 Navamsha, and current Vimshottari Dasha.\n\nAutomated AI cannot guess personal chart outcomes responsibly. For authentic Vedic guidance, book a 1-on-1 direct session with Acharya Niraj Kumar (₹1,051 first-booking offer) or connect directly on WhatsApp with your birth details.",
+      language: "en",
+      intent: "personal_prediction_handoff",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 12. FALLBACK / OUT OF SCOPE
+  // "A confident wrong answer is worse than saying I don't know"
+  // --------------------------------------------------------------------------
+  if (lang === "hi") {
+    return {
+      answer: "मुझे इस विशेष विषय पर हमारी वेबसाइट के प्रमाणित डेटा में निश्चित जानकारी नहीं मिली। गलत या मनगढ़ंत उत्तर देने से बेहतर है कि मैं आपको सीधे आचार्य नीरज कुमार जी या हमारी सहायता टीम से जोड़ दूँ।\n\nआप सीधे WhatsApp पर संदेश भेज सकते हैं या हमारे परामर्श विकल्प देख सकते हैं:",
+      language: "hi",
+      intent: "fallback_safe",
+      confidence: "fallback",
+      actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO, ACTION_CALL],
+    };
+  }
+
+  if (lang === "hinglish") {
+    return {
+      answer: "Mujhe is vishay par hamari website ke verified data mein accurate jaankari nahi mili. Galat ya confusing answer dene se behtar hai ki main aapko seedhe Acharya Niraj Kumar ji aur hamari support team se connect kar doon.\n\nAap directly WhatsApp par pooch sakte hain ya consultation book kar sakte hain:",
+      language: "hinglish",
+      intent: "fallback_safe",
+      confidence: "fallback",
+      actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO, ACTION_CALL],
+    };
+  }
+
+  return {
+    answer: "I do not have verified information on that specific question in this website's knowledge base. Rather than providing an inaccurate answer, I recommend connecting directly with Acharya Niraj Kumar or our support team:\n\nYou can chat with us on WhatsApp, call directly, or book a consultation below:",
+    language: "en",
+    intent: "fallback_safe",
+    confidence: "fallback",
+    actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO, ACTION_CALL],
+  };
+}
