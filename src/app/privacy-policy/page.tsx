@@ -187,10 +187,37 @@ export default function PrivacyPolicyPage() {
             </div>
           </section>
 
-          {/* Section 6 */}
+          {/* Section 6: AI Assistant & Quality Assurance */}
+          <section id="ai-assistant" className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
+            <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+              6. AI Assistant Interaction &amp; 30-Day Query Quality Logging
+            </h2>
+            <p>
+              When visitors interact with our floating AI Assistant, the service operates under strict privacy and grounding safeguards:
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6E5545]">
+              <li>
+                <strong>Privacy-Preserving Rate Limiting:</strong> IP addresses are one-way hashed using salted cryptographic SHA-256 algorithms. Raw IP addresses are never saved, stored, or logged.
+              </li>
+              <li>
+                <strong>PII Masking &amp; Stripping:</strong> If a query contains sensitive contact details such as email addresses or telephone numbers, our ingestion engine automatically detects and permanently strips/masks them (replacing them with generic placeholders).
+              </li>
+              <li>
+                <strong>Unanswered &amp; Low-Confidence Query Logging:</strong> Questions that the AI Assistant cannot answer with high confidence are recorded in a private, Owner-only quality assurance log along with frequency counts. This allows our astrological sanctum team to identify common seeker questions and author verified FAQ entries.
+              </li>
+              <li>
+                <strong>30-Day Strict Retention:</strong> Logged unanswered question records are automatically purged and deleted after 30 days.
+              </li>
+              <li>
+                <strong>No Third-Party AI Model Training:</strong> All AI interactions utilize paid enterprise API tiers with data training on customer inputs contractually disabled.
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 7 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              6. User Rights &amp; Data Deletion
+              7. User Rights &amp; Data Deletion
             </h2>
             <p>
               You maintain sovereign ownership of your personal data. At any time, you may:
@@ -204,10 +231,10 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 7 */}
+          {/* Section 8 */}
           <section className="bg-[#FBF3E7] p-6 rounded-2xl border border-[#E8D8C3] space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              7. Privacy Grievance Officer
+              8. Privacy Grievance Officer
             </h2>
             <p>
               For questions, privacy compliance inquiries, or to exercise your data protection rights under the Digital Personal Data Protection Act (DPDPA), please reach out:

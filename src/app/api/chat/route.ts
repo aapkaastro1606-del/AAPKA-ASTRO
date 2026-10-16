@@ -3,10 +3,19 @@ import { z } from "zod";
 import {
   getChatProvider,
   isChatbotConfigured,
-  GROUNDED_SYSTEM_PROMPT,
+  buildGroundedSystemPrompt,
   ChatMessage,
 } from "@/lib/assistant/chatProvider";
 import { checkChatbotRateLimit } from "@/lib/assistant/rateLimiter";
+import {
+  fetchLiveSiteData,
+  formatLiveSiteDataSnippet,
+} from "@/lib/assistant/liveDataReader";
+import {
+  retrieveRelevantKnowledge,
+  logUnansweredQuestion,
+} from "@/lib/assistant/retriever";
+
 
 export const dynamic = "force-dynamic";
 
@@ -85,11 +94,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Assemble Context (Limit to strictly the last 8 messages)
+    // 3. Dynamic Knowledge Retrieval & Live Site Data (Single Source of Truth)
+    const [liveData, retrieved] = await Promise.all([
+      fetchLiveSiteData(),
+      retrieveRelevantKnowledge(message),
+    ]);
+
+    // Log low-confidence or unanswered queries (anonymized & masked, kept 30 days)
+    if (!retrieved.isConfident) {
+      logUnansweredQuestion(message).catch((err) =>
+        console.error("[UnansweredQuestion Log Background Error]", err)
+      );
+    }
+
+    const liveDataSnippet = formatLiveSiteDataSnippet(liveData);
+    const dynamicSystemPrompt = buildGroundedSystemPrompt({
+      liveDataSnippet,
+      retrievedSections: retrieved.sections,
+    });
+
+    // 4. Assemble Context (Limit to strictly the last 8 messages)
     const trimmedHistory = history.slice(-8);
 
     const fullMessages: ChatMessage[] = [
-      { role: "system", content: GROUNDED_SYSTEM_PROMPT },
+      { role: "system", content: dynamicSystemPrompt },
       ...trimmedHistory.map((h) => ({
         role: h.role as "user" | "assistant",
         content: h.content,
@@ -97,12 +125,13 @@ export async function POST(req: NextRequest) {
       { role: "user", content: message },
     ];
 
-    // 4. Invoke Swappable Provider with 400 max tokens & 15s function timeout
+    // 5. Invoke Swappable Provider with 400 max tokens & 15s function timeout
     const provider = getChatProvider();
     const stream = await provider.generateStream(fullMessages, {
       maxTokens: 400,
       timeoutMs: 15000,
     });
+
 
     return new Response(stream, {
       status: 200,

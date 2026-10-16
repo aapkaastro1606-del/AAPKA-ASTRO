@@ -521,3 +521,41 @@ model KundliLead {
   @@map("kundli_leads")
 }
 
+// ------------------------------------------------------------------------------
+// 18. KnowledgeEntry (Owner-editable verified knowledge base for AI Assistant)
+// ------------------------------------------------------------------------------
+model KnowledgeEntry {
+  id         String   @id @default(cuid())
+  question   String   @db.Text
+  answer     String   @db.Text
+  language   String   @default("en") // "en", "hi", "hinglish"
+  category   String   @default("general") // "services", "pricing", "acharya", "vaastu", "faq", "general"
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([published, language])
+  @@index([category])
+  @@map("knowledge_entries")
+}
+
+// ------------------------------------------------------------------------------
+// 19. UnansweredQuestion (Logged low-confidence questions with PII masked; 30-day retention)
+// ------------------------------------------------------------------------------
+model UnansweredQuestion {
+  id          String   @id @default(cuid())
+  question    String   @db.Text // Truncated to 500 chars, phone numbers and emails masked
+  language    String   @default("en")
+  count       Int      @default(1)
+  resolved    Boolean  @default(false)
+  lastAskedAt DateTime @default(now()) @map("last_asked_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([resolved])
+  @@index([lastAskedAt])
+  @@index([createdAt])
+  @@map("unanswered_questions")
+}
+
+
