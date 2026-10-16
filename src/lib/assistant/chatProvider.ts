@@ -130,12 +130,17 @@ export class OpenAICompatibleChatProvider implements ChatProvider {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      };
+      if (this.name === "Gemini" || this.baseUrl.includes("generativelanguage.googleapis.com")) {
+        headers["x-goog-api-key"] = this.apiKey;
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
+        headers,
         body: JSON.stringify({
           model: this.model,
           messages,
@@ -247,15 +252,18 @@ export class MockGroundedChatProvider implements ChatProvider {
 export function isChatbotConfigured(): boolean {
   const isProd = process.env.NODE_ENV === "production";
   const apiKey = process.env.CHATBOT_API_KEY;
+  const allowFallbackInProd =
+    process.env.CHATBOT_ENABLE_FALLBACK === "true" ||
+    process.env.CHATBOT_PROVIDER === "mock";
 
   if (!apiKey || apiKey.trim() === "" || apiKey === "change_in_production") {
-    if (isProd) {
+    if (isProd && !allowFallbackInProd) {
       console.warn(
         "[Chatbot Disabled] CHATBOT_API_KEY is missing in production environment. Hiding assistant widget to prevent broken user experience."
       );
       return false;
     }
-    // In dev or test, we fall back cleanly to MockGroundedProvider
+    // In dev, test, or when explicit grounded fallback is permitted
     return true;
   }
 
@@ -272,6 +280,17 @@ export function getChatProvider(): ChatProvider {
 
   if (!apiKey || apiKey === "change_in_production" || providerType === "mock") {
     return new MockGroundedChatProvider();
+  }
+
+  if (providerType === "gemini" || providerType === "google") {
+    return new OpenAICompatibleChatProvider({
+      name: "Gemini",
+      apiKey,
+      model: model || "gemini-1.5-flash",
+      baseUrl:
+        process.env.CHATBOT_BASE_URL ||
+        "https://generativelanguage.googleapis.com/v1beta/openai",
+    });
   }
 
   if (providerType === "groq") {

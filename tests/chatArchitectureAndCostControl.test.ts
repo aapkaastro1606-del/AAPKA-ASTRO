@@ -141,6 +141,13 @@ describe("Chatbot Architecture, Cost Control & Privacy Suite", () => {
       process.env.CHATBOT_MODEL = "gpt-4o-mini";
       const openaiProvider = getChatProvider();
       assert.strictEqual(openaiProvider.name, "OpenAI");
+
+      // 4. Gemini provider
+      process.env.CHATBOT_PROVIDER = "gemini";
+      process.env.CHATBOT_API_KEY = "AIzaSy_test_key_gemini";
+      process.env.CHATBOT_MODEL = "gemini-1.5-flash";
+      const geminiProvider = getChatProvider();
+      assert.strictEqual(geminiProvider.name, "Gemini");
     });
   });
 
@@ -153,6 +160,14 @@ describe("Chatbot Architecture, Cost Control & Privacy Suite", () => {
       delete process.env.CHATBOT_API_KEY;
 
       assert.strictEqual(isChatbotConfigured(), false);
+    });
+
+    test("isChatbotConfigured returns true in production if CHATBOT_ENABLE_FALLBACK is set", () => {
+      process.env.NODE_ENV = "production";
+      delete process.env.CHATBOT_API_KEY;
+      process.env.CHATBOT_ENABLE_FALLBACK = "true";
+
+      assert.strictEqual(isChatbotConfigured(), true);
     });
 
     test("isChatbotConfigured returns true in production if valid CHATBOT_API_KEY is set", () => {
