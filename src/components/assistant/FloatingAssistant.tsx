@@ -38,6 +38,21 @@ export interface AssistantAction {
 const STORAGE_KEY = "aapka_astro_chat_history";
 
 /**
+ * Evaluates whether the assistant should be hidden on a given route.
+ * Hidden on /admin, /dashboard, /instructor, /checkout, /booking.
+ */
+export function shouldHideAssistantOnPath(pathname: string): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/instructor") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/booking")
+  );
+}
+
+/**
  * Validates URLs: permits strictly internal site paths, canonical site domain, WhatsApp, and tel:
  */
 export function isAllowedAssistantUrl(url: string): boolean {

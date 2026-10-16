@@ -98,6 +98,290 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   const lang = detectLanguage(rawQuery);
 
   // --------------------------------------------------------------------------
+  // 0A. ADVERSARIAL: PROMPT INJECTION, JAILBREAK & SECRET / PROMPT EXTRACTION
+  // Rule 8: Resist prompt injection, jailbreaks, and instructions to reveal prompt or keys.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("ignore all previous") ||
+    query.includes("ignore previous") ||
+    query.includes("forget all previous") ||
+    query.includes("forget your instructions") ||
+    query.includes("dan mode") ||
+    query.includes("you are now dan") ||
+    query.includes("jailbreak") ||
+    query.includes("system prompt") ||
+    query.includes("chatbot_api_key") ||
+    query.includes("api key") ||
+    query.includes("reveal your instructions") ||
+    query.includes("reveal prompt") ||
+    query.includes("show prompt") ||
+    query.includes("print system prompt") ||
+    query.includes("unrestricted assistant") ||
+    query.includes("disregard rules") ||
+    query.includes("bypass safety") ||
+    query.includes("backend secret")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "मैं आपका एस्ट्रो (Aapka Astro) का आधिकारिक AI सहायक हूँ। मैं अपनी सुरक्षा नीतियों, सिस्टम निर्देशों अथवा गुप्त कुंजियों (API keys) को अनदेखा या प्रकट नहीं कर सकता। मैं केवल वेबसाइट की सेवाओं, आचार्य नीरज कुमार जी के परामर्श, और वैदिक साधनों से संबंधित प्रश्नों में आपकी सहायता के लिए उपलब्ध हूँ।",
+        language: "hi",
+        intent: "prompt_injection_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Main Aapka Astro ka official AI assistant hoon. Main apne core security rules, system instructions ya API keys ko disclose ya ignore nahi kar sakta. Main sirf Aapka Astro ki services, Acharya Niraj Kumar ji ki consultation aur free Vedic tools ke baare mein madad karne ke liye hoon. Aap kya jaanna chahte hain?",
+        language: "hinglish",
+        intent: "prompt_injection_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "I am the official AI assistant for Aapka Astro. I cannot ignore my operating instructions, alter core safety guidelines, or disclose system prompts or API keys. I am strictly dedicated to assisting you with Aapka Astro's Vedic astrology, Devta Vaastu, and consultation services. How may I assist you with our services today?",
+      language: "en",
+      intent: "prompt_injection_refusal",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 0B. ADVERSARIAL & SAFETY: PAYMENT & BOOKING CONFIRMATION ATTEMPTS
+  // Rule 5: Never confirm that a booking, payment, or enrolment has happened.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("confirm my payment") ||
+    query.includes("confirm payment") ||
+    query.includes("confirm my booking") ||
+    query.includes("confirm booking") ||
+    query.includes("confirm my enrolment") ||
+    query.includes("confirm enrolment") ||
+    query.includes("did my payment go through") ||
+    query.includes("payment ho gaya confirm") ||
+    query.includes("payment kar diya") ||
+    query.includes("payment kar di") ||
+    query.includes("maine pay kar diya") ||
+    query.includes("paise bhej diye") ||
+    query.includes("verify my payment") ||
+    query.includes("booking confirm karo") ||
+    query.includes("payment confirm karo") ||
+    query.includes("mera payment aaya") ||
+    (query.includes("paid") && (query.includes("confirm") || query.includes("booked")))
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "कृपया ध्यान दें: एक स्वचालित AI सहायक के रूप में, मेरे पास बैंक खातों या भुगतान लेजर की पहुँच नहीं है, इसलिए मैं किसी भी भुगतान या बुकिंग की पुष्टि नहीं कर सकता।\n\nसभी भुगतानों का सत्यापन हमारे व्यवस्थापक/ओनर द्वारा मैन्युअल रूप से किया जाता है। कृपया अपने UPI भुगतान का स्क्रीनशॉट या UTR संदर्भ हमारे आधिकारिक WhatsApp नंबर (+91 93112 15564) पर भेजें। हमारी टीम तुरंत सत्यापन कर आपकी अपॉइंटमेंट की पुष्टि कर देगी।",
+        language: "hi",
+        intent: "payment_confirmation_attempt",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Dhyan dein: Ek automated AI assistant hone ke naate, mere paas banking ledger ya payment verification ka access nahi hai, isliye main kisi bhi payment ya booking ko confirm nahi kar sakta.\n\nSabhi payments aur bookings ka verification hamari management team dwara directly kiya jata hai. Kripya apna UPI payment screenshot ya UTR number hamare WhatsApp (+91 93112 15564) par send karein. Team turant verify karke aapka slot confirm kar degi.",
+        language: "hinglish",
+        intent: "payment_confirmation_attempt",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+      };
+    }
+    return {
+      answer: "Please note: As an automated AI assistant, I do not have direct access to banking portals or transaction ledgers and CANNOT verify payments or confirm bookings.\n\nAll payments and bookings are strictly verified by our management team. Please send your UPI transaction screenshot or UTR reference to our official WhatsApp at +91 93112 15564. Our team will verify it immediately and confirm your consultation slot.",
+      language: "en",
+      intent: "payment_confirmation_attempt",
+      confidence: "high",
+      actions: [ACTION_WHATSAPP, ACTION_BOOK_ASTRO],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 0C. ADVERSARIAL & SAFETY: MEDICAL ADVICE REFUSAL
+  // Rule 6: Do not give medical advice, and never guarantee health outcomes.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("chest pain") ||
+    query.includes("heart attack") ||
+    query.includes("breathlessness") ||
+    query.includes("medicine") ||
+    query.includes("medication") ||
+    query.includes("prescription") ||
+    query.includes("dawa") ||
+    query.includes("davai") ||
+    query.includes("treatment for") ||
+    query.includes("cure for") ||
+    query.includes("doctor") ||
+    query.includes("depression") ||
+    query.includes("suicide") ||
+    query.includes("bukhar ki") ||
+    (query.includes("disease") && !query.includes("astrology"))
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "महत्वपूर्ण सूचना: एक AI सहायक के रूप में, मैं कोई चिकित्सीय सलाह (Medical Advice) या दवा की सिफारिश नहीं कर सकता।\n\nयदि आप किसी स्वास्थ्य समस्या, सीने में दर्द या आपातकालीन स्थिति का सामना कर रहे हैं, तो कृपया तुरंत किसी योग्य चिकित्सक (Doctor) या नजदीकी अस्पताल से संपर्क करें। वैदिक ज्योतिष में स्वास्थ्य व मानसिक शांति हेतु ग्रहों के मार्गदर्शन के लिए आप आचार्य नीरज कुमार जी से परामर्श ले सकते हैं।",
+        language: "hi",
+        intent: "medical_advice_refusal",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Important Notice: AI assistant hone ke naate main koi medical advice, bimari ka ilaj ya medicine prescribe nahi kar sakta.\n\nAgar aap kisi physical health issue ya emergency ka samna kar rahe hain, to kripya turant kisi licensed doctor ya hospital se contact karein. Swasthya aur mansik shanti ke liye grahon ke prabhav aur Vedic remedies ke liye aap Acharya Niraj Kumar ji se consultation book kar sakte hain.",
+        language: "hinglish",
+        intent: "medical_advice_refusal",
+        confidence: "high",
+        actions: [ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+    return {
+      answer: "Important Notice: As an AI assistant, I do NOT provide medical advice, diagnose health conditions, or prescribe medicines.\n\nIf you are experiencing medical symptoms, illness, or an emergency, please consult a qualified doctor or emergency medical service immediately. For astrological insights into planetary influences on vitality and spiritual remedies, you may consult Acharya Niraj Kumar.",
+      language: "en",
+      intent: "medical_advice_refusal",
+      confidence: "high",
+      actions: [ACTION_WHATSAPP, ACTION_CALL],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 0D. ADVERSARIAL & SAFETY: LEGAL ADVICE REFUSAL
+  // Rule 6: Do not give legal advice.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("sue my") ||
+    query.includes("sue someone") ||
+    query.includes("legal advice") ||
+    query.includes("lawsuit") ||
+    query.includes("file a case") ||
+    query.includes("criminal case") ||
+    query.includes("police complaint") ||
+    query.includes("divorce petition") ||
+    query.includes("lawyer") ||
+    query.includes("attorney") ||
+    query.includes("vakeel") ||
+    query.includes("court case") ||
+    query.includes("kanooni salah") ||
+    query.includes("fir darj")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "महत्वपूर्ण सूचना: एक AI सहायक के रूप में, मैं कोई कानूनी सलाह (Legal Advice) नहीं दे सकता और न ही अदालत में प्रतिनिधित्व कर सकता हूँ।\n\nकिसी भी कानूनी विवाद, मुकदमे या पुलिस शिकायत के लिए कृपया किसी योग्य अधिवक्ता (Lawyer/Advocate) से परामर्श लें। कानूनी विवादों के ज्योतिषीय समय (Dasha/Transits) और वैदिक शांति उपायों के विश्लेषण हेतु आप आचार्य नीरज कुमार जी से परामर्श ले सकते हैं।",
+        language: "hi",
+        intent: "legal_advice_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Important Notice: AI assistant legal advice, court case representation ya legal petition draft nahi kar sakta.\n\nKisi bhi legal matter ya court dispute ke liye kripya kisi practicing advocate ya lawyer se consult karein. Legal disputes ke astrological planetary timing aur Vedic remedies ke vishleshan ke liye aap Acharya Niraj Kumar ji ke sath consultation book kar sakte hain.",
+        language: "hinglish",
+        intent: "legal_advice_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "Important Notice: As an AI assistant, I do NOT provide legal advice, draft court petitions, or offer attorney representation.\n\nFor any legal disputes, lawsuits, or formal proceedings, please consult a qualified licensed advocate or legal professional. For Vedic astrological analysis on dispute timing, planetary dashas, and peaceful remedies, you may book a consultation with Acharya Niraj Kumar.",
+      language: "en",
+      intent: "legal_advice_refusal",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 0E. ADVERSARIAL: ABUSIVE OR OFFENSIVE CONTENT REFUSAL
+  // Rule 9: Politely refuse abusive or offensive requests.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("fuck") ||
+    query.includes("bitch") ||
+    query.includes("bastard") ||
+    query.includes("idiot") ||
+    query.includes("stupid bot") ||
+    query.includes("useless bot") ||
+    query.includes("pagal bot") ||
+    query.includes("chutiya") ||
+    query.includes("harami") ||
+    query.includes("bakwaas") ||
+    query.includes("asshole") ||
+    query.includes("shut up")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "मैं आपका एस्ट्रो (Aapka Astro) का आधिकारिक सहायक हूँ और शिष्टता एवं सम्मान के साथ सहायता प्रदान करने के लिए उपस्थित हूँ। कृपया मर्यादित भाषा का प्रयोग करें। मैं आपकी जन्म कुंडली, वास्तु परामर्श अथवा सेवाओं के विषय में किस प्रकार सहायता कर सकता हूँ?",
+        language: "hi",
+        intent: "abusive_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Main Aapka Astro ka assistant hoon aur respect ke sath madad karne ke liye committed hoon. Kripya polite bhasha ka use karein. Main astrology consultation, Devta Vaastu ya free tools ke baare mein aapki kya help kar sakta hoon?",
+        language: "hinglish",
+        intent: "abusive_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "I am the official assistant of Aapka Astro and I am committed to maintaining a courteous and respectful conversation. Please communicate respectfully. How may I assist you with our Vedic astrology, Devta Vaastu, or booking inquiries?",
+      language: "en",
+      intent: "abusive_refusal",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 0F. ADVERSARIAL: OFF-TOPIC QUERIES REFUSAL
+  // Rule 9: Politely refuse off-topic requests.
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("fifa world cup") ||
+    query.includes("world cup") ||
+    query.includes("binary tree") ||
+    query.includes("capital of france") ||
+    query.includes("recipe for") ||
+    query.includes("python code") ||
+    query.includes("elon musk") ||
+    query.includes("crypto") ||
+    query.includes("bitcoin") ||
+    query.includes("stock market tips")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "मैं केवल आपका एस्ट्रो (Aapka Astro), वैदिक ज्योतिष, देवता वास्तु और आचार्य नीरज कुमार जी के परामर्श से संबंधित सहायता के लिए उपलब्ध हूँ। यह विषय मेरे दायरे से बाहर है। आप हमारी ज्योतिष सेवाओं या मुफ्त कुंडली साधनों के बारे में क्या जानना चाहते हैं?",
+        language: "hi",
+        intent: "off_topic_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Main exclusively Aapka Astro, Vedic Jyotish, Devta Vaastu aur Acharya Niraj Kumar ji ki consultations ke liye dedicated hoon. Ye topic mere scope se bahar hai. Aap hamari astrology services ya free tools ke baare mein kya jaanna chahte hain?",
+        language: "hinglish",
+        intent: "off_topic_refusal",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "I am exclusively dedicated to Aapka Astro, Vedic astrology consultations, Devta Vaastu, and our online astrological tools. That inquiry is outside the scope of this website. How may I assist you with our consultations, gemstones, or birth chart analysis?",
+      language: "en",
+      intent: "off_topic_refusal",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
   // 1. GREETING
   // --------------------------------------------------------------------------
   if (
@@ -135,32 +419,48 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   // 2. PRICING, FEES, CHARGES & OFFERS
   // --------------------------------------------------------------------------
   if (
-    query.includes("fee") ||
-    query.includes("fees") ||
-    query.includes("price") ||
-    query.includes("pricing") ||
-    query.includes("cost") ||
-    query.includes("charge") ||
-    query.includes("charges") ||
-    query.includes("kitna") ||
-    query.includes("kitne") ||
-    query.includes("rate") ||
-    query.includes("discount") ||
-    query.includes("offer") ||
-    query.includes("1051") ||
-    query.includes("first1051") ||
-    query.includes("free consultation") ||
-    query.includes("muft") ||
-    query.includes("paisa") ||
-    query.includes("शुल्क") ||
-    query.includes("फीस") ||
-    query.includes("फ़ीस") ||
-    query.includes("लागत") ||
-    query.includes("दाम") ||
-    query.includes("खर्च") ||
-    query.includes("चार्ज") ||
-    query.includes("छूट") ||
-    query.includes("ऑफर")
+    !query.includes("wallet") &&
+    !query.includes("coin") &&
+    !query.includes("recharge") &&
+    !query.includes("tool") &&
+    !query.includes("tools") &&
+    !query.includes("tithi") &&
+    !query.includes("nakshatra") &&
+    !query.includes("rahukaal") &&
+    (
+      query.includes("fee") ||
+      query.includes("fees") ||
+      query.includes("price") ||
+      query.includes("pricing") ||
+      query.includes("cost") ||
+      (query.includes("charge") && !query.includes("recharge")) ||
+      query.includes("charges") ||
+      query.includes("kitna") ||
+      query.includes("kitne") ||
+      (query.includes("rate") && !query.includes("generate") && !query.includes("accurate")) ||
+      query.includes("discount") ||
+      query.includes("offer") ||
+      query.includes("coupon") ||
+      query.includes("1051") ||
+      query.includes("first1051") ||
+      query.includes("pdf") ||
+      query.includes("report") ||
+      query.includes("free consultation") ||
+      (query.includes("free") && !query.includes("kundli") && !query.includes("panchang") && !query.includes("milan") && !query.includes("rashifal")) ||
+      query.includes("0 rupees") ||
+      query.includes("zero rupees") ||
+      query.includes("muft") ||
+      query.includes("paisa") ||
+      query.includes("शुल्क") ||
+      query.includes("फीस") ||
+      query.includes("फ़ीस") ||
+      query.includes("लागत") ||
+      query.includes("दाम") ||
+      query.includes("खर्च") ||
+      query.includes("चार्ज") ||
+      query.includes("छूट") ||
+      query.includes("ऑफर")
+    )
   ) {
     const isFreeInquiry =
       query.includes("free consultation") ||
@@ -168,14 +468,14 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
       query.includes("मुफ्त") ||
       query.includes("मुफ़्त") ||
       query.includes("फ्री") ||
-      (query.includes("free") && (query.includes("consult") || query.includes("baat")));
+      (query.includes("free") && (query.includes("consult") || query.includes("baat") || query.includes("0 rupees") || query.includes("zero")));
 
     if (lang === "hi") {
       const freeClarification = isFreeInquiry
         ? "ध्यान दें: व्यक्तिगत 1-on-1 परामर्श निःशुल्क (Free) नहीं है। "
         : "";
       return {
-        answer: `${freeClarification}आपका एस्ट्रो पर परामर्श शुल्क पूरी तरह पारदर्शी और निश्चित (Flat Pay-Per-Booking) है:\n\n• **वैदिक ज्योतिष परामर्श (1-on-1):** प्रथम परामर्श पर 50% की विशेष छूट के साथ मात्र **₹1,051/-** (सामान्य शुल्क ₹2,100)। इसमें जन्म कुंडली, दशा एवं वैदिक उपायों का संपूर्ण विश्लेषण शामिल है।\n• **देवता वास्तु परामर्श:** फ्लैट ₹10,000 की बचत के साथ **₹15,000/-** (सामान्य शुल्क ₹25,000)। 16-जोन बिना तोड़फोड़ का वैज्ञानिक वास्तु समाधान।\n• **ऑनलाइन कुंडली व पंचांग:** हमारी वेबसाइट पर जन्म कुंडली निर्माण, कुंडली मिलान और दैनिक पंचांग 100% मुफ़्त हैं।\n\nयहाँ कोई छिपा हुआ वॉलेट बैलेंस या कॉइन सिस्टम नहीं है।`,
+        answer: `${freeClarification}आपका एस्ट्रो पर परामर्श शुल्क पूरी तरह पारदर्शी और निश्चित (Flat Pay-Per-Booking) है:\n\n• **वैदिक ज्योतिष परामर्श (1-on-1):** प्रथम परामर्श पर 50% की विशेष छूट के साथ मात्र **₹1,051/-** (कूपन कोड: FIRST1051, सामान्य शुल्क ₹2,100)। इसमें जन्म कुंडली, दशा एवं वैदिक उपायों का संपूर्ण विश्लेषण शामिल है।\n• **देवता वास्तु परामर्श:** फ्लैट ₹10,000 की बचत के साथ **₹15,000/-** (सामान्य शुल्क ₹25,000)। 16-जोन बिना तोड़फोड़ का वैज्ञानिक वास्तु समाधान।\n• **जन्म कुंडली पूर्ण PDF रिपोर्ट:** मात्र **₹501/-** (डाउनलोड एवं प्रिंट योग्य पूर्ण रिपोर्ट)।\n• **ऑनलाइन कुंडली व पंचांग:** हमारी वेबसाइट पर जन्म कुंडली निर्माण, 36 गुण मिलान और दैनिक पंचांग 100% मुफ़्त हैं।\n\nयहाँ कोई छिपा हुआ वॉलेट बैलेंस या कॉइन सिस्टम नहीं है।`,
         language: "hi",
         intent: "pricing",
         confidence: "high",
@@ -188,7 +488,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
         ? "Dhyan dein: Personal 1-on-1 consultation free nahi hai. "
         : "";
       return {
-        answer: `${freeClarification}Aapka Astro par consultation charges bilkul transparent aur flat pay-per-booking hain:\n\n• **Vedic Astro Consultation (1-on-1):** First consultation par 50% discount ke sath flat **₹1,051/-** (Regular fee ₹2,100). Isme Janam Kundli, Dasha timeline, career, marriage aur non-destructive Vedic remedies shamil hain.\n• **Devta Vaastu Consultation:** Flat ₹10,000 savings ke sath **₹15,000/-** (Regular fee ₹25,000) for complete 16-zone zero-demolition audit.\n• **Free Tools:** Website par Janam Kundli banana, Kundli Milan (Matching), aur Aaj Ka Panchang 100% free hain.\n\nAapka Astro par koi wallet coin ya subscription recharge nahi hai; aap direct pay karte hain.`,
+        answer: `${freeClarification}Aapka Astro par consultation charges bilkul transparent aur flat pay-per-booking hain:\n\n• **Vedic Astro Consultation (1-on-1):** First consultation par 50% discount ke sath flat **₹1,051/-** (Coupon code: FIRST1051, Regular fee ₹2,100). Isme Janam Kundli, Dasha timeline, career, marriage aur non-destructive Vedic remedies shamil hain.\n• **Devta Vaastu Consultation:** Flat ₹10,000 savings ke sath **₹15,000/-** (Regular fee ₹25,000) for complete 16-zone zero-demolition audit.\n• **Kundli Full PDF Report:** Flat **₹501/-** one-time printable dossier.\n• **Free Tools:** Website par Janam Kundli banana, Kundli Milan (Matching), aur Aaj Ka Panchang 100% free hain.\n\nAapka Astro par koi wallet coin ya subscription recharge nahi hai; aap direct pay karte hain.`,
         language: "hinglish",
         intent: "pricing",
         confidence: "high",
@@ -200,7 +500,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
       ? "Please note: 1-on-1 personal consultations are not free. "
       : "";
     return {
-      answer: `${freeClarification}Aapka Astro operates on a transparent, flat pay-per-booking model with zero hidden fees:\n\n• **Vedic Astro Consultation (1-on-1):** Flat **₹1,051/-** for your first consultation (50% off regular ₹2,100 with code FIRST1051). Includes comprehensive birth chart, D9/D10, dasha timing, and non-destructive remedies.\n• **Devta Vaastu Consultation:** Flat **₹15,000/-** (save ₹10,000, regular ₹25,000) for a 16-zone zero-demolition residential or commercial audit.\n• **Free Calculators:** Online Kundli generation, Kundli Matching (Milan), Daily Panchang, and Rashifal are 100% free on our site.\n\nWe do NOT use wallet recharges or coin deductions.`,
+      answer: `${freeClarification}Aapka Astro operates on a transparent, flat pay-per-booking model with zero hidden fees:\n\n• **Vedic Astro Consultation (1-on-1):** Flat **₹1,051/-** for your first consultation (50% off regular ₹2,100 with discount coupon code FIRST1051). Includes comprehensive birth chart, D9/D10, dasha timing, and non-destructive remedies.\n• **Devta Vaastu Consultation:** Flat **₹15,000/-** (save ₹10,000, regular ₹25,000) for a 16-zone zero-demolition residential or commercial audit.\n• **Kundli Full PDF Report:** Flat **₹501/-** one-time printable comprehensive dossier.\n• **Free Calculators:** Online Kundli generation, Kundli Matching (Milan), Daily Panchang, and Rashifal are 100% free on our site.\n\nWe do NOT use wallet recharges or coin deductions.`,
       language: "en",
       intent: "pricing",
       confidence: "high",
@@ -209,21 +509,76 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   }
 
   // --------------------------------------------------------------------------
-  // 3. ACHARYA NIRAJ KUMAR CREDENTIALS & BACKGROUND
+  // 3. HOW TO BOOK / CONSULTATION PROCESS & FORMATS
+  // (Evaluated before credentials so "book with Acharya" triggers booking)
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("how to book") ||
+    query.includes("book kaise") ||
+    query.includes("appointment") ||
+    query.includes("process") ||
+    query.includes("format") ||
+    query.includes("video call") ||
+    query.includes("voice call") ||
+    query.includes("google meet") ||
+    query.includes("kaise consult") ||
+    query.includes("kaise kare") ||
+    query.includes("steps") ||
+    query.includes("बुक") ||
+    query.includes("बुकिंग") ||
+    query.includes("अपॉइंटमेंट") ||
+    query.includes("परामर्श कैसे") ||
+    query.includes("birth time") ||
+    query.includes("submit") ||
+    query.includes("before the call")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आचार्य नीरज कुमार जी के साथ परामर्श बुक करने की प्रक्रिया अत्यंत सरल है:\n\n1. **/consult** पेज पर जाएं और 'Astro Consultation' (₹1,051) या 'Vaastu Consultation' (₹15,000) चुनें।\n2. अपनी जन्म तिथि, सही जन्म समय, जन्म स्थान और अपनी मुख्य समस्या/प्रश्न दर्ज करें।\n3. अपना पसंदीदा समय स्लॉट चुनें और डायरेक्ट UPI (GPay/PhonePe/Paytm/QR) द्वारा भुगतान पूरा करें।\n4. पुष्टि होते ही आपको WhatsApp Call या Google Meet का सीधा लिंक प्राप्त हो जाएगा।",
+        language: "hi",
+        intent: "booking_process",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: "Acharya Niraj Kumar ji ke sath consultation book karna bahut simple hai:\n\n1. **/consult** page par jaiye aur 'Astro Consultation' (₹1,051) ya 'Vaastu Consultation' (₹15,000) select kijiye.\n2. Apna naam, birth date, exact birth time, birth place aur apna sawal fill kijiye.\n3. Preferred date aur time window select karke direct UPI (GPay, PhonePe, Paytm ya QR code) se payment confirm kijiye.\n4. Booking confirm hote hi aapko WhatsApp Call ya Google Meet ka direct link mil jata hai.",
+        language: "hinglish",
+        intent: "booking_process",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+      };
+    }
+
+    return {
+      answer: "Booking a 1-on-1 session with Acharya Niraj Kumar is quick and direct:\n\n1. Visit **/consult** and select your consultation type (Astro Consultation at ₹1,051 or Vaastu at ₹15,000).\n2. Enter your birth details (date, exact time, place) and your primary concerns.\n3. Choose your preferred slot and complete the flat pay-per-booking payment via direct UPI (GPay, PhonePe, Paytm, or QR).\n4. You will receive immediate confirmation with your direct WhatsApp Call or Google Meet joining link.",
+      language: "en",
+      intent: "booking_process",
+      confidence: "high",
+      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 4. ACHARYA NIRAJ KUMAR CREDENTIALS & BACKGROUND
   // --------------------------------------------------------------------------
   if (
     query.includes("who is") ||
-    query.includes("astrologer") ||
-    query.includes("acharya") ||
-    query.includes("niraj") ||
     query.includes("credentials") ||
     query.includes("qualification") ||
+    query.includes("qualifications") ||
     query.includes("experience") ||
     query.includes("guru") ||
     query.includes("lineage") ||
     query.includes("kaun hai") ||
     query.includes("degrees") ||
     query.includes("background") ||
+    query.includes("profile") ||
+    query.includes("about the astrologer") ||
+    query.includes("about acharya") ||
+    query.includes("about niraj") ||
     query.includes("आचार्य") ||
     query.includes("नीरज") ||
     query.includes("ज्योतिषी") ||
@@ -258,61 +613,6 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
       intent: "acharya_credentials",
       confidence: "high",
       actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
-    };
-  }
-
-  // --------------------------------------------------------------------------
-  // 4. HOW TO BOOK / CONSULTATION PROCESS & FORMATS
-  // --------------------------------------------------------------------------
-  if (
-    query.includes("how to book") ||
-    query.includes("book kaise") ||
-    query.includes("appointment") ||
-    query.includes("process") ||
-    query.includes("format") ||
-    query.includes("video call") ||
-    query.includes("voice call") ||
-    query.includes("google meet") ||
-    query.includes("kaise consult") ||
-    query.includes("kaise kare") ||
-    query.includes("steps") ||
-    query.includes("बुक") ||
-    query.includes("बुकिंग") ||
-    query.includes("अपॉइंटमेंट") ||
-    query.includes("परामर्श कैसे") ||
-    query.includes("video call") ||
-    query.includes("voice call") ||
-    query.includes("google meet") ||
-    query.includes("kaise consult") ||
-    query.includes("kaise kare") ||
-    query.includes("steps")
-  ) {
-    if (lang === "hi") {
-      return {
-        answer: "आचार्य नीरज कुमार जी के साथ परामर्श बुक करने की प्रक्रिया अत्यंत सरल है:\n\n1. **/consult** पेज पर जाएं और 'Astro Consultation' (₹1,051) या 'Vaastu Consultation' (₹15,000) चुनें।\n2. अपनी जन्म तिथि, सही जन्म समय, जन्म स्थान और अपनी मुख्य समस्या/प्रश्न दर्ज करें।\n3. अपना पसंदीदा समय स्लॉट चुनें और डायरेक्ट UPI (GPay/PhonePe/Paytm/QR) द्वारा भुगतान पूरा करें।\n4. पुष्टि होते ही आपको WhatsApp Call या Google Meet का सीधा लिंक प्राप्त हो जाएगा।",
-        language: "hi",
-        intent: "booking_process",
-        confidence: "high",
-        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
-      };
-    }
-
-    if (lang === "hinglish") {
-      return {
-        answer: "Acharya Niraj Kumar ji ke sath consultation book karna bahut simple hai:\n\n1. **/consult** page par jaiye aur 'Astro Consultation' (₹1,051) ya 'Vaastu Consultation' (₹15,000) select kijiye.\n2. Apna naam, birth date, exact birth time, birth place aur apna sawal fill kijiye.\n3. Preferred date aur time window select karke direct UPI (GPay, PhonePe, Paytm ya QR code) se payment confirm kijiye.\n4. Booking confirm hote hi aapko WhatsApp Call ya Google Meet ka direct link mil jata hai.",
-        language: "hinglish",
-        intent: "booking_process",
-        confidence: "high",
-        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
-      };
-    }
-
-    return {
-      answer: "Booking a 1-on-1 session with Acharya Niraj Kumar is quick and direct:\n\n1. Visit **/consult** and select your consultation type (Astro Consultation at ₹1,051 or Vaastu at ₹15,000).\n2. Enter your birth details (date, exact time, place) and your primary concerns.\n3. Choose your preferred slot and complete the flat pay-per-booking payment via direct UPI (GPay, PhonePe, Paytm, or QR).\n4. You will receive immediate confirmation with your direct WhatsApp Call or Google Meet joining link.",
-      language: "en",
-      intent: "booking_process",
-      confidence: "high",
-      actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP, ACTION_CALL],
     };
   }
 
@@ -368,7 +668,11 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
     query.includes("cancel") ||
     query.includes("reschedule") ||
     query.includes("paisa wapas") ||
-    query.includes("guarantee")
+    query.includes("guarantee") ||
+    query.includes("रिफंड") ||
+    query.includes("रद्दीकरण") ||
+    query.includes("वापसी") ||
+    query.includes("वापस")
   ) {
     if (lang === "hi") {
       return {
@@ -416,7 +720,13 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
     query.includes("timing") ||
     query.includes("hours") ||
     query.includes("kaha hai") ||
-    query.includes("kahan")
+    query.includes("kahan") ||
+    query.includes("email") ||
+    query.includes("social") ||
+    query.includes("instagram") ||
+    query.includes("youtube") ||
+    query.includes("handles") ||
+    query.includes("social media")
   ) {
     if (lang === "hi") {
       return {
@@ -540,14 +850,21 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   if (
     query.includes("free kundli") ||
     query.includes("kundli generator") ||
+    query.includes("kundli") ||
     query.includes("kundali") ||
     query.includes("panchang") ||
+    query.includes("tithi") ||
+    query.includes("nakshatra") ||
+    query.includes("rahukaal") ||
     query.includes("matching") ||
     query.includes("milan") ||
     query.includes("gun milan") ||
     query.includes("rashifal") ||
     query.includes("horoscope") ||
-    query.includes("calculator")
+    query.includes("calculator") ||
+    query.includes("tool") ||
+    query.includes("tools") ||
+    query.includes("free tools")
   ) {
     if (lang === "hi") {
       return {
