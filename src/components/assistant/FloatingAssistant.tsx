@@ -23,6 +23,7 @@ interface ChatMessage {
   text: string;
   actions?: AssistantAction[];
   timestamp: string;
+  isStreaming?: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -36,15 +37,45 @@ const QUICK_PROMPTS = [
 export function FloatingAssistant() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionKey, setSessionKey] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Initial welcome message
+
+    // 1. Session key initialization for anonymous rate limiting
+    try {
+      let key = sessionStorage.getItem("aapka_astro_chat_session");
+      if (!key) {
+        key = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        sessionStorage.setItem("aapka_astro_chat_session", key);
+      }
+      setSessionKey(key);
+    } catch {
+      // sessionStorage unavailable
+    }
+
+    // 2. Production Health Check: Do NOT render if chatbot is disabled / key missing
+    fetch("/api/chat/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.enabled) {
+          setIsEnabled(true);
+        } else {
+          setIsEnabled(false);
+        }
+      })
+      .catch(() => {
+        // Safe fail-closed: do not render broken chatbot
+        setIsEnabled(false);
+      });
+
+    // 3. Welcome Message
     setMessages([
       {
         id: "msg-welcome",
@@ -73,8 +104,8 @@ export function FloatingAssistant() {
     }
   }, [messages, isOpen]);
 
-  // Suppress on administrative desks and operator queue
-  if (!mounted) return null;
+  // Suppress when unmounted, disabled in production, or on administrative desks
+  if (!mounted || !isEnabled) return null;
   if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
     return null;
   }
@@ -83,10 +114,13 @@ export function FloatingAssistant() {
     const queryText = (textToSend || input).trim();
     if (!queryText || isLoading) return;
 
+    // Strict 500-character cap
+    const sanitizedQuery = queryText.slice(0, 500);
+
     const userMessage: ChatMessage = {
       id: `usr-${Date.now()}`,
       sender: "user",
-      text: queryText,
+      text: sanitizedQuery,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -94,55 +128,141 @@ export function FloatingAssistant() {
     setInput("");
     setIsLoading(true);
 
+    // Create an empty assistant message ready to receive streamed tokens
+    const assistantMsgId = `ast-${Date.now()}`;
+    const initialAssistantMsg: ChatMessage = {
+      id: assistantMsgId,
+      sender: "assistant",
+      text: "",
+      isStreaming: true,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setMessages((prev) => [...prev, initialAssistantMsg]);
+
     try {
-      const response = await fetch("/api/assistant/chat", {
+      // Assemble history capped to last 8 messages
+      const historyContext = messages.slice(-8).map((m) => ({
+        role: m.sender,
+        content: m.text,
+      }));
+
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: queryText }),
+        body: JSON.stringify({
+          message: sanitizedQuery,
+          history: historyContext,
+          sessionKey,
+        }),
       });
 
-      const data = await response.json();
+      // Handle Rate Limiting (429) or Service Disabled (503)
+      if (response.status === 429 || response.status === 503) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg =
+          errorData.message ||
+          "You have reached the message limit for now. For immediate assistance, please connect with us directly on WhatsApp.";
 
-      if (data.success) {
-        const assistantMsg: ChatMessage = {
-          id: `ast-${Date.now()}`,
-          sender: "assistant",
-          text: data.answer,
-          actions: data.actions,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      } else {
-        const fallbackMsg: ChatMessage = {
-          id: `ast-err-${Date.now()}`,
-          sender: "assistant",
-          text: data.message || "I encountered an issue retrieving that. Please connect directly with our support team on WhatsApp.",
-          actions: [
-            {
-              label: "Chat on WhatsApp",
-              url: "https://wa.me/919311215564",
-              type: "whatsapp",
-            },
-          ],
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setMessages((prev) => [...prev, fallbackMsg]);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId
+              ? {
+                  ...m,
+                  text: errorMsg,
+                  isStreaming: false,
+                  actions: [
+                    {
+                      label: "Chat on WhatsApp",
+                      url: errorData.whatsappUrl || "https://wa.me/919311215564",
+                      type: "whatsapp",
+                    },
+                    {
+                      label: "Book Consultation",
+                      url: "/consult?product=astro&offer=FIRST1051",
+                      type: "primary",
+                    },
+                  ],
+                }
+              : m
+          )
+        );
+        return;
       }
+
+      if (!response.ok) {
+        throw new Error(`Server returned status ${response.status}`);
+      }
+
+      // Read streamed chunks
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? { ...m, text: fullText } : m
+            )
+          );
+        }
+      }
+
+      // Attach relevant contextual actions based on generated text
+      const lowerFull = fullText.toLowerCase();
+      const actions: AssistantAction[] = [];
+
+      if (lowerFull.includes("1,051") || lowerFull.includes("astro") || lowerFull.includes("kundli")) {
+        actions.push({
+          label: "Book Astro Session (₹1,051)",
+          url: "/consult?product=astro&offer=FIRST1051",
+          type: "primary",
+        });
+      }
+      if (lowerFull.includes("vaastu") || lowerFull.includes("vastu") || lowerFull.includes("15,000")) {
+        actions.push({
+          label: "Book Vaastu Audit (₹15,000)",
+          url: "/consult?product=vaastu",
+          type: "primary",
+        });
+      }
+      actions.push({
+        label: "Chat on WhatsApp",
+        url: "https://wa.me/919311215564?text=" + encodeURIComponent("Namaste Acharya Ji, I would like to inquire about a consultation on Aapka Astro."),
+        type: "whatsapp",
+      });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, isStreaming: false, actions }
+            : m
+        )
+      );
     } catch {
-      const errMsg: ChatMessage = {
-        id: `ast-net-err-${Date.now()}`,
-        sender: "assistant",
-        text: "Network connection was interrupted. You can connect with Acharya Ji directly on WhatsApp at +91 93112 15564.",
-        actions: [
-          {
-            label: "Chat on WhatsApp",
-            url: "https://wa.me/919311215564",
-            type: "whatsapp",
-          },
-        ],
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errMsg]);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? {
+                ...m,
+                text: "I am having trouble connecting right now. Please message Acharya Niraj Kumar directly on WhatsApp at +91 93112 15564.",
+                isStreaming: false,
+                actions: [
+                  {
+                    label: "Chat on WhatsApp",
+                    url: "https://wa.me/919311215564",
+                    type: "whatsapp",
+                  },
+                ],
+              }
+            : m
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -244,10 +364,13 @@ export function FloatingAssistant() {
                   }`}
                 >
                   {m.text}
+                  {m.isStreaming && (
+                    <span className="inline-block w-1.5 h-3.5 ml-1 bg-[#C1662F] animate-pulse"></span>
+                  )}
                 </div>
 
                 {/* Interactive Action Buttons */}
-                {m.actions && m.actions.length > 0 && (
+                {m.actions && m.actions.length > 0 && !m.isStreaming && (
                   <div className="mt-2 flex flex-wrap gap-1.5 w-full">
                     {m.actions.map((act, idx) => {
                       if (act.type === "whatsapp") {
@@ -312,12 +435,12 @@ export function FloatingAssistant() {
               </div>
             ))}
 
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.text === "" && (
               <div className="flex items-center gap-1.5 text-[#7B2D26] bg-white border border-[#E8D8C3] px-3 py-2 rounded-xl w-max">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#7B2D26] animate-bounce"></span>
                 <span className="h-1.5 w-1.5 rounded-full bg-[#C1662F] animate-bounce [animation-delay:0.2s]"></span>
                 <span className="h-1.5 w-1.5 rounded-full bg-[#E8A33D] animate-bounce [animation-delay:0.4s]"></span>
-                <span className="text-[10px] font-medium text-[#6E5545] ml-1">Searching site knowledge...</span>
+                <span className="text-[10px] font-medium text-[#6E5545] ml-1">Searching verified knowledge...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -350,15 +473,23 @@ export function FloatingAssistant() {
               <MessageSquare className="h-4 w-4" />
             </a>
 
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading}
-              placeholder="Poochhiye apna sawal / Ask a question..."
-              className="flex-1 rounded-xl border border-[#E8D8C3] bg-white px-3 py-2 text-xs text-[#3B2A1E] focus:outline-none focus:ring-1 focus:ring-[#7B2D26] focus:border-[#7B2D26]"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={input}
+                maxLength={500}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading}
+                placeholder="Poochhiye apna sawal / Ask a question..."
+                className="w-full rounded-xl border border-[#E8D8C3] bg-white pl-3 pr-10 py-2 text-xs text-[#3B2A1E] focus:outline-none focus:ring-1 focus:ring-[#7B2D26] focus:border-[#7B2D26]"
+              />
+              {input.length > 400 && (
+                <span className="absolute right-2 top-2 text-[9px] text-[#C1662F]">
+                  {500 - input.length}
+                </span>
+              )}
+            </div>
 
             <button
               onClick={() => handleSendMessage()}

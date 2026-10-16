@@ -161,3 +161,41 @@ Clerk's Free plan does not support satellite domains. Aapka Astro uses its own i
    - **Authorization:** Checks server session `auth()`, cookie auth, and Bearer token from Clerk client SDK.
    - **Live Probe:** Reports runtime Clerk key mode, server session recognition, received cookie names, apex vs www host, current user database row presence, total user count, last 5 sign-ups (masked), last webhook, environment checklist, and satellite variable audit.
    - **Secrets Safety:** Never prints secrets or full keys (only prefixes like `pk_test_...` and boolean true/false).
+
+---
+
+## 9. Floating AI Assistant: Architecture, Cost Control & Privacy Audit
+
+1. **Server-Side Route Boundary (`/api/chat`):**
+   - All model invocations execute strictly server-side via `/api/chat`.
+   - The credentials (`CHATBOT_API_KEY`, `CHATBOT_PROVIDER`, `CHATBOT_MODEL`) are exclusively read by server functions and **never sent to the client browser**.
+
+2. **Swappable Model Architecture (`ChatProvider` Interface):**
+   - Unified `ChatProvider` interface decoupling application code from underlying AI models.
+   - **Recommended Default:** Groq `llama-3.1-8b-instant` or OpenAI `gpt-4o-mini`. Both are small, high-throughput, low-cost models on a paid API tier where **training on customer data is disabled**.
+   - **Deterministic Fallback / Local Dev:** `MockGroundedChatProvider` powers local development and automated CI tests at **$0 cost** and zero external latency.
+
+3. **Fail-Closed Safety & Production Key Check:**
+   - If `CHATBOT_API_KEY` is missing in production (`NODE_ENV === "production"`), `/api/chat/status` immediately returns `{ enabled: false }` and logs `[Chatbot Disabled] CHATBOT_API_KEY is missing in production...`.
+   - The floating assistant widget mounts and queries `/api/chat/status`. If disabled, it returns `null` and **does not render**, ensuring visitors never encounter a non-functional or broken chatbot. Direct WhatsApp & Call buttons remain available across all pages.
+
+4. **Strict Cost & Context Boundaries:**
+   - **Input Limit:** Zod schema enforces maximum **500 characters** per query (frontend also enforces `maxLength={500}`).
+   - **Output Token Cap:** Capped at **400 output tokens** via `maxTokens: 400` in the model parameters.
+   - **Context Window:** Strictly trimmed to the **last 8 messages** (`history.slice(-8)`) to prevent quadratic context token growth.
+   - **Execution Timeout:** 15-second AbortController timeout prevents hanging serverless invocations.
+   - **Streaming Response:** Returns low-latency `ReadableStream` (`text/plain; charset=utf-8`) for real-time progressive token rendering.
+
+5. **Privacy-Preserving Rate Limiting (Zero Raw IP Storage):**
+   - In compliance with privacy standards and DPDP, client IPs are one-way hashed using salted SHA-256 (`crypto.createHash('sha256').update(ip:salt)`).
+   - Only the 32-character hex hash and integer counters are stored in memory; **raw IP addresses are never saved, persisted, or logged**.
+   - **Rate Limit Tiers:**
+     - Short Window: 15 messages per 10 minutes per hashed identifier.
+     - Daily User Limit: 100 messages per 24 hours per hashed identifier.
+     - Global Daily Cap: Configured via `CHATBOT_DAILY_MESSAGE_CAP` (default 1,000 queries/day across all visitors).
+   - When any limit is exceeded, HTTP 429 returns a warm, respectful message with a pre-filled direct WhatsApp escalation link (`https://wa.me/919311215564`).
+
+6. **Mandatory Hard Spending Backstop in Provider Dashboard:**
+   - Software rate limits protect against typical bot abuse, but the platform owner/developer **must configure a hard monthly spending limit** (recommended: **$5.00 to $10.00 / month**) directly in the provider's billing dashboard (Groq Console `Settings > Billing > Limits` or OpenAI Platform `Billing > Usage limits`).
+   - This cloud-side spending cap serves as the absolute, tamper-proof backstop against runaway costs.
+
