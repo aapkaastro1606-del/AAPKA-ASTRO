@@ -175,4 +175,17 @@ describe("Root Login and Session Architecture Verification Suite", () => {
       assert.strictEqual(json.event, "SESSION_SYNC_MISMATCH");
     });
   });
+
+  describe("6. Clerk Handshake Edge Error Recovery", () => {
+    test("cleanses broken __clerk_handshake query parameter and redirects to clean URL without crashing with 500", async () => {
+      const req = new NextRequest("https://www.aapkaastro.com/?__clerk_handshake=malformed_token_xyz", {
+        headers: { host: "www.aapkaastro.com" },
+      });
+
+      const res = await middleware(req, {} as any);
+      assert.ok(res, "Middleware must return a valid response without throwing 500");
+      assert.strictEqual(res.status, 307);
+      assert.strictEqual(res.headers.get("location"), "https://www.aapkaastro.com/");
+    });
+  });
 });

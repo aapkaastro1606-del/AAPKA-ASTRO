@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { isClerkConfigured, getClerkPublishableKey } from "@/lib/auth/clerkConfig";
 import { evaluateRouteAccess } from "@/lib/auth/roles";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest } from "@/lib/auth/requestAuth";
 import { validateRedirectUrl } from "@/lib/auth/redirectValidation";
 
 const isAccountRoute = createRouteMatcher(["/account(.*)"]);
@@ -76,10 +76,25 @@ const liveClerkMiddleware = clerkMiddleware(
   }
 );
 
+function handleClerkError(err: any, req: NextRequest) {
+  console.warn("[Middleware Auth Handshake Recovery]", err?.message || err);
+  // If Clerk handshake verification failed (e.g. invalid dev token or cross-domain mismatch),
+  // strip the broken handshake parameter so visitors and seekers are not stuck on a 500 error screen
+  if (req.nextUrl.searchParams.has("__clerk_handshake")) {
+    const cleanUrl = req.nextUrl.clone();
+    cleanUrl.searchParams.delete("__clerk_handshake");
+    cleanUrl.searchParams.delete("__clerk_help");
+    return NextResponse.redirect(cleanUrl);
+  }
+  return fallbackMiddleware(req);
+}
+
 export default function middleware(req: NextRequest, event: any) {
   // 1. Canonical Host Enforcement: apex (aapkaastro.com) -> canonical (www.aapkaastro.com) via 308
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  if (host === "aapkaastro.com") {
+  const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const hostname = (hostHeader.split(",")[0] || req.nextUrl.hostname || "").split(":")[0].trim().toLowerCase();
+
+  if (hostname === "aapkaastro.com") {
     const canonicalUrl = req.nextUrl.clone();
     canonicalUrl.protocol = "https:";
     canonicalUrl.host = "www.aapkaastro.com";
@@ -87,10 +102,19 @@ export default function middleware(req: NextRequest, event: any) {
     return NextResponse.redirect(canonicalUrl, 308);
   }
 
-  // 2. Delegate to appropriate authentication middleware
+  // 2. Delegate to appropriate authentication middleware with edge crash recovery
   if (isClerkActive) {
-    return (liveClerkMiddleware as any)(req, event);
+    try {
+      const response = (liveClerkMiddleware as any)(req, event);
+      if (response && typeof response.then === "function") {
+        return response.catch((err: any) => handleClerkError(err, req));
+      }
+      return response;
+    } catch (err: any) {
+      return handleClerkError(err, req);
+    }
   }
+
   return fallbackMiddleware(req);
 }
 
