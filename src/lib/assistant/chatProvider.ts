@@ -115,7 +115,7 @@ export class OpenAICompatibleChatProvider implements ChatProvider {
     baseUrl?: string;
   }) {
     this.name = config.name || "OpenAICompatible";
-    this.apiKey = config.apiKey;
+    this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
     this.model = config.model || "gpt-4o-mini";
     this.baseUrl = (config.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
   }
@@ -214,6 +214,119 @@ export class OpenAICompatibleChatProvider implements ChatProvider {
 }
 
 /**
+ * Native Google Gemini Chat Provider
+ * Direct streaming via Google AI Studio API (works with all Gemini keys without requiring beta OpenAI proxies)
+ */
+export class GeminiChatProvider implements ChatProvider {
+  name = "Gemini";
+  private apiKey: string;
+  private model: string;
+
+  constructor(config: { apiKey: string; model?: string }) {
+    this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
+    let m = (config.model || "gemini-1.5-flash").trim().toLowerCase();
+    if (m === "gemini" || m === "flash" || m === "gemini-flash") {
+      m = "gemini-1.5-flash";
+    }
+    this.model = m;
+  }
+
+  async generateStream(
+    messages: ChatMessage[],
+    options?: ChatProviderOptions
+  ): Promise<ReadableStream<Uint8Array>> {
+    const maxTokens = options?.maxTokens || 400;
+    const timeoutMs = options?.timeoutMs || 15000;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const systemMsg = messages.find((m) => m.role === "system")?.content || "";
+    const conversation = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      }));
+
+    const body: Record<string, any> = {
+      contents: conversation,
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature: 0.3,
+      },
+    };
+
+    if (systemMsg) {
+      body.systemInstruction = {
+        parts: [{ text: systemMsg }],
+      };
+    }
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:streamGenerateContent?alt=sse&key=${this.apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(
+          `Gemini API failed with HTTP ${response.status}: ${errorText.slice(0, 200)}`
+        );
+      }
+
+      const bodyStream = response.body;
+      if (!bodyStream) throw new Error("Gemini returned empty body");
+
+      const reader = bodyStream.getReader();
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      return new ReadableStream<Uint8Array>({
+        async pull(streamController) {
+          try {
+            const { done, value } = await reader.read();
+            if (done) {
+              streamController.close();
+              return;
+            }
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith("data: ")) continue;
+              const jsonStr = trimmed.replace(/^data: /, "").trim();
+
+              try {
+                const parsed = JSON.parse(jsonStr);
+                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  streamController.enqueue(encoder.encode(text));
+                }
+              } catch {
+                // Incomplete JSON chunk in buffer, ignore
+              }
+            }
+          } catch (err) {
+            streamController.error(err);
+          }
+        },
+      });
+    } catch (err: any) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+}
+
+/**
  * Mock / Local Grounded Chat Provider
  * Uses the deterministic queryEngine so local development and test runs operate at $0 cost
  * with zero latency and 100% factual accuracy.
@@ -283,13 +396,17 @@ export function getChatProvider(): ChatProvider {
   }
 
   if (providerType === "gemini" || providerType === "google") {
-    return new OpenAICompatibleChatProvider({
-      name: "Gemini",
+    if (process.env.CHATBOT_BASE_URL) {
+      return new OpenAICompatibleChatProvider({
+        name: "Gemini",
+        apiKey,
+        model: model || "gemini-1.5-flash",
+        baseUrl: process.env.CHATBOT_BASE_URL,
+      });
+    }
+    return new GeminiChatProvider({
       apiKey,
       model: model || "gemini-1.5-flash",
-      baseUrl:
-        process.env.CHATBOT_BASE_URL ||
-        "https://generativelanguage.googleapis.com/v1beta/openai",
     });
   }
 

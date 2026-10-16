@@ -127,10 +127,22 @@ export async function POST(req: NextRequest) {
 
     // 5. Invoke Swappable Provider with 400 max tokens & 15s function timeout
     const provider = getChatProvider();
-    const stream = await provider.generateStream(fullMessages, {
-      maxTokens: 400,
-      timeoutMs: 15000,
-    });
+    let stream: ReadableStream<Uint8Array>;
+    try {
+      stream = await provider.generateStream(fullMessages, {
+        maxTokens: 400,
+        timeoutMs: 15000,
+      });
+    } catch (providerError: any) {
+      console.error(
+        "[Provider Error - Falling back to Grounded Knowledge Engine]:",
+        providerError?.message || providerError
+      );
+      const fallbackProvider = new MockGroundedChatProvider();
+      stream = await fallbackProvider.generateStream(fullMessages, {
+        maxTokens: 400,
+      });
+    }
 
 
     return new Response(stream, {
