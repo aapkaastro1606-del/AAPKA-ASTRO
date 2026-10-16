@@ -44,6 +44,7 @@
     "@types/tz-lookup": "^6.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
+    "puppeteer-core": "^25.14.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
