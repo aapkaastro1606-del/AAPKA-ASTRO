@@ -19,6 +19,7 @@
 
 import { AuditLogService } from "./auditLogService";
 import { getOwnerEmails } from "@/lib/auth/staffPermissions";
+import { isEmailEnabled } from "@/lib/utils/resilience";
 
 export interface BookingConfirmationEmailParams {
   bookingId: string;
@@ -52,6 +53,48 @@ export class BookingEmailService {
   private static readonly WEBSITE_URL = "https://aapkaastro.com";
 
   /**
+   * Persists email delivery status on the booking so admin view can show "email failed"
+   */
+  public static async recordEmailStatus(
+    bookingId: string | undefined,
+    status: "DELIVERED" | "FAILED" | "SIMULATED",
+    errorMsg?: string
+  ): Promise<void> {
+    if (!bookingId || bookingId === "N/A") return;
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (!prisma || !prisma.session) return;
+
+      const existing = await prisma.session.findFirst({
+        where: { bookingId },
+        select: { id: true, notes: true, intakeDetails: true },
+      });
+      if (!existing) return;
+
+      const updatedIntake =
+        typeof existing.intakeDetails === "object" && existing.intakeDetails !== null
+          ? {
+              ...(existing.intakeDetails as Record<string, any>),
+              emailStatus: status,
+              emailError: errorMsg || null,
+            }
+          : { emailStatus: status, emailError: errorMsg || null };
+
+      const notesTag = status === "FAILED" ? `\n[EMAIL_FAILED]: ${errorMsg || "Delivery failed"}` : "";
+
+      await prisma.session.update({
+        where: { id: existing.id },
+        data: {
+          intakeDetails: updatedIntake,
+          notes: existing.notes ? `${existing.notes}${notesTag}` : notesTag,
+        },
+      });
+    } catch (e) {
+      console.warn(`[BookingEmailService] Could not update session emailStatus for ${bookingId}:`, e);
+    }
+  }
+
+  /**
    * Generates the prefilled WhatsApp coordination link
    */
   public static getWhatsAppCoordinationLink(params: {
@@ -65,7 +108,7 @@ export class BookingEmailService {
 
   /**
    * Core dispatcher that handles communication with Resend API.
-   * Enforces loud failure logging and never-throw resilience.
+   * Enforces loud failure logging, kill switch compliance, timeouts, and never-throw resilience.
    */
   private static async dispatchResendEmail(params: {
     to: string | string[];
@@ -75,7 +118,6 @@ export class BookingEmailService {
     templateName: string;
     bookingId?: string;
   }): Promise<DispatchEmailResult> {
-    const apiKey = process.env.RESEND_API_KEY;
     const toList = Array.isArray(params.to)
       ? params.to.map((e) => e.trim()).filter(Boolean)
       : [params.to.trim()];
@@ -83,13 +125,36 @@ export class BookingEmailService {
 
     if (toList.length === 0) {
       console.warn(`[BookingEmailService] No recipient address provided for template '${params.templateName}'. Skipping dispatch.`);
+      await this.recordEmailStatus(params.bookingId, "FAILED", "No recipient address provided");
       return { success: false, simulated: true, error: "No recipient address provided." };
     }
 
-    // 1. Fail loudly if unconfigured or placeholder
+    // 1. Kill Switch Check (EMAIL_ENABLED — default safe: false on Preview)
+    if (!isEmailEnabled()) {
+      const msg = `[EMAIL_KILL_SWITCH] Email dispatch is disabled (EMAIL_ENABLED=false or Preview isolation active). Skipping live delivery for template '${params.templateName}' to ${toDisplay}.`;
+      console.info(msg);
+
+      await this.recordEmailStatus(params.bookingId, "SIMULATED", "Email skipped via kill switch or preview isolation");
+
+      await AuditLogService.log({
+        action: "EMAIL_SKIPPED_KILL_SWITCH",
+        actorEmail: "system@aapkaastro.com",
+        targetId: params.bookingId || null,
+        targetType: "EMAIL",
+        notes: msg,
+      }).catch(() => {});
+
+      return { success: false, simulated: true, error: msg };
+    }
+
+    const apiKey = process.env.RESEND_API_KEY;
+
+    // 2. Fail loudly if unconfigured or placeholder
     if (!apiKey || apiKey.startsWith("re_placeholder") || apiKey === "placeholder" || apiKey.trim().length === 0) {
       const errorMsg = `[RESEND EMAIL MISCONFIGURATION] RESEND_API_KEY is not configured or is a placeholder in process.env. Transactional email '${params.templateName}' for booking ${params.bookingId || "N/A"} could not be delivered to: ${toDisplay}. Add a valid RESEND_API_KEY in Vercel/env to enable live delivery.`;
       console.error(errorMsg);
+
+      await this.recordEmailStatus(params.bookingId, "FAILED", errorMsg);
 
       await AuditLogService.log({
         action: "EMAIL_CONFIG_MISSING",
@@ -102,8 +167,11 @@ export class BookingEmailService {
       return { success: false, simulated: true, error: errorMsg };
     }
 
-    // 2. Network dispatch to Resend
+    // 3. Network dispatch to Resend with strict 6-second timeout
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -117,12 +185,17 @@ export class BookingEmailService {
           html: params.html,
           text: params.text,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const errText = await res.text();
         const errorMsg = `[RESEND DELIVERY FAILURE] Resend API returned HTTP ${res.status} (${res.statusText}) for template '${params.templateName}' to ${toDisplay}. Response body: ${errText}`;
         console.error(errorMsg);
+
+        await this.recordEmailStatus(params.bookingId, "FAILED", errorMsg);
 
         await AuditLogService.log({
           action: "EMAIL_DELIVERY_FAILED",
@@ -137,6 +210,8 @@ export class BookingEmailService {
 
       console.info(`[RESEND SUCCESS] Dispatched '${params.templateName}' email to ${toDisplay} for booking ${params.bookingId || "N/A"}`);
 
+      await this.recordEmailStatus(params.bookingId, "DELIVERED");
+
       await AuditLogService.log({
         action: "EMAIL_DELIVERED",
         actorEmail: "system@aapkaastro.com",
@@ -147,8 +222,14 @@ export class BookingEmailService {
 
       return { success: true, simulated: false };
     } catch (networkErr: any) {
-      const errorMsg = `[RESEND NETWORK EXCEPTION] Network exception while dispatching '${params.templateName}' to ${toDisplay}: ${networkErr?.message || networkErr}`;
+      const isTimeout = networkErr?.name === "AbortError";
+      const errorMsg = isTimeout
+        ? `[RESEND TIMEOUT] Request to Resend timed out after 6000ms for template '${params.templateName}' to ${toDisplay}.`
+        : `[RESEND NETWORK EXCEPTION] Network exception while dispatching '${params.templateName}' to ${toDisplay}: ${networkErr?.message || networkErr}`;
+
       console.error(errorMsg);
+
+      await this.recordEmailStatus(params.bookingId, "FAILED", errorMsg);
 
       await AuditLogService.log({
         action: "EMAIL_DELIVERY_EXCEPTION",

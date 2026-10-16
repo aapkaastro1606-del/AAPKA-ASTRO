@@ -110,6 +110,8 @@ export async function GET(req: NextRequest) {
         refundedAt: b.refundedAt,
         refundNotes: b.refundNotes,
         intakeDetails: b.intakeDetails,
+        emailStatus: (b.intakeDetails as any)?.emailStatus || (b.notes?.includes("[EMAIL_FAILED]") ? "FAILED" : null),
+        emailError: (b.intakeDetails as any)?.emailError || null,
         createdAt: b.createdAt,
         expiresAt: b.expiresAt,
       })),

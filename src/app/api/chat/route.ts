@@ -19,6 +19,7 @@ import {
 
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const ChatRequestSchema = z.object({
   message: z

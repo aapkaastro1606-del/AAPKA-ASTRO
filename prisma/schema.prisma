@@ -208,6 +208,8 @@ model Session {
   preferredTimeWindow  String?       @map("preferred_time_window")
   scheduledSlot        String?       @map("scheduled_slot")
   intakeDetails        Json?         @map("intake_details")
+  emailStatus          String?       @map("email_status")
+  emailError           String?       @map("email_error") @db.Text
   expiresAt            DateTime?     @map("expires_at")
 
   messages SessionMessage[]
@@ -556,6 +558,21 @@ model UnansweredQuestion {
   @@index([lastAskedAt])
   @@index([createdAt])
   @@map("unanswered_questions")
+}
+
+// ------------------------------------------------------------------------------
+// 20. GeocodeCache (Caches Nominatim & external geocoding queries in PostgreSQL)
+// ------------------------------------------------------------------------------
+model GeocodeCache {
+  id        String   @id @default(cuid())
+  query     String   @unique
+  results   Json
+  provider  String   @default("nominatim")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([query])
+  @@map("geocode_cache")
 }
 
 

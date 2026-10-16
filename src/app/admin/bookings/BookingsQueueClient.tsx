@@ -54,6 +54,8 @@ interface BookingItem {
   refundedAt?: string | null;
   refundNotes?: string | null;
   intakeDetails?: any;
+  emailStatus?: string | null;
+  emailError?: string | null;
   createdAt: string;
   expiresAt?: string | null;
 }
@@ -580,9 +582,18 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
                         </a>
                       </div>
                       {booking.userEmail && (
-                        <div className="flex items-center gap-1.5 text-[#6E5545]">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[#6E5545]">
                           <Mail className="h-3 w-3 text-[#7B2D26]" />
                           <span>{booking.userEmail}</span>
+                          {booking.emailStatus === "FAILED" && (
+                            <span
+                              title={booking.emailError || "Email delivery failed"}
+                              className="inline-flex items-center gap-1 rounded bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 text-[9px] font-bold"
+                            >
+                              <AlertCircle className="h-2.5 w-2.5 text-rose-600" />
+                              <span>email failed</span>
+                            </span>
+                          )}
                         </div>
                       )}
                       <div className="text-[10px] text-[#6E5545] pt-1">

@@ -64,3 +64,9 @@ export const otpSendRateLimiter = new SlidingWindowRateLimiter(3, 10);
 
 // Max 5 OTP verification attempts per phone number per 10 minutes
 export const otpVerifyRateLimiter = new SlidingWindowRateLimiter(5, 10);
+
+// Heavy Public Endpoint Rate Limiters (1-minute sliding window)
+export const kundliCalcRateLimiter = new SlidingWindowRateLimiter(20, 1);
+export const locationSearchRateLimiter = new SlidingWindowRateLimiter(60, 1);
+export const kundliLeadRateLimiter = new SlidingWindowRateLimiter(10, 1);
+export const publicChatRateLimiter = new SlidingWindowRateLimiter(30, 1);

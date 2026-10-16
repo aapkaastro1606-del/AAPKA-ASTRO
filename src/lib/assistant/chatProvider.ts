@@ -363,6 +363,10 @@ export class MockGroundedChatProvider implements ChatProvider {
  * In test/dev: allows mock provider so developers and CI tests succeed without paid keys.
  */
 export function isChatbotConfigured(): boolean {
+  if (process.env.CHATBOT_ENABLED === "false") {
+    return false;
+  }
+
   const isProd = process.env.NODE_ENV === "production";
   const apiKey = process.env.CHATBOT_API_KEY;
   const allowFallbackInProd =

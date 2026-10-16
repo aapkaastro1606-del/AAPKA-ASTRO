@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { LocationResult, LocationService } from "@/lib/services/locationService";
-import { MapPin, Loader2, Globe2, Check } from "lucide-react";
+import { MapPin, Loader2, Globe2, Check, AlertTriangle } from "lucide-react";
 
 interface LocationAutocompleteProps {
   value: string;
@@ -25,6 +25,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
   const [results, setResults] = useState<LocationResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,25 +63,27 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
     }
 
     // Instant local fast-path check
-    const localMatches = LocationService.search(newQuery, 6);
-    if (localMatches instanceof Promise) {
-      // If async
-      setIsLoading(true);
-      debounceTimer.current = setTimeout(async () => {
-        try {
-          const res = await fetch(`/api/location/search?q=${encodeURIComponent(newQuery)}&limit=8`);
-          if (res.ok) {
-            const data = await res.json();
-            setResults(data.locations || []);
+    setIsLoading(true);
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/location/search?q=${encodeURIComponent(newQuery)}&limit=8`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.locations || []);
+          if (data.warning) {
+            setWarningMessage(data.warning);
+          } else {
+            setWarningMessage(null);
           }
-        } catch {
-          // Fallback to local
-          setResults([]);
-        } finally {
-          setIsLoading(false);
         }
-      }, 250);
-    }
+      } catch {
+        // Fallback to local
+        setResults([]);
+        setWarningMessage("Geocoding service unavailable. Showing standard city list.");
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
   };
 
   const handleSelect = (loc: LocationResult) => {
@@ -130,6 +133,13 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
 
       {isOpen && (
         <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] p-1 shadow-xl">
+          {warningMessage && (
+            <div className="m-1 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1.5 text-[11px] text-amber-800 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+              <span>{warningMessage}</span>
+            </div>
+          )}
+
           {results.length > 0 ? (
             results.map((loc) => {
               const isMatch = selectedLocation?.id === loc.id;
