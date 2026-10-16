@@ -146,6 +146,9 @@ export async function runDryRunAudit(options: { keepEmails?: string[] } = {}) {
 }
 
 async function main() {
+  const { assertStagingEnvironment } = require("./guard");
+  assertStagingEnvironment("db_cleanup.ts");
+
   const isDryRun = !process.argv.includes("--execute");
   console.log("================================================================================");
   console.log(`AAPKA ASTRO - DATABASE CLEANUP AUDIT ${isDryRun ? "[DRY RUN ONLY]" : "[EXECUTE MODE]"}`);

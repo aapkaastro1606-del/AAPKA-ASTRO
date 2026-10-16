@@ -1,5 +1,10 @@
 import sharp from "sharp";
 import fs from "fs";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const { assertStagingEnvironment } = require("./guard");
+assertStagingEnvironment("generate_icons.mjs");
 
 const srcPath = "C:/Users/anmol/.gemini/antigravity/brain/38dce4e4-16b3-4431-82d2-da75d512f77a/.user_uploaded/media_1790685976176.png";
 

@@ -1,7 +1,12 @@
 const { execSync } = require("child_process");
+const { assertStagingEnvironment } = require("./guard");
+
+if (process.env.VERCEL !== "1" && process.env.CI !== "1") {
+  assertStagingEnvironment("build.js");
+}
 
 console.log("================================================================================");
-console.log("AAPKA ASTRO PRODUCTION BUILD PIPELINE");
+console.log("AAPKA ASTRO BUILD PIPELINE");
 console.log("================================================================================");
 
 // 1. Ensure DIRECT_URL fallback if only DATABASE_URL is configured in Vercel

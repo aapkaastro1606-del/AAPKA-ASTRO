@@ -43,23 +43,26 @@ export function isStagingDatabase(connectionString?: string): boolean {
 }
 
 export function enforceStagingDatabase(scriptName: string = "Script") {
-  const isStagingEnv = process.env.IS_STAGING_ENVIRONMENT === "true";
+  const isStagingEnv =
+    process.env.IS_STAGING_ENVIRONMENT === "true" ||
+    process.env.ALLOW_STAGING_SCRIPTS === "true" ||
+    process.env.STAGING === "true" ||
+    process.argv.includes("--staging");
+
   const host = getDatabaseHost();
 
-  const isExplicitOverride =
-    process.argv.includes("--allow-production") ||
-    process.env.ALLOW_PRODUCTION_OVERRIDE === "true";
-
-  if (isExplicitOverride) {
-    console.warn(`[WARNING] Database safety guard overridden for ${scriptName} with --allow-production.`);
-    return;
+  if (!isStagingEnv) {
+    throw new Error(
+      `[SCRIPT SAFETY VIOLATION] Refusing to run ${scriptName}: Explicit staging flag is missing. ` +
+        `Set IS_STAGING_ENVIRONMENT="true" or ALLOW_STAGING_SCRIPTS="true" or pass --staging.`
+    );
   }
 
-  if (!isStagingEnv && !isStagingDatabase()) {
+  if (!isStagingDatabase()) {
     throw new Error(
       `[DATABASE SAFETY VIOLATION] Refusing to run ${scriptName} against host "${host || "UNKNOWN"}". ` +
-        `Tests, seeds, and verification scripts are STRICTLY FORBIDDEN from touching the production database. ` +
-        `Use the Neon staging branch (ep-summer-grass-b4twg911) with IS_STAGING_ENVIRONMENT=true or .env.test.`
+        `Scripts, seeds, and verification tools are STRICTLY FORBIDDEN from touching the production database. ` +
+        `Target must be an allowlisted Neon staging branch (ep-summer-grass-b4twg911) or localhost.`
     );
   }
 }
