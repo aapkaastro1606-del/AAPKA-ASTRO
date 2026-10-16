@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest } from "@/lib/auth/serverAuth";
-import { BookingWorkflowService } from "@/lib/services/bookingWorkflowService";
+import { BookingWorkflowService, isBase64Payload } from "@/lib/services/bookingWorkflowService";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +13,22 @@ export async function POST(req: NextRequest) {
   try {
     const auth = getAuthFromRequest(req);
     const body = await req.json();
-    const { bookingId, utr } = body;
+    const { bookingId, utr, screenshot } = body;
 
     if (!bookingId) {
       return NextResponse.json(
         { success: false, message: "bookingId is required." },
+        { status: 400 }
+      );
+    }
+
+    if (isBase64Payload(utr) || isBase64Payload(screenshot)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Base64 screenshot data is strictly prohibited in the database. Use secure object storage or direct WhatsApp transmission.",
+        },
         { status: 400 }
       );
     }

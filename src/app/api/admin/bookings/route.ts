@@ -4,6 +4,7 @@ import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { prisma } from "@/lib/db/prisma";
 import { BookingWorkflowService } from "@/lib/services/bookingWorkflowService";
 import { AuditLogService } from "@/lib/services/auditLogService";
+import { storageProvider } from "@/lib/providers/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -84,37 +85,51 @@ export async function GET(req: NextRequest) {
         COMPLETED: completedCount,
         REJECTED: rejectedCount,
       },
-      bookings: bookings.map((b) => ({
-        id: b.id,
-        bookingId: b.bookingId,
-        clientId: b.clientId,
-        userName: b.userName,
-        userPhone: b.userPhone,
-        userEmail: b.userEmail,
-        productType: b.productType,
-        format: b.format,
-        concern: b.concern,
-        amount: b.lockedAmount || b.totalCost,
-        isFirstTimeAstro: b.isFirstTimeAstro,
-        bookingStatus: b.bookingStatus,
-        paymentStatus: b.paymentStatus,
-        bankCreditConfirmed: b.bankCreditConfirmed,
-        utr: b.utr,
-        preferredDay: b.preferredDay,
-        preferredTimeWindow: b.preferredTimeWindow,
-        scheduledSlot: b.scheduledSlot,
-        meetingLink: b.meetingLink,
-        approvedAt: b.approvedAt,
-        approvedBy: b.approvedBy,
-        rejectionReason: b.rejectionReason,
-        refundedAt: b.refundedAt,
-        refundNotes: b.refundNotes,
-        intakeDetails: b.intakeDetails,
-        emailStatus: (b.intakeDetails as any)?.emailStatus || (b.notes?.includes("[EMAIL_FAILED]") ? "FAILED" : null),
-        emailError: (b.intakeDetails as any)?.emailError || null,
-        createdAt: b.createdAt,
-        expiresAt: b.expiresAt,
-      })),
+      bookings: await Promise.all(
+        bookings.map(async (b) => {
+          let signedScreenshotUrl: string | null = null;
+          if (b.paymentScreenshotUrl) {
+            try {
+              signedScreenshotUrl = await storageProvider.getSignedDownloadUrl(b.paymentScreenshotUrl, 900);
+            } catch (e) {
+              console.warn(`Failed to generate signed screenshot URL for ${b.bookingId}:`, e);
+            }
+          }
+
+          return {
+            id: b.id,
+            bookingId: b.bookingId,
+            clientId: b.clientId,
+            userName: b.userName,
+            userPhone: b.userPhone,
+            userEmail: b.userEmail,
+            productType: b.productType,
+            format: b.format,
+            concern: b.concern,
+            amount: b.lockedAmount || b.totalCost,
+            isFirstTimeAstro: b.isFirstTimeAstro,
+            bookingStatus: b.bookingStatus,
+            paymentStatus: b.paymentStatus,
+            bankCreditConfirmed: b.bankCreditConfirmed,
+            utr: b.utr,
+            paymentScreenshotUrl: signedScreenshotUrl,
+            preferredDay: b.preferredDay,
+            preferredTimeWindow: b.preferredTimeWindow,
+            scheduledSlot: b.scheduledSlot,
+            meetingLink: b.meetingLink,
+            approvedAt: b.approvedAt,
+            approvedBy: b.approvedBy,
+            rejectionReason: b.rejectionReason,
+            refundedAt: b.refundedAt,
+            refundNotes: b.refundNotes,
+            intakeDetails: b.intakeDetails,
+            emailStatus: (b.intakeDetails as any)?.emailStatus || (b.notes?.includes("[EMAIL_FAILED]") ? "FAILED" : null),
+            emailError: (b.intakeDetails as any)?.emailError || null,
+            createdAt: b.createdAt,
+            expiresAt: b.expiresAt,
+          };
+        })
+      ),
       recentLogs,
     });
   } catch (error: any) {

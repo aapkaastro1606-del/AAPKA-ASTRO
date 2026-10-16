@@ -216,13 +216,25 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
     secondAstroBookingId = result2.bookingId;
   });
 
-  test("7. Duplicate UTR check blocks approval if another booking used same transaction ID", async () => {
+  test("7. Duplicate UTR check blocks claim and approval if another booking used same transaction ID", async () => {
     const ownerEmail = "aapkaastro1606@gmail.com";
 
-    // Set second booking to claimed using the exact same UTR as the first booking
-    await BookingWorkflowService.claimPayment(secondAstroBookingId, mockUtr1);
+    // 1. Attempting to claim second booking with duplicate UTR must be blocked at submission
+    await assert.rejects(
+      async () => {
+        await BookingWorkflowService.claimPayment(secondAstroBookingId, mockUtr1);
+      },
+      /Duplicate UTRs are not permitted/i,
+      "Duplicate UTR must be blocked on claim payment"
+    );
 
-    // Attempting to approve booking with an already-used UTR must be blocked
+    // Set to claimed for approval test
+    await prisma.session.update({
+      where: { bookingId: secondAstroBookingId },
+      data: { bookingStatus: "PAYMENT_CLAIMED", utr: mockUtr1 },
+    });
+
+    // 2. Attempting to approve booking with an already-used UTR must be blocked at approval
     await assert.rejects(
       async () => {
         await BookingWorkflowService.approveBooking({

@@ -49,6 +49,10 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   const [utrInput, setUtrInput] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [qrError, setQrError] = useState(false);
+  const [storageUploadEnabled, setStorageUploadEnabled] = useState(false);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const [screenshotUploaded, setScreenshotUploaded] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Dynamic payment settings loaded from database
   const [paymentSettings, setPaymentSettings] = useState({
@@ -66,6 +70,9 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
           if (data.success && data.paymentSettings) {
             setPaymentSettings(data.paymentSettings);
           }
+          if (typeof data.storageUploadEnabled === "boolean") {
+            setStorageUploadEnabled(data.storageUploadEnabled);
+          }
           if (data.booking?.bookingStatus === "PAYMENT_CLAIMED" || data.booking?.bookingStatus === "CONFIRMED") {
             setStep("CLAIMED");
           }
@@ -73,6 +80,44 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
         .catch(() => {});
     }
   }, [isOpen, bookingId]);
+
+  const handleScreenshotChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type.toLowerCase())) {
+      setUploadError("Only JPG, PNG, or WebP images are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("Image file exceeds maximum allowable limit of 5 MB.");
+      return;
+    }
+
+    setUploadError(null);
+    setUploadingScreenshot(true);
+
+    try {
+      const fd = new FormData();
+      fd.append("bookingId", bookingId);
+      fd.append("file", file);
+
+      const res = await fetch("/api/booking/upload-screenshot", {
+        method: "POST",
+        body: fd,
+      });
+      const resJson = await res.json();
+      if (resJson.success) {
+        setScreenshotUploaded(true);
+      } else {
+        setUploadError(resJson.message || "Failed to upload screenshot.");
+      }
+    } catch {
+      setUploadError("Network error uploading screenshot.");
+    } finally {
+      setUploadingScreenshot(false);
+    }
+  };
 
   const upiId = paymentSettings.upiId || "9311215564@okbizaxis";
   const upiPayee = paymentSettings.payeeName || "Aapka Astro";
@@ -304,6 +349,34 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
                   className="w-full rounded-xl border border-[#E8D8C3] bg-white p-2.5 text-xs font-mono text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26]"
                 />
               </div>
+
+              {/* Optional Screenshot Upload (only rendered when STORAGE_PROVIDER is active) */}
+              {storageUploadEnabled && (
+                <div className="space-y-1.5 text-left border border-dashed border-[#E8D8C3] rounded-xl p-3 bg-[#FAF5EE]">
+                  <label className="text-xs font-bold text-[#3B2A1E] flex items-center justify-between">
+                    <span>Attach Payment Screenshot:</span>
+                    <span className="text-[10px] text-stone-500 font-normal">Max 5MB (JPG, PNG, WebP)</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleScreenshotChange}
+                    disabled={uploadingScreenshot || screenshotUploaded}
+                    className="w-full text-xs text-stone-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-[#7B2D26] file:text-white hover:file:bg-[#64221C] cursor-pointer"
+                  />
+                  {uploadingScreenshot && (
+                    <p className="text-[11px] text-[#7B2D26] font-bold">Uploading to private storage (EXIF stripped)...</p>
+                  )}
+                  {screenshotUploaded && (
+                    <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Screenshot securely attached
+                    </p>
+                  )}
+                  {uploadError && (
+                    <p className="text-[11px] text-red-600 font-bold">{uploadError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Primary "I Have Paid" Button */}
               <div className="space-y-2.5 pt-1">

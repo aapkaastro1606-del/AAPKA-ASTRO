@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
-import { PlatformSettingsService, PaymentSettings } from "@/lib/services/platformSettingsService";
+import { PlatformSettingsService, PaymentSettings, isValidUpiId } from "@/lib/services/platformSettingsService";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,18 @@ export async function POST(req: NextRequest) {
     const { upiId, payeeName, qrImageUrl, whatsappNumber, whatsappConfirmed, unpaidExpiryDays } = body;
 
     const updates: Partial<PaymentSettings> = {};
-    if (typeof upiId === "string" && upiId.trim()) updates.upiId = upiId.trim();
+    if (upiId !== undefined) {
+      if (typeof upiId !== "string" || !isValidUpiId(upiId)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Invalid UPI ID format: "${upiId}". Expected format: username@handle (e.g. 9311215564@okbizaxis).`,
+          },
+          { status: 400 }
+        );
+      }
+      updates.upiId = upiId.trim();
+    }
     if (typeof payeeName === "string" && payeeName.trim()) updates.payeeName = payeeName.trim();
     if (qrImageUrl !== undefined) updates.qrImageUrl = qrImageUrl ? String(qrImageUrl).trim() : null;
     if (typeof whatsappNumber === "string" && whatsappNumber.trim()) updates.whatsappNumber = whatsappNumber.trim();

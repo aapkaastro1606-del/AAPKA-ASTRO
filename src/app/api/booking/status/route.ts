@@ -51,10 +51,14 @@ export async function GET(req: NextRequest) {
           meetingLink: booking.meetingLink,
           rejectionReason: booking.rejectionReason,
           intakeDetails: booking.intakeDetails,
+          hasScreenshot: Boolean(booking.paymentScreenshotUrl),
           createdAt: booking.createdAt,
           expiresAt: booking.expiresAt,
         },
         paymentSettings,
+        storageUploadEnabled: Boolean(
+          process.env.STORAGE_PROVIDER && ["r2", "s3"].includes(process.env.STORAGE_PROVIDER.toLowerCase())
+        ),
       });
     }
 
@@ -143,11 +147,15 @@ export async function GET(req: NextRequest) {
             meetingLink: latestBooking.meetingLink,
             rejectionReason: latestBooking.rejectionReason,
             intakeDetails: latestBooking.intakeDetails,
+            hasScreenshot: Boolean(latestBooking.paymentScreenshotUrl),
             createdAt: latestBooking.createdAt,
             expiresAt: latestBooking.expiresAt,
           }
         : null,
       paymentSettings,
+      storageUploadEnabled: Boolean(
+        process.env.STORAGE_PROVIDER && ["r2", "s3"].includes(process.env.STORAGE_PROVIDER.toLowerCase())
+      ),
     });
   } catch (error: any) {
     console.error("Booking status fetch error:", error);

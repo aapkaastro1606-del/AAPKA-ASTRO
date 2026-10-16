@@ -231,8 +231,8 @@ export default function DiagnosticsClient() {
               </div>
             )}
 
-            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability, UPI & Storage Safety */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Clerk Publishable Key Mode */}
               <div
                 className={`rounded-2xl border p-5 shadow-xs ${
@@ -365,6 +365,54 @@ export default function DiagnosticsClient() {
                   <div className="flex justify-between">
                     <span className="text-[#6E5545]">Total Users:</span>
                     <strong className="font-mono text-[#7B2D26]">{data.database.totalUserCount}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: UPI Routing & Storage Safety */}
+              <div
+                className={`rounded-2xl border p-5 shadow-xs ${
+                  data.payment?.upiConfigured
+                    ? "border-emerald-200 bg-emerald-50/50"
+                    : "border-amber-300 bg-amber-50/60"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-[#7B2D26]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3B2A1E]">
+                      UPI &amp; Storage Safety
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      data.payment?.upiConfigured ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {data.payment?.upiConfigured ? "Active" : "Unset"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-[#3B2A1E]">
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Payee:</span>
+                    <strong className="truncate max-w-[140px]">{data.payment?.payeeName || "Aapka Astro"}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Masked UPI:</span>
+                    <code className="font-mono text-[11px] font-bold text-[#7B2D26]">
+                      {data.payment?.maskedUpiId || "None"}
+                    </code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Expiry:</span>
+                    <span>{data.payment?.unpaidExpiryDays ?? 3} days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Storage:</span>
+                    <span className="font-mono text-[11px] uppercase font-bold text-[#6E5545]">
+                      {data.payment?.storageProvider || "mock"}
+                    </span>
                   </div>
                 </div>
               </div>

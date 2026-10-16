@@ -117,5 +117,12 @@ describe("System Health & Diagnostics Audit Suite", () => {
       assert.strictEqual(typeof item.isSet, "boolean");
       assert.strictEqual((item as any).value, undefined);
     }
+
+    // Verify Payment & Storage Safety in diagnostics
+    assert.ok(body.diagnostics.payment);
+    assert.ok(typeof body.diagnostics.payment.payeeName === "string");
+    assert.ok(typeof body.diagnostics.payment.maskedUpiId === "string");
+    assert.ok(body.diagnostics.payment.maskedUpiId.includes("***"));
+    assert.ok(typeof body.diagnostics.payment.storageProvider === "string");
   });
 });
