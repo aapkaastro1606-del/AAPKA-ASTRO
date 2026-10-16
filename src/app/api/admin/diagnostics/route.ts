@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { ClerkWebhookTracker } from "@/lib/auth/clerkWebhookTracker";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
@@ -81,9 +81,11 @@ function maskEmail(email: string | null | undefined): string {
 export async function GET(req: NextRequest) {
   // 1. Check server-side auth first
   let serverAuthSession: { userId: string | null } | null = null;
+  let serverAuthUser: any = null;
   try {
     const { auth } = await import("@clerk/nextjs/server");
     serverAuthSession = await auth();
+    serverAuthUser = await getServerAuthUser();
   } catch {
     // Clerk server auth error or unconfigured
   }
@@ -109,8 +111,36 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // If Bearer token provided userId but no email claim, resolve email from DB or Clerk
+  if (clientUserIdFromBearer && !clientEmailFromBearer) {
+    try {
+      const dbUser = await prisma.user.findFirst({
+        where: { clerkId: clientUserIdFromBearer },
+        select: { email: true },
+      });
+      if (dbUser?.email) {
+        clientEmailFromBearer = dbUser.email;
+      } else {
+        const { clerkClient } = await import("@clerk/nextjs/server");
+        const client = await clerkClient();
+        const u = await client.users.getUser(clientUserIdFromBearer);
+        const primaryId = u.primaryEmailAddressId;
+        const primaryObj =
+          u.emailAddresses?.find((e) => e.id === primaryId) ||
+          u.emailAddresses?.[0];
+        if (primaryObj?.emailAddress) {
+          clientEmailFromBearer = primaryObj.emailAddress;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // 3. Determine if caller is Owner
   const isServerOwner = Boolean(
+    serverAuthUser?.isOwner ||
+    (serverAuthUser?.email && isOwnerEmail(serverAuthUser.email)) ||
     (serverAuthSession?.userId && cookieAuth.isOwner) ||
     cookieAuth.role === "OWNER" ||
     (cookieAuth.email && isOwnerEmail(cookieAuth.email))
