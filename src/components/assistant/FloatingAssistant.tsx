@@ -567,39 +567,37 @@ export function FloatingAssistant() {
           messages[messages.length - 1]?.text}
       </div>
 
-      {/* 1. Collapsed Floating Trigger Button */}
+      {/* 1. Collapsed Floating Trigger Button: Circular Logo Type */}
       {!isOpen && (
-        <button
-          ref={triggerButtonRef}
-          onClick={() => setIsOpen(true)}
-          className="group flex items-center gap-3 rounded-full bg-gradient-to-r from-[#7B2D26] to-[#5F201B] p-2 sm:px-4 sm:py-2.5 text-[#FFFDF9] shadow-2xl border-2 border-[#E8A33D]/60 hover:border-[#E8A33D] hover:shadow-red-950/40 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#7B2D26] focus-visible:ring-offset-2 focus-visible:outline-hidden transition-all duration-200 motion-reduce:transition-none motion-reduce:hover:scale-100"
-          aria-label={isHi ? "AI सहायक खोलें" : "Open Aapka Astro AI Assistant"}
-          title={isHi ? "AI सहायक से पूछें" : "Ask Acharya Ji's AI Assistant"}
-        >
-          {/* Logo as chatbot avatar / cover badge */}
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-md border border-[#E8D8C3]">
-            <img
-              src="/images/logo.png"
-              alt="Aapka Astro Logo"
-              className="h-full w-full object-contain"
-            />
-            <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+        <div className="relative group">
+          <button
+            ref={triggerButtonRef}
+            onClick={() => setIsOpen(true)}
+            className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#7B2D26] to-[#5F201B] p-1.5 text-[#FFFDF9] shadow-2xl border-2 border-[#E8A33D] hover:border-[#F59E0B] hover:shadow-red-950/50 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#7B2D26] focus-visible:ring-offset-2 focus-visible:outline-hidden transition-all duration-200 motion-reduce:transition-none motion-reduce:hover:scale-100 cursor-pointer"
+            aria-label={isHi ? "AI सहायक खोलें" : "Open Aapka Astro AI Assistant"}
+            title={isHi ? "आचार्य जी का AI सहायक" : "Ask Aapka Astro AI Assistant"}
+          >
+            {/* White Circular Inner Container with Website Logo */}
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-white p-2 shadow-inner border border-[#E8D8C3]">
+              <img
+                src="/images/logo.png"
+                alt="Aapka Astro Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            {/* Online Live Presence Indicator Badge */}
+            <span className="absolute top-0 right-0 flex h-3.5 w-3.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-white"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
             </span>
-          </div>
+          </button>
 
-          <div className="text-left hidden sm:block pr-1">
-            <span className="block text-xs font-bold leading-tight tracking-wide text-[#FFFDF9]">
-              {isHi ? "आचार्य जी का AI सहायक" : "Ask Acharya Ji's Assistant"}
-            </span>
-            <span className="block text-[10px] text-[#E8A33D] font-medium leading-none mt-0.5">
-              {isHi ? "शुल्क • वास्तु • WhatsApp" : "Fees • Vaastu • WhatsApp"}
-            </span>
+          {/* Hover Tooltip (Above Circle) */}
+          <div className="pointer-events-none absolute bottom-full right-0 mb-2 hidden group-hover:flex items-center whitespace-nowrap rounded-lg bg-[#241710] text-[#FFFDF9] text-[11px] font-semibold px-2.5 py-1 shadow-lg border border-[#E8A33D]/40 transition-opacity z-50">
+            {isHi ? "AI सहायक से पूछें" : "Ask AI Assistant"}
           </div>
-
-          <span className="sm:hidden text-xs font-bold text-[#E8A33D] pr-1">AI</span>
-        </button>
+        </div>
       )}
 
       {/* 2. Expanded Assistant Panel: 380x560 on desktop; full-height sheet on mobile */}

@@ -5,6 +5,7 @@ import {
   isChatbotConfigured,
   buildGroundedSystemPrompt,
   ChatMessage,
+  MockGroundedChatProvider,
 } from "@/lib/assistant/chatProvider";
 import { checkChatbotRateLimit } from "@/lib/assistant/rateLimiter";
 import {
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         error: "chat_execution_failed",
+        detail: error?.message || String(error),
         message:
           "Unable to complete assistant response right now. Please message us directly on WhatsApp.",
         whatsappUrl: "https://wa.me/919311215564",

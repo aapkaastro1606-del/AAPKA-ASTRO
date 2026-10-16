@@ -845,26 +845,166 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   }
 
   // --------------------------------------------------------------------------
-  // 10. FREE TOOLS (KUNDLI, PANCHANG, HOROSCOPE, MATCHING)
+  // 10A. PANCHANG & DAILY VEDIC TIMINGS
   // --------------------------------------------------------------------------
   if (
-    query.includes("free kundli") ||
-    query.includes("kundli generator") ||
-    query.includes("kundli") ||
-    query.includes("kundali") ||
     query.includes("panchang") ||
     query.includes("tithi") ||
     query.includes("nakshatra") ||
     query.includes("rahukaal") ||
+    query.includes("rahu kaal") ||
+    query.includes("shubh muhurat") ||
+    query.includes("choghadiya")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आज का संपूर्ण वैदिक पंचांग (सूर्योदय, तिथि, नक्षत्र, करण, योग, राहुकाल एवं शुभ मुहूर्त) आप हमारी वेबसाइट पर 100% मुफ़्त **/panchang** पर देख सकते हैं (और कल का पंचांग **/panchang/tomorrow** पर उपलब्ध है)। किसी विशेष कार्य के शुभ मुहूर्त निर्धारण अथवा कुंडली परामर्श हेतु आप आचार्य नीरज कुमार जी से भी जुड़ सकते हैं।",
+        language: "hi",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_PANCHANG, { label: "कल का पंचांग", url: "/panchang/tomorrow", type: "secondary" }, ACTION_BOOK_ASTRO],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Aaj ka complete Vedic Hindu Panchang (Tithi, Nakshatra, Yoga, Karana, Rahu Kaal aur Shubh Muhurat) aap 100% free hamare dedicated Panchang page **/panchang** par dekh sakte hain (aur kal ka panchang **/panchang/tomorrow** par). Shubh Muhurat ya Jyotish guidance ke liye aap Acharya Niraj Kumar ji se consultation bhi book kar sakte hain.",
+        language: "hinglish",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_PANCHANG, { label: "Tomorrow's Panchang", url: "/panchang/tomorrow", type: "secondary" }, ACTION_BOOK_ASTRO],
+      };
+    }
+    return {
+      answer: "You can view today's complete Vedic Hindu Panchang (Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, and Shubh Muhurat) 100% free on our dedicated Panchang page at **/panchang** (and tomorrow's timings at **/panchang/tomorrow**). For auspicious Muhurat selection or personalized planetary guidance, you can also consult Acharya Niraj Kumar.",
+      language: "en",
+      intent: "free_tools",
+      confidence: "high",
+      actions: [ACTION_PANCHANG, { label: "Tomorrow's Panchang", url: "/panchang/tomorrow", type: "secondary" }, ACTION_BOOK_ASTRO],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 10B. FREE JANAM KUNDLI GENERATOR
+  // --------------------------------------------------------------------------
+  if (
+    !query.includes("matching") &&
+    !query.includes("milan") &&
+    !query.includes("marriage") &&
+    (query.includes("janam kundli") ||
+      query.includes("kundli generator") ||
+      query.includes("free kundli") ||
+      query.includes("birth chart") ||
+      query.includes("kundli banaye"))
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "आप अपनी सटीक जन्म कुंडली 100% मुफ़्त हमारे **/kundli-generator** पर बना सकते हैं। इसमें आपको लग्न कुंडली, नवमांश, ग्रह स्थितियां और नक्षत्र विवरण तुरंत प्राप्त होता है। संपूर्ण 50+ पृष्ठों की हस्तलिखित जैसी PDF रिपोर्ट ₹501 में उपलब्ध है, अथवा आचार्य जी से 1-on-1 विश्लेषण के लिए ₹1,051 में परामर्श बुक कर सकते हैं।",
+        language: "hi",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_FREE_KUNDLI, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Aap apni accurate Janam Kundli 100% free hamare **/kundli-generator** par bana sakte hain. Isme aapko Lagna chart, Navamsha, aur planetary positions instant milti hain. Full detailed PDF Report ₹501 mein milti hai, ya Acharya ji ke sath 1-on-1 analysis ke liye aap ₹1,051 mein session book kar sakte hain.",
+        language: "hinglish",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [ACTION_FREE_KUNDLI, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "You can generate your accurate Vedic Janam Kundli 100% free using our online tool at **/kundli-generator**. It calculates your Lagna chart, planetary positions, Navamsha, and Nakshatras instantly. A comprehensive downloadable PDF Report is available for ₹501, or you can book a 1-on-1 chart consultation with Acharya Niraj Kumar for ₹1,051.",
+      language: "en",
+      intent: "free_tools",
+      confidence: "high",
+      actions: [ACTION_FREE_KUNDLI, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 10C. KUNDLI MILAN / HOROSCOPE MATCHING
+  // --------------------------------------------------------------------------
+  if (
     query.includes("matching") ||
     query.includes("milan") ||
     query.includes("gun milan") ||
+    query.includes("compatibility") ||
+    query.includes("shadi milan")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "विवाह हेतु 36 गुण मिलान (Kundli Milan) आप हमारी वेबसाइट पर 100% मुफ़्त **/kundli-matching** पर कर सकते हैं। इसमें अष्टकूट मिलान, नाड़ी दोष, भकूट दोष और मंगल दोष का प्रारंभिक विश्लेषण मिलता है। विवाह संबंधी गहन मार्गदर्शन हेतु आचार्य जी से 1-on-1 परामर्श लें।",
+        language: "hi",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [{ label: "Kundli Matching", url: "/kundli-matching", type: "secondary" }, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Marriage ke liye 36 Guna Kundli Milan aap hamari website par 100% free **/kundli-matching** par check kar sakte hain. Isme Ashta-Koot score, Nadi Dosha, aur Manglik analysis shamil hai. In-depth marriage consultation ke liye Acharya ji ke sath slot book karein.",
+        language: "hinglish",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [{ label: "Kundli Matching", url: "/kundli-matching", type: "secondary" }, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+    return {
+      answer: "You can check 36 Guna Kundli Milan (marriage compatibility) 100% free at **/kundli-matching**. It evaluates Ashta-Koot points, Nadi Dosha, Bhakoot Dosha, and Mangal Dosha. For personalized marital harmony analysis, you can book a consultation with Acharya Niraj Kumar.",
+      language: "en",
+      intent: "free_tools",
+      confidence: "high",
+      actions: [{ label: "Kundli Matching", url: "/kundli-matching", type: "secondary" }, ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 10D. DAILY HOROSCOPE / RASHIFAL
+  // --------------------------------------------------------------------------
+  if (
     query.includes("rashifal") ||
     query.includes("horoscope") ||
+    query.includes("rashi")
+  ) {
+    if (lang === "hi") {
+      return {
+        answer: "सभी 12 राशियों का आज का वैदिक राशिफल आप हमारी वेबसाइट पर **/horoscope** पर प्रतिदिन पढ़ सकते हैं। व्यक्तिगत ग्रहों की दशा और गोचर के सटीक विश्लेषण हेतु आप आचार्य नीरज कुमार जी से परामर्श ले सकते हैं।",
+        language: "hi",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [{ label: "Daily Rashifal", url: "/horoscope", type: "secondary" }, ACTION_BOOK_ASTRO],
+      };
+    }
+    if (lang === "hinglish") {
+      return {
+        answer: "Sabhi 12 zodiac signs ka daily Vedic Rashifal aap hamari website par **/horoscope** par read kar sakte hain. Personal planetary dashas aur transits ke detailed analysis ke liye Acharya Niraj Kumar ji se consult karein.",
+        language: "hinglish",
+        intent: "free_tools",
+        confidence: "high",
+        actions: [{ label: "Daily Rashifal", url: "/horoscope", type: "secondary" }, ACTION_BOOK_ASTRO],
+      };
+    }
+    return {
+      answer: "You can read your daily Vedic Horoscope for all 12 zodiac signs 100% free at **/horoscope**. For personal transit and planetary dasha analysis specific to your exact chart, you can book a session with Acharya Niraj Kumar.",
+      language: "en",
+      intent: "free_tools",
+      confidence: "high",
+      actions: [{ label: "Daily Horoscope", url: "/horoscope", type: "secondary" }, ACTION_BOOK_ASTRO],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 10E. GENERAL FREE TOOLS SUITE
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("kundli") ||
+    query.includes("kundali") ||
     query.includes("calculator") ||
     query.includes("tool") ||
     query.includes("tools") ||
-    query.includes("free tools")
+    query.includes("free")
   ) {
     if (lang === "hi") {
       return {
