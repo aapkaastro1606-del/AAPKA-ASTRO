@@ -198,9 +198,13 @@ async function main() {
 
   // Stage 3: Unit & Integration Tests
   const fs = require("fs");
-  const testCmd = fs.existsSync(".env.test")
-    ? "npx tsx --env-file=.env.test --test tests/**/*.test.ts"
-    : "npx tsx --test tests/**/*.test.ts";
+  const path = require("path");
+  const testFiles = fs
+    .readdirSync("tests")
+    .filter((f) => f.endsWith(".test.ts"))
+    .map((f) => `"${path.join("tests", f).replace(/\\/g, "/")}"`);
+  const envArg = fs.existsSync(".env.test") ? "--env-file=.env.test " : "";
+  const testCmd = `npx tsx ${envArg}--test ${testFiles.join(" ")}`;
   runCommand(testCmd, "3. Automated Test Suites");
 
   // Stage 4: Next.js Production Build
