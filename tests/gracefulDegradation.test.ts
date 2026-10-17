@@ -93,6 +93,7 @@ describe("Graceful Degradation & Kill Switch Suite", () => {
   });
 
   test("geocoding service provides swappable providers and built-in city fallback", async () => {
+    const initialProvider = (LocationService as any).provider;
     try {
       // 1. Swappable provider resolution
       process.env.GEOCODER_PROVIDER = "google";
@@ -136,7 +137,9 @@ describe("Graceful Degradation & Kill Switch Suite", () => {
       assert.ok(unknownResult.locations.length > 0);
     } finally {
       process.env = { ...originalEnv };
-      LocationService.setProvider(new MockLocationProvider());
+      if (initialProvider) {
+        LocationService.setProvider(initialProvider);
+      }
     }
   });
 

@@ -59,6 +59,7 @@ describe("Universal LocationService & Worldwide Geocoding", () => {
   });
 
   test("supports hot-swappable custom LocationProvider via LocationService.setProvider()", async () => {
+    const originalProvider = (LocationService as any).provider;
     const originalProviderName = LocationService.getProviderName();
 
     const mockProvider: LocationProvider = {
@@ -88,8 +89,7 @@ describe("Universal LocationService & Worldwide Geocoding", () => {
     assert.equal(searchRes[0].name, "Mock City");
 
     // Reset back
-    const { NominatimLocationProvider } = await import("../src/lib/services/locationService");
-    LocationService.setProvider(new NominatimLocationProvider());
+    LocationService.setProvider(originalProvider);
     assert.equal(LocationService.getProviderName(), originalProviderName);
   });
 

@@ -36,8 +36,6 @@ jobs:
       # AI assistant dummy configuration
       CHATBOT_PROVIDER: "mock"
       CHATBOT_MODEL: "gemini-2.0-flash"
-      CHATBOT_API_KEY: "dummy_mock_api_key_ci"
-      CHATBOT_ENABLE_FALLBACK: "true"
 
     steps:
       - name: Checkout Code
@@ -65,10 +63,6 @@ jobs:
           CLERK_SECRET_KEY="sk_test_placeholder"
           CLERK_WEBHOOK_SECRET="whsec_placeholder_test_secret"
           CRON_SECRET="dummy_ci_cron_secret_token"
-          CHATBOT_PROVIDER="mock"
-          CHATBOT_MODEL="gemini-2.0-flash"
-          CHATBOT_API_KEY="dummy_key"
-          CHATBOT_ENABLE_FALLBACK="true"
           EOF
 
       - name: Generate Prisma Client
