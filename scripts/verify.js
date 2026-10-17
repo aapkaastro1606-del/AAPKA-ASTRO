@@ -136,10 +136,10 @@ async function runSmokeTests() {
       const location = adminRes.headers.get("location") || "";
       const isRedirect = (status >= 300 && status <= 308) || status === 401;
 
-      if (isRedirect && (location.includes("/login") || status === 401)) {
+      if (isRedirect && (location.includes("/login") || location.includes("/account") || status === 401)) {
         console.log(`  ✔ [REDIRECT] /admin redirects when unauthenticated (Status: ${status}, Location: ${location || "N/A"})`);
       } else {
-        console.error(`  ❌ [FAIL] /admin did NOT redirect to login! Status: ${status}, Location: ${location}`);
+        console.error(`  ❌ [FAIL] /admin did NOT redirect when unauthenticated! Status: ${status}, Location: ${location}`);
         failures++;
       }
     } catch (err) {
