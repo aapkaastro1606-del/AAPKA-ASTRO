@@ -197,7 +197,11 @@ async function main() {
   runCommand("npx tsc --noEmit", "2. TypeScript Compiler Typechecking");
 
   // Stage 3: Unit & Integration Tests
-  runCommand("npx tsx --env-file=.env.test --test tests/**/*.test.ts", "3. Automated Test Suites");
+  const fs = require("fs");
+  const testCmd = fs.existsSync(".env.test")
+    ? "npx tsx --env-file=.env.test --test tests/**/*.test.ts"
+    : "npx tsx --test tests/**/*.test.ts";
+  runCommand(testCmd, "3. Automated Test Suites");
 
   // Stage 4: Next.js Production Build
   runCommand("npx next build", "4. Next.js Production Build (next build)");

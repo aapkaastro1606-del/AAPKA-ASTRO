@@ -19,8 +19,8 @@ jobs:
       # Staging & CI Safety Isolation
       IS_STAGING_ENVIRONMENT: "true"
       ALLOW_STAGING_SCRIPTS: "true"
-      DATABASE_URL: "postgresql://neondb_owner:dummy_pass@ep-summer-grass-b4twg911-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
-      DIRECT_URL: "postgresql://neondb_owner:dummy_pass@ep-summer-grass-b4twg911.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://neondb_owner:npg_5EgPLdDr7kFj@ep-summer-grass-b4twg911-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require' }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL || 'postgresql://neondb_owner:npg_5EgPLdDr7kFj@ep-summer-grass-b4twg911.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require' }}
       REDIS_URL: "redis://localhost:6379"
       # Dummy auth credentials
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_dummy_ci_key_profound_cicada"
@@ -51,6 +51,25 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Create Test Environment
+        run: |
+          cat << 'EOF' > .env.test
+          DATABASE_URL="${{ secrets.DATABASE_URL || 'postgresql://neondb_owner:npg_5EgPLdDr7kFj@ep-summer-grass-b4twg911-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require' }}"
+          DIRECT_URL="${{ secrets.DIRECT_URL || 'postgresql://neondb_owner:npg_5EgPLdDr7kFj@ep-summer-grass-b4twg911.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require' }}"
+          IS_STAGING_ENVIRONMENT="true"
+          ALLOW_STAGING_SCRIPTS="true"
+          OWNER_EMAIL="aapkaastro1606@gmail.com"
+          NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_placeholder"
+          CLERK_SECRET_KEY="sk_test_placeholder"
+          CLERK_WEBHOOK_SECRET="whsec_placeholder_test_secret"
+          CRON_SECRET="dummy_ci_cron_secret_token"
+          CHATBOT_PROVIDER="mock"
+          CHATBOT_MODEL="gemini-2.0-flash"
+          CHATBOT_API_KEY="dummy_key"
+          CHATBOT_ENABLE_FALLBACK="true"
+          EOF
 
       - name: Generate Prisma Client
         run: npx prisma generate
