@@ -33,9 +33,6 @@ jobs:
       CALL_PROVIDER: "mock"
       STORAGE_PROVIDER: "mock"
       CRON_SECRET: "dummy_ci_cron_secret_token"
-      # AI assistant dummy configuration
-      CHATBOT_PROVIDER: "mock"
-      CHATBOT_MODEL: "gemini-2.0-flash"
 
     steps:
       - name: Checkout Code

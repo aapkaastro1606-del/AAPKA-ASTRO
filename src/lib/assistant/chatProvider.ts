@@ -386,9 +386,7 @@ export function isChatbotConfigured(): boolean {
   const apiKey = process.env.CHATBOT_API_KEY;
   const providerType = (process.env.CHATBOT_PROVIDER || "mock").toLowerCase();
   const model = (process.env.CHATBOT_MODEL || "").trim();
-  const allowFallbackInProd =
-    process.env.CHATBOT_ENABLE_FALLBACK === "true" ||
-    process.env.CHATBOT_PROVIDER === "mock";
+  const allowFallbackInProd = process.env.CHATBOT_ENABLE_FALLBACK === "true";
 
   // When external provider is chosen, CHATBOT_MODEL is strictly required
   if (providerType !== "mock" && !allowFallbackInProd) {

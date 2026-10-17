@@ -475,14 +475,17 @@ export class MockLocationProvider implements LocationProvider {
  * Factory to instantiate swappable geocoding provider based on GEOCODER_PROVIDER
  */
 export function resolveDefaultProvider(): LocationProvider {
-  const providerType = (process.env.GEOCODER_PROVIDER || "nominatim").toLowerCase();
+  const providerType = (
+    process.env.GEOCODER_PROVIDER ||
+    (process.env.NODE_ENV === "test" ? "mock" : "nominatim")
+  ).toLowerCase();
   const apiKey = process.env.GEOCODER_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
 
   if (providerType === "google" && apiKey) {
     return new GoogleLocationProvider(apiKey);
   }
 
-  if (providerType === "mock" || process.env.NODE_ENV === "test") {
+  if (providerType === "mock") {
     return new MockLocationProvider();
   }
 
