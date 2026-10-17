@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "aapkaastro.com",
+          },
+        ],
+        destination: "https://www.aapkaastro.com/:path*",
+        permanent: true,
+      },
+      {
         source: "/about-us",
         destination: "/about",
         permanent: true,

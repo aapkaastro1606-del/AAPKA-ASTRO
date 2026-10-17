@@ -124,5 +124,13 @@ describe("System Health & Diagnostics Audit Suite", () => {
     assert.ok(typeof body.diagnostics.payment.maskedUpiId === "string");
     assert.ok(body.diagnostics.payment.maskedUpiId.includes("***"));
     assert.ok(typeof body.diagnostics.payment.storageProvider === "string");
+
+    // Verify Chatbot Provider Status in diagnostics
+    assert.ok(body.diagnostics.chatbot);
+    assert.ok(typeof body.diagnostics.chatbot.provider === "string");
+    assert.ok(typeof body.diagnostics.chatbot.model === "string");
+    assert.ok(typeof body.diagnostics.chatbot.status === "string");
+    assert.ok(typeof body.diagnostics.chatbot.consecutiveFailures === "number");
+    assert.ok(typeof body.diagnostics.chatbot.circuitBreakerTripped === "boolean");
   });
 });

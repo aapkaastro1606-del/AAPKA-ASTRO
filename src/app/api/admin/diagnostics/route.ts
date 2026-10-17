@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { ClerkWebhookTracker } from "@/lib/auth/clerkWebhookTracker";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { PlatformSettingsService, maskUpiId } from "@/lib/services/platformSettingsService";
+import { ChatbotHealthTracker, ChatbotDiagnostics } from "@/lib/assistant/chatbotHealthTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,7 @@ export interface DiagnosticsData {
     unpaidExpiryDays: number;
     storageProvider: string;
   };
+  chatbot: ChatbotDiagnostics;
 }
 
 function maskEmail(email: string | null | undefined): string {
@@ -413,6 +415,7 @@ export async function GET(req: NextRequest) {
     envChecklist,
     satelliteConfig,
     payment: paymentDiagnostics,
+    chatbot: ChatbotHealthTracker.getDiagnostics(),
   };
 
   return NextResponse.json({

@@ -17,6 +17,8 @@ import {
   Users,
   Globe,
   Cookie,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import { DiagnosticsData } from "@/app/api/admin/diagnostics/route";
 
@@ -231,8 +233,8 @@ export default function DiagnosticsClient() {
               </div>
             )}
 
-            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability, UPI & Storage Safety */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability, UPI & Storage Safety, AI Assistant Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {/* Card 1: Clerk Publishable Key Mode */}
               <div
                 className={`rounded-2xl border p-5 shadow-xs ${
@@ -414,6 +416,71 @@ export default function DiagnosticsClient() {
                       {data.payment?.storageProvider || "mock"}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Card 5: AI Chatbot Provider & Circuit Breaker Status */}
+              <div
+                className={`rounded-2xl border p-5 shadow-xs ${
+                  data.chatbot?.status === "HEALTHY"
+                    ? "border-emerald-200 bg-emerald-50/50"
+                    : data.chatbot?.status === "DEGRADED"
+                    ? "border-amber-300 bg-amber-50/60"
+                    : data.chatbot?.status === "ERROR"
+                    ? "border-red-300 bg-red-50/60"
+                    : "border-gray-200 bg-gray-50/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-[#7B2D26]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3B2A1E]">
+                      AI Assistant
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      data.chatbot?.status === "HEALTHY"
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : data.chatbot?.status === "DEGRADED"
+                        ? "bg-amber-100 text-amber-800 border border-amber-300"
+                        : data.chatbot?.status === "ERROR"
+                        ? "bg-red-100 text-red-800 border border-red-300"
+                        : "bg-gray-100 text-gray-800 border border-gray-300"
+                    }`}
+                  >
+                    {data.chatbot?.status || "UNKNOWN"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-[#3B2A1E]">
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Provider:</span>
+                    <strong className="font-mono text-[11px] uppercase">{data.chatbot?.provider || "mock"}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Model:</span>
+                    <code className="font-mono text-[10px] font-bold text-[#7B2D26] truncate max-w-[120px]">
+                      {data.chatbot?.model || "Unset"}
+                    </code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Failures:</span>
+                    <span className={data.chatbot?.consecutiveFailures ? "text-amber-700 font-bold" : "text-emerald-700 font-bold"}>
+                      {data.chatbot?.consecutiveFailures ?? 0} consecutive
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Circuit Breaker:</span>
+                    <span className={data.chatbot?.circuitBreakerTripped ? "text-red-700 font-bold" : "text-emerald-700"}>
+                      {data.chatbot?.circuitBreakerTripped ? "TRIPPED (Hidden)" : "Armed (Active)"}
+                    </span>
+                  </div>
+                  {data.chatbot?.lastError && (
+                    <div className="pt-1 border-t border-amber-200/60 text-[10px] text-red-700 truncate" title={data.chatbot.lastError.message}>
+                      ⚠️ {data.chatbot.lastError.type}: {data.chatbot.lastError.message.slice(0, 45)}...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

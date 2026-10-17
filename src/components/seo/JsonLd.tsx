@@ -15,7 +15,7 @@ export interface LocalBusinessJsonLdProps {
 }
 
 export function LocalBusinessJsonLd({
-  url = "https://aapkaastro.com",
+  url = "https://www.aapkaastro.com",
   name = "Aapka Astro — Vedic Astrology, Vastu & Gemstone Wisdom",
   telephone = PLACEHOLDER_CONTACT_INFO.phone,
   address = {
@@ -33,7 +33,7 @@ export function LocalBusinessJsonLd({
     url,
     telephone,
     priceRange: "₹₹",
-    image: "https://aapkaastro.com/images/logo.png",
+    image: "https://www.aapkaastro.com/images/logo.png",
     address: {
       "@type": "PostalAddress",
       ...address,
@@ -108,11 +108,11 @@ export function PersonJsonLd() {
     worksFor: {
       "@type": "Organization",
       name: "Aapka Astro",
-      url: "https://aapkaastro.com",
+      url: "https://www.aapkaastro.com",
     },
     description: PLACEHOLDER_ASTROLOGER.bio,
-    image: PLACEHOLDER_ASTROLOGER.avatarUrl,
-    url: "https://aapkaastro.com/about",
+    image: "https://www.aapkaastro.com/images/logo.png",
+    url: "https://www.aapkaastro.com/about",
     knowsAbout: [
       "Vedic Astrology (Parashari & Jaimini)",
       "Vedic Vastu Shastra",
@@ -170,14 +170,14 @@ export function ConsultationServicesJsonLd() {
         name: "1-on-1 Vedic Astrology Consultation",
         description:
           "Comprehensive 1-on-1 personal Vedic horoscope reading with Acharya Niraj Kumar across Voice, Video, or Live Chat.",
-        image: "https://aapkaastro.com/images/logo.png",
+        image: "https://www.aapkaastro.com/images/logo.png",
         offers: {
           "@type": "Offer",
           priceCurrency: "INR",
           price: "1051",
           priceValidUntil: "2027-12-31",
           availability: "https://schema.org/InStock",
-          url: "https://aapkaastro.com/consult",
+          url: "https://www.aapkaastro.com/consult",
           description: "Flat ₹1,051 introductory promotional fee for first-time clients (Standard rate ₹2,100).",
         },
       },
@@ -186,14 +186,14 @@ export function ConsultationServicesJsonLd() {
         name: "Vedic & Devta Vaastu Consultation",
         description:
           "Comprehensive Devta Vaastu and Energy Vaastu spatial audit for residential, commercial, or industrial properties.",
-        image: "https://aapkaastro.com/images/logo.png",
+        image: "https://www.aapkaastro.com/images/logo.png",
         offers: {
           "@type": "Offer",
           priceCurrency: "INR",
           price: "15000",
           priceValidUntil: "2027-12-31",
           availability: "https://schema.org/InStock",
-          url: "https://aapkaastro.com/consult?product=vaastu",
+          url: "https://www.aapkaastro.com/consult?product=vaastu",
           description: "Standing promotional fee of Flat ₹15,000 for all clients (Discounted from ₹25,000).",
         },
       },
@@ -202,14 +202,14 @@ export function ConsultationServicesJsonLd() {
         name: "Comprehensive Janam Kundli PDF Report",
         description:
           "Full formatted, multi-page downloadable PDF Vedic astrological dossier calculated from verified Swiss Ephemeris.",
-        image: "https://aapkaastro.com/images/logo.png",
+        image: "https://www.aapkaastro.com/images/logo.png",
         offers: {
           "@type": "Offer",
           priceCurrency: "INR",
           price: "501",
           priceValidUntil: "2027-12-31",
           availability: "https://schema.org/InStock",
-          url: "https://aapkaastro.com/kundli-generator",
+          url: "https://www.aapkaastro.com/kundli-generator",
           description: "Download Full Formatted PDF Report for Flat ₹501 (Free online chart viewing permanently complimentary).",
         },
       },

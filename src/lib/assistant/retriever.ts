@@ -15,12 +15,14 @@ export interface RetrievedContext {
  * Mask PII (emails and phone numbers) to protect user privacy.
  */
 export function maskPii(text: string): string {
+  if (!text) return "";
+
   // 1. Mask Email addresses
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
   let sanitized = text.replace(emailRegex, "[MASKED_EMAIL]");
 
-  // 2. Mask Phone numbers (Indian mobile formats: +91 9xxxx xxxxx, 10 digits starting with 6-9, or US 10-digits)
-  const phoneRegex = /(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}\b|\b\d{3}[-.\s]??\d{3}[-.\s]??\d{4}\b/g;
+  // 2. Mask Phone numbers (Indian mobiles +91/0/bare 10-digits, space/dash formatted, and international numbers)
+  const phoneRegex = /(?:(?:\+?91|0)[\s-]?)?[6-9]\d{2,4}[\s-]?\d{2,4}[\s-]?\d{2,4}\b|\b\d{3}[-.\s]??\d{3}[-.\s]??\d{4}\b|\b[6-9]\d{9}\b/g;
   sanitized = sanitized.replace(phoneRegex, "[MASKED_PHONE]");
 
   // 3. Truncate to 500 characters

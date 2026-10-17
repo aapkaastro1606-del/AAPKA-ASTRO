@@ -1,5 +1,6 @@
 import { ASSISTANT_KNOWLEDGE } from "./knowledgeBase";
 import { queryKnowledgeBase } from "./queryEngine";
+import { ChatbotHealthTracker } from "./chatbotHealthTracker";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -116,7 +117,13 @@ export class OpenAICompatibleChatProvider implements ChatProvider {
   }) {
     this.name = config.name || "OpenAICompatible";
     this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
-    this.model = config.model || "gpt-4o-mini";
+    const model = (config.model || "").trim();
+    if (!model) {
+      throw new Error(
+        `CHATBOT_MODEL is required for provider ${this.name}. Please set CHATBOT_MODEL in your environment variables after verifying the current active model in the provider's official documentation.`
+      );
+    }
+    this.model = model;
     this.baseUrl = (config.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
   }
 
@@ -224,9 +231,11 @@ export class GeminiChatProvider implements ChatProvider {
 
   constructor(config: { apiKey: string; model?: string }) {
     this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
-    let m = (config.model || "gemini-1.5-flash").trim().toLowerCase();
-    if (m === "gemini" || m === "flash" || m === "gemini-flash") {
-      m = "gemini-1.5-flash";
+    const m = (config.model || "").trim().toLowerCase();
+    if (!m) {
+      throw new Error(
+        "CHATBOT_MODEL is required. Google has retired the Gemini 1.5 models. Please explicitly configure CHATBOT_MODEL (e.g. 'gemini-2.0-flash') after verifying current active models in Google AI documentation."
+      );
     }
     this.model = m;
   }
@@ -358,8 +367,9 @@ export class MockGroundedChatProvider implements ChatProvider {
 }
 
 /**
- * Checks if chatbot is validly configured.
- * In production: If CHATBOT_API_KEY is missing, logs a clear warning and returns false.
+ * Checks if chatbot is validly configured and healthy.
+ * In production: If CHATBOT_API_KEY is missing or CHATBOT_MODEL is unset for external providers, returns false.
+ * If circuit breaker is tripped due to repeated failures, returns false to hide the widget.
  * In test/dev: allows mock provider so developers and CI tests succeed without paid keys.
  */
 export function isChatbotConfigured(): boolean {
@@ -367,11 +377,28 @@ export function isChatbotConfigured(): boolean {
     return false;
   }
 
+  // If circuit breaker has tripped from repeated provider failures, hide widget
+  if (ChatbotHealthTracker.isCircuitBreakerTripped()) {
+    return false;
+  }
+
   const isProd = process.env.NODE_ENV === "production";
   const apiKey = process.env.CHATBOT_API_KEY;
+  const providerType = (process.env.CHATBOT_PROVIDER || "mock").toLowerCase();
+  const model = (process.env.CHATBOT_MODEL || "").trim();
   const allowFallbackInProd =
     process.env.CHATBOT_ENABLE_FALLBACK === "true" ||
     process.env.CHATBOT_PROVIDER === "mock";
+
+  // When external provider is chosen, CHATBOT_MODEL is strictly required
+  if (providerType !== "mock" && !allowFallbackInProd) {
+    if (!model) {
+      console.warn(
+        `[Chatbot Disabled] CHATBOT_MODEL is required for provider '${providerType}'. Google has retired Gemini 1.5 models. Developers must set CHATBOT_MODEL and verify current active model names in the provider's official documentation.`
+      );
+      return false;
+    }
+  }
 
   if (!apiKey || apiKey.trim() === "" || apiKey === "change_in_production") {
     if (isProd && !allowFallbackInProd) {
@@ -389,14 +416,21 @@ export function isChatbotConfigured(): boolean {
 
 /**
  * Resolves the configured ChatProvider instance.
+ * Explicitly requires CHATBOT_MODEL for non-mock providers.
  */
 export function getChatProvider(): ChatProvider {
   const apiKey = process.env.CHATBOT_API_KEY;
   const providerType = (process.env.CHATBOT_PROVIDER || "mock").toLowerCase();
-  const model = process.env.CHATBOT_MODEL;
+  const model = (process.env.CHATBOT_MODEL || "").trim();
 
   if (!apiKey || apiKey === "change_in_production" || providerType === "mock") {
     return new MockGroundedChatProvider();
+  }
+
+  if (!model) {
+    throw new Error(
+      `CHATBOT_MODEL is required for provider '${providerType}'. Google has retired the Gemini 1.5 models. Please configure CHATBOT_MODEL (e.g. 'gemini-2.0-flash', 'llama-3.1-8b-instant', or 'gpt-4o-mini') after confirming active models in provider documentation.`
+    );
   }
 
   if (providerType === "gemini" || providerType === "google") {
@@ -404,13 +438,13 @@ export function getChatProvider(): ChatProvider {
       return new OpenAICompatibleChatProvider({
         name: "Gemini",
         apiKey,
-        model: model || "gemini-1.5-flash",
+        model,
         baseUrl: process.env.CHATBOT_BASE_URL,
       });
     }
     return new GeminiChatProvider({
       apiKey,
-      model: model || "gemini-1.5-flash",
+      model,
     });
   }
 
@@ -418,7 +452,7 @@ export function getChatProvider(): ChatProvider {
     return new OpenAICompatibleChatProvider({
       name: "Groq",
       apiKey,
-      model: model || "llama-3.1-8b-instant",
+      model,
       baseUrl: "https://api.groq.com/openai/v1",
     });
   }
@@ -427,7 +461,7 @@ export function getChatProvider(): ChatProvider {
     return new OpenAICompatibleChatProvider({
       name: "OpenAI",
       apiKey,
-      model: model || "gpt-4o-mini",
+      model,
       baseUrl: "https://api.openai.com/v1",
     });
   }
@@ -436,7 +470,7 @@ export function getChatProvider(): ChatProvider {
   return new OpenAICompatibleChatProvider({
     name: providerType,
     apiKey,
-    model: model || "gpt-4o-mini",
+    model,
     baseUrl: process.env.CHATBOT_BASE_URL || "https://api.openai.com/v1",
   });
 }

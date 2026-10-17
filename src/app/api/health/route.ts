@@ -132,8 +132,8 @@ export async function GET(req: NextRequest) {
     storage: process.env.STORAGE_PROVIDER || "mock",
     calling: process.env.CALL_PROVIDER || "mock",
     chatbot: {
-      provider: process.env.CHATBOT_PROVIDER || "gemini",
-      model: process.env.CHATBOT_MODEL || "gemini-1.5-flash",
+      provider: process.env.CHATBOT_PROVIDER || "mock",
+      model: process.env.CHATBOT_MODEL || "unconfigured",
       keyConfigured: Boolean(process.env.CHATBOT_API_KEY && process.env.CHATBOT_API_KEY.trim().length > 0),
     },
     email: Boolean(

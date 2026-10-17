@@ -3,7 +3,7 @@ import { BlogStore } from "@/lib/store/blogStore";
 import { ZODIAC_SIGNS } from "@/lib/astrology/dailyHoroscope";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aapkaastro.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.aapkaastro.com";
   const now = new Date();
 
   const staticRoutes = [
@@ -36,6 +36,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/consult",
     "/login",
     "/signup",
+    "/privacy-policy",
+    "/terms",
+    "/refund-policy",
+    "/pricing-policy",
+    "/disclaimer",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: now,
@@ -90,5 +95,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...horoscopeSignRoutes, ...blogRoutes];
+  const allRoutes = [...staticRoutes, ...horoscopeSignRoutes, ...blogRoutes];
+
+  // Strictly enforce: Sitemap lists public routes only (exclude wallet, account, admin, api, dashboard)
+  const excludedPrefixes = ["account", "admin", "api", "dashboard", "wallet"];
+  return allRoutes.filter((entry) => {
+    const path = entry.url.replace(baseUrl, "").replace(/^\//, "");
+    return !excludedPrefixes.some((prefix) => path.startsWith(prefix));
+  });
 }
