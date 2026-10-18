@@ -120,6 +120,7 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
  */
 export function getOwnerEmails(): string[] {
   const envVal =
+    process.env.OWNER_NOTIFY_EMAIL ||
     process.env.OWNER_EMAIL ||
     process.env.NEXT_PUBLIC_OWNER_EMAIL ||
     "";

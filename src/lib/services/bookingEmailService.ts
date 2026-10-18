@@ -179,7 +179,7 @@ export class BookingEmailService {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify({
-          from: "Aapka Astro <bookings@aapkaastro.com>",
+          from: process.env.EMAIL_FROM || "Aapka Astro <bookings@mail.aapkaastro.com>",
           to: toList,
           subject: params.subject,
           html: params.html,
