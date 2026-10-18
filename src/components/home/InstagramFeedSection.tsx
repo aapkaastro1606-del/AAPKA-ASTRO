@@ -12,19 +12,26 @@ import { ArrowRight, ExternalLink } from "lucide-react";
 
 export const InstagramFeedSection: React.FC = () => {
   const [reels, setReels] = useState<AstroReel[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const updateReels = () => {
       fetch("/api/reels")
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.pinnedReels?.length > 0) {
+          setLoaded(true);
+          if (data.disabled || !data.success) {
+            setReels([]);
+          } else if (data.pinnedReels?.length > 0) {
             setReels(data.pinnedReels.slice(0, 4));
           } else {
-            setReels(ReelsStore.getPinnedReels().slice(0, 4));
+            setReels([]);
           }
         })
-        .catch(() => setReels(ReelsStore.getPinnedReels().slice(0, 4)));
+        .catch(() => {
+          setLoaded(true);
+          setReels([]);
+        });
     };
 
     updateReels();
@@ -34,6 +41,10 @@ export const InstagramFeedSection: React.FC = () => {
       window.removeEventListener("aapka_reels_updated", updateReels);
     };
   }, []);
+
+  if (!loaded || reels.length === 0) {
+    return null;
+  }
 
   return (
     <section className="relative bg-[#FBF3E7] py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-b border-[#E8D8C3]">

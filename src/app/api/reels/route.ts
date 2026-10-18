@@ -16,8 +16,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       disabled: true,
-      visibleReels: ReelsStore.getVisibleReels(),
-      pinnedReels: ReelsStore.getPinnedReels(),
+      visibleReels: [],
+      pinnedReels: [],
     });
   }
 
