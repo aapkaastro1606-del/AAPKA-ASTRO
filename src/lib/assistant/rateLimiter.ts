@@ -1,7 +1,10 @@
 import crypto from "crypto";
 
 // Salt for hashing IPs to ensure one-way privacy (never stores raw IP)
-const HASH_SALT = process.env.RATE_LIMIT_SALT || "aapka-astro-privacy-salt-2026";
+const HASH_SALT =
+  process.env.CHATBOT_HASH_SALT ||
+  process.env.RATE_LIMIT_SALT ||
+  "aapka-astro-privacy-salt-2026";
 
 export function hashIp(ip: string): string {
   return crypto
