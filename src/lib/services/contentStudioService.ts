@@ -6,6 +6,8 @@ import {
   PLACEHOLDER_TESTIMONIALS,
 } from "@/config/placeholderContent";
 import { AuditLogService } from "@/lib/services/auditLogService";
+import { ContentModelService } from "@/lib/services/contentModelService";
+import { ContentStatus } from "@prisma/client";
 
 export interface FaqItem {
   id: string;
@@ -176,47 +178,112 @@ const SINGLETON_ID = "singleton_settings";
 export class ContentStudioService {
   /**
    * Fetches full Content Studio data from PostgreSQL.
-   * Merges safely with default values if partial data exists.
+   * Prioritizes typed ContentEntry tables with fallback to platformSettings and built-in code defaults.
    */
   static async getContent(): Promise<ContentStudioData> {
     try {
-      if (!prisma || !prisma.platformSetting) {
-        return { ...DEFAULT_CONTENT_STUDIO };
+      // 1. Attempt to read from typed ContentEntry collections
+      if (prisma && prisma.contentEntry) {
+        const [faqEntries, contactEntry, socialEntry, heroEntry, testimonialEntries] = await Promise.all([
+          ContentModelService.getAllEntries("faqs").catch(() => []),
+          ContentModelService.getPublishedEntry("contact", "primary").catch(() => null),
+          ContentModelService.getPublishedEntry("social", "primary").catch(() => null),
+          ContentModelService.getPublishedEntry("hero", "home-hero").catch(() => null),
+          ContentModelService.getAllEntries("testimonials").catch(() => []),
+        ]);
+
+        if (faqEntries.length > 0 || contactEntry || socialEntry || heroEntry) {
+          const faqs: FaqItem[] = faqEntries.length > 0
+            ? faqEntries.map((f) => ({
+                id: f.key,
+                q: f.data.question || f.dataEn.question || "",
+                a: f.data.answer || f.dataEn.answer || "",
+                category: f.data.category || f.dataEn.category || "general",
+                isActive: f.status === ContentStatus.PUBLISHED,
+                sortOrder: f.sortOrder,
+              }))
+            : DEFAULT_FAQS;
+
+          const contact: ContactInfoConfig = contactEntry
+            ? {
+                ...DEFAULT_CONTENT_STUDIO.contact,
+                ...(contactEntry.data as any),
+              }
+            : DEFAULT_CONTENT_STUDIO.contact;
+
+          const social: SocialLinksConfig = socialEntry
+            ? {
+                ...DEFAULT_CONTENT_STUDIO.social,
+                ...(socialEntry.data as any),
+              }
+            : DEFAULT_CONTENT_STUDIO.social;
+
+          const hero: HeroBannerConfig = heroEntry
+            ? {
+                ...DEFAULT_CONTENT_STUDIO.hero,
+                ...(heroEntry.data as any),
+              }
+            : DEFAULT_CONTENT_STUDIO.hero;
+
+          const reviews: ReviewItem[] = testimonialEntries.length > 0
+            ? testimonialEntries.map((t) => ({
+                id: t.key,
+                clientName: t.data.clientName || t.dataEn.clientName || "",
+                city: t.data.city || t.dataEn.city || "",
+                service: t.data.service || t.dataEn.service || "",
+                stars: t.data.stars || t.dataEn.stars || 5,
+                text: t.data.text || t.dataEn.text || "",
+                verified: t.data.verified ?? true,
+                isActive: t.status === ContentStatus.PUBLISHED,
+              }))
+            : DEFAULT_CONTENT_STUDIO.reviews!;
+
+          return {
+            contact,
+            social,
+            hero,
+            faqs,
+            reviews,
+            updatedAt: contactEntry?.updatedAt || heroEntry?.updatedAt || new Date().toISOString(),
+            updatedBy: contactEntry?.updatedBy || heroEntry?.updatedBy || "system",
+          };
+        }
       }
 
-      const record = await prisma.platformSetting.findUnique({
-        where: { id: SINGLETON_ID },
-      });
+      // 2. Fallback to platformSetting
+      if (prisma && prisma.platformSetting) {
+        const record = await prisma.platformSetting.findUnique({
+          where: { id: SINGLETON_ID },
+        });
 
-      if (!record || !record.features) {
-        return { ...DEFAULT_CONTENT_STUDIO };
+        if (record && record.features) {
+          const featuresObj = record.features as Record<string, any>;
+          const studio = featuresObj.contentStudio as Partial<ContentStudioData> | undefined;
+
+          if (studio) {
+            return {
+              contact: {
+                ...DEFAULT_CONTENT_STUDIO.contact,
+                ...(studio.contact || {}),
+              },
+              social: {
+                ...DEFAULT_CONTENT_STUDIO.social,
+                ...(studio.social || {}),
+              },
+              hero: {
+                ...DEFAULT_CONTENT_STUDIO.hero,
+                ...(studio.hero || {}),
+              },
+              faqs: Array.isArray(studio.faqs) && studio.faqs.length > 0 ? studio.faqs : DEFAULT_FAQS,
+              reviews: Array.isArray(studio.reviews) && studio.reviews.length > 0 ? studio.reviews : DEFAULT_CONTENT_STUDIO.reviews,
+              updatedAt: studio.updatedAt,
+              updatedBy: studio.updatedBy,
+            };
+          }
+        }
       }
 
-      const featuresObj = record.features as Record<string, any>;
-      const studio = featuresObj.contentStudio as Partial<ContentStudioData> | undefined;
-
-      if (!studio) {
-        return { ...DEFAULT_CONTENT_STUDIO };
-      }
-
-      return {
-        contact: {
-          ...DEFAULT_CONTENT_STUDIO.contact,
-          ...(studio.contact || {}),
-        },
-        social: {
-          ...DEFAULT_CONTENT_STUDIO.social,
-          ...(studio.social || {}),
-        },
-        hero: {
-          ...DEFAULT_CONTENT_STUDIO.hero,
-          ...(studio.hero || {}),
-        },
-        faqs: Array.isArray(studio.faqs) && studio.faqs.length > 0 ? studio.faqs : DEFAULT_FAQS,
-        reviews: Array.isArray(studio.reviews) && studio.reviews.length > 0 ? studio.reviews : DEFAULT_CONTENT_STUDIO.reviews,
-        updatedAt: studio.updatedAt,
-        updatedBy: studio.updatedBy,
-      };
+      return { ...DEFAULT_CONTENT_STUDIO };
     } catch (err) {
       console.error("ContentStudioService.getContent error:", err);
       return { ...DEFAULT_CONTENT_STUDIO };
@@ -224,7 +291,8 @@ export class ContentStudioService {
   }
 
   /**
-   * Updates Content Studio data in PostgreSQL and writes an audit log entry.
+   * Updates Content Studio data in PostgreSQL (both ContentEntry and platformSettings),
+   * creates ContentRevision snapshots, and records audit logs.
    */
   static async updateContent(
     updates: Partial<ContentStudioData>,
@@ -251,6 +319,105 @@ export class ContentStudioService {
       updatedBy: actorEmail,
     };
 
+    // 1. Sync to typed ContentEntry & ContentRevision tables
+    try {
+      if (prisma && prisma.contentEntry) {
+        if (updates.contact) {
+          await ContentModelService.saveEntry({
+            collection: "contact",
+            key: "primary",
+            dataEn: merged.contact,
+            dataHi: merged.contact,
+            actorEmail,
+            changeSummary: `Updated contact info by ${actorEmail}`,
+          }).catch((e) => console.error("Sync contact to ContentModel failed:", e));
+        }
+
+        if (updates.social) {
+          await ContentModelService.saveEntry({
+            collection: "social",
+            key: "primary",
+            dataEn: merged.social,
+            dataHi: merged.social,
+            actorEmail,
+            changeSummary: `Updated social channels by ${actorEmail}`,
+          }).catch((e) => console.error("Sync social to ContentModel failed:", e));
+        }
+
+        if (updates.hero) {
+          await ContentModelService.saveEntry({
+            collection: "hero",
+            key: "home-hero",
+            dataEn: merged.hero,
+            dataHi: merged.hero,
+            actorEmail,
+            changeSummary: `Updated hero banner by ${actorEmail}`,
+          }).catch((e) => console.error("Sync hero to ContentModel failed:", e));
+        }
+
+        if (updates.faqs) {
+          const activeKeys = new Set(updates.faqs.map((f) => f.id));
+          const existingFaqs = await prisma.contentEntry.findMany({
+            where: { collection: "faqs" },
+            select: { id: true, key: true },
+          });
+
+          for (const ef of existingFaqs) {
+            if (!activeKeys.has(ef.key)) {
+              await prisma.contentRevision.deleteMany({ where: { contentId: ef.id } }).catch(() => {});
+              await prisma.contentEntry.delete({ where: { id: ef.id } }).catch(() => {});
+            }
+          }
+
+          for (let i = 0; i < merged.faqs.length; i++) {
+            const f = merged.faqs[i];
+            await ContentModelService.saveEntry({
+              collection: "faqs",
+              key: f.id,
+              dataEn: { question: f.q, answer: f.a, category: f.category || "general" },
+              status: f.isActive !== false ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
+              sortOrder: f.sortOrder || i + 1,
+              actorEmail,
+              changeSummary: `Synced FAQ ${f.id} by ${actorEmail}`,
+            }).catch((e) => console.error(`Sync FAQ ${f.id} to ContentModel failed:`, e));
+          }
+        }
+
+        if (updates.reviews) {
+          for (let i = 0; i < merged.reviews!.length; i++) {
+            const r = merged.reviews![i];
+            await ContentModelService.saveEntry({
+              collection: "testimonials",
+              key: r.id,
+              dataEn: {
+                clientName: r.clientName,
+                city: r.city,
+                service: r.service,
+                stars: r.stars,
+                text: r.text,
+                verified: r.verified,
+              },
+              dataHi: {
+                clientName: r.clientName,
+                city: r.city,
+                service: r.service,
+                stars: r.stars,
+                text: r.text,
+                verified: r.verified,
+              },
+              status: r.isActive !== false ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced review ${r.id} by ${actorEmail}`,
+            }).catch((e) => console.error(`Sync review ${r.id} to ContentModel failed:`, e));
+          }
+        }
+      }
+    } catch (modelErr) {
+      console.warn("ContentModelService sync warning:", modelErr);
+    }
+
+    // 2. Also keep platformSetting updated for redundancy
     if (prisma && prisma.platformSetting) {
       let record = await prisma.platformSetting.findUnique({
         where: { id: SINGLETON_ID },
@@ -334,6 +501,20 @@ export class ContentStudioService {
   static async deleteFaq(id: string, actorEmail: string): Promise<ContentStudioData> {
     const current = await this.getContent();
     const updatedFaqs = current.faqs.filter((f) => f.id !== id);
+
+    // Also update ContentModel entry status to HIDDEN or delete
+    try {
+      if (prisma && prisma.contentEntry) {
+        await prisma.contentEntry.delete({
+          where: { collection_key: { collection: "faqs", key: id } },
+        }).catch(async () => {
+          // If delete fails due to cascade or non-existence, ignore or set hidden
+        });
+      }
+    } catch {
+      // Ignored
+    }
+
     return this.updateContent({ faqs: updatedFaqs }, actorEmail);
   }
 

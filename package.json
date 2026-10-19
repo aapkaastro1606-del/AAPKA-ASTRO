@@ -14,7 +14,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "node scripts/prisma-guard.js migrate deploy",
     "prisma:db-push": "node scripts/prisma-guard.js db push",
-    "prisma:reset": "node scripts/prisma-guard.js migrate reset"
+    "prisma:reset": "node scripts/prisma-guard.js migrate reset",
+    "seed:content": "tsx scripts/seed-content.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.4",

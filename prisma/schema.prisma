@@ -77,6 +77,12 @@ enum AccessLevel {
   MANAGE
 }
 
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
 // ------------------------------------------------------------------------------
 // 1. User (role: client/astrologer/admin, identifier, email, phone, name, created_at)
 // ------------------------------------------------------------------------------
@@ -573,6 +579,78 @@ model GeocodeCache {
 
   @@index([query])
   @@map("geocode_cache")
+}
+
+// ------------------------------------------------------------------------------
+// 21. ContentEntry (Typed collections of editable content in EN & HI)
+// ------------------------------------------------------------------------------
+model ContentEntry {
+  id            String          @id @default(cuid())
+  collection    String          @map("collection")
+  key           String          @map("key")
+  slug          String?         @map("slug")
+  status        ContentStatus   @default(PUBLISHED)
+  sortOrder     Int             @default(0) @map("sort_order")
+  schemaVersion String          @default("1.0") @map("schema_version")
+  dataEn        Json            @default("{}") @map("data_en")
+  dataHi        Json            @default("{}") @map("data_hi")
+  metadata      Json?           @default("{}") @map("metadata")
+  createdBy     String?         @map("created_by")
+  updatedBy     String?         @map("updated_by")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  revisions     ContentRevision[]
+
+  @@unique([collection, key])
+  @@index([collection, status, sortOrder])
+  @@index([status])
+  @@map("content_entries")
+}
+
+// ------------------------------------------------------------------------------
+// 22. ContentRevision (Snapshot on every save, with restore)
+// ------------------------------------------------------------------------------
+model ContentRevision {
+  id             String        @id @default(cuid())
+  contentId      String        @map("content_id")
+  content        ContentEntry  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  collection     String        @map("collection")
+  key            String        @map("key")
+  status         ContentStatus @default(PUBLISHED)
+  sortOrder      Int           @default(0) @map("sort_order")
+  dataEn         Json          @map("data_en")
+  dataHi         Json          @map("data_hi")
+  metadata       Json?         @map("metadata")
+  revisionNumber Int           @default(1) @map("revision_number")
+  changeSummary  String?       @map("change_summary")
+  createdBy      String?       @map("created_by")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@index([contentId, revisionNumber])
+  @@index([collection, key])
+  @@map("content_revisions")
+}
+
+// ------------------------------------------------------------------------------
+// 23. MediaAsset (Uploaded images, videos, certificates, and attachments)
+// ------------------------------------------------------------------------------
+model MediaAsset {
+  id          String   @id @default(cuid())
+  url         String   @map("url")
+  filename    String   @map("filename")
+  mimeType    String   @default("image/jpeg") @map("mime_type")
+  fileSize    Int?     @map("file_size")
+  altTextEn   String?  @map("alt_text_en")
+  altTextHi   String?  @map("alt_text_hi")
+  collection  String?  @map("collection")
+  uploadedBy  String?  @map("uploaded_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([collection])
+  @@index([url])
+  @@map("media_assets")
 }
 
 
