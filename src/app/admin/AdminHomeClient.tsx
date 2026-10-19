@@ -23,6 +23,7 @@ import {
   MessageSquare,
   AlertCircle,
   CheckCircle2,
+  Image as ImageIcon,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 
@@ -116,6 +117,15 @@ export default function AdminHomeClient({
       icon: MessageSquare,
       section: "content",
       accent: "purple",
+    },
+    {
+      id: "media-library",
+      title: "Media Library & Photos",
+      helpText: "Upload site photos directly to Cloudflare R2, manage alt text, and inspect in-use images.",
+      href: "/admin/media",
+      icon: ImageIcon,
+      section: "content",
+      accent: "blue",
     },
     {
       id: "blog",

@@ -262,22 +262,46 @@ export const DEFAULT_CONTENT_COLLECTIONS: Record<string, DefaultEntryDefinition[
   })),
 };
 
-export const INITIAL_MEDIA_ASSETS = [
+export interface MediaAssetDefinition {
+  id: string;
+  url: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number | null;
+  altTextEn: string | null;
+  altTextHi: string | null;
+  collection: string | null;
+  uploadedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const INITIAL_MEDIA_ASSETS: MediaAssetDefinition[] = [
   {
+    id: "fallback-media-acharya",
     url: "/images/Acharya_Niraj_Kumar.jpg",
     filename: "Acharya_Niraj_Kumar.jpg",
     mimeType: "image/jpeg",
+    fileSize: 450000,
     altTextEn: "Acharya Niraj Kumar - Founder & Jyotish Acharya",
     altTextHi: "आचार्य नीरज कुमार - संस्थापक एवं ज्योतिष आचार्य",
     collection: "astrologer",
+    uploadedBy: "system",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   },
-  ...OFFICIAL_GALLERY_IMAGES.map((img) => ({
+  ...OFFICIAL_GALLERY_IMAGES.map((img, idx) => ({
+    id: `fallback-media-gallery-${idx + 1}`,
     url: img.src,
     filename: img.src.split("/").pop() || "image.jpg",
     mimeType: img.src.endsWith(".png") ? "image/png" : "image/jpeg",
+    fileSize: 320000,
     altTextEn: img.alt,
     altTextHi: img.alt,
     collection: "gallery",
+    uploadedBy: "system",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   })),
 ];
 

@@ -54,13 +54,17 @@ const envSchema = z.object({
   ZEGOCLOUD_APP_ID: z.string().optional(),
   ZEGOCLOUD_SERVER_SECRET: z.string().optional(),
 
-  // Swappable File Storage (Cloudflare R2 / AWS S3)
+  // Swappable File Storage (Cloudflare R2 / AWS S3 - Private Bucket for internal files)
   STORAGE_PROVIDER: z.enum(["r2", "s3", "mock"]).default("mock"),
   S3_BUCKET: z.string().optional().default("aapka-astro-assets"),
   S3_REGION: z.string().optional().default("auto"),
   S3_ENDPOINT: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // Cloudflare R2 Public Storage (Public bucket for website media images, separate from private bucket)
+  R2_PUBLIC_BUCKET: z.string().optional(),
+  R2_PUBLIC_DOMAIN: z.string().optional(),
 
   // Scheduled Automation & Cron Secret
   CRON_SECRET: z.string().optional().default("aapka_astro_cron_secret_token_change_in_production"),

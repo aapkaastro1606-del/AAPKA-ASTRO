@@ -564,7 +564,19 @@ export class ContentModelService {
   /**
    * Fetches media assets, falling back to initial media assets if table is empty or error occurs.
    */
-  static async getMediaAssets(collection?: string) {
+  static async getMediaAssets(collection?: string): Promise<Array<{
+    id: string;
+    url: string;
+    filename: string;
+    mimeType: string;
+    fileSize: number | null;
+    altTextEn: string | null;
+    altTextHi: string | null;
+    collection: string | null;
+    uploadedBy: string | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+  }>> {
     const fallback = collection
       ? INITIAL_MEDIA_ASSETS.filter((m) => m.collection === collection)
       : INITIAL_MEDIA_ASSETS;
@@ -587,6 +599,9 @@ export class ContentModelService {
 
   /**
    * Adds a new media asset.
+   * Strictly enforces:
+   * - Prohibits Base64 data URLs in database
+   * - Requires alt text for accessibility and SEO
    */
   static async createMediaAsset(input: {
     url: string;
@@ -602,15 +617,27 @@ export class ContentModelService {
       throw new Error("Database client unavailable for creating media asset.");
     }
 
+    // Strictly prohibit Base64 in database
+    if (input.url.startsWith("data:") || input.url.includes(";base64,")) {
+      throw new Error(
+        "Base64 image storage in database is prohibited. Images must be stored in Cloudflare R2."
+      );
+    }
+
+    // Enforce required alt text (English required for accessibility and SEO)
+    if (!input.altTextEn || !input.altTextEn.trim()) {
+      throw new Error("Alt text (English) is required for accessibility and SEO.");
+    }
+
     const asset = await prisma.mediaAsset.create({
       data: {
         url: input.url,
         filename: input.filename,
         mimeType: input.mimeType || "image/jpeg",
         fileSize: input.fileSize,
-        altTextEn: input.altTextEn,
-        altTextHi: input.altTextHi,
-        collection: input.collection,
+        altTextEn: input.altTextEn.trim(),
+        altTextHi: input.altTextHi?.trim() || null,
+        collection: input.collection || "general",
         uploadedBy: input.actorEmail,
       },
     });
@@ -624,5 +651,137 @@ export class ContentModelService {
     });
 
     return asset;
+  }
+
+  /**
+   * Checks whether a media asset is currently in use across ContentEntry collections,
+   * platform settings, or official site galleries.
+   */
+  static async checkMediaAssetUsage(
+    assetIdOrUrl: string
+  ): Promise<{ inUse: boolean; usedIn: string[] }> {
+    const usedIn: string[] = [];
+    if (!prisma) return { inUse: false, usedIn: [] };
+
+    let targetUrl = assetIdOrUrl;
+    let targetFilename = "";
+
+    try {
+      if (prisma.mediaAsset) {
+        const asset = await prisma.mediaAsset.findFirst({
+          where: { OR: [{ id: assetIdOrUrl }, { url: assetIdOrUrl }] },
+        });
+        if (asset) {
+          targetUrl = asset.url;
+          targetFilename = asset.filename;
+        }
+      }
+    } catch {
+      // Ignore lookup failure
+    }
+
+    if (!targetUrl) return { inUse: false, usedIn: [] };
+
+    // 1. Scan content_entries
+    try {
+      if (prisma.contentEntry) {
+        const entries = await prisma.contentEntry.findMany({
+          select: { collection: true, key: true, dataEn: true, dataHi: true },
+        });
+
+        for (const entry of entries) {
+          const strEn = JSON.stringify(entry.dataEn || {});
+          const strHi = JSON.stringify(entry.dataHi || {});
+          if (
+            strEn.includes(targetUrl) ||
+            strHi.includes(targetUrl) ||
+            (targetFilename && (strEn.includes(targetFilename) || strHi.includes(targetFilename)))
+          ) {
+            usedIn.push(`Content: ${entry.collection} (${entry.key})`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("checkMediaAssetUsage contentEntry scan error:", e);
+    }
+
+    // 2. Scan platform_settings
+    try {
+      if (prisma.platformSetting) {
+        const setting = await prisma.platformSetting.findUnique({
+          where: { id: "singleton_settings" },
+        });
+        if (setting) {
+          const strSettings = JSON.stringify(setting);
+          if (
+            strSettings.includes(targetUrl) ||
+            (targetFilename && strSettings.includes(targetFilename))
+          ) {
+            usedIn.push("Platform Settings");
+          }
+        }
+      }
+    } catch (e) {
+      console.error("checkMediaAssetUsage platformSetting scan error:", e);
+    }
+
+    // 3. Scan official site gallery baseline
+    if (INITIAL_MEDIA_ASSETS.some((m) => m.url === targetUrl)) {
+      usedIn.push("Official Site Gallery Baseline");
+    }
+
+    return {
+      inUse: usedIn.length > 0,
+      usedIn,
+    };
+  }
+
+  /**
+   * Safely deletes a media asset, blocking deletion if the image is currently in use.
+   */
+  static async deleteMediaAsset(
+    id: string,
+    actorEmail: string
+  ): Promise<{ success: boolean; message: string; blocked?: boolean; usedIn?: string[] }> {
+    if (!prisma || !prisma.mediaAsset) {
+      throw new Error("Database client unavailable for deleting media asset.");
+    }
+
+    const asset = await prisma.mediaAsset.findUnique({
+      where: { id },
+    });
+
+    if (!asset) {
+      throw new Error(`Media asset with ID "${id}" was not found.`);
+    }
+
+    // Check if asset is still in use
+    const usage = await this.checkMediaAssetUsage(asset.id);
+    if (usage.inUse) {
+      return {
+        success: false,
+        blocked: true,
+        message: `Cannot delete image "${asset.filename}" because it is currently in use in: ${usage.usedIn.join(", ")}. Please remove or replace this image before deleting.`,
+        usedIn: usage.usedIn,
+      };
+    }
+
+    // Safe to delete
+    await prisma.mediaAsset.delete({
+      where: { id: asset.id },
+    });
+
+    await AuditLogService.log({
+      action: "MEDIA_ASSET_DELETED",
+      actorEmail,
+      targetId: asset.id,
+      targetType: "MediaAsset",
+      notes: `Deleted unused media asset: ${asset.filename} (${asset.url})`,
+    });
+
+    return {
+      success: true,
+      message: `Media asset "${asset.filename}" was successfully deleted.`,
+    };
   }
 }
