@@ -8,6 +8,7 @@ import {
   DefaultEntryDefinition,
 } from "@/lib/content/contentDefaults";
 import { validateCollectionData } from "@/lib/content/contentSchemas";
+import { sanitizeRichText } from "@/lib/content/sanitizeRichText";
 import { AuditLogService } from "@/lib/services/auditLogService";
 
 export interface ResolvedContentEntry<T = Record<string, any>> {
@@ -27,6 +28,23 @@ export interface ResolvedContentEntry<T = Record<string, any>> {
   createdAt: string;
   updatedAt: string;
   isFallback?: boolean;
+  isDraft?: boolean;
+}
+
+function sanitizeContentObject(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "string") {
+      result[k] = sanitizeRichText(v);
+    } else if (Array.isArray(v)) {
+      result[k] = v.map((item) => (typeof item === "string" ? sanitizeRichText(item) : item));
+    } else if (v && typeof v === "object") {
+      result[k] = sanitizeContentObject(v);
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
 }
 
 export interface SaveEntryInput {
@@ -51,7 +69,8 @@ export class ContentModelService {
    */
   static async getPublishedCollection<T = Record<string, any>>(
     collection: string,
-    language: "en" | "hi" = "en"
+    language: "en" | "hi" = "en",
+    options?: { includeDraftsForOwner?: boolean }
   ): Promise<ResolvedContentEntry<T>[]> {
     const fallbackList = getDefaultCollection(collection).map((item) => ({
       id: `fallback-${collection}-${item.key}`,
@@ -72,6 +91,7 @@ export class ContentModelService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isFallback: true,
+      isDraft: false,
     }));
 
     try {
@@ -79,10 +99,14 @@ export class ContentModelService {
         return fallbackList;
       }
 
+      const statusFilter = options?.includeDraftsForOwner
+        ? { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] }
+        : ContentStatus.PUBLISHED;
+
       const dbEntries = await prisma.contentEntry.findMany({
         where: {
           collection,
-          status: ContentStatus.PUBLISHED,
+          status: statusFilter,
         },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       });
@@ -114,6 +138,7 @@ export class ContentModelService {
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),
           isFallback: false,
+          isDraft: entry.status === ContentStatus.DRAFT,
         };
       });
     } catch (err) {
@@ -129,7 +154,8 @@ export class ContentModelService {
   static async getPublishedEntry<T = Record<string, any>>(
     collection: string,
     keyOrSlug: string,
-    language: "en" | "hi" = "en"
+    language: "en" | "hi" = "en",
+    options?: { includeDraftsForOwner?: boolean }
   ): Promise<ResolvedContentEntry<T> | null> {
     const defaultItem = getDefaultEntry(collection, keyOrSlug);
     const fallbackEntry: ResolvedContentEntry<T> | null = defaultItem
@@ -152,6 +178,7 @@ export class ContentModelService {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isFallback: true,
+          isDraft: false,
         }
       : null;
 
@@ -160,10 +187,14 @@ export class ContentModelService {
         return fallbackEntry;
       }
 
+      const statusFilter = options?.includeDraftsForOwner
+        ? { in: [ContentStatus.PUBLISHED, ContentStatus.DRAFT] }
+        : ContentStatus.PUBLISHED;
+
       const dbEntry = await prisma.contentEntry.findFirst({
         where: {
           collection,
-          status: ContentStatus.PUBLISHED,
+          status: statusFilter,
           OR: [{ key: keyOrSlug }, { slug: keyOrSlug }],
         },
       });
@@ -193,6 +224,7 @@ export class ContentModelService {
         createdAt: dbEntry.createdAt.toISOString(),
         updatedAt: dbEntry.updatedAt.toISOString(),
         isFallback: false,
+        isDraft: dbEntry.status === ContentStatus.DRAFT,
       };
     } catch (err) {
       console.error(`ContentModelService.getPublishedEntry(${collection}, ${keyOrSlug}) error:`, err);
@@ -331,6 +363,9 @@ export class ContentModelService {
     }
 
     const isNew = !existing;
+    const sanitizedDataEn = sanitizeContentObject(dataEn);
+    const sanitizedDataHi = sanitizeContentObject(effectiveDataHi);
+
     const entry = await prisma.contentEntry.upsert({
       where: {
         collection_key: { collection, key },
@@ -342,8 +377,8 @@ export class ContentModelService {
         status,
         sortOrder,
         schemaVersion,
-        dataEn,
-        dataHi: effectiveDataHi,
+        dataEn: sanitizedDataEn,
+        dataHi: sanitizedDataHi,
         metadata,
         createdBy: actorEmail,
         updatedBy: actorEmail,
@@ -353,8 +388,8 @@ export class ContentModelService {
         status,
         sortOrder,
         schemaVersion,
-        dataEn,
-        dataHi: effectiveDataHi,
+        dataEn: sanitizedDataEn,
+        dataHi: sanitizedDataHi,
         metadata,
         updatedBy: actorEmail,
       },
@@ -373,8 +408,8 @@ export class ContentModelService {
         key,
         status,
         sortOrder,
-        dataEn,
-        dataHi,
+        dataEn: sanitizedDataEn,
+        dataHi: sanitizedDataHi,
         metadata,
         revisionNumber,
         changeSummary: changeSummary || (isNew ? "Initial creation" : `Updated by ${actorEmail}`),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { DEFAULT_CONTENT_STUDIO } from "@/lib/services/contentStudioService";
+import { getAuthFromRequest } from "@/lib/auth/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -8,19 +9,23 @@ export const dynamic = "force-dynamic";
  * GET /api/content
  * Public endpoint to fetch live active website content for visitors in English or Hindi.
  * Guaranteed never to crash or return empty: falls back to built-in code defaults.
+ * Allows previewing DRAFT entries if and only if caller is authenticated as the Owner.
  */
 export async function GET(req?: NextRequest) {
   try {
     const lang = (req?.nextUrl?.searchParams?.get("lang") === "hi" ? "hi" : "en") as "en" | "hi";
+    const auth = req ? getAuthFromRequest(req) : { isOwner: false };
+    const wantsDraft = req?.nextUrl?.searchParams?.get("previewDraft") === "true";
+    const isOwnerDraftPreview = Boolean(auth.isOwner && wantsDraft);
 
     const [faqEntries, contactEntry, socialEntry, heroEntry, testimonialEntries, serviceEntries] =
       await Promise.all([
-        ContentModelService.getPublishedCollection("faqs", lang).catch(() => []),
-        ContentModelService.getPublishedEntry("contact", "primary", lang).catch(() => null),
-        ContentModelService.getPublishedEntry("social", "primary", lang).catch(() => null),
-        ContentModelService.getPublishedEntry("hero", "home-hero", lang).catch(() => null),
-        ContentModelService.getPublishedCollection("testimonials", lang).catch(() => []),
-        ContentModelService.getPublishedCollection("services", lang).catch(() => []),
+        ContentModelService.getPublishedCollection("faqs", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => []),
+        ContentModelService.getPublishedEntry("contact", "primary", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => null),
+        ContentModelService.getPublishedEntry("social", "primary", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => null),
+        ContentModelService.getPublishedEntry("hero", "home-hero", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => null),
+        ContentModelService.getPublishedCollection("testimonials", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => []),
+        ContentModelService.getPublishedCollection("services", lang, { includeDraftsForOwner: isOwnerDraftPreview }).catch(() => []),
       ]);
 
     const faqs = (faqEntries.length > 0 ? faqEntries : []).map((f) => ({
@@ -58,6 +63,7 @@ export async function GET(req?: NextRequest) {
     return NextResponse.json({
       success: true,
       lang,
+      isOwnerDraftPreview,
       content: {
         contact,
         social,
