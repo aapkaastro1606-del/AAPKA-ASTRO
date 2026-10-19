@@ -152,6 +152,7 @@ export default function AdminHomeClient({
       href: "/admin/pricing",
       icon: Tag,
       section: "pricing",
+      ownerOnly: true,
       accent: "green",
     },
     {
@@ -194,6 +195,16 @@ export default function AdminHomeClient({
       section: "staff",
       ownerOnly: true,
       accent: "maroon",
+    },
+    {
+      id: "audit",
+      title: "Audit Trail & Activity Log",
+      helpText: "Inspect all administrative changes, price updates, approvals, and security events.",
+      href: "/admin/audit",
+      icon: Activity,
+      section: "audit",
+      ownerOnly: true,
+      accent: "blue",
     },
   ];
 

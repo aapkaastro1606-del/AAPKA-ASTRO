@@ -18,14 +18,10 @@ export default async function AdminPricingPage() {
     redirect("/login?redirect_url=/admin/pricing");
   }
 
-  // Server-side check: requires VIEW on "pricing" (or Owner)
-  const isAuthorized = auth.isOwner || hasStaffSectionAccess(auth, "pricing", "VIEW");
-
-  if (!isAuthorized) {
+  // Server-side check: Pricing is strictly Owner-only
+  if (!auth.isOwner) {
     redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
   }
 
-  const canManage = auth.isOwner || hasStaffSectionAccess(auth, "pricing", "MANAGE");
-
-  return <PricingManagerClient canManage={canManage} />;
+  return <PricingManagerClient canManage={true} />;
 }

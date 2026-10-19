@@ -3,6 +3,8 @@ import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth
 import { ContentStudioService, ContentStudioData } from "@/lib/services/contentStudioService";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { seedContentModel } from "@/lib/content/contentSeeder";
+import { parseAndValidateJsonBody, checkAdminRateLimit } from "@/lib/admin/rateLimitAndValidation";
+import { revalidateAffectedContent } from "@/lib/content/revalidation";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,15 @@ export const dynamic = "force-dynamic";
  * Authenticated endpoint to fetch Content Studio data, revisions, and media assets.
  */
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rateLimit = checkAdminRateLimit(ip);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Rate limit exceeded. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
@@ -66,6 +77,11 @@ export async function GET(req: NextRequest) {
  * restore revisions, or manage media assets.
  */
 export async function POST(req: NextRequest) {
+  const parsed = await parseAndValidateJsonBody<any>(req, { maxBodyBytes: 2 * 1024 * 1024 });
+  if (!parsed.success) {
+    return NextResponse.json({ success: false, message: parsed.error }, { status: parsed.status });
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
@@ -83,7 +99,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const body = parsed.data;
     const actorEmail = auth.email || "staff@aapkaastro.com";
 
     // Sub-action: Restore Revision Snapshot
@@ -185,6 +201,7 @@ export async function POST(req: NextRequest) {
     // Sub-action: Toggle FAQ
     if (body.action === "toggle_faq" && body.id) {
       const updated = await ContentStudioService.toggleFaqActive(body.id, actorEmail);
+      revalidateAffectedContent("faqs", body.id);
       return NextResponse.json({
         success: true,
         message: "FAQ visibility toggled successfully.",
@@ -195,6 +212,13 @@ export async function POST(req: NextRequest) {
     // Default: General Content Update (Contact, Social, Hero, or Full FAQs/Reviews)
     const updates = (body.updates || body) as Partial<ContentStudioData>;
     const updated = await ContentStudioService.updateContent(updates, actorEmail);
+
+    // Revalidate affected cache tags
+    if (updates.faqs) revalidateAffectedContent("faqs");
+    if (updates.contact) revalidateAffectedContent("contact");
+    if (updates.hero) revalidateAffectedContent("hero");
+    if (updates.social) revalidateAffectedContent("social");
+    if (updates.reviews) revalidateAffectedContent("testimonials");
 
     return NextResponse.json({
       success: true,

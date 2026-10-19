@@ -2,15 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { PlatformSettingsService, PaymentSettings, isValidUpiId } from "@/lib/services/platformSettingsService";
+import { parseAndValidateJsonBody, checkAdminRateLimit } from "@/lib/admin/rateLimitAndValidation";
+import { revalidateAffectedContent } from "@/lib/content/revalidation";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/payment-settings
- * Returns current payment settings and WhatsApp confirmation state.
+ * Returns current payment settings and WhatsApp confirmation state. Strictly Owner-only.
  */
 export async function GET(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const rateLimit = checkAdminRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, message: "Rate limit exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const auth = getAuthFromRequest(req);
 
     if (!auth.isAuthenticated || !isOwnerEmail(auth.email)) {
@@ -42,6 +53,11 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    const parsed = await parseAndValidateJsonBody<any>(req, { maxBodyBytes: 1024 * 50 });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, message: parsed.error }, { status: parsed.status });
+    }
+
     const auth = getAuthFromRequest(req);
 
     if (!auth.isAuthenticated || !isOwnerEmail(auth.email)) {
@@ -51,7 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    const body = parsed.data;
     const { upiId, payeeName, qrImageUrl, whatsappNumber, whatsappConfirmed, unpaidExpiryDays } = body;
 
     const updates: Partial<PaymentSettings> = {};
@@ -83,6 +99,8 @@ export async function POST(req: NextRequest) {
       ipAddress,
       userAgent,
     });
+
+    revalidateAffectedContent("pricing");
 
     return NextResponse.json({
       success: true,

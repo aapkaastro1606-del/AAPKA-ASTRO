@@ -39,20 +39,20 @@ describe("Admin Panel Server-Side Fail-Closed Access & Nav State", () => {
   });
 
   it("proves staff members only reach their granted sections and fail-close on Owner-only sections", () => {
-    const pricingStaffAuth: ServerAuthResult = {
+    const contentStaffAuth: ServerAuthResult = {
       isAuthenticated: true,
-      userId: "user_pricing_staff",
+      userId: "user_content_staff",
       role: "CLIENT",
       isAstrologer: false,
       isAdmin: false,
       isOwner: false,
-      email: "pricing_officer@aapkaastro.com",
-      permissions: ["pricing"],
+      email: "content_editor@aapkaastro.com",
+      permissions: ["content"],
       grants: [
         {
-          id: "grant_p1",
-          email: "pricing_officer@aapkaastro.com",
-          section: "pricing",
+          id: "grant_c1",
+          email: "content_editor@aapkaastro.com",
+          section: "content",
           accessLevel: "MANAGE",
           grantedAt: new Date().toISOString(),
           revokedAt: null,
@@ -60,15 +60,17 @@ describe("Admin Panel Server-Side Fail-Closed Access & Nav State", () => {
       ],
     };
 
-    // Authorized on pricing
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "pricing", "VIEW"), true);
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "pricing", "MANAGE"), true);
+    // Authorized on content
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "content", "VIEW"), true);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "content", "MANAGE"), true);
 
-    // Strictly blocked on Owner-only sections (bookings, leads, staff, team)
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "bookings", "VIEW"), false);
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "leads", "VIEW"), false);
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "staff", "VIEW"), false);
-    assert.equal(hasStaffSectionAccess(pricingStaffAuth, "analytics", "VIEW"), false);
+    // Strictly blocked on Owner-only sections (pricing, bookings, leads, staff)
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "pricing", "VIEW"), false);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "pricing", "MANAGE"), false);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "bookings", "VIEW"), false);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "leads", "VIEW"), false);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "staff", "VIEW"), false);
+    assert.equal(hasStaffSectionAccess(contentStaffAuth, "analytics", "VIEW"), false);
   });
 
   it("proves regular clients and unauthenticated visitors fail-close on all sections", () => {

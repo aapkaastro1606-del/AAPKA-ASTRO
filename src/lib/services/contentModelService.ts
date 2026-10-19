@@ -10,6 +10,7 @@ import {
 import { validateCollectionData } from "@/lib/content/contentSchemas";
 import { sanitizeRichText } from "@/lib/content/sanitizeRichText";
 import { AuditLogService } from "@/lib/services/auditLogService";
+import { revalidateAffectedContent } from "@/lib/content/revalidation";
 
 export interface ResolvedContentEntry<T = Record<string, any>> {
   id: string;
@@ -366,55 +367,59 @@ export class ContentModelService {
     const sanitizedDataEn = sanitizeContentObject(dataEn);
     const sanitizedDataHi = sanitizeContentObject(effectiveDataHi);
 
-    const entry = await prisma.contentEntry.upsert({
-      where: {
-        collection_key: { collection, key },
-      },
-      create: {
-        collection,
-        key,
-        slug: slug || key,
-        status,
-        sortOrder,
-        schemaVersion,
-        dataEn: sanitizedDataEn,
-        dataHi: sanitizedDataHi,
-        metadata,
-        createdBy: actorEmail,
-        updatedBy: actorEmail,
-      },
-      update: {
-        slug: slug || existing?.slug || key,
-        status,
-        sortOrder,
-        schemaVersion,
-        dataEn: sanitizedDataEn,
-        dataHi: sanitizedDataHi,
-        metadata,
-        updatedBy: actorEmail,
-      },
-    });
+    // Atomic transaction: entry upsert + revision snapshot creation
+    const { entry, revisionNumber } = await prisma.$transaction(async (tx) => {
+      const savedEntry = await tx.contentEntry.upsert({
+        where: {
+          collection_key: { collection, key },
+        },
+        create: {
+          collection,
+          key,
+          slug: slug || key,
+          status,
+          sortOrder,
+          schemaVersion,
+          dataEn: sanitizedDataEn,
+          dataHi: sanitizedDataHi,
+          metadata,
+          createdBy: actorEmail,
+          updatedBy: actorEmail,
+        },
+        update: {
+          slug: slug || existing?.slug || key,
+          status,
+          sortOrder,
+          schemaVersion,
+          dataEn: sanitizedDataEn,
+          dataHi: sanitizedDataHi,
+          metadata,
+          updatedBy: actorEmail,
+        },
+      });
 
-    // 4. Create Revision Snapshot
-    const previousRevisionsCount = await prisma.contentRevision.count({
-      where: { contentId: entry.id },
-    });
-    const revisionNumber = previousRevisionsCount + 1;
+      const previousRevisionsCount = await tx.contentRevision.count({
+        where: { contentId: savedEntry.id },
+      });
+      const revNum = previousRevisionsCount + 1;
 
-    await prisma.contentRevision.create({
-      data: {
-        contentId: entry.id,
-        collection,
-        key,
-        status,
-        sortOrder,
-        dataEn: sanitizedDataEn,
-        dataHi: sanitizedDataHi,
-        metadata,
-        revisionNumber,
-        changeSummary: changeSummary || (isNew ? "Initial creation" : `Updated by ${actorEmail}`),
-        createdBy: actorEmail,
-      },
+      await tx.contentRevision.create({
+        data: {
+          contentId: savedEntry.id,
+          collection,
+          key,
+          status,
+          sortOrder,
+          dataEn: sanitizedDataEn,
+          dataHi: sanitizedDataHi,
+          metadata,
+          revisionNumber: revNum,
+          changeSummary: changeSummary || (isNew ? "Initial creation" : `Updated by ${actorEmail}`),
+          createdBy: actorEmail,
+        },
+      });
+
+      return { entry: savedEntry, revisionNumber: revNum };
     });
 
     // 5. Audit Log
@@ -425,6 +430,9 @@ export class ContentModelService {
       targetType: "ContentEntry",
       notes: `Collection: ${collection}, Key: ${key}, Status: ${status}, Revision: #${revisionNumber}`,
     });
+
+    // 6. On-demand cache revalidation (affected pages only, zero redeploy required)
+    revalidateAffectedContent(collection, key);
 
     return {
       id: entry.id,
@@ -447,7 +455,7 @@ export class ContentModelService {
   }
 
   /**
-   * Restores a past ContentRevision to active status and creates a new revision snapshot.
+   * Restores a past ContentRevision to active status and creates a new revision snapshot inside a transaction.
    */
   static async restoreRevision(revisionId: string, actorEmail: string): Promise<ResolvedContentEntry> {
     if (!prisma || !prisma.contentRevision || !prisma.contentEntry) {
@@ -462,57 +470,63 @@ export class ContentModelService {
       throw new Error(`ContentRevision with ID "${revisionId}" was not found.`);
     }
 
-    const entry = await prisma.contentEntry.findUnique({
+    const parentEntry = await prisma.contentEntry.findUnique({
       where: { id: revision.contentId },
     });
 
-    if (!entry) {
+    if (!parentEntry) {
       throw new Error(`Parent ContentEntry for revision "${revisionId}" was not found.`);
     }
 
-    // Update active entry to snapshot state
-    const restored = await prisma.contentEntry.update({
-      where: { id: entry.id },
-      data: {
-        status: revision.status,
-        sortOrder: revision.sortOrder,
-        dataEn: revision.dataEn as any,
-        dataHi: revision.dataHi as any,
-        metadata: (revision.metadata as any) || {},
-        updatedBy: actorEmail,
-      },
-    });
+    // Atomic transaction for restoring entry state and creating new restore revision
+    const { restored, newRevisionNumber } = await prisma.$transaction(async (tx) => {
+      const updated = await tx.contentEntry.update({
+        where: { id: parentEntry.id },
+        data: {
+          status: revision.status,
+          sortOrder: revision.sortOrder,
+          dataEn: revision.dataEn as any,
+          dataHi: revision.dataHi as any,
+          metadata: (revision.metadata as any) || {},
+          updatedBy: actorEmail,
+        },
+      });
 
-    // Create a new revision representing the restore event
-    const revCount = await prisma.contentRevision.count({
-      where: { contentId: entry.id },
-    });
-    const newRevisionNumber = revCount + 1;
+      const revCount = await tx.contentRevision.count({
+        where: { contentId: parentEntry.id },
+      });
+      const revNum = revCount + 1;
 
-    await prisma.contentRevision.create({
-      data: {
-        contentId: entry.id,
-        collection: revision.collection,
-        key: revision.key,
-        status: revision.status,
-        sortOrder: revision.sortOrder,
-        dataEn: revision.dataEn as any,
-        dataHi: revision.dataHi as any,
-        metadata: revision.metadata as any,
-        revisionNumber: newRevisionNumber,
-        changeSummary: `Restored from revision #${revision.revisionNumber} by ${actorEmail}`,
-        createdBy: actorEmail,
-      },
+      await tx.contentRevision.create({
+        data: {
+          contentId: parentEntry.id,
+          collection: revision.collection,
+          key: revision.key,
+          status: revision.status,
+          sortOrder: revision.sortOrder,
+          dataEn: revision.dataEn as any,
+          dataHi: revision.dataHi as any,
+          metadata: revision.metadata as any,
+          revisionNumber: revNum,
+          changeSummary: `Restored from revision #${revision.revisionNumber} by ${actorEmail}`,
+          createdBy: actorEmail,
+        },
+      });
+
+      return { restored: updated, newRevisionNumber: revNum };
     });
 
     // Audit Log
     await AuditLogService.log({
       action: "CONTENT_REVISION_RESTORED",
       actorEmail,
-      targetId: entry.id,
+      targetId: parentEntry.id,
       targetType: "ContentEntry",
       notes: `Restored collection ${revision.collection}:${revision.key} from revision #${revision.revisionNumber}`,
     });
+
+    // Revalidate affected cache tags
+    revalidateAffectedContent(revision.collection, revision.key);
 
     return {
       id: restored.id,

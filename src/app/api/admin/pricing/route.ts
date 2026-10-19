@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getAuthFromRequest } from "@/lib/auth/serverAuth";
 import { PricingSettings } from "@/lib/store/adminStore";
 import { PlatformSettingsService } from "@/lib/services/platformSettingsService";
+import { parseAndValidateJsonBody, checkAdminRateLimit } from "@/lib/admin/rateLimitAndValidation";
+import { revalidateAffectedContent } from "@/lib/content/revalidation";
 
 /**
  * GET /api/admin/pricing
- * Reads current consultation pricing settings from Neon database. Requires VIEW on "pricing".
+ * Reads current consultation pricing settings. Strictly Owner-only.
  */
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rateLimit = checkAdminRateLimit(ip);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Rate limit exceeded. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
@@ -17,9 +28,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  if (!auth.isOwner && !hasStaffSectionAccess(auth, "pricing", "VIEW")) {
+  if (!auth.isOwner) {
     return NextResponse.json(
-      { success: false, message: "Forbidden: VIEW access required for pricing settings." },
+      { success: false, message: "Forbidden: Pricing configuration is strictly Owner-only." },
       { status: 403 }
     );
   }
@@ -37,9 +48,15 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/admin/pricing
- * Updates consultation pricing rules in Neon database. Requires MANAGE on "pricing".
+ * Updates consultation pricing rules in Neon database. Strictly Owner-only.
+ * Fails closed and triggers selective cache revalidation without full redeploy.
  */
 export async function POST(req: NextRequest) {
+  const parsed = await parseAndValidateJsonBody<PricingSettings>(req, { maxBodyBytes: 1024 * 50 });
+  if (!parsed.success) {
+    return NextResponse.json({ success: false, message: parsed.error }, { status: parsed.status });
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
@@ -49,16 +66,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!auth.isOwner && !hasStaffSectionAccess(auth, "pricing", "MANAGE")) {
+  if (!auth.isOwner) {
     return NextResponse.json(
-      { success: false, message: "Forbidden: MANAGE access required to modify pricing rules." },
+      { success: false, message: "Forbidden: Modifying pricing is strictly Owner-only." },
       { status: 403 }
     );
   }
 
   try {
-    const body = (await req.json()) as PricingSettings;
+    const body = parsed.data;
     const updatedPricing = await PlatformSettingsService.updatePricing(body);
+
+    // Revalidate affected pages (consultation page, pricing policy)
+    revalidateAffectedContent("pricing");
+
     return NextResponse.json({
       success: true,
       message: "Pricing updated successfully in database.",

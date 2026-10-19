@@ -84,7 +84,8 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     id: "pricing",
     name: "Pricing & Coupons",
     path: "/admin/pricing",
-    description: "Configure flat-fee consultation products, festive promotions, and promotional pricing.",
+    description: "Configure flat-fee consultation products, festive promotions, and promotional pricing (Owner Only).",
+    ownerOnly: true,
   },
   {
     id: "analytics",

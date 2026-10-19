@@ -107,12 +107,14 @@ describe("Content Model, Revisions, & Media Asset Test Suite", () => {
       assert.ok(enFaqs.length > 0);
       assert.ok(hiFaqs.length > 0);
 
-      // English question
-      const enQ = enFaqs[0].data.question;
+      // Verify a seeded FAQ has distinct English and Hindi text
+      const seededEn = enFaqs.find((f) => f.key === "faq-1") || enFaqs[0];
+      const seededHi = hiFaqs.find((f) => f.key === "faq-1") || hiFaqs[0];
+
+      const enQ = seededEn.data.question;
       assert.ok(typeof enQ === "string" && enQ.length > 0);
 
-      // Hindi question
-      const hiQ = hiFaqs[0].data.question;
+      const hiQ = seededHi.data.question;
       assert.ok(typeof hiQ === "string" && hiQ.length > 0);
       assert.notEqual(enQ, hiQ, "English and Hindi questions should differ");
     });

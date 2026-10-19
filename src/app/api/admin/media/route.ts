@@ -7,6 +7,7 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   ALLOWED_IMAGE_MIME_TYPES,
 } from "@/lib/storage/r2PublicStorage";
+import { checkAdminRateLimit, parseAndValidateJsonBody } from "@/lib/admin/rateLimitAndValidation";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,15 @@ export const dynamic = "force-dynamic";
  * Fetches all media assets, their in-use status across the site, and storage configuration.
  */
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rateLimit = checkAdminRateLimit(ip, 120, 60_000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Rate limit exceeded. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
@@ -84,7 +94,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const parsed = await parseAndValidateJsonBody<any>(req, { maxBodyBytes: 2 * 1024 * 1024, maxRequests: 60 });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, message: parsed.error }, { status: parsed.status });
+    }
+    const body = parsed.data;
     const actorEmail = auth.email || "staff@aapkaastro.com";
 
     // 1. Request Presigned Upload URL for Direct Browser-to-R2 Upload
@@ -218,6 +232,15 @@ export async function POST(req: NextRequest) {
  * Deletes a media asset, blocking deletion if the image is currently in use on the site.
  */
 export async function DELETE(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rateLimit = checkAdminRateLimit(ip, 60, 60_000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { success: false, message: "Rate limit exceeded. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const auth = getAuthFromRequest(req);
 
   if (!auth.isAuthenticated) {
