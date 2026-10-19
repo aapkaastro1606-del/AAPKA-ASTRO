@@ -152,9 +152,10 @@ export const ASSISTANT_KNOWLEDGE = {
   },
 
   refundAndCancellation: {
+    noCancellationPolicy: "Strict no-cancellation policy: once a consultation is booked and paid for, you must attend your session. Bookings are non-cancellable and non-refundable.",
     missedAppointment: "If Acharya Niraj Kumar is unable to attend the scheduled session, 100% of the consultation fee is refunded to your original bank account within 2-3 business days.",
     rescheduling: "Free rescheduling is available with at least 2 hours prior notice via WhatsApp.",
-    cancellationWindow: "Cancellations requested 2 hours prior to the slot are refunded in full. No refunds once a session has concluded.",
+    cancellationWindow: "Strict no-cancellation policy applies once booked. Emergency rescheduling is accommodated with 2 hours prior notice. If Acharya Ji misses the session, 100% refund is processed within 2-3 business days.",
   },
 
   contact: {
@@ -163,7 +164,7 @@ export const ASSISTANT_KNOWLEDGE = {
     whatsappLink: "https://wa.me/919311215564",
     phone: "+91 931-121-5564",
     phoneRaw: "+919311215564",
-    email: "aapkaastro1606@gmail.com",
+    email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "contact@aapkaastro.com",
     hours: "Monday – Sunday: 7:00 AM – 11:00 PM IST",
     address: "Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, G.B. Nagar - U.P. 201301",
     instagram: "@aapkaastrologer (https://www.instagram.com/aapkaastrologer/)",

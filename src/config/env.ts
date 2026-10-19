@@ -39,6 +39,7 @@ const envSchema = z.object({
   // Site Owner Elevation (Designated site owner email)
   OWNER_EMAIL: z.string().optional().default("aapkaastro1606@gmail.com"),
   NEXT_PUBLIC_OWNER_EMAIL: z.string().optional().default("aapkaastro1606@gmail.com"),
+  NEXT_PUBLIC_SUPPORT_EMAIL: z.string().optional().default("contact@aapkaastro.com"),
 
   // Payments (Direct UPI / Mock)
   PAYMENT_PROVIDER: z.enum(["upi", "mock"]).default("upi"),

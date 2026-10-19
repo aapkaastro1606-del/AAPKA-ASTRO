@@ -418,7 +418,7 @@ export const PLACEHOLDER_TESTIMONIALS = [
 
 // Official Contact & Sanctum Information from https://aapkaastro.com/
 export const PLACEHOLDER_CONTACT_INFO = {
-  email: "aapkaastro1606@gmail.com",
+  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "contact@aapkaastro.com",
   phone: "+91 931-121-5564",
   phoneRaw: "+919311215564",
   whatsapp: "+91 93112 15564",

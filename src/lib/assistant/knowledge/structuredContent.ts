@@ -173,9 +173,9 @@ Executive Leadership Experience:
       "missed", "guarantee"
     ],
     content: `Aapka Astro's official Refund and Cancellation Policy:
-- Missed by Astrologer: If Acharya Niraj Kumar is unable to attend the scheduled consultation, a 100% full refund is credited back to your original bank account within 2-3 business days.
-- Free Rescheduling: You may reschedule your session for free with at least 2 hours prior notice via WhatsApp (+91 93112 15564).
-- Prior Cancellation: Cancellations requested at least 2 hours prior to the slot are eligible for a full refund.
+- Strict No-Cancellation Policy: Once a consultation is booked, cancellations for refunds are not permitted — seekers must attend their scheduled session.
+- Emergency Rescheduling: You may reschedule your session for free with at least 2 hours prior notice via WhatsApp (+91 93112 15564).
+- Missed by Astrologer Guarantee: If Acharya Niraj Kumar is unable to attend the scheduled consultation, a 100% full refund is credited back to your original bank account within 2-3 business days.
 - Concluded Sessions: Once a 1-on-1 consultation has concluded, no refunds are issued as professional time has been rendered.`
   },
   {
@@ -201,7 +201,7 @@ Aapka Astro never sells, rents, or shares your personal information or birth coo
     ],
     content: `Official Contact Details:
 - WhatsApp / Phone: +91 93112 15564 (Direct link: https://wa.me/919311215564)
-- Email: aapkaastro1606@gmail.com
+- Email: contact@aapkaastro.com (Support Desk)
 - Office Sanctum: Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, Gautam Buddha Nagar, U.P. 201301.
 - Consultation Operating Hours: Monday to Sunday: 7:00 AM – 11:00 PM IST.`
   }
