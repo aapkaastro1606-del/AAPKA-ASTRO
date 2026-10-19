@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { useUser, useSession } from "@clerk/nextjs";
 import {
   Database,
@@ -17,6 +18,8 @@ import {
   Users,
   Globe,
   Cookie,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import { DiagnosticsData } from "@/app/api/admin/diagnostics/route";
 
@@ -154,11 +157,11 @@ export default function DiagnosticsClient() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Link
-                href="/admin/staff"
+                href="/admin"
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#7B2D26] hover:underline"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Admin Console</span>
+                <span>Admin Home</span>
               </Link>
               <span className="text-[#C1662F]">&bull;</span>
               <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#FFFDF9] font-temple">
@@ -184,6 +187,27 @@ export default function DiagnosticsClient() {
             </button>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to read system diagnostics & health checks"
+          steps={[
+            {
+              title: "What does this page do?",
+              description: "This probes live database connection, Clerk authentication, Resend email status, AI latency, and background cron health.",
+            },
+            {
+              title: "Green checkmarks",
+              description: "All green indicators mean your live system is running normally with zero failures.",
+            },
+            {
+              title: "Owner Only Protection",
+              description: "This screen is strictly restricted to aapkaastro1606@gmail.com and cannot be viewed by staff or visitors.",
+            },
+          ]}
+          tip="Click 'Re-Probe System' at any time to run a live diagnostic audit against all backend providers."
+          defaultExpanded={false}
+        />
 
         {/* Loading / Error States */}
         {loading && (
@@ -231,8 +255,8 @@ export default function DiagnosticsClient() {
               </div>
             )}
 
-            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Top Cards: Clerk Key Mode, Server Auth Recognition, Database Reachability, UPI & Storage Safety, AI Assistant Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {/* Card 1: Clerk Publishable Key Mode */}
               <div
                 className={`rounded-2xl border p-5 shadow-xs ${
@@ -366,6 +390,119 @@ export default function DiagnosticsClient() {
                     <span className="text-[#6E5545]">Total Users:</span>
                     <strong className="font-mono text-[#7B2D26]">{data.database.totalUserCount}</strong>
                   </div>
+                </div>
+              </div>
+
+              {/* Card 4: UPI Routing & Storage Safety */}
+              <div
+                className={`rounded-2xl border p-5 shadow-xs ${
+                  data.payment?.upiConfigured
+                    ? "border-emerald-200 bg-emerald-50/50"
+                    : "border-amber-300 bg-amber-50/60"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-[#7B2D26]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3B2A1E]">
+                      UPI &amp; Storage Safety
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      data.payment?.upiConfigured ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {data.payment?.upiConfigured ? "Active" : "Unset"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-[#3B2A1E]">
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Payee:</span>
+                    <strong className="truncate max-w-[140px]">{data.payment?.payeeName || "Aapka Astro"}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Masked UPI:</span>
+                    <code className="font-mono text-[11px] font-bold text-[#7B2D26]">
+                      {data.payment?.maskedUpiId || "None"}
+                    </code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Expiry:</span>
+                    <span>{data.payment?.unpaidExpiryDays ?? 3} days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Storage:</span>
+                    <span className="font-mono text-[11px] uppercase font-bold text-[#6E5545]">
+                      {data.payment?.storageProvider || "mock"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: AI Chatbot Provider & Circuit Breaker Status */}
+              <div
+                className={`rounded-2xl border p-5 shadow-xs ${
+                  data.chatbot?.status === "HEALTHY"
+                    ? "border-emerald-200 bg-emerald-50/50"
+                    : data.chatbot?.status === "DEGRADED"
+                    ? "border-amber-300 bg-amber-50/60"
+                    : data.chatbot?.status === "ERROR"
+                    ? "border-red-300 bg-red-50/60"
+                    : "border-gray-200 bg-gray-50/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-[#7B2D26]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#3B2A1E]">
+                      AI Assistant
+                    </span>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      data.chatbot?.status === "HEALTHY"
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : data.chatbot?.status === "DEGRADED"
+                        ? "bg-amber-100 text-amber-800 border border-amber-300"
+                        : data.chatbot?.status === "ERROR"
+                        ? "bg-red-100 text-red-800 border border-red-300"
+                        : "bg-gray-100 text-gray-800 border border-gray-300"
+                    }`}
+                  >
+                    {data.chatbot?.status || "UNKNOWN"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-[#3B2A1E]">
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Provider:</span>
+                    <strong className="font-mono text-[11px] uppercase">{data.chatbot?.provider || "mock"}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Model:</span>
+                    <code className="font-mono text-[10px] font-bold text-[#7B2D26] truncate max-w-[120px]">
+                      {data.chatbot?.model || "Unset"}
+                    </code>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Failures:</span>
+                    <span className={data.chatbot?.consecutiveFailures ? "text-amber-700 font-bold" : "text-emerald-700 font-bold"}>
+                      {data.chatbot?.consecutiveFailures ?? 0} consecutive
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6E5545]">Circuit Breaker:</span>
+                    <span className={data.chatbot?.circuitBreakerTripped ? "text-red-700 font-bold" : "text-emerald-700"}>
+                      {data.chatbot?.circuitBreakerTripped ? "TRIPPED (Hidden)" : "Armed (Active)"}
+                    </span>
+                  </div>
+                  {data.chatbot?.lastError && (
+                    <div className="pt-1 border-t border-amber-200/60 text-[10px] text-red-700 truncate" title={data.chatbot.lastError.message}>
+                      ⚠️ {data.chatbot.lastError.type}: {data.chatbot.lastError.message.slice(0, 45)}...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

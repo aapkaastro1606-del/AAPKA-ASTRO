@@ -5,7 +5,10 @@ const fs = require("fs");
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const ARTIFACT_DIR = "C:\\Users\\anmol\\.gemini\\antigravity\\brain\\38dce4e4-16b3-4431-82d2-da75d512f77a";
 
+const { assertStagingEnvironment } = require("./guard");
+
 async function capture() {
+  assertStagingEnvironment("capture-assistant-screenshots.js");
   console.log("Launching headless Chrome from:", CHROME_PATH);
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,

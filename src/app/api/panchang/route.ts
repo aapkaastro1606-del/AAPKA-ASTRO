@@ -6,6 +6,9 @@ import {
 } from "@/lib/store/panchangStore";
 import { PanchangService } from "@/lib/services/panchangService";
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 15;
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

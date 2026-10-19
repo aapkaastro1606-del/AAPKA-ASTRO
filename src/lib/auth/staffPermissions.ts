@@ -10,7 +10,8 @@ export type StaffSection =
   | "analytics"
   | "staff"
   | "bookings"
-  | "leads";
+  | "leads"
+  | "content";
 
 export type AccessLevel = "VIEW" | "MANAGE";
 
@@ -83,7 +84,8 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     id: "pricing",
     name: "Pricing & Coupons",
     path: "/admin/pricing",
-    description: "Configure flat-fee consultation products, festive promotions, and promotional pricing.",
+    description: "Configure flat-fee consultation products, festive promotions, and promotional pricing (Owner Only).",
+    ownerOnly: true,
   },
   {
     id: "analytics",
@@ -112,6 +114,12 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     description: "Manage seekers who generated free Kundlis with consent, filter leads, and export to CSV (Owner Only).",
     ownerOnly: true,
   },
+  {
+    id: "content",
+    name: "Content Studio",
+    path: "/admin/content",
+    description: "Edit FAQs, contact details, social links, hero announcements, and seeker testimonials without coding.",
+  },
 ];
 
 /**
@@ -120,6 +128,7 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
  */
 export function getOwnerEmails(): string[] {
   const envVal =
+    process.env.OWNER_NOTIFY_EMAIL ||
     process.env.OWNER_EMAIL ||
     process.env.NEXT_PUBLIC_OWNER_EMAIL ||
     "";

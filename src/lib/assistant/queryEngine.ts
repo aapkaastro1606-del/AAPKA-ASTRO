@@ -676,7 +676,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   ) {
     if (lang === "hi") {
       return {
-        answer: "रिफंड एवं रद्दीकरण नीति:\n\n• यदि किसी अपरिहार्य कारणवश आचार्य नीरज कुमार जी निर्धारित समय पर सत्र में उपस्थित नहीं हो पाते हैं, तो आपकी **100% फीस 2-3 कार्यदिवसों में आपके मूल बैंक खाते में वापस (Refund)** कर दी जाती है।\n• यदि आप समय बदलना चाहते हैं, तो सत्र से कम से कम 2 घंटे पूर्व WhatsApp पर सूचित करके निःशुल्क रिशेड्यूल करा सकते हैं।\n• सत्र संपन्न होने के पश्चात कोई रिफंड देय नहीं होता है।",
+        answer: "रिफंड एवं रद्दीकरण नीति:\n\n• **रद्दीकरण निषेध:** एक बार परामर्श बुक होने के बाद रद्दीकरण (Cancellation) या रिफंड की अनुमति नहीं है — आपको अपना सत्र अटेंड करना होगा।\n• **निःशुल्क रिशेड्यूलिंग:** यदि किसी कारणवश आप समय बदलना चाहते हैं, तो सत्र से कम से कम 2 घंटे पूर्व WhatsApp पर सूचित करके निःशुल्क स्लॉट रिशेड्यूल करा सकते हैं।\n• **आचार्य जी अनुपस्थिति गारंटी:** यदि किसी अपरिहार्य कारणवश आचार्य नीरज कुमार जी निर्धारित समय पर सत्र में उपस्थित नहीं हो पाते हैं, तो आपकी **100% फीस 2-3 कार्यदिवसों में आपके मूल बैंक खाते में वापस (Refund)** कर दी जाती है।\n• सत्र संपन्न होने के पश्चात कोई रिफंड देय नहीं होता है।",
         language: "hi",
         intent: "refund_policy",
         confidence: "high",
@@ -686,7 +686,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
 
     if (lang === "hinglish") {
       return {
-        answer: "Refund aur Cancellation Policy:\n\n• Agar kisi unexpected reason se Acharya Niraj Kumar ji scheduled session attend nahi kar paate, to aapki **100% fees 2-3 working days mein directly aapke bank account mein refund** ho jaati hai.\n• Session se kam se kam 2 ghante pehle WhatsApp par inform karke aap free mein slot reschedule kara sakte hain.\n• Session successfully complete hone ke baad refund applicable nahi hota.",
+        answer: "Refund aur Cancellation Policy:\n\n• **Strict No-Cancellation:** Ek baar consultation book hone ke baad cancellation ya refund allowed nahi hai — aapko apna session attend karna hota hai.\n• **Free Rescheduling:** Urgent situation hone par session se kam se kam 2 ghante pehle WhatsApp par inform karke aap free mein slot reschedule kara sakte hain.\n• **Missed Session Guarantee:** Agar Acharya Niraj Kumar ji scheduled session attend nahi kar paate, to aapki **100% fees 2-3 working days mein directly aapke bank account mein refund** ho jaati hai.\n• Session successfully complete hone ke baad refund applicable nahi hota.",
         language: "hinglish",
         intent: "refund_policy",
         confidence: "high",
@@ -695,7 +695,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
     }
 
     return {
-      answer: "Refund & Cancellation Policy:\n\n• **100% Missed Session Guarantee:** If Acharya Niraj Kumar is unable to attend your scheduled session, 100% of your consultation fee is refunded to your bank account within 2-3 business days.\n• **Free Rescheduling:** You can reschedule your slot for free with at least 2 hours prior notice via WhatsApp.\n• No refunds are provided once a consultation has successfully taken place.",
+      answer: "Refund & Cancellation Policy:\n\n• **Strict No-Cancellation Policy:** Once a consultation is booked, cancellations for refunds are not permitted — you must attend your booked session.\n• **Free Rescheduling:** If an emergency arises, you can reschedule your slot for free with at least 2 hours prior notice via WhatsApp.\n• **100% Missed Session Guarantee:** If Acharya Niraj Kumar is unable to attend your scheduled session, 100% of your consultation fee is refunded to your bank account within 2-3 business days.\n• No refunds are provided once a consultation has successfully taken place.",
       language: "en",
       intent: "refund_policy",
       confidence: "high",
@@ -730,7 +730,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   ) {
     if (lang === "hi") {
       return {
-        answer: "संपर्क एवं केंद्र का विवरण:\n\n• **फ़ोन व WhatsApp:** +91 93112 15564\n• **ईमेल:** aapkaastro1606@gmail.com\n• **समय:** सोमवार से रविवार, प्रातः 7:00 बजे से रात्रि 11:00 बजे तक (IST)\n• **कार्यालय/केंद्र पता:** यूनिट नं. A-1212 D, टावर A, स्पेक्ट्रम@मेट्रो फेज 1, सेक्टर 75, नोएडा, उ.प्र. 201301\n• **सोशल मीडिया:** Instagram: @aapkaastrologer | YouTube: @aapkaastro7900",
+        answer: "संपर्क एवं केंद्र का विवरण:\n\n• **फ़ोन व WhatsApp:** +91 93112 15564\n• **ईमेल:** contact@aapkaastro.com\n• **समय:** सोमवार से रविवार, प्रातः 7:00 बजे से रात्रि 11:00 बजे तक (IST)\n• **कार्यालय/केंद्र पता:** यूनिट नं. A-1212 D, टावर A, स्पेक्ट्रम@मेट्रो फेज 1, सेक्टर 75, नोएडा, उ.प्र. 201301\n• **सोशल मीडिया:** Instagram: @aapkaastrologer | YouTube: @aapkaastro7900",
         language: "hi",
         intent: "contact_info",
         confidence: "high",
@@ -740,7 +740,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
 
     if (lang === "hinglish") {
       return {
-        answer: "Aapka Astro Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** aapkaastro1606@gmail.com\n• **Consultation Timings:** Monday to Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Media:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
+        answer: "Aapka Astro Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** contact@aapkaastro.com\n• **Consultation Timings:** Monday to Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Media:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
         language: "hinglish",
         intent: "contact_info",
         confidence: "high",
@@ -749,7 +749,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
     }
 
     return {
-      answer: "Aapka Astro Official Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** aapkaastro1606@gmail.com\n• **Operating Hours:** Monday – Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Channels:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
+      answer: "Aapka Astro Official Contact Details:\n\n• **Phone & WhatsApp:** +91 93112 15564\n• **Email:** contact@aapkaastro.com\n• **Operating Hours:** Monday – Sunday: 7:00 AM – 11:00 PM IST\n• **Sanctum Address:** Unit No. A-1212 D, Tower A, Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301\n• **Social Channels:** Instagram @aapkaastrologer | YouTube @aapkaastro7900",
       language: "en",
       intent: "contact_info",
       confidence: "high",

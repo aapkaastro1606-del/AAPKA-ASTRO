@@ -3,6 +3,7 @@ import { z } from "zod";
 import { queryKnowledgeBase } from "@/lib/assistant/queryEngine";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const ChatRequestSchema = z.object({
   message: z.string().trim().min(1, "Message cannot be empty").max(1000, "Message too long"),
@@ -38,6 +39,17 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
+    if (process.env.CHATBOT_ENABLED === "false") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Assistant service is currently in quiet hours. Please connect directly on WhatsApp at +91 93112 15564.",
+          actions: [{ label: "Connect on WhatsApp", url: "https://wa.me/919311215564" }],
+        },
+        { status: 503 }
+      );
+    }
+
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
 
     if (!checkRateLimit(ip)) {

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { AdminStore } from "@/lib/store/adminStore";
 import {
   TrendingUp,
@@ -21,11 +22,11 @@ export default function AnalyticsManagerClient() {
         {/* Navigation & Header */}
         <div>
           <Link
-            href="/dashboard"
+            href="/admin"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7B2D26] hover:underline mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
+            <span>Back to Admin Home</span>
           </Link>
 
           <div className="flex items-center justify-between">
@@ -42,6 +43,23 @@ export default function AnalyticsManagerClient() {
             </div>
           </div>
         </div>
+
+        {/* How-To Help Panel */}
+        <AdminHelpPanel
+          title="How to understand your website traffic and bookings"
+          steps={[
+            {
+              title: "Seekers & Visitors",
+              description: "Shows how many people visit the website and how many proceed to book consultations or calculate free Kundlis.",
+            },
+            {
+              title: "Consultation Conversion",
+              description: "Tracks how many seekers complete payments and attend their scheduled readings with Acharya Ji.",
+            },
+          ]}
+          tip="All telemetry is cookieless and privacy-first. Personal identity is never shared or tracked."
+          defaultExpanded={false}
+        />
 
         {/* High-level KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

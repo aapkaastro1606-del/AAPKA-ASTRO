@@ -145,7 +145,7 @@ describe("Chatbot Architecture, Cost Control & Privacy Suite", () => {
       // 4. Gemini provider
       process.env.CHATBOT_PROVIDER = "gemini";
       process.env.CHATBOT_API_KEY = "AIzaSy_test_key_gemini";
-      process.env.CHATBOT_MODEL = "gemini-1.5-flash";
+      process.env.CHATBOT_MODEL = "gemini-2.0-flash";
       const geminiProvider = getChatProvider();
       assert.strictEqual(geminiProvider.name, "Gemini");
     });

@@ -274,8 +274,37 @@ const GLOBAL_FAST_PATH: LocationResult[] = [
 ];
 
 /**
- * 2. OpenStreetMap Nominatim Geocoding Provider
- * Free, worldwide, resolves any village, town, or city without API keys.
+ * 2. Nominatim Sequential Throttle Queue (1 request per second max)
+ * OSM Nominatim Usage Policy strictly forbids more than 1 request per second.
+ */
+class NominatimThrottleQueue {
+  private static lastRequestTimestamp = 0;
+  private static queue: Promise<any> = Promise.resolve();
+
+  public static enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const runTask = async (): Promise<T> => {
+      const now = Date.now();
+      const elapsed = now - NominatimThrottleQueue.lastRequestTimestamp;
+      const minIntervalMs = 1000; // 1 second throttle
+
+      if (elapsed < minIntervalMs) {
+        const waitTime = minIntervalMs - elapsed;
+        await new Promise((r) => setTimeout(r, waitTime));
+      }
+
+      NominatimThrottleQueue.lastRequestTimestamp = Date.now();
+      return task();
+    };
+
+    const nextPromise = NominatimThrottleQueue.queue.then(runTask, runTask);
+    NominatimThrottleQueue.queue = nextPromise.catch(() => {});
+    return nextPromise;
+  }
+}
+
+/**
+ * OpenStreetMap Nominatim Geocoding Provider
+ * Enforces valid User-Agent, sequential 1 req/sec throttle, and 6-second timeout.
  */
 export class NominatimLocationProvider implements LocationProvider {
   public name = "OpenStreetMap Nominatim";
@@ -284,49 +313,129 @@ export class NominatimLocationProvider implements LocationProvider {
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 2) return [];
 
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        trimmed
-      )}&format=json&addressdetails=1&limit=${limit}&accept-language=en`;
+    return NominatimThrottleQueue.enqueue(async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "AapkaAstro-Geocoder/1.0 (contact@aapkaastro.com; Vedic Astrology Platform)",
-          Accept: "application/json",
-        },
-      });
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          trimmed
+        )}&format=json&addressdetails=1&limit=${limit}&accept-language=en`;
 
-      if (!response.ok) {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            "User-Agent": "AapkaAstro/1.0 (contact: support@aapkaastro.com; Vedic Astrology Platform)",
+            Accept: "application/json",
+          },
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.warn(`[Nominatim Geocoder] HTTP ${response.status}: ${response.statusText}`);
+          return [];
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) return [];
+
+        return data.map((item: any) => {
+          const lat = parseFloat(item.lat);
+          const lon = parseFloat(item.lon);
+          const tz = resolveTimezone(lat, lon);
+
+          const addr = item.address || {};
+          const cityName =
+            addr.city ||
+            addr.town ||
+            addr.village ||
+            addr.suburb ||
+            addr.municipality ||
+            addr.county ||
+            item.name ||
+            trimmed;
+
+          const stateName = addr.state || addr.province || addr.region;
+          const countryName = addr.country || "Unknown";
+          const countryCode = (addr.country_code || "").toUpperCase();
+
+          return {
+            id: `osm-${item.place_id || `${lat}-${lon}`}`,
+            name: cityName,
+            displayName: item.display_name,
+            state: stateName,
+            country: countryName,
+            countryCode,
+            latitude: Number(lat.toFixed(4)),
+            longitude: Number(lon.toFixed(4)),
+            timezone: tz.offset,
+            timezoneId: tz.timezoneId,
+            isFastPath: false,
+          };
+        });
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        console.warn("[Nominatim Geocoding Error]:", err?.message || err);
         return [];
       }
+    });
+  }
+}
 
-      const data = await response.json();
-      if (!Array.isArray(data)) return [];
+/**
+ * Google Maps Geocoding Provider (Swappable via GEOCODER_PROVIDER="google")
+ */
+export class GoogleLocationProvider implements LocationProvider {
+  public name = "Google Geocoding API";
+  private apiKey: string;
 
-      return data.map((item: any) => {
-        const lat = parseFloat(item.lat);
-        const lon = parseFloat(item.lon);
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  public async search(query: string, limit: number = 8): Promise<LocationResult[]> {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return [];
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        trimmed
+      )}&key=${this.apiKey}`;
+
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (!Array.isArray(data.results)) return [];
+
+      return data.results.slice(0, limit).map((item: any) => {
+        const lat = item.geometry?.location?.lat || 0;
+        const lon = item.geometry?.location?.lng || 0;
         const tz = resolveTimezone(lat, lon);
 
-        const addr = item.address || {};
-        const cityName =
-          addr.city ||
-          addr.town ||
-          addr.village ||
-          addr.suburb ||
-          addr.municipality ||
-          addr.county ||
-          item.name ||
-          trimmed;
+        let cityName = trimmed;
+        let stateName = "";
+        let countryName = "Unknown";
+        let countryCode = "";
 
-        const stateName = addr.state || addr.province || addr.region;
-        const countryName = addr.country || "Unknown";
-        const countryCode = (addr.country_code || "").toUpperCase();
+        for (const comp of item.address_components || []) {
+          if (comp.types.includes("locality")) cityName = comp.long_name;
+          if (comp.types.includes("administrative_area_level_1")) stateName = comp.long_name;
+          if (comp.types.includes("country")) {
+            countryName = comp.long_name;
+            countryCode = comp.short_name;
+          }
+        }
 
         return {
-          id: `osm-${item.place_id || `${lat}-${lon}`}`,
+          id: `goog-${item.place_id || `${lat}-${lon}`}`,
           name: cityName,
-          displayName: item.display_name,
+          displayName: item.formatted_address,
           state: stateName,
           country: countryName,
           countryCode,
@@ -337,24 +446,70 @@ export class NominatimLocationProvider implements LocationProvider {
           isFastPath: false,
         };
       });
-    } catch (err) {
-      console.warn("Nominatim Geocoding error:", err);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.warn("[Google Geocoding Error]:", err?.message || err);
       return [];
     }
   }
 }
 
 /**
+ * Mock / Fast-Path Location Provider (For Offline / Test Environments)
+ */
+export class MockLocationProvider implements LocationProvider {
+  public name = "Mock / Fast-Path Geocoder";
+
+  public async search(query: string, limit: number = 8): Promise<LocationResult[]> {
+    const q = query.trim().toLowerCase();
+    return GLOBAL_FAST_PATH.filter(
+      (c) =>
+        c.name.toLowerCase().startsWith(q) ||
+        c.displayName.toLowerCase().includes(q) ||
+        (c.state && c.state.toLowerCase().startsWith(q))
+    ).slice(0, limit);
+  }
+}
+
+/**
+ * Factory to instantiate swappable geocoding provider based on GEOCODER_PROVIDER
+ */
+export function resolveDefaultProvider(): LocationProvider {
+  const providerType = (
+    process.env.GEOCODER_PROVIDER ||
+    (process.env.NODE_ENV === "test" ? "mock" : "nominatim")
+  ).toLowerCase();
+  const apiKey = process.env.GEOCODER_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+
+  if (providerType === "google" && apiKey) {
+    return new GoogleLocationProvider(apiKey);
+  }
+
+  if (providerType === "mock") {
+    return new MockLocationProvider();
+  }
+
+  return new NominatimLocationProvider();
+}
+
+export interface LocationSearchResult {
+  locations: LocationResult[];
+  isFallback: boolean;
+  warning?: string;
+}
+
+/**
  * 3. Master LocationService Class
- * Integrates fast-path caching with the active geocoding provider.
+ * Integrates multi-tiered caching: Fast-path -> In-memory -> PostgreSQL database cache -> Geocoding provider.
  */
 export class LocationService {
-  private static provider: LocationProvider = new NominatimLocationProvider();
+  private static provider: LocationProvider = resolveDefaultProvider();
   private static queryCache: Map<string, { timestamp: number; results: LocationResult[] }> = new Map();
-  private static CACHE_TTL_MS = 1000 * 60 * 60; // 1 Hour
+  private static CACHE_TTL_MS = 1000 * 60 * 60; // 1 Hour in-memory
+  private static DB_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 Days in DB
 
   /**
-   * Set a custom provider (e.g. Google Places, Photon, Mapbox)
+   * Set or swap active provider (e.g. Nominatim, Google Places, Mock)
    */
   public static setProvider(newProvider: LocationProvider): void {
     this.provider = newProvider;
@@ -368,13 +523,69 @@ export class LocationService {
   }
 
   /**
-   * Searches for matching locations across fast-path cache and the geocoding provider.
+   * Query database cache with graceful try/catch isolation
    */
-  public static async search(query: string, limit: number = 8): Promise<LocationResult[]> {
-    const q = query.trim().toLowerCase();
-    if (!q || q.length < 2) return [];
+  private static async getFromDatabaseCache(query: string): Promise<LocationResult[] | null> {
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (!prisma || !prisma.geocodeCache) return null;
 
-    // Check fast-path catalog first
+      const q = query.toLowerCase().trim();
+      const cached = await prisma.geocodeCache.findUnique({
+        where: { query: q },
+      });
+
+      if (cached && Array.isArray(cached.results)) {
+        const isFresh = Date.now() - new Date(cached.updatedAt).getTime() < this.DB_CACHE_TTL_MS;
+        if (isFresh && cached.results.length > 0) {
+          return cached.results as unknown as LocationResult[];
+        }
+      }
+    } catch {
+      // Graceful degradation: fail silently if table is not yet created or DB asleep
+    }
+    return null;
+  }
+
+  /**
+   * Save geocoded results into PostgreSQL database cache
+   */
+  private static async saveToDatabaseCache(
+    query: string,
+    results: LocationResult[],
+    providerName: string
+  ): Promise<void> {
+    if (results.length === 0) return;
+    try {
+      const { prisma } = await import("@/lib/db/prisma");
+      if (!prisma || !prisma.geocodeCache) return;
+
+      const q = query.toLowerCase().trim();
+      await prisma.geocodeCache.upsert({
+        where: { query: q },
+        create: {
+          query: q,
+          results: results as any,
+          provider: providerName,
+        },
+        update: {
+          results: results as any,
+          provider: providerName,
+        },
+      });
+    } catch {
+      // Graceful degradation: do not throw on DB save failure
+    }
+  }
+
+  /**
+   * Searches locations with status metadata (isFallback and clear warning when provider is unavailable).
+   */
+  public static async searchWithStatus(query: string, limit: number = 8): Promise<LocationSearchResult> {
+    const q = query.trim().toLowerCase();
+    if (!q || q.length < 2) return { locations: [], isFallback: false };
+
+    // 1. Check local fast-path catalog (< 1ms)
     const fastPathMatches = GLOBAL_FAST_PATH.filter(
       (c) =>
         c.name.toLowerCase().startsWith(q) ||
@@ -382,31 +593,74 @@ export class LocationService {
         (c.state && c.state.toLowerCase().startsWith(q))
     ).slice(0, limit);
 
-    // If fast-path provides exact/high confidence matches and query is short, return immediately
+    // If fast-path provides full quota or exact prefix match for short query, return immediately
     if (fastPathMatches.length >= limit) {
-      return fastPathMatches;
+      return { locations: fastPathMatches, isFallback: false };
     }
 
-    // Check query cache
-    const cached = this.queryCache.get(q);
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
-      return this.mergeResults(fastPathMatches, cached.results, limit);
+    // 2. Check in-memory query cache
+    const memCached = this.queryCache.get(q);
+    if (memCached && Date.now() - memCached.timestamp < this.CACHE_TTL_MS) {
+      return {
+        locations: this.mergeResults(fastPathMatches, memCached.results, limit),
+        isFallback: false,
+      };
     }
 
-    // Query active geocoding provider
+    // 3. Check persistent PostgreSQL database cache
+    const dbCached = await this.getFromDatabaseCache(q);
+    if (dbCached && dbCached.length > 0) {
+      // Populate memory cache
+      this.queryCache.set(q, { timestamp: Date.now(), results: dbCached });
+      return {
+        locations: this.mergeResults(fastPathMatches, dbCached, limit),
+        isFallback: false,
+      };
+    }
+
+    // 4. Query active Geocoding Provider
     try {
       const providerResults = await this.provider.search(query, limit);
 
-      // Cache the geocoded result
-      this.queryCache.set(q, {
-        timestamp: Date.now(),
-        results: providerResults,
-      });
+      if (providerResults && providerResults.length > 0) {
+        // Cache to memory
+        this.queryCache.set(q, { timestamp: Date.now(), results: providerResults });
+        // Cache asynchronously to database
+        this.saveToDatabaseCache(q, providerResults, this.provider.name).catch(() => {});
 
-      return this.mergeResults(fastPathMatches, providerResults, limit);
-    } catch {
-      return fastPathMatches;
+        return {
+          locations: this.mergeResults(fastPathMatches, providerResults, limit),
+          isFallback: false,
+        };
+      }
+
+      // If provider returned 0 results, fall back to matching from built-in cities
+      if (fastPathMatches.length > 0) {
+        return { locations: fastPathMatches, isFallback: false };
+      }
+
+      return { locations: [], isFallback: false };
+    } catch (err: any) {
+      console.warn(
+        `[LocationService] Geocoder '${this.provider.name}' failed. Falling back to built-in city list:`,
+        err?.message || err
+      );
+
+      // Return fast-path matches with clear user warning
+      return {
+        locations: fastPathMatches.length > 0 ? fastPathMatches : [GLOBAL_FAST_PATH[0]],
+        isFallback: true,
+        warning: "Geocoding service unavailable. Showing standard city list.",
+      };
     }
+  }
+
+  /**
+   * Backward-compatible search method returning LocationResult[]
+   */
+  public static async search(query: string, limit: number = 8): Promise<LocationResult[]> {
+    const res = await this.searchWithStatus(query, limit);
+    return res.locations;
   }
 
   /**

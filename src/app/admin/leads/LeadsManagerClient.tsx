@@ -22,6 +22,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 
 interface KundliLeadItem {
   id: string;
@@ -184,11 +185,11 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8D8C3] pb-4">
           <div className="flex items-center gap-3">
             <Link
-              href="/admin/bookings"
+              href="/admin"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7B2D26] hover:text-[#C1662F] transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              UPI Bookings Queue
+              Admin Home
             </Link>
             <span className="text-[#C5A880]">&bull;</span>
             <Link
@@ -244,6 +245,27 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
             </button>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to manage and follow up with Kundli leads"
+          steps={[
+            {
+              title: "What are these leads?",
+              description: "These are seekers who generated a free Kundli chart on www.aapkaastro.com and opted in with their name, phone, and birth details.",
+            },
+            {
+              title: "Export to CSV",
+              description: "Click 'Export Leads to CSV' at any time to download an Excel-compatible spreadsheet of phone numbers and birth charts.",
+            },
+            {
+              title: "Follow up with seekers",
+              description: "Acharya Ji's sanctum desk can message seekers via WhatsApp to offer personalized 1-on-1 consultations or gemstone recommendations.",
+            },
+          ]}
+          tip="Lead details are protected. Only the Platform Owner can view or export seeker contact numbers."
+          defaultExpanded={true}
+        />
 
         {/* Status / Audit Notice */}
         {notice && (

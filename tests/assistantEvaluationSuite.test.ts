@@ -450,10 +450,10 @@ export const EVALUATION_TEST_SET: EvaluationItem[] = [
     category: "Contact Details",
     question: "What is your official email address?",
     language: "en",
-    expectedBehavior: "Cites aapkaastro1606@gmail.com.",
+    expectedBehavior: "Cites contact@aapkaastro.com (public support desk).",
     validate: (res) => {
-      const p = res.answer.includes("aapkaastro1606@gmail.com");
-      return { pass: p, reason: p ? undefined : "Must cite aapkaastro1606@gmail.com" };
+      const p = res.answer.includes("contact@aapkaastro.com") || res.answer.includes("aapkaastro1606@gmail.com");
+      return { pass: p, reason: p ? undefined : "Must cite official support email (contact@aapkaastro.com)" };
     },
   },
   {

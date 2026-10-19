@@ -3,6 +3,47 @@ import { PlatformSettingsService } from "./platformSettingsService";
 import { AuditLogService } from "./auditLogService";
 import { BookingEmailService } from "./bookingEmailService";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
+import { storageProvider } from "@/lib/providers/storage";
+
+/**
+ * Validates that an input is not an inline base64 image or raw encoded string.
+ * Direct base64 screenshot storage in the database is strictly prohibited.
+ */
+export function isBase64Payload(val: unknown): boolean {
+  if (typeof val !== "string") return false;
+  const trimmed = val.trim();
+  if (trimmed.startsWith("data:image/") || trimmed.includes(";base64,")) return true;
+  // Detect raw base64 string (>300 chars without whitespace, base64 alphabet)
+  if (trimmed.length > 300 && /^[A-Za-z0-9+/=]+$/.test(trimmed.replace(/\s+/g, ""))) return true;
+  return false;
+}
+
+/**
+ * In-process mutex lock to guarantee that concurrent booking creation calls
+ * for the same user execute serially rather than racing.
+ */
+class AsyncLock {
+  private locks = new Map<string, Promise<void>>();
+
+  async acquire<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    while (this.locks.has(key)) {
+      await this.locks.get(key);
+    }
+    let resolveLock!: () => void;
+    const lockPromise = new Promise<void>((resolve) => {
+      resolveLock = resolve;
+    });
+    this.locks.set(key, lockPromise);
+
+    try {
+      return await fn();
+    } finally {
+      this.locks.delete(key);
+      resolveLock();
+    }
+  }
+}
+export const userBookingLock = new AsyncLock();
 
 export type BookingWorkflowStatus =
   | "PENDING_PAYMENT"
@@ -108,6 +149,7 @@ export class BookingWorkflowService {
 
   /**
    * Creates a new booking record with server-locked pricing and dynamic UPI QR generation.
+   * Hardened against race conditions using in-process mutual exclusion and atomic database transaction.
    */
   static async createBooking(params: CreateBookingParams) {
     if (!params.userId || params.userId === "guest") {
@@ -118,143 +160,201 @@ export class BookingWorkflowService {
       throw new Error("A valid phone number is required to coordinate your consultation.");
     }
 
-    // 1. Resolve database user
-    let dbUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { id: params.userId },
-          { clerkId: params.userId },
-          ...(params.clientEmail ? [{ email: params.clientEmail }] : []),
-        ],
-      },
-    });
+    // Direct base64 image strings in database fields are strictly prohibited
+    if (
+      isBase64Payload(params.topic) ||
+      isBase64Payload(params.intakeDetails?.concerns)
+    ) {
+      throw new Error(
+        "Base64 screenshot data is strictly prohibited in the database. Use secure object storage or direct WhatsApp transmission."
+      );
+    }
 
-    if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          clerkId: params.userId,
-          identifier: params.clientEmail || params.clientPhone,
-          name: params.clientName,
-          phone: params.clientPhone,
-          email: params.clientEmail || null,
-          role: "CLIENT",
-          walletBalance: 0,
+    // Enforce mutual exclusion on booking creation for this user from the very start
+    return await userBookingLock.acquire(params.userId, async () => {
+      // 1. Resolve database user
+      let dbUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: params.userId },
+            { clerkId: params.userId },
+            ...(params.clientEmail ? [{ email: params.clientEmail }] : []),
+            ...(params.clientPhone ? [{ phone: params.clientPhone }] : []),
+          ],
         },
       });
-    }
 
-    // 2. Enforce single open Astro booking rule
-    if (params.productType === "astro") {
-      const openCheck = await this.hasOpenAstroBooking(dbUser.id);
-      if (openCheck.hasOpen) {
-        throw new Error(
-          `You already have an active Astro consultation booking in progress (${openCheck.openBookingId}). Please complete or cancel it before initiating a new booking.`
-        );
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            clerkId: params.userId,
+            identifier: params.clientEmail || params.clientPhone,
+            name: params.clientName,
+            phone: params.clientPhone,
+            email: params.clientEmail || null,
+            role: "CLIENT",
+            walletBalance: 0,
+          },
+        });
       }
-    }
 
-    // 3. Server-side Pricing Enforcement
-    const pricing = await PlatformSettingsService.getPricing();
-    const paymentSettings = await PlatformSettingsService.getPaymentSettings();
+      // 3. Pre-fetch pricing and payment routing before entering transaction
+      const pricing = await PlatformSettingsService.getPricing();
+      const paymentSettings = await PlatformSettingsService.getPaymentSettings();
 
-    let lockedAmount = 0;
-    let isFirstTimeAstro = false;
-    let serviceName = "Astro Consultation";
+      const expiryDays = paymentSettings.unpaidExpiryDays || 2;
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
-    if (params.productType === "astro") {
-      isFirstTimeAstro = await this.checkFirstTimeAstroEligibility(dbUser.id);
-      lockedAmount = isFirstTimeAstro
-        ? pricing.flatFirstConsultationFee || 1051
-        : pricing.flatStandardFee || 2100;
-      serviceName = isFirstTimeAstro
-        ? "1-on-1 Vedic Astro Consultation (First-Time 50% Off)"
-        : "1-on-1 Vedic Astro Consultation (Standard Rate)";
-    } else if (params.productType === "vaastu") {
-      lockedAmount = pricing.vaastuPromoFee || 15000;
-      isFirstTimeAstro = false;
-      serviceName = "Comprehensive Devta & Energy Vaastu Audit";
-    } else if (params.productType === "kundli_pdf") {
-      lockedAmount = pricing.kundliPdfFee || 501;
-      isFirstTimeAstro = false;
-      serviceName = "Kundli Full Multi-Page PDF Dossier";
-    }
+      const prefix = params.productType === "vaastu" ? "VAASTU" : params.productType === "kundli_pdf" ? "KUNDLI" : "ASTRO";
+      const bookingRef = `${prefix}-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
 
-    // 4. Expiry calculation (default 2 days for unpaid bookings)
-    const expiryDays = paymentSettings.unpaidExpiryDays || 2;
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + expiryDays);
+      const storageUploadEnabled = Boolean(
+        process.env.STORAGE_PROVIDER && ["r2", "s3"].includes(process.env.STORAGE_PROVIDER.toLowerCase())
+      );
 
-    // 5. Unique booking reference
-    const prefix = params.productType === "vaastu" ? "VAASTU" : params.productType === "kundli_pdf" ? "KUNDLI" : "ASTRO";
-    const bookingRef = `${prefix}-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
+      // Execute atomic session creation inside transaction
+      const sessionResult = await prisma.$transaction(
+        async (tx) => {
+          // Advisory row lock on PostgreSQL when available
+          try {
+            if (process.env.DATABASE_URL?.includes("postgres")) {
+              await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(hashtext('user_booking_' || $1))`, dbUser.id);
+            }
+          } catch {
+            // Non-blocking fallback
+          }
 
-    // 6. Generate standard Indian UPI Intent link (clean NPCI format without unsigned merchant 'tr' parameter to ensure 100% PhonePe / GPay / Paytm compatibility)
-    const upiPayLink = `upi://pay?pa=${paymentSettings.upiId}&pn=${encodeURIComponent(
-      paymentSettings.payeeName
-    )}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(bookingRef)}`;
+          // Enforce single open Astro booking rule inside transaction
+          if (params.productType === "astro") {
+            const openBooking = await tx.session.findFirst({
+              where: {
+                clientId: dbUser.id,
+                productType: "astro",
+                bookingStatus: {
+                  in: ["PENDING_PAYMENT", "PAYMENT_CLAIMED", "CONFIRMED", "SCHEDULED"],
+                },
+              },
+              select: { bookingId: true },
+            });
 
-    // 7. Persist session booking in PostgreSQL
-    const session = await prisma.session.create({
-      data: {
+            if (openBooking && openBooking.bookingId) {
+              throw new Error(
+                `You already have an active Astro consultation booking in progress (${openBooking.bookingId}). Please complete or cancel it before initiating a new booking.`
+              );
+            }
+          }
+
+          let lockedAmount = 0;
+          let isFirstTimeAstro = false;
+          let serviceName = "Astro Consultation";
+
+          if (params.productType === "astro") {
+            const priorConfirmedCount = await tx.session.count({
+              where: {
+                clientId: dbUser.id,
+                productType: "astro",
+                bookingStatus: {
+                  in: ["CONFIRMED", "SCHEDULED", "COMPLETED"],
+                },
+              },
+            });
+            isFirstTimeAstro = priorConfirmedCount === 0;
+            lockedAmount = isFirstTimeAstro
+              ? pricing.flatFirstConsultationFee || 1051
+              : pricing.flatStandardFee || 2100;
+            serviceName = isFirstTimeAstro
+              ? "1-on-1 Vedic Astro Consultation (First-Time 50% Off)"
+              : "1-on-1 Vedic Astro Consultation (Standard Rate)";
+          } else if (params.productType === "vaastu") {
+            lockedAmount = pricing.vaastuPromoFee || 15000;
+            isFirstTimeAstro = false;
+            serviceName = "Comprehensive Devta & Energy Vaastu Audit";
+          } else if (params.productType === "kundli_pdf") {
+            lockedAmount = pricing.kundliPdfFee || 501;
+            isFirstTimeAstro = false;
+            serviceName = "Kundli Full Multi-Page PDF Dossier";
+          }
+
+          const upiPayLink = `upi://pay?pa=${paymentSettings.upiId}&pn=${encodeURIComponent(
+            paymentSettings.payeeName
+          )}&am=${lockedAmount}&cu=INR&tn=${encodeURIComponent(bookingRef)}`;
+
+          // Persist session booking in PostgreSQL
+          const session = await tx.session.create({
+            data: {
+              bookingId: bookingRef,
+              clientId: dbUser.id,
+              userName: params.clientName,
+              userPhone: params.clientPhone,
+              userEmail: params.clientEmail || null,
+              productType: params.productType,
+              format: params.format,
+              concern: params.topic || params.intakeDetails?.concerns || serviceName,
+              totalCost: lockedAmount,
+              lockedAmount: lockedAmount,
+              isFirstTimeAstro: isFirstTimeAstro,
+              bookingStatus: "PENDING_PAYMENT",
+              paymentStatus: "AWAITING_VERIFICATION",
+              paymentMethod: "UPI_QR",
+              preferredDay: params.preferredDay || "Earliest Available",
+              preferredTimeWindow: params.preferredTimeWindow || "Morning",
+              preferredSlot: `${params.preferredDay || "Earliest"} (${params.preferredTimeWindow || "Morning"})`,
+              intakeDetails: params.intakeDetails as any,
+              expiresAt: expiresAt,
+              type: params.format.includes("Video") ? "VIDEO" : params.format.includes("Chat") ? "CHAT" : "VOICE",
+            },
+          });
+
+          return {
+            session,
+            lockedAmount,
+            isFirstTimeAstro,
+            serviceName,
+            upiPayLink,
+          };
+        },
+        { timeout: 20000, maxWait: 10000 }
+      );
+
+      // Audit log after transaction commits
+      AuditLogService.log({
+        action: "BOOKING_CREATED",
+        actorId: dbUser.id,
+        actorEmail: params.clientEmail || dbUser.email,
+        targetId: bookingRef,
+        targetType: "BOOKING",
+        newState: {
+          bookingId: bookingRef,
+          amount: sessionResult.lockedAmount,
+          isFirstTimeAstro: sessionResult.isFirstTimeAstro,
+          productType: params.productType,
+        },
+        notes: `Booking initialized for ${params.clientName} (₹${sessionResult.lockedAmount}, FirstTime=${sessionResult.isFirstTimeAstro})`,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+      }).catch(() => {});
+
+      return {
+        success: true,
         bookingId: bookingRef,
-        clientId: dbUser.id,
-        userName: params.clientName,
-        userPhone: params.clientPhone,
-        userEmail: params.clientEmail || null,
-        productType: params.productType,
-        format: params.format,
-        concern: params.topic || params.intakeDetails?.concerns || serviceName,
-        totalCost: lockedAmount,
-        lockedAmount: lockedAmount,
-        isFirstTimeAstro: isFirstTimeAstro,
-        bookingStatus: "PENDING_PAYMENT",
-        paymentStatus: "AWAITING_VERIFICATION",
-        paymentMethod: "UPI_QR",
-        preferredDay: params.preferredDay || "Earliest Available",
-        preferredTimeWindow: params.preferredTimeWindow || "Morning",
-        preferredSlot: `${params.preferredDay || "Earliest"} (${params.preferredTimeWindow || "Morning"})`,
-        intakeDetails: params.intakeDetails as any,
-        expiresAt: expiresAt,
-        type: params.format.includes("Video") ? "VIDEO" : params.format.includes("Chat") ? "CHAT" : "VOICE",
-      },
+        sessionId: sessionResult.session.id,
+        amount: sessionResult.lockedAmount,
+        lockedAmount: sessionResult.lockedAmount,
+        bookingStatus: "PENDING_PAYMENT" as const,
+        isFirstTimeAstro: sessionResult.isFirstTimeAstro,
+        serviceName: sessionResult.serviceName,
+        upiPayLink: sessionResult.upiPayLink,
+        paymentSettings: {
+          upiId: paymentSettings.upiId,
+          payeeName: paymentSettings.payeeName,
+          qrImageUrl: paymentSettings.qrImageUrl || null,
+          whatsappNumber: paymentSettings.whatsappNumber,
+        },
+        storageUploadEnabled,
+        expiresAt: expiresAt.toISOString(),
+      };
     });
-
-    // 8. Audit log booking creation
-    await AuditLogService.log({
-      action: "BOOKING_CREATED",
-      actorId: dbUser.id,
-      actorEmail: params.clientEmail || dbUser.email,
-      targetId: bookingRef,
-      targetType: "BOOKING",
-      newState: {
-        bookingId: bookingRef,
-        amount: lockedAmount,
-        isFirstTimeAstro,
-        productType: params.productType,
-      },
-      notes: `Booking initialized for ${params.clientName} (₹${lockedAmount}, FirstTime=${isFirstTimeAstro})`,
-      ipAddress: params.ipAddress,
-      userAgent: params.userAgent,
-    });
-
-    return {
-      success: true,
-      bookingId: bookingRef,
-      sessionId: session.id,
-      amount: lockedAmount,
-      lockedAmount: lockedAmount,
-      bookingStatus: "PENDING_PAYMENT" as const,
-      isFirstTimeAstro,
-      serviceName,
-      upiPayLink,
-      paymentSettings: {
-        upiId: paymentSettings.upiId,
-        payeeName: paymentSettings.payeeName,
-        qrImageUrl: paymentSettings.qrImageUrl || null,
-        whatsappNumber: paymentSettings.whatsappNumber,
-      },
-      expiresAt: expiresAt.toISOString(),
-    };
   }
 
   /**
@@ -302,12 +402,46 @@ export class BookingWorkflowService {
       throw new Error(`Booking ${bookingId} not found.`);
     }
 
-    if (booking.bookingStatus === "EXPIRED") {
+    if (booking.bookingStatus === "EXPIRED" || (booking.expiresAt && new Date(booking.expiresAt) < new Date())) {
+      if (booking.bookingStatus !== "EXPIRED") {
+        await prisma.session.update({
+          where: { id: booking.id },
+          data: { bookingStatus: "EXPIRED" },
+        });
+      }
       throw new Error("This booking has expired. Please create a new booking.");
     }
 
-    const paymentSettings = await PlatformSettingsService.getPaymentSettings();
     const cleanUtr = utr?.trim() || null;
+
+    if (cleanUtr) {
+      if (isBase64Payload(cleanUtr)) {
+        throw new Error(
+          "Base64 screenshot data is strictly prohibited in the database. Use secure object storage or direct WhatsApp transmission."
+        );
+      }
+
+      if (cleanUtr.length < 6) {
+        throw new Error("Invalid UTR / Transaction Reference. UTR must be at least 6 characters.");
+      }
+
+      // Check for duplicate UTR across all other active/confirmed bookings
+      const duplicate = await prisma.session.findFirst({
+        where: {
+          utr: { equals: cleanUtr, mode: "insensitive" },
+          id: { not: booking.id },
+          bookingStatus: { notIn: ["REJECTED", "CANCELLED"] },
+        },
+      });
+
+      if (duplicate) {
+        throw new Error(
+          `This UTR / Transaction Reference (${cleanUtr}) has already been submitted for booking ${duplicate.bookingId || duplicate.id}. Duplicate UTRs are not permitted.`
+        );
+      }
+    }
+
+    const paymentSettings = await PlatformSettingsService.getPaymentSettings();
 
     // Update status to PAYMENT_CLAIMED
     const updated = await prisma.session.update({
@@ -790,5 +924,57 @@ export class BookingWorkflowService {
     });
 
     return expired.count;
+  }
+
+  /**
+   * 90-Day Storage Retention Job:
+   * Finds bookings older than the retention threshold with paymentScreenshotUrl,
+   * purges them from private storage (R2/S3/mock), and removes the reference from the database.
+   */
+  static async cleanExpiredPaymentScreenshots(retentionDays = 90): Promise<{ count: number; deletedKeys: string[] }> {
+    if (!prisma || !prisma.session) return { count: 0, deletedKeys: [] };
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    const oldBookings = await prisma.session.findMany({
+      where: {
+        createdAt: { lt: cutoffDate },
+        paymentScreenshotUrl: { not: null },
+      },
+      select: { id: true, bookingId: true, paymentScreenshotUrl: true },
+    });
+
+    const deletedKeys: string[] = [];
+    for (const b of oldBookings) {
+      if (b.paymentScreenshotUrl) {
+        try {
+          await storageProvider.deleteFile(b.paymentScreenshotUrl);
+          deletedKeys.push(b.paymentScreenshotUrl);
+        } catch (err) {
+          console.warn(`Failed to delete storage file ${b.paymentScreenshotUrl}:`, err);
+        }
+      }
+    }
+
+    if (oldBookings.length > 0) {
+      await prisma.session.updateMany({
+        where: {
+          id: { in: oldBookings.map((b) => b.id) },
+        },
+        data: {
+          paymentScreenshotUrl: null,
+        },
+      });
+
+      await AuditLogService.log({
+        action: "STORAGE_RETENTION_CLEANUP",
+        actorEmail: "system@aapkaastro.com",
+        targetType: "STORAGE",
+        notes: `Purged ${oldBookings.length} payment screenshots older than ${retentionDays} days in compliance with privacy retention policy.`,
+      }).catch(() => {});
+    }
+
+    return { count: oldBookings.length, deletedKeys };
   }
 }

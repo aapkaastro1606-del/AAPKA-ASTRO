@@ -37,6 +37,9 @@ function loadEnv() {
 
 loadEnv();
 
+const { assertStagingEnvironment } = require("./guard");
+assertStagingEnvironment("verify-neon-connection.ts");
+
 async function main() {
   console.log("\n=======================================================");
   console.log("AAPKA ASTRO - NEON DATABASE CONFIGURATION AUDIT");

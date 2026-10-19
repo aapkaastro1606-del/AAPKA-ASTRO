@@ -16,9 +16,11 @@ import {
   retrieveRelevantKnowledge,
   logUnansweredQuestion,
 } from "@/lib/assistant/retriever";
+import { ChatbotHealthTracker } from "@/lib/assistant/chatbotHealthTracker";
 
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const ChatRequestSchema = z.object({
   message: z
@@ -134,15 +136,38 @@ export async function POST(req: NextRequest) {
         maxTokens: 400,
         timeoutMs: 15000,
       });
+      ChatbotHealthTracker.recordSuccess();
     } catch (providerError: any) {
-      console.error(
-        "[Provider Error - Falling back to Grounded Knowledge Engine]:",
-        providerError?.message || providerError
-      );
-      const fallbackProvider = new MockGroundedChatProvider();
-      stream = await fallbackProvider.generateStream(fullMessages, {
-        maxTokens: 400,
-      });
+      const errorInfo = ChatbotHealthTracker.recordError(providerError);
+
+      const allowFallback =
+        process.env.CHATBOT_ENABLE_FALLBACK === "true" ||
+        process.env.CHATBOT_PROVIDER === "mock";
+
+      if (allowFallback) {
+        console.warn(
+          `[Chatbot Fallback Engaged] Provider error (${errorInfo.errorType}): ${providerError?.message || providerError}. Serving grounded knowledge fallback.`
+        );
+        const fallbackProvider = new MockGroundedChatProvider();
+        stream = await fallbackProvider.generateStream(fullMessages, {
+          maxTokens: 400,
+        });
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "provider_unavailable",
+            errorType: errorInfo.errorType,
+            message:
+              "Our AI assistant is temporarily unavailable due to provider maintenance or quota. Please connect directly with Acharya Niraj Kumar on WhatsApp at +91 93112 15564.",
+            whatsappUrl: `https://wa.me/919311215564?text=${encodeURIComponent(
+              `Namaste Acharya Ji, I would like to inquire about: ${message}`
+            )}`,
+            circuitBreakerTripped: errorInfo.circuitBreakerTripped,
+          },
+          { status: 503 }
+        );
+      }
     }
 
 

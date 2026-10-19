@@ -220,6 +220,7 @@ export function FloatingAssistant() {
   const [sessionKey, setSessionKey] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [lastUserQuestion, setLastUserQuestion] = useState<string>("");
+  const [consecutiveErrors, setConsecutiveErrors] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -493,6 +494,7 @@ export function FloatingAssistant() {
         type: "whatsapp",
       });
 
+      setConsecutiveErrors(0);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
@@ -501,6 +503,9 @@ export function FloatingAssistant() {
         )
       );
     } catch {
+      const nextErrCount = consecutiveErrors + 1;
+      setConsecutiveErrors(nextErrCount);
+
       const fallbackMsg = isHi
         ? "संपर्क करने में तकनीकी बाधा आ रही है। कृपया आचार्य नीरज कुमार जी से सीधे WhatsApp या Call पर संपर्क करें।"
         : "I am having trouble connecting right now. Please message Acharya Niraj Kumar directly on WhatsApp at +91 93112 15564.";
@@ -535,6 +540,14 @@ export function FloatingAssistant() {
             : m
         )
       );
+
+      // If repeated consecutive failures occur, hide the widget to prevent broken user experience
+      if (nextErrCount >= 3) {
+        setTimeout(() => {
+          setIsEnabled(false);
+          setIsOpen(false);
+        }, 3500);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -12,4 +12,6 @@ export interface StorageProvider {
     options?: UploadOptions
   ): Promise<string>;
   getDownloadUrl(key: string): Promise<string>;
+  getSignedDownloadUrl(key: string, expiresInSeconds?: number): Promise<string>;
+  deleteFile(key: string): Promise<boolean>;
 }

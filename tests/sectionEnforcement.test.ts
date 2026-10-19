@@ -292,7 +292,15 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
     grants: [{ section: "reels", accessLevel: "VIEW" }],
   };
 
-  test("GET /api/admin/pricing allows staff with pricing:VIEW", async () => {
+  const ownerUser = {
+    id: "usr_owner_official",
+    email: "aapkaastro1606@gmail.com",
+    role: "OWNER",
+    permissions: ["pricing", "bookings", "staff"],
+    grants: [],
+  };
+
+  test("GET /api/admin/pricing rejects (403 Forbidden) non-owner staff as pricing is strictly Owner-only", async () => {
     const req = new NextRequest("http://localhost:3000/api/admin/pricing", {
       headers: {
         cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(staffPricingView))}`,
@@ -300,13 +308,13 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
     });
 
     const res = await pricingGet(req);
-    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.status, 403);
     const data = await res.json();
-    assert.strictEqual(data.success, true);
-    assert.ok(data.pricing);
+    assert.strictEqual(data.success, false);
+    assert.match(data.message, /Owner/i);
   });
 
-  test("POST /api/admin/pricing rejects (403 Forbidden) staff with only pricing:VIEW", async () => {
+  test("POST /api/admin/pricing rejects (403 Forbidden) non-owner staff as pricing is strictly Owner-only", async () => {
     const req = new NextRequest("http://localhost:3000/api/admin/pricing", {
       method: "POST",
       headers: {
@@ -320,7 +328,28 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
     assert.strictEqual(res.status, 403);
     const data = await res.json();
     assert.strictEqual(data.success, false);
-    assert.match(data.message, /MANAGE access required/i);
+    assert.match(data.message, /Owner/i);
+  });
+
+  test("GET & POST /api/admin/pricing succeeds (200 OK) for platform Owner", async () => {
+    const reqGet = new NextRequest("http://localhost:3000/api/admin/pricing", {
+      headers: {
+        cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(ownerUser))}`,
+      },
+    });
+    const resGet = await pricingGet(reqGet);
+    assert.strictEqual(resGet.status, 200);
+
+    const reqPost = new NextRequest("http://localhost:3000/api/admin/pricing", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(ownerUser))}`,
+      },
+      body: JSON.stringify({ chatRate: 25, callRate: 35, videoRate: 50 }),
+    });
+    const resPost = await pricingPost(reqPost);
+    assert.strictEqual(resPost.status, 200);
   });
 
   test("GET /api/dashboard/reels allows staff with reels:VIEW", async () => {

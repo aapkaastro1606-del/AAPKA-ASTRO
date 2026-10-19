@@ -6,11 +6,16 @@
     "dev": "next dev",
     "build": "node scripts/build.js",
     "start": "next start",
-    "lint": "eslint",
-    "test": "tsx --env-file=.env.test --test tests/**/*.test.ts",
+    "lint": "eslint src/ --max-warnings=1000",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --env-file=.env.test --test --test-concurrency=1 tests/**/*.test.ts",
+    "verify": "node scripts/verify.js",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "node scripts/prisma-guard.js migrate deploy",
+    "prisma:db-push": "node scripts/prisma-guard.js db push",
+    "prisma:reset": "node scripts/prisma-guard.js migrate reset",
+    "seed:content": "tsx scripts/seed-content.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.4",

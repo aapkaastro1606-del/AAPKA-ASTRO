@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import {
   ShieldCheck,
   UserPlus,
@@ -174,6 +175,27 @@ export default function StaffManagementClient() {
             </button>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to invite staff and grant section access"
+          steps={[
+            {
+              title: "What does this do?",
+              description: "You can give assistants or content writers access to specific sections (like Blog or Content Studio) without giving them access to your bank bookings or leads.",
+            },
+            {
+              title: "Grant Access",
+              description: "Enter the employee's email address below, select which sections they may manage (e.g. Blog, Content), and click 'Save Staff Permissions'.",
+            },
+            {
+              title: "Revoke Access",
+              description: "To remove an assistant, simply click 'Revoke All' next to their name in the table below.",
+            },
+          ]}
+          tip="Only you (Platform Owner) can view or change staff permissions. Staff members cannot see bank verification, payment routing, or diagnostics."
+          defaultExpanded={true}
+        />
 
         {/* Cost & Isolation Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

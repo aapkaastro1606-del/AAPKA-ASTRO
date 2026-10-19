@@ -20,6 +20,9 @@ function loadEnvFile(p) {
 loadEnvFile('.env.local');
 loadEnvFile('.env');
 
+const { assertStagingEnvironment } = require('./guard');
+assertStagingEnvironment('audit_db_enums.js');
+
 const prisma = new PrismaClient();
 
 async function main() {

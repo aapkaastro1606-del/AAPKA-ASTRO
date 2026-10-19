@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aapkaastro.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.aapkaastro.com";
 
   return {
     rules: [
@@ -9,13 +9,21 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
-          "/account/",
-          "/account/*",
-          "/dashboard/",
-          "/dashboard/*",
+          "/admin",
           "/admin/",
           "/admin/*",
+          "/account",
+          "/account/",
+          "/account/*",
+          "/api",
           "/api/",
+          "/api/*",
+          "/dashboard",
+          "/dashboard/",
+          "/dashboard/*",
+          "/wallet",
+          "/wallet/",
+          "/wallet/*",
         ],
       },
     ],

@@ -76,14 +76,23 @@ export class InstagramSyncService {
 
     if (accessToken && !accessToken.includes("mock")) {
       try {
+        const { safeExternalCall } = await import("@/lib/utils/resilience");
         const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&access_token=${accessToken}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          fetchedItems = data.data || [];
-        }
+        fetchedItems = await safeExternalCall({
+          name: "Instagram Meta Graph API",
+          timeoutMs: 6000,
+          fallback: () => this.getFallbackMedia(),
+          fn: async (signal) => {
+            const res = await fetch(url, { signal });
+            if (res.ok) {
+              const data = await res.json();
+              return data.data || [];
+            }
+            return [];
+          },
+        });
       } catch (e) {
-        console.error("[InstagramSyncService] Meta Graph fetch failed:", e);
+        console.error("[InstagramSyncService] Meta Graph fetch failed, falling back:", e);
       }
     }
 

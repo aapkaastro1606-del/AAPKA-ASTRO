@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `About ${PLACEHOLDER_ASTROLOGER.displayName} — Vedic Astrology & Vastu`,
     description: PLACEHOLDER_ASTROLOGER.bio,
-    images: [PLACEHOLDER_ASTROLOGER.avatarUrl],
+    images: ["https://www.aapkaastro.com/images/logo-white-bg.png"],
   },
 };
 

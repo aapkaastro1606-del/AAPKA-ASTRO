@@ -29,29 +29,19 @@ export async function GET() {
         isAuthenticated: true,
         isOwner: true,
         hasAdminAccess: true,
-        adminUrl: "/admin/bookings",
+        adminUrl: "/admin",
         label: "Admin Panel",
       });
     }
 
     // Staff with admin section permissions
-    const hasPricing = auth.permissions.includes("pricing");
-    const hasAnalytics = auth.permissions.includes("analytics");
-    const hasStaff = auth.permissions.includes("staff");
-
-    if (hasPricing || hasAnalytics || hasStaff) {
-      const adminUrl = hasPricing
-        ? "/admin/pricing"
-        : hasAnalytics
-        ? "/admin/analytics"
-        : "/admin/staff";
-
+    if (auth.permissions.length > 0) {
       return NextResponse.json({
         isAuthenticated: true,
         isOwner: false,
         hasAdminAccess: true,
-        adminUrl,
-        label: "Staff Desk",
+        adminUrl: "/admin",
+        label: "Admin Panel",
       });
     }
 

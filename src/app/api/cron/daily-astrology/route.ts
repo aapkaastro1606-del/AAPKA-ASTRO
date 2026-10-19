@@ -48,6 +48,9 @@ const PREWARM_CITIES = [
   "newyork",
 ];
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 export async function GET(req: NextRequest) {
   const errors: string[] = [];
   const now = new Date();
@@ -61,20 +64,24 @@ export async function GET(req: NextRequest) {
   let databasePersisted = false;
   const prewarmedCities: string[] = [];
 
+  // 1. Strict CRON_SECRET verification (Vercel Cron sends Authorization: Bearer <CRON_SECRET>)
+  const authHeader = req.headers.get("authorization");
+  const querySecret = req.nextUrl.searchParams.get("secret");
+  const cronSecret = process.env.CRON_SECRET;
+
+  const isAuthorized =
+    Boolean(cronSecret) &&
+    (authHeader === `Bearer ${cronSecret}` || querySecret === cronSecret);
+
+  if (!isAuthorized) {
+    console.warn(`[CRON /api/cron/daily-astrology] Unauthorized invocation attempt from IP: ${req.headers.get("x-forwarded-for") || "unknown"}`);
+    return NextResponse.json(
+      { success: false, message: "Unauthorized cron execution: CRON_SECRET required." },
+      { status: 401 }
+    );
+  }
+
   try {
-    // 1. Authorization check for Cron triggers (Vercel Cron sends Authorization: Bearer <CRON_SECRET>)
-    const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { success: false, message: "Unauthorized cron execution" },
-          { status: 401 }
-        );
-      }
-    }
-
     // 2. Pre-warm deterministic Panchang cache for Today & Tomorrow across major cities
     try {
       const delhiToday = getPanchangForCity("delhi", dateStr);

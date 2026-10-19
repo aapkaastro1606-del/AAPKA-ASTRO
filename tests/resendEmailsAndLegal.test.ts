@@ -12,6 +12,8 @@ describe("Resend Email Workflows & Resilience", () => {
   test("fails loudly and records audit log when RESEND_API_KEY is misconfigured without throwing", async () => {
     // Save original env
     const originalKey = process.env.RESEND_API_KEY;
+    const originalEmailEnabled = process.env.EMAIL_ENABLED;
+    process.env.EMAIL_ENABLED = "true";
     delete process.env.RESEND_API_KEY;
 
     try {
@@ -82,6 +84,11 @@ describe("Resend Email Workflows & Resilience", () => {
       assert.ok(auditEntry?.notes?.includes("RESEND_API_KEY is not configured"));
     } finally {
       if (originalKey) process.env.RESEND_API_KEY = originalKey;
+      if (originalEmailEnabled !== undefined) {
+        process.env.EMAIL_ENABLED = originalEmailEnabled;
+      } else {
+        delete process.env.EMAIL_ENABLED;
+      }
     }
   });
 

@@ -14,6 +14,39 @@ export interface PaymentSettings {
   unpaidExpiryDays: number;
 }
 
+/**
+ * Validates standard NPCI UPI Virtual Payment Address (VPA) format.
+ * Format: username@handle (e.g. 9311215564@okbizaxis, user@okhdfcbank)
+ */
+export function isValidUpiId(upiId: unknown): boolean {
+  if (typeof upiId !== "string") return false;
+  const trimmed = upiId.trim();
+  const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9.\-_]{2,64}$/;
+  return upiRegex.test(trimmed);
+}
+
+/**
+ * Safely masks a UPI ID for diagnostic and administrative display.
+ * Retains the provider handle and first/last characters while redacting sensitive digits.
+ * e.g. 9311215564@okbizaxis -> 93***64@okbizaxis
+ */
+export function maskUpiId(upiId: string | null | undefined): string {
+  if (!upiId || typeof upiId !== "string") return "Unconfigured";
+  const trimmed = upiId.trim();
+  const atIndex = trimmed.indexOf("@");
+  if (atIndex <= 0 || atIndex === trimmed.length - 1) return "***";
+  const user = trimmed.slice(0, atIndex);
+  const handle = trimmed.slice(atIndex + 1);
+
+  if (user.length <= 2) {
+    return `${user[0]}***@${handle}`;
+  }
+  if (user.length <= 4) {
+    return `${user.slice(0, 2)}***@${handle}`;
+  }
+  return `${user.slice(0, 2)}***${user.slice(-2)}@${handle}`;
+}
+
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
   upiId: "9311215564@okbizaxis",
   payeeName: "Aapka Astro Official",
@@ -216,6 +249,15 @@ export class PlatformSettingsService {
 
     if (!isOwnerEmail(actorEmail)) {
       throw new Error("Unauthorized: Only the platform Owner may update payment routing settings.");
+    }
+
+    if (updates.upiId !== undefined) {
+      if (!isValidUpiId(updates.upiId)) {
+        throw new Error(
+          `Invalid UPI ID format: "${updates.upiId}". Expected format: username@handle (e.g. 9311215564@okbizaxis).`
+        );
+      }
+      updates.upiId = updates.upiId.trim();
     }
 
     const current = await this.getPaymentSettings();

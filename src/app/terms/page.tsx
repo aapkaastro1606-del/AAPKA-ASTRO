@@ -142,7 +142,7 @@ export default function TermsOfServicePage() {
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8D8C3] pb-2">
               <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-                5. Cancellation, Rescheduling &amp; Consultation Delivery
+                5. Strict No-Cancellation, Rescheduling &amp; Consultation Delivery
               </h2>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FBF3E7] text-[#C1662F] border border-[#E8A33D]/40">
                 Pending Lawyer Review
@@ -151,6 +151,9 @@ export default function TermsOfServicePage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <strong>Delivery Channels:</strong> Consultations are conducted exclusively via WhatsApp Call or Google Meet, arranged after bank payment verification. There is no in-app calling or proprietary client download required.
+              </li>
+              <li>
+                <strong>Strict No-Cancellation Policy:</strong> Once a consultation is booked and payment is verified, it cannot be cancelled for a refund. Seekers are required to attend their booked consultation session. Fees paid for Acharya Ji&apos;s allocated time, preparatory chart calculations, and research are non-refundable.
               </li>
               <li>
                 <strong>Client Rescheduling Notice:</strong> If you need to reschedule your confirmed consultation slot, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the scheduled time. We will arrange a mutually agreed alternative slot at zero additional charge.

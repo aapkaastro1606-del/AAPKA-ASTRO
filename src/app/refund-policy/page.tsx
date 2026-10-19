@@ -119,9 +119,12 @@ export default function RefundPolicyPage() {
           {/* Section 4 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-              4. Live Consultation Cancellations &amp; Rescheduling
+              4. Strict No-Cancellation &amp; Rescheduling Policy
             </h2>
             <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <strong>Strict No-Cancellation Policy:</strong> Once a consultation is booked and payment is verified, bookings are final, non-cancellable, and non-refundable. Seekers are required to attend their booked consultation session. Voluntary client cancellations or refund requests are not entertained under any circumstances once booked.
+              </li>
               <li>
                 <strong>Client Rescheduling Notice:</strong> If you have a scheduled consultation slot and need to reschedule, you must provide written notice via WhatsApp (+91 93112 15564) or Email at least <strong>4 hours prior</strong> to the booked slot. We will gladly accommodate a mutually agreed alternative slot at zero additional charge.
               </li>

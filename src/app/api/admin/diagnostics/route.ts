@@ -3,6 +3,8 @@ import { getAuthFromRequest, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { ClerkWebhookTracker } from "@/lib/auth/clerkWebhookTracker";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
+import { PlatformSettingsService, maskUpiId } from "@/lib/services/platformSettingsService";
+import { ChatbotHealthTracker, ChatbotDiagnostics } from "@/lib/assistant/chatbotHealthTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +64,14 @@ export interface DiagnosticsData {
     domainValue: string | null;
     anySatelliteVariableSet: boolean;
   };
+  payment: {
+    payeeName: string;
+    maskedUpiId: string;
+    upiConfigured: boolean;
+    unpaidExpiryDays: number;
+    storageProvider: string;
+  };
+  chatbot: ChatbotDiagnostics;
 }
 
 function maskEmail(email: string | null | undefined): string {
@@ -359,6 +369,17 @@ export async function GET(req: NextRequest) {
     anySatelliteVariableSet: isSatelliteSet || isDomainSet,
   };
 
+  // 11. Payment Settings Diagnostics
+  const paymentSettings = await PlatformSettingsService.getPaymentSettings();
+  const maskedUpi = maskUpiId(paymentSettings.upiId);
+  const paymentDiagnostics = {
+    payeeName: paymentSettings.payeeName || "Aapka Astro Official",
+    maskedUpiId: maskedUpi,
+    upiConfigured: Boolean(paymentSettings.upiId),
+    unpaidExpiryDays: paymentSettings.unpaidExpiryDays || 3,
+    storageProvider: process.env.STORAGE_PROVIDER || "mock",
+  };
+
   const payload: DiagnosticsData = {
     timestamp: new Date().toISOString(),
     clerk: {
@@ -393,6 +414,8 @@ export async function GET(req: NextRequest) {
     lastWebhookReceived: lastWebhook,
     envChecklist,
     satelliteConfig,
+    payment: paymentDiagnostics,
+    chatbot: ChatbotHealthTracker.getDiagnostics(),
   };
 
   return NextResponse.json({
