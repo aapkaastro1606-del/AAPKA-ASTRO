@@ -24,6 +24,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Image as ImageIcon,
+  Flame,
+  Scale,
+  Award,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 
@@ -85,7 +88,7 @@ export default function AdminHomeClient({
     {
       id: "content-contact",
       title: "Change phone number & social links",
-      helpText: "Update WhatsApp consultation number, phone, support email, sanctum address, and social links.",
+      helpText: "Update WhatsApp consultation number, phone, public contact email, sanctum address, and social links.",
       href: "/admin/content?tab=contact",
       icon: PhoneCall,
       section: "content",
@@ -94,7 +97,7 @@ export default function AdminHomeClient({
     {
       id: "content-faqs",
       title: "Edit FAQs & Questions",
-      helpText: "Add, edit, hide, or delete frequently asked questions that visitors read on the website.",
+      helpText: "Add, edit, hide, or delete frequently asked questions that visitors read on the website and chatbot.",
       href: "/admin/content?tab=faqs",
       icon: HelpCircle,
       section: "content",
@@ -103,20 +106,38 @@ export default function AdminHomeClient({
     {
       id: "content-hero",
       title: "Homepage text & announcements",
-      helpText: "Change hero headlines, experience badges, and festive announcement banners.",
+      helpText: "Change hero headlines, trust metrics, hero carousel photos, and service cards.",
       href: "/admin/content?tab=hero",
       icon: LayoutTemplate,
       section: "content",
       accent: "blue",
     },
     {
+      id: "content-about",
+      title: "About page & credentials gallery",
+      helpText: "Edit journey story sections, certificates from Bhartiya Vidya Bhawan, and photo gallery.",
+      href: "/admin/content?tab=about",
+      icon: Award,
+      section: "content",
+      accent: "amber",
+    },
+    {
       id: "content-reviews",
       title: "Client reviews & testimonials",
-      helpText: "Manage seeker appreciation reviews and choose which authentic feedback to display.",
+      helpText: "Manage seeker appreciation reviews with required consent notes and publication switch.",
       href: "/admin/content?tab=reviews",
       icon: MessageSquare,
       section: "content",
       accent: "purple",
+    },
+    {
+      id: "content-popups",
+      title: "Promotional & festival popups",
+      helpText: "Manage the 50%-off first consultation welcome popup and seasonal festival blessings in one place.",
+      href: "/admin/content?tab=popups",
+      icon: Flame,
+      section: "content",
+      accent: "maroon",
     },
     {
       id: "media-library",
@@ -125,6 +146,16 @@ export default function AdminHomeClient({
       href: "/admin/media",
       icon: ImageIcon,
       section: "content",
+      accent: "blue",
+    },
+    {
+      id: "content-legal",
+      title: "Legal policies & compliance",
+      helpText: "Owner-only editor for Terms, Privacy, Refund, and Disclaimer with lawyer review flags.",
+      href: "/admin/content?tab=legal",
+      icon: Scale,
+      section: "legal",
+      ownerOnly: true,
       accent: "blue",
     },
     {
