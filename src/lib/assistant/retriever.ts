@@ -60,7 +60,7 @@ export async function retrieveRelevantKnowledge(
     source: "database" | "site_doc";
   }[] = [];
 
-  // 1. Search Owner-Editable Database Knowledge Entries (if DB connected)
+  // 1. Search Owner-Editable Database Knowledge Entries & ContentModel FAQs (Single source of truth)
   try {
     if (prisma && prisma.knowledgeEntry) {
       const dbEntries = await prisma.knowledgeEntry.findMany({
@@ -82,6 +82,47 @@ export async function retrieveRelevantKnowledge(
           matchedSections.push({
             title: entry.question,
             content: entry.answer,
+            score,
+            source: "database",
+          });
+        }
+      }
+    }
+
+    // 1b. Search ContentModel published FAQs (bilingual single source of truth)
+    if (prisma && prisma.contentEntry) {
+      const faqEntries = await prisma.contentEntry.findMany({
+        where: {
+          collection: "faqs",
+          status: "PUBLISHED",
+        },
+        take: 50,
+      });
+
+      for (const fe of faqEntries) {
+        const en = (fe.dataEn as any) || {};
+        const hi = (fe.dataHi as any) || {};
+        const qEn = en.question || en.q || "";
+        const aEn = en.answer || en.a || "";
+        const qHi = hi.question || hi.q || "";
+        const aHi = hi.answer || hi.a || "";
+
+        let score = 0;
+        const combinedText = `${qEn} ${aEn} ${qHi} ${aHi}`;
+        const combinedTokens = extractTokens(combinedText);
+
+        for (const token of tokens) {
+          if (qEn.toLowerCase().includes(token) || qHi.includes(token)) score += 6;
+          if (aEn.toLowerCase().includes(token) || aHi.includes(token)) score += 3;
+          if (combinedTokens.includes(token)) score += 1;
+        }
+
+        if (score > 2) {
+          // Provide both English and Hindi answer text if available
+          const contentText = aHi && aHi !== aEn ? `${aEn}\n(हिंदी: ${aHi})` : aEn;
+          matchedSections.push({
+            title: qEn || qHi,
+            content: contentText,
             score,
             source: "database",
           });

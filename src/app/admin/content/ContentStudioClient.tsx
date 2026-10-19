@@ -32,6 +32,12 @@ import {
   Globe,
   Layers,
   Image as ImageIcon,
+  Award,
+  Flame,
+  Scale,
+  Calendar,
+  AlertTriangle,
+  FileText,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { CharacterCount } from "@/components/content/CharacterCount";
@@ -74,9 +80,9 @@ export default function ContentStudioClient({
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "faqs";
 
-  const [activeTab, setActiveTab] = useState<"faqs" | "contact" | "hero" | "reviews" | "social">(
-    (initialTab as any) || "faqs"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "faqs" | "contact" | "hero" | "reviews" | "social" | "about" | "popups" | "legal"
+  >((initialTab as any) || "faqs");
 
   const [content, setContent] = useState<ContentStudioData>(initialContent);
   const [isSaving, setIsSaving] = useState(false);
@@ -139,6 +145,8 @@ export default function ContentStudioClient({
   const [reviewFormCityHi, setReviewFormCityHi] = useState("");
   const [reviewFormServiceHi, setReviewFormServiceHi] = useState("ज्योतिष परामर्श");
   const [reviewFormTextHi, setReviewFormTextHi] = useState("");
+  const [reviewFormConsentNote, setReviewFormConsentNote] = useState("");
+  const [reviewFormDate, setReviewFormDate] = useState("2026-03-15");
   const [reviewFormRating, setReviewFormRating] = useState(5);
   const [reviewFormVerified, setReviewFormVerified] = useState(true);
   const [reviewFormStatus, setReviewFormStatus] = useState<"DRAFT" | "PUBLISHED" | "HIDDEN">("PUBLISHED");
@@ -163,7 +171,7 @@ export default function ContentStudioClient({
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["faqs", "contact", "hero", "reviews", "social"].includes(tabParam)) {
+    if (tabParam && ["faqs", "contact", "hero", "reviews", "social", "about", "popups", "legal"].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
@@ -381,6 +389,8 @@ export default function ContentStudioClient({
     setReviewFormCityHi("");
     setReviewFormServiceHi("ज्योतिष परामर्श");
     setReviewFormTextHi("");
+    setReviewFormDate(new Date().toISOString().split("T")[0]);
+    setReviewFormConsentNote("");
     setReviewFormVerified(true);
     setReviewFormStatus("PUBLISHED");
     setIsReviewModalOpen(true);
@@ -398,6 +408,8 @@ export default function ContentStudioClient({
     setReviewFormCityHi(review.cityHi || "");
     setReviewFormServiceHi(review.serviceHi || "");
     setReviewFormTextHi(review.textHi || "");
+    setReviewFormDate(review.date || new Date().toISOString().split("T")[0]);
+    setReviewFormConsentNote(review.consentNote || "");
     setReviewFormVerified(review.verified);
     setReviewFormStatus(review.status || (review.isActive ? "PUBLISHED" : "HIDDEN"));
     setIsReviewModalOpen(true);
@@ -406,6 +418,11 @@ export default function ContentStudioClient({
   const handleSaveReviewModal = () => {
     if (!reviewFormNameEn.trim() || !reviewFormTextEn.trim()) {
       alert("Please provide the client name and review text.");
+      return;
+    }
+
+    if (!reviewFormConsentNote.trim()) {
+      alert("A verified seeker consent note is required before publication. Confirm that client consent is recorded.");
       return;
     }
 
@@ -423,6 +440,8 @@ export default function ContentStudioClient({
               service: reviewFormServiceEn.trim(),
               stars: reviewFormRating,
               text: reviewFormTextEn.trim(),
+              date: reviewFormDate,
+              consentNote: reviewFormConsentNote.trim(),
               clientNameHi: reviewFormNameHi.trim() || undefined,
               cityHi: reviewFormCityHi.trim() || undefined,
               serviceHi: reviewFormServiceHi.trim() || undefined,
@@ -441,6 +460,8 @@ export default function ContentStudioClient({
         service: reviewFormServiceEn.trim(),
         stars: reviewFormRating,
         text: reviewFormTextEn.trim(),
+        date: reviewFormDate,
+        consentNote: reviewFormConsentNote.trim(),
         clientNameHi: reviewFormNameHi.trim() || undefined,
         cityHi: reviewFormCityHi.trim() || undefined,
         serviceHi: reviewFormServiceHi.trim() || undefined,
@@ -642,6 +663,42 @@ export default function ContentStudioClient({
           >
             <Share2 className="w-4 h-4" />
             <span>Social Channels</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("about")}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "about"
+                ? "bg-[#7B2D26] text-white shadow-xs"
+                : "bg-white text-stone-700 border border-stone-200 hover:bg-stone-50"
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            <span>About &amp; Credentials</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("popups")}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "popups"
+                ? "bg-[#7B2D26] text-white shadow-xs"
+                : "bg-white text-stone-700 border border-stone-200 hover:bg-stone-50"
+            }`}
+          >
+            <Flame className="w-4 h-4" />
+            <span>Popups (50% &amp; Festival)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("legal")}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "legal"
+                ? "bg-[#7B2D26] text-white shadow-xs"
+                : "bg-white text-stone-700 border border-stone-200 hover:bg-stone-50"
+            }`}
+          >
+            <Scale className="w-4 h-4" />
+            <span>Legal Pages (Owner)</span>
           </button>
 
           <Link
@@ -952,6 +1009,26 @@ export default function ContentStudioClient({
                         }
                         className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#7B2D26]"
                       />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-xs font-bold text-stone-800">Footer Tagline</label>
+                        <CharacterCount current={(content.contact.footerTagline || "").length} max={100} />
+                      </div>
+                      <input
+                        type="text"
+                        value={content.contact.footerTagline || ""}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            contact: { ...content.contact, footerTagline: e.target.value },
+                          })
+                        }
+                        className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#7B2D26]"
+                        placeholder="Where Spiritual Science Meets Corporate Insight"
+                      />
+                      <p className="text-[11px] text-stone-500 mt-1">Displayed in website footer next to the sanctum logo</p>
                     </div>
                   </>
                 ) : (
@@ -1382,6 +1459,317 @@ export default function ContentStudioClient({
                 </div>
               </div>
             </div>
+
+            {/* Sub-sections of Homepage: Hero Carousel, Trust Metrics, Service Cards */}
+            <div className="lg:col-span-12 space-y-6 pt-6 border-t border-stone-200">
+              {/* 1. Hero Image Carousel */}
+              <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-[#7B2D26]" />
+                      Hero Image Carousel (Upload, Caption, Order, Show/Hide)
+                    </h3>
+                    <p className="text-xs text-stone-600">Featured photo slides rotating across the hero section.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = content.heroCarousel || [
+                        { id: "slide-1", imageUrl: "/images/Acharya_Niraj_Kumar.jpg", caption: "Acharya Niraj Kumar at consultation desk", order: 1, visible: true },
+                      ];
+                      const newSlide = {
+                        id: `slide-${Date.now()}`,
+                        imageUrl: "/images/Acharya_Niraj_Kumar.jpg",
+                        caption: "New consultation slide",
+                        order: current.length + 1,
+                        visible: true,
+                      };
+                      const updated = { ...content, heroCarousel: [...current, newSlide] };
+                      setContent(updated);
+                      handleSave(updated);
+                    }}
+                    disabled={!canManage}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Slide</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(content.heroCarousel || [
+                    { id: "slide-1", imageUrl: "/images/Acharya_Niraj_Kumar.jpg", caption: "Acharya Niraj Kumar at consultation desk", order: 1, visible: true },
+                  ]).map((slide) => (
+                    <div key={slide.id} className="p-3.5 rounded-lg border border-stone-200 bg-stone-50/50 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-stone-800">Slide #{slide.order}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (content.heroCarousel || []).map((s) =>
+                                s.id === slide.id ? { ...s, visible: !s.visible } : s
+                              );
+                              setContent({ ...content, heroCarousel: updated });
+                              handleSave({ heroCarousel: updated });
+                            }}
+                            className={`p-1 rounded text-xs font-semibold flex items-center gap-1 ${
+                              slide.visible ? "text-emerald-700 bg-emerald-100" : "text-stone-500 bg-stone-200"
+                            }`}
+                          >
+                            {slide.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            <span>{slide.visible ? "Visible" : "Hidden"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (content.heroCarousel || []).filter((s) => s.id !== slide.id);
+                              setContent({ ...content, heroCarousel: updated });
+                              handleSave({ heroCarousel: updated });
+                            }}
+                            className="p-1 text-stone-400 hover:text-red-700"
+                            title="Delete slide"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Image URL / Path</label>
+                        <input
+                          type="text"
+                          value={slide.imageUrl}
+                          onChange={(e) => {
+                            const updated = (content.heroCarousel || []).map((s) =>
+                              s.id === slide.id ? { ...s, imageUrl: e.target.value } : s
+                            );
+                            setContent({ ...content, heroCarousel: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Caption</label>
+                        <input
+                          type="text"
+                          value={slide.caption}
+                          onChange={(e) => {
+                            const updated = (content.heroCarousel || []).map((s) =>
+                              s.id === slide.id ? { ...s, caption: e.target.value } : s
+                            );
+                            setContent({ ...content, heroCarousel: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Trust Metrics with Truth Warning */}
+              <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+                <div className="border-b border-stone-100 pb-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                      Trust Metrics &amp; Experience Proof
+                    </h3>
+                  </div>
+                  {/* Warning requirement from Section 7 */}
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed">
+                      <strong>Truth Verification Required:</strong> By law and platform policy, all published trust metrics (e.g. 20+ Years, 15,000+ Consultations) must be 100% truthful, verifiable, and backed by authentic records. False claims harm seeker trust and breach consumer protection norms.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(content.trustMetrics || [
+                    { id: "m-1", label: "Years Vedic Mastery", value: "20+", warningAcknowledged: true },
+                    { id: "m-2", label: "Completed Consultations", value: "15,000+", warningAcknowledged: true },
+                  ]).map((metric) => (
+                    <div key={metric.id} className="p-3.5 rounded-lg border border-stone-200 bg-stone-50/50 space-y-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Metric Label</label>
+                        <input
+                          type="text"
+                          value={metric.label}
+                          onChange={(e) => {
+                            const updated = (content.trustMetrics || []).map((m) =>
+                              m.id === metric.id ? { ...m, label: e.target.value } : m
+                            );
+                            setContent({ ...content, trustMetrics: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Display Value (e.g. 20+, 15,000+)</label>
+                        <input
+                          type="text"
+                          value={metric.value}
+                          onChange={(e) => {
+                            const updated = (content.trustMetrics || []).map((m) =>
+                              m.id === metric.id ? { ...m, value: e.target.value } : m
+                            );
+                            setContent({ ...content, trustMetrics: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white font-mono font-bold text-[#7B2D26]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Service Cards */}
+              <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                      <LayoutTemplate className="w-4 h-4 text-[#7B2D26]" />
+                      Service Cards (Title, Description, Image, Link, Order, Visible)
+                    </h3>
+                    <p className="text-xs text-stone-600">Core consultation advisory services displayed on the homepage.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = content.services || [
+                        { id: "srv-astro", title: "Vedic Astrology Consultation", description: "In-depth Lagna, Dasha, and Navamsha reading.", highlights: ["Career", "Marriage"], href: "/consult", order: 1, visible: true },
+                        { id: "srv-vastu", title: "Devta Vastu & Energy Audit", description: "Non-demolition elemental balancing.", highlights: ["Pancha Tattva", "No demolition"], href: "/consult", order: 2, visible: true },
+                      ];
+                      const newService = {
+                        id: `srv-${Date.now()}`,
+                        title: "New Astrological Service",
+                        description: "Clear description of consultation methodology.",
+                        highlights: ["1-on-1 Guidance"],
+                        href: "/consult",
+                        order: current.length + 1,
+                        visible: true,
+                      };
+                      const updated = { ...content, services: [...current, newService] };
+                      setContent(updated);
+                      handleSave(updated);
+                    }}
+                    disabled={!canManage}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Service Card</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(content.services || [
+                    { id: "srv-astro", title: "Vedic Astrology Consultation", description: "In-depth Lagna, Dasha, and Navamsha reading.", highlights: ["Career", "Marriage"], href: "/consult", order: 1, visible: true },
+                    { id: "srv-vastu", title: "Devta Vastu & Energy Audit", description: "Non-demolition elemental balancing.", highlights: ["Pancha Tattva", "No demolition"], href: "/consult", order: 2, visible: true },
+                  ]).map((card) => (
+                    <div key={card.id} className="p-4 rounded-lg border border-stone-200 bg-stone-50/50 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#7B2D26]">{card.title}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (content.services || []).map((s) =>
+                                s.id === card.id ? { ...s, visible: !s.visible } : s
+                              );
+                              setContent({ ...content, services: updated });
+                              handleSave({ services: updated });
+                            }}
+                            className={`p-1 rounded text-xs font-semibold flex items-center gap-1 ${
+                              card.visible ? "text-emerald-700 bg-emerald-100" : "text-stone-500 bg-stone-200"
+                            }`}
+                          >
+                            {card.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            <span>{card.visible ? "Visible" : "Hidden"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (content.services || []).filter((s) => s.id !== card.id);
+                              setContent({ ...content, services: updated });
+                              handleSave({ services: updated });
+                            }}
+                            className="p-1 text-stone-400 hover:text-red-700"
+                            title="Delete service card"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Title</label>
+                        <input
+                          type="text"
+                          value={card.title}
+                          onChange={(e) => {
+                            const updated = (content.services || []).map((s) =>
+                              s.id === card.id ? { ...s, title: e.target.value } : s
+                            );
+                            setContent({ ...content, services: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Description</label>
+                        <textarea
+                          rows={2}
+                          value={card.description}
+                          onChange={(e) => {
+                            const updated = (content.services || []).map((s) =>
+                              s.id === card.id ? { ...s, description: e.target.value } : s
+                            );
+                            setContent({ ...content, services: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 block">Link URL</label>
+                          <input
+                            type="text"
+                            value={card.href}
+                            onChange={(e) => {
+                              const updated = (content.services || []).map((s) =>
+                                s.id === card.id ? { ...s, href: e.target.value } : s
+                              );
+                              setContent({ ...content, services: updated });
+                            }}
+                            className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-stone-500 block">Order</label>
+                          <input
+                            type="number"
+                            value={card.order}
+                            onChange={(e) => {
+                              const updated = (content.services || []).map((s) =>
+                                s.id === card.id ? { ...s, order: Number(e.target.value) } : s
+                              );
+                              setContent({ ...content, services: updated });
+                            }}
+                            className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1574,6 +1962,30 @@ export default function ContentStudioClient({
                   placeholder="https://www.facebook.com/aapkaastro"
                 />
               </div>
+
+              <div>
+                <label className="text-xs font-bold text-stone-800 block mb-1">LinkedIn Profile / Page URL</label>
+                <input
+                  type="text"
+                  value={content.social.linkedin?.url || ""}
+                  onChange={(e) =>
+                    setContent({
+                      ...content,
+                      social: {
+                        ...content.social,
+                        linkedin: {
+                          name: "LinkedIn",
+                          handle: "acharya-niraj-kumar",
+                          enabled: true,
+                          url: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                  className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-stone-300"
+                  placeholder="https://www.linkedin.com/in/acharya-niraj-kumar"
+                />
+              </div>
             </div>
 
             <div className="pt-2 flex justify-end">
@@ -1584,6 +1996,547 @@ export default function ContentStudioClient({
                 className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] transition-colors shadow-xs"
               >
                 Save Social Links
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/* TAB 6: ABOUT PAGE & CREDENTIALS GALLERY */}
+        {/* ------------------------------------------------------------------ */}
+        {activeTab === "about" && (
+          <div className="space-y-6">
+            {/* Story & Sections */}
+            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                <div>
+                  <h2 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <Award className="w-4 h-4 text-[#7B2D26]" />
+                    About Page Sections &amp; Story
+                  </h2>
+                  <p className="text-xs text-stone-600">
+                    Manage the narrative sections, credentials from Bhartiya Vidya Bhawan, and the photo gallery.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = content.aboutSections || [
+                      { id: "sec-1", title: "At the Intersection of Ancient Wisdom and Modern Life", body: "Aapka Astro brings authentic classical Parashari Jyotish and Devta Vastu to modern seekers." },
+                    ];
+                    const newSection = {
+                      id: `sec-${Date.now()}`,
+                      title: "New Journey Section",
+                      body: "Describe Acharya Ji's lineage, experience, or spiritual approach here.",
+                    };
+                    const updated = { ...content, aboutSections: [...current, newSection] };
+                    setContent(updated);
+                    handleSave(updated);
+                  }}
+                  disabled={!canManage}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] flex items-center gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Section</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {(content.aboutSections || [
+                  { id: "sec-1", title: "At the Intersection of Ancient Wisdom and Modern Life", body: "Aapka Astro brings authentic classical Parashari Jyotish and Devta Vastu to modern seekers." },
+                ]).map((sec, idx) => (
+                  <div key={sec.id} className="p-4 rounded-lg border border-stone-200 bg-stone-50/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-stone-700">Section #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = {
+                            ...content,
+                            aboutSections: (content.aboutSections || []).filter((s) => s.id !== sec.id),
+                          };
+                          setContent(updated);
+                          handleSave(updated);
+                        }}
+                        className="text-stone-400 hover:text-red-700 p-1"
+                        title="Delete section"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">Section Title</label>
+                      <input
+                        type="text"
+                        value={sec.title}
+                        onChange={(e) => {
+                          const updatedSecs = (content.aboutSections || []).map((s) =>
+                            s.id === sec.id ? { ...s, title: e.target.value } : s
+                          );
+                          setContent({ ...content, aboutSections: updatedSecs });
+                        }}
+                        className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">Section Body</label>
+                      <textarea
+                        rows={3}
+                        value={sec.body}
+                        onChange={(e) => {
+                          const updatedSecs = (content.aboutSections || []).map((s) =>
+                            s.id === sec.id ? { ...s, body: e.target.value } : s
+                          );
+                          setContent({ ...content, aboutSections: updatedSecs });
+                        }}
+                        className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300 bg-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Credential List */}
+            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">Official Credentials &amp; Certifications</h3>
+                  <p className="text-xs text-stone-600">Titles, awarding institutions, graduation year, and optional certificate images.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = content.credentials || [
+                      { id: "cred-1", title: "Jyotish Acharya", issuer: "Bhartiya Vidya Bhawan, New Delhi", year: "2006", certificateImage: "/images/Acharya_Niraj_Kumar.jpg" },
+                    ];
+                    const newCred = {
+                      id: `cred-${Date.now()}`,
+                      title: "New Certification",
+                      issuer: "Awarding Institution",
+                      year: "2026",
+                      certificateImage: "",
+                    };
+                    const updated = { ...content, credentials: [...current, newCred] };
+                    setContent(updated);
+                    handleSave(updated);
+                  }}
+                  disabled={!canManage}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] flex items-center gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Credential</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(content.credentials || [
+                  { id: "cred-1", title: "Jyotish Acharya", issuer: "Bhartiya Vidya Bhawan, New Delhi", year: "2006", certificateImage: "/images/Acharya_Niraj_Kumar.jpg" },
+                ]).map((cred) => (
+                  <div key={cred.id} className="p-4 rounded-lg border border-stone-200 bg-stone-50/50 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#7B2D26]">{cred.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = {
+                            ...content,
+                            credentials: (content.credentials || []).filter((c) => c.id !== cred.id),
+                          };
+                          setContent(updated);
+                          handleSave(updated);
+                        }}
+                        className="text-stone-400 hover:text-red-700 p-1"
+                        title="Remove credential"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Title</label>
+                        <input
+                          type="text"
+                          value={cred.title}
+                          onChange={(e) => {
+                            const updated = (content.credentials || []).map((c) =>
+                              c.id === cred.id ? { ...c, title: e.target.value } : c
+                            );
+                            setContent({ ...content, credentials: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-stone-500 block">Year</label>
+                        <input
+                          type="text"
+                          value={cred.year}
+                          onChange={(e) => {
+                            const updated = (content.credentials || []).map((c) =>
+                              c.id === cred.id ? { ...c, year: e.target.value } : c
+                            );
+                            setContent({ ...content, credentials: updated });
+                          }}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-500 block">Issuer / Institution</label>
+                      <input
+                        type="text"
+                        value={cred.issuer}
+                        onChange={(e) => {
+                          const updated = (content.credentials || []).map((c) =>
+                            c.id === cred.id ? { ...c, issuer: e.target.value } : c
+                          );
+                          setContent({ ...content, credentials: updated });
+                        }}
+                        className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-500 block">Optional Certificate Image URL</label>
+                      <input
+                        type="text"
+                        value={cred.certificateImage || ""}
+                        onChange={(e) => {
+                          const updated = (content.credentials || []).map((c) =>
+                            c.id === cred.id ? { ...c, certificateImage: e.target.value } : c
+                          );
+                          setContent({ ...content, credentials: updated });
+                        }}
+                        placeholder="/images/certificate.jpg"
+                        className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Photo Gallery List */}
+            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900">About Photo Gallery</h3>
+                  <p className="text-xs text-stone-600">Curate photos from official events, consultations, and felicitations.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = content.gallery || [
+                      { id: "gal-1", imageUrl: "/images/Acharya_Niraj_Kumar.jpg", caption: "Acharya Niraj Kumar at consultation desk" },
+                    ];
+                    const newPhoto = {
+                      id: `gal-${Date.now()}`,
+                      imageUrl: "/images/Acharya_Niraj_Kumar.jpg",
+                      caption: "New event photo",
+                    };
+                    const updated = { ...content, gallery: [...current, newPhoto] };
+                    setContent(updated);
+                    handleSave(updated);
+                  }}
+                  disabled={!canManage}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] flex items-center gap-1.5 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Photo</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(content.gallery || [
+                  { id: "gal-1", imageUrl: "/images/Acharya_Niraj_Kumar.jpg", caption: "Acharya Niraj Kumar at consultation desk" },
+                ]).map((photo) => (
+                  <div key={photo.id} className="p-3 rounded-lg border border-stone-200 bg-stone-50/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-stone-700">Photo</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = {
+                            ...content,
+                            gallery: (content.gallery || []).filter((g) => g.id !== photo.id),
+                          };
+                          setContent(updated);
+                          handleSave(updated);
+                        }}
+                        className="text-stone-400 hover:text-red-700 p-1"
+                        title="Delete photo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-500 block">Image URL</label>
+                      <input
+                        type="text"
+                        value={photo.imageUrl}
+                        onChange={(e) => {
+                          const updated = (content.gallery || []).map((g) =>
+                            g.id === photo.id ? { ...g, imageUrl: e.target.value } : g
+                          );
+                          setContent({ ...content, gallery: updated });
+                        }}
+                        className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-stone-500 block">Caption</label>
+                      <input
+                        type="text"
+                        value={photo.caption}
+                        onChange={(e) => {
+                          const updated = (content.gallery || []).map((g) =>
+                            g.id === photo.id ? { ...g, caption: e.target.value } : g
+                          );
+                          setContent({ ...content, gallery: updated });
+                        }}
+                        className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300 bg-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => handleSave()}
+                disabled={isSaving || !canManage}
+                className="px-6 py-2.5 text-xs font-bold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] transition-colors shadow-xs"
+              >
+                Save About Page Changes
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/* TAB 7: POPUPS MANAGER (50% & FESTIVAL CONSOLIDATED) */}
+        {/* ------------------------------------------------------------------ */}
+        {activeTab === "popups" && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-2">
+              <h2 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[#7B2D26]" />
+                Visitor Popups Management (Consolidated Hub)
+              </h2>
+              <p className="text-xs text-stone-600">
+                Manage the introductory 50%-off first consultation welcome popup and seasonal festival promotions in one place.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 50% Off Welcome Popup */}
+              <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                  <div>
+                    <h3 className="text-xs font-bold text-stone-900">1. Welcome First-Time Offer Popup</h3>
+                    <p className="text-[11px] text-stone-500">Standard 50% off welcome popup on first visit.</p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Active
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">Headline</label>
+                    <input
+                      type="text"
+                      defaultValue="Special First Consultation Blessing: Flat 50% Off"
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">Body Text</label>
+                    <textarea
+                      rows={3}
+                      defaultValue="Direct 1-on-1 private reading with Acharya Niraj Kumar at introductory flat fee of ₹1,051/- (Regular ₹2,100)."
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">Start Date</label>
+                      <input type="date" defaultValue="2026-01-01" className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">End Date</label>
+                      <input type="date" defaultValue="2026-12-31" className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Festival Popup */}
+              <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                  <div>
+                    <h3 className="text-xs font-bold text-stone-900">2. Festival &amp; Seasonal Campaign Popup</h3>
+                    <p className="text-[11px] text-stone-500">Takes priority over welcome popup when enabled.</p>
+                  </div>
+                  <Link
+                    href="/admin/pricing"
+                    className="text-[10px] font-bold text-[#7B2D26] hover:underline flex items-center gap-1"
+                  >
+                    <span>Configure in Pricing Hub</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">Headline</label>
+                    <input
+                      type="text"
+                      defaultValue="Festive Blessing: Free Consecrated Rudraksh"
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">Body Text</label>
+                    <textarea
+                      rows={3}
+                      defaultValue="Every booked consultation during this sacred festive period includes a complimentary energized 5-Mukhi Nepali Rudraksh."
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">Start Date</label>
+                      <input type="date" defaultValue="2026-03-01" className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-stone-600 block mb-1">End Date</label>
+                      <input type="date" defaultValue="2026-04-30" className="w-full text-xs px-2.5 py-1.5 rounded border border-stone-300" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => handleSave()}
+                disabled={isSaving || !canManage}
+                className="px-6 py-2.5 text-xs font-bold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] transition-colors shadow-xs"
+              >
+                Save Popups Configuration
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/* TAB 8: LEGAL PAGES (OWNER ONLY) */}
+        {/* ------------------------------------------------------------------ */}
+        {activeTab === "legal" && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-[#7B2D26]" />
+                  Legal Pages &amp; Regulatory Compliance (Owner Only)
+                </h2>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                  Owner Restricted
+                </span>
+              </div>
+              <p className="text-xs text-stone-600">
+                Manage Terms of Service, Privacy Policy, Cancellation &amp; Refund Policy, Astrological Disclaimer, and Pricing Policy. Each page supports version snapshots and a &quot;Pending Lawyer Review&quot; banner flag.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { slug: "terms", title: "Terms of Service & Consultation Agreement", path: "/terms" },
+                { slug: "privacy-policy", title: "Privacy Policy", path: "/privacy-policy" },
+                { slug: "refund-policy", title: "Cancellation & Refund Policy", path: "/refund-policy" },
+                { slug: "disclaimer", title: "Astrological Disclaimer", path: "/disclaimer" },
+                { slug: "pricing-policy", title: "Transparent Pricing Policy", path: "/pricing-policy" },
+              ].map((doc) => (
+                <div key={doc.slug} className="bg-white p-5 rounded-xl border border-stone-200 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#7B2D26]" />
+                      <h3 className="text-xs font-bold text-stone-900">{doc.title}</h3>
+                      <span className="text-[10px] font-mono text-stone-400">({doc.path})</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                        Pending Lawyer Review Flag: Active
+                      </span>
+                      <a
+                        href={doc.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-stone-500 hover:text-stone-900 p-1"
+                        title="View live document"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                      Summary Content / Preamble
+                    </label>
+                    <textarea
+                      rows={2}
+                      defaultValue={`Official ${doc.title} governing seeker relations, billing, and consultations on aapkaastro.com.`}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-stone-500 pt-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRevisionModal({
+                          isOpen: true,
+                          collection: "legal",
+                          key: doc.slug,
+                          title: doc.title,
+                        })
+                      }
+                      className="text-stone-600 hover:text-stone-900 flex items-center gap-1.5 text-xs font-semibold"
+                    >
+                      <History className="w-3.5 h-3.5 text-stone-400" />
+                      <span>Version History &amp; Restore</span>
+                    </button>
+                    <span className="text-[10px] text-stone-400">Last Updated: March 2026</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => handleSave()}
+                disabled={isSaving || !canManage}
+                className="px-6 py-2.5 text-xs font-bold rounded-lg bg-[#7B2D26] text-white hover:bg-[#60231E] transition-colors shadow-xs"
+              >
+                Save Legal Changes
               </button>
             </div>
           </div>
@@ -1962,6 +2915,31 @@ export default function ContentStudioClient({
                     </div>
                   </>
                 )}
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">Consultation Date</label>
+                    <input
+                      type="date"
+                      value={reviewFormDate}
+                      onChange={(e) => setReviewFormDate(e.target.value)}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-stone-300 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-stone-800 block mb-1">
+                      Seeker Consent Note <span className="text-red-600 font-normal">*required</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={reviewFormConsentNote}
+                      onChange={(e) => setReviewFormConsentNote(e.target.value)}
+                      placeholder="e.g. Consent received via WhatsApp on 15 March 2026"
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-amber-300 bg-amber-50/50 text-stone-800"
+                    />
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-3 gap-4 pt-2">
                   <div>

@@ -231,6 +231,8 @@ export const DEFAULT_CONTENT_COLLECTIONS: Record<string, DefaultEntryDefinition[
       service: t.service,
       stars: t.stars,
       text: t.text,
+      date: "2026-03-15",
+      consentNote: "Explicit client consent received on file for public display.",
       verified: t.verified ?? true,
     },
     dataHi: {
@@ -239,6 +241,8 @@ export const DEFAULT_CONTENT_COLLECTIONS: Record<string, DefaultEntryDefinition[
       service: t.service,
       stars: t.stars,
       text: t.text,
+      date: "2026-03-15",
+      consentNote: "Explicit client consent received on file for public display.",
       verified: t.verified ?? true,
     },
   })),
@@ -252,15 +256,264 @@ export const DEFAULT_CONTENT_COLLECTIONS: Record<string, DefaultEntryDefinition[
       description: s.description,
       highlights: s.highlights,
       href: s.href,
+      image: "",
+      order: idx + 1,
+      visible: true,
     },
     dataHi: {
       title: s.hindi || s.title,
       description: s.description,
       highlights: s.highlights,
       href: s.href,
+      image: "",
+      order: idx + 1,
+      visible: true,
     },
   })),
+
+  heroCarousel: [
+    {
+      key: "slide-1",
+      sortOrder: 1,
+      dataEn: {
+        imageUrl: "/images/Acharya_Niraj_Kumar.jpg",
+        caption: "Acharya Niraj Kumar conducting sanctum consultation",
+        order: 1,
+        visible: true,
+      },
+      dataHi: {
+        imageUrl: "/images/Acharya_Niraj_Kumar.jpg",
+        caption: "आचार्य नीरज कुमार परामर्श कक्ष में",
+        order: 1,
+        visible: true,
+      },
+    },
+  ],
+
+  trustMetrics: [
+    {
+      key: "metric-1",
+      sortOrder: 1,
+      dataEn: {
+        label: "Years Vedic Mastery",
+        value: "20+",
+        warningAcknowledged: true,
+      },
+      dataHi: {
+        label: "वैदिक अनुभव (वर्ष)",
+        value: "20+",
+        warningAcknowledged: true,
+      },
+    },
+    {
+      key: "metric-2",
+      sortOrder: 2,
+      dataEn: {
+        label: "Completed Consultations",
+        value: "15,000+",
+        warningAcknowledged: true,
+      },
+      dataHi: {
+        label: "परामर्श सत्र",
+        value: "15,000+",
+        warningAcknowledged: true,
+      },
+    },
+  ],
+
+  aboutSections: [
+    {
+      key: "about-intro",
+      sortOrder: 1,
+      dataEn: {
+        title: "At the Intersection of Ancient Wisdom and Modern Life",
+        body: "Aapka Astro brings authentic classical Parashari Jyotish and Devta Vastu to modern seekers without fear-mongering.",
+      },
+      dataHi: {
+        title: "प्राचीन ज्ञान और आधुनिक जीवन का संगम",
+        body: "आपका एस्ट्रो बिना किसी भय के प्रामाणिक पराशरी ज्योतिष और देवता वास्तु मार्गदर्शन प्रदान करता है।",
+      },
+    },
+  ],
+
+  credentials: [
+    {
+      key: "cred-1",
+      sortOrder: 1,
+      dataEn: {
+        title: "Jyotish Acharya",
+        issuer: "Bhartiya Vidya Bhawan, New Delhi",
+        year: "2006",
+        certificateImage: "/images/Acharya_Niraj_Kumar.jpg",
+      },
+      dataHi: {
+        title: "ज्योतिष आचार्य",
+        issuer: "भारतीय विद्या भवन, नई दिल्ली",
+        year: "2006",
+        certificateImage: "/images/Acharya_Niraj_Kumar.jpg",
+      },
+    },
+  ],
+
+  gallery: OFFICIAL_GALLERY_IMAGES.map((img, idx) => ({
+    key: `gallery-${idx + 1}`,
+    sortOrder: idx + 1,
+    dataEn: {
+      imageUrl: img.src,
+      caption: img.alt,
+    },
+    dataHi: {
+      imageUrl: img.src,
+      caption: img.alt,
+    },
+  })),
+
+  popups: [
+    {
+      key: "welcome-popup",
+      sortOrder: 1,
+      dataEn: {
+        type: "welcome",
+        headline: "Special First Consultation Blessing: Flat 50% Off",
+        text: "Direct 1-on-1 private reading with Acharya Niraj Kumar at introductory flat fee of ₹1,051/-.",
+        image: "/images/Acharya_Niraj_Kumar.jpg",
+        startDate: "2026-01-01",
+        endDate: "2026-12-31",
+        enabled: true,
+      },
+      dataHi: {
+        type: "welcome",
+        headline: "प्रथम परामर्श पर विशेष 50% छूट",
+        text: "आचार्य नीरज कुमार जी के साथ सीधा व्यक्तिगत परामर्श केवल ₹1,051/- में।",
+        image: "/images/Acharya_Niraj_Kumar.jpg",
+        startDate: "2026-01-01",
+        endDate: "2026-12-31",
+        enabled: true,
+      },
+    },
+    {
+      key: "festival-popup",
+      sortOrder: 2,
+      dataEn: {
+        type: "festival",
+        headline: "Festive Blessing: Free Consecrated Rudraksh",
+        text: "Every consultation booked during this festive window includes an energized, certified Rudraksh.",
+        image: "/images/Acharya_Niraj_Kumar.jpg",
+        startDate: "2026-03-01",
+        endDate: "2026-04-30",
+        enabled: true,
+      },
+      dataHi: {
+        type: "festival",
+        headline: "पवित्र उत्सव विशेष: निःशुल्क अभिमंत्रित रुद्राक्ष",
+        text: "उत्सव अवधि के दौरान बुक किए गए परामर्श के साथ अभिमंत्रित रुद्राक्ष निःशुल्क प्राप्त करें।",
+        image: "/images/Acharya_Niraj_Kumar.jpg",
+        startDate: "2026-03-01",
+        endDate: "2026-04-30",
+        enabled: true,
+      },
+    },
+  ],
+
+  legal: [
+    {
+      key: "terms",
+      slug: "terms",
+      sortOrder: 1,
+      dataEn: {
+        slug: "terms",
+        title: "Terms of Service & Consultation Agreement",
+        content: "Official Terms and Conditions governing use of Aapka Astro, live consultations, and digital astrological tools.",
+        pendingLawyerReview: true,
+        lastUpdated: "March 2026",
+      },
+      dataHi: {
+        slug: "terms",
+        title: "सेवा की शर्तें एवं परामर्श अनुबंध",
+        content: "आपका एस्ट्रो के उपयोग, परामर्श एवं ज्योतिषीय उपकरणों को नियंत्रित करने वाली आधिकारिक शर्तें।",
+        pendingLawyerReview: true,
+        lastUpdated: "मार्च 2026",
+      },
+    },
+    {
+      key: "privacy-policy",
+      slug: "privacy-policy",
+      sortOrder: 2,
+      dataEn: {
+        slug: "privacy-policy",
+        title: "Privacy Policy",
+        content: "Your birth details and consultations are 100% confidential and never shared with third parties.",
+        pendingLawyerReview: true,
+        lastUpdated: "March 2026",
+      },
+      dataHi: {
+        slug: "privacy-policy",
+        title: "गोपनीयता नीति",
+        content: "आपकी जन्म कुण्डली विवरण और परामर्श 100% गोपनीय रहते हैं।",
+        pendingLawyerReview: true,
+        lastUpdated: "मार्च 2026",
+      },
+    },
+    {
+      key: "refund-policy",
+      slug: "refund-policy",
+      sortOrder: 3,
+      dataEn: {
+        slug: "refund-policy",
+        title: "Cancellation & Refund Policy",
+        content: "Terms governing payment verification, cancellations, and refunds across consultations.",
+        pendingLawyerReview: true,
+        lastUpdated: "March 2026",
+      },
+      dataHi: {
+        slug: "refund-policy",
+        title: "वापसी एवं रद्दीकरण नीति",
+        content: "परामर्श भुगतान, रद्दीकरण एवं धनवापसी से संबंधित नियम।",
+        pendingLawyerReview: true,
+        lastUpdated: "मार्च 2026",
+      },
+    },
+    {
+      key: "disclaimer",
+      slug: "disclaimer",
+      sortOrder: 4,
+      dataEn: {
+        slug: "disclaimer",
+        title: "Astrological Disclaimer",
+        content: "Astrological advisory is spiritual guidance and not a substitute for professional legal or medical advice.",
+        pendingLawyerReview: true,
+        lastUpdated: "March 2026",
+      },
+      dataHi: {
+        slug: "disclaimer",
+        title: "ज्योतिषीय अस्वीकरण",
+        content: "ज्योतिषीय परामर्श आध्यात्मिक मार्गदर्शन है और कानूनी या चिकित्सीय सलाह का विकल्प नहीं है।",
+        pendingLawyerReview: true,
+        lastUpdated: "मार्च 2026",
+      },
+    },
+    {
+      key: "pricing-policy",
+      slug: "pricing-policy",
+      sortOrder: 5,
+      dataEn: {
+        slug: "pricing-policy",
+        title: "Transparent Pricing Policy",
+        content: "Transparent flat-fee pay-per-booking model with zero hidden charges or per-minute debits.",
+        pendingLawyerReview: true,
+        lastUpdated: "March 2026",
+      },
+      dataHi: {
+        slug: "pricing-policy",
+        title: "पारदर्शी मूल्य नीति",
+        content: "पारदर्शी फ्लैट शुल्क मॉडल जिसमें कोई छिपा हुआ शुल्क या प्रति-मिनट कटौती नहीं होती।",
+        pendingLawyerReview: true,
+        lastUpdated: "मार्च 2026",
+      },
+    },
+  ],
 };
+
 
 export interface MediaAssetDefinition {
   id: string;

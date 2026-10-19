@@ -27,12 +27,14 @@ export interface ContactInfoConfig {
   sanctumCity: string;
   address: string;
   operatingHours: string;
+  footerTagline?: string;
 }
 
 export interface SocialLinksConfig {
   instagram: { name: string; url: string; handle: string; enabled: boolean };
   youtube: { name: string; url: string; embedUrl?: string; handle: string; enabled: boolean };
   facebook: { name: string; url: string; handle: string; enabled: boolean };
+  linkedin?: { name: string; url: string; handle: string; enabled: boolean };
 }
 
 export interface HeroBannerConfig {
@@ -53,8 +55,76 @@ export interface ReviewItem {
   service: string;
   stars: number;
   text: string;
+  date?: string;
+  consentNote?: string;
   verified: boolean;
   isActive: boolean;
+}
+
+export interface HeroCarouselItem {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  order: number;
+  visible: boolean;
+}
+
+export interface TrustMetricItem {
+  id: string;
+  label: string;
+  value: string;
+  warningAcknowledged: boolean;
+}
+
+export interface ServiceCardItem {
+  id: string;
+  title: string;
+  description: string;
+  highlights: string[];
+  href: string;
+  image?: string;
+  order: number;
+  visible: boolean;
+}
+
+export interface AboutSectionItem {
+  id: string;
+  title: string;
+  body: string;
+}
+
+export interface CredentialItem {
+  id: string;
+  title: string;
+  issuer: string;
+  year: string;
+  certificateImage?: string;
+}
+
+export interface PhotoGalleryItem {
+  id: string;
+  imageUrl: string;
+  caption: string;
+}
+
+export interface PopupConfigItem {
+  id: string;
+  type: "welcome" | "festival";
+  headline: string;
+  text: string;
+  image?: string;
+  startDate: string;
+  endDate: string;
+  enabled: boolean;
+}
+
+export interface LegalPageItem {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  pendingLawyerReview: boolean;
+  lastUpdated: string;
 }
 
 export interface ContentStudioData {
@@ -63,9 +133,18 @@ export interface ContentStudioData {
   hero: HeroBannerConfig;
   faqs: FaqItem[];
   reviews?: ReviewItem[];
+  heroCarousel?: HeroCarouselItem[];
+  trustMetrics?: TrustMetricItem[];
+  services?: ServiceCardItem[];
+  aboutSections?: AboutSectionItem[];
+  credentials?: CredentialItem[];
+  gallery?: PhotoGalleryItem[];
+  popups?: PopupConfigItem[];
+  legal?: LegalPageItem[];
   updatedAt?: string;
   updatedBy?: string;
 }
+
 
 export const DEFAULT_FAQS: FaqItem[] = [
   {
@@ -184,12 +263,34 @@ export class ContentStudioService {
     try {
       // 1. Attempt to read from typed ContentEntry collections
       if (prisma && prisma.contentEntry) {
-        const [faqEntries, contactEntry, socialEntry, heroEntry, testimonialEntries] = await Promise.all([
+        const [
+          faqEntries,
+          contactEntry,
+          socialEntry,
+          heroEntry,
+          testimonialEntries,
+          heroCarouselEntries,
+          trustMetricEntries,
+          serviceEntries,
+          aboutSectionEntries,
+          credentialEntries,
+          galleryEntries,
+          popupEntries,
+          legalEntries,
+        ] = await Promise.all([
           ContentModelService.getAllEntries("faqs").catch(() => []),
           ContentModelService.getPublishedEntry("contact", "primary").catch(() => null),
           ContentModelService.getPublishedEntry("social", "primary").catch(() => null),
           ContentModelService.getPublishedEntry("hero", "home-hero").catch(() => null),
           ContentModelService.getAllEntries("testimonials").catch(() => []),
+          ContentModelService.getAllEntries("heroCarousel").catch(() => []),
+          ContentModelService.getAllEntries("trustMetrics").catch(() => []),
+          ContentModelService.getAllEntries("services").catch(() => []),
+          ContentModelService.getAllEntries("aboutSections").catch(() => []),
+          ContentModelService.getAllEntries("credentials").catch(() => []),
+          ContentModelService.getAllEntries("gallery").catch(() => []),
+          ContentModelService.getAllEntries("popups").catch(() => []),
+          ContentModelService.getAllEntries("legal").catch(() => []),
         ]);
 
         if (faqEntries.length > 0 || contactEntry || socialEntry || heroEntry) {
@@ -233,10 +334,78 @@ export class ContentStudioService {
                 service: t.data.service || t.dataEn.service || "",
                 stars: t.data.stars || t.dataEn.stars || 5,
                 text: t.data.text || t.dataEn.text || "",
+                date: t.data.date || t.dataEn.date || "2026-03-15",
+                consentNote: t.data.consentNote || t.dataEn.consentNote || "Client consent on file.",
                 verified: t.data.verified ?? true,
                 isActive: t.status === ContentStatus.PUBLISHED,
               }))
             : DEFAULT_CONTENT_STUDIO.reviews!;
+
+          const heroCarousel: HeroCarouselItem[] = heroCarouselEntries.map((h) => ({
+            id: h.key,
+            imageUrl: h.data.imageUrl || h.dataEn.imageUrl || "",
+            caption: h.data.caption || h.dataEn.caption || "",
+            order: h.data.order ?? h.sortOrder,
+            visible: h.status === ContentStatus.PUBLISHED,
+          }));
+
+          const trustMetrics: TrustMetricItem[] = trustMetricEntries.map((m) => ({
+            id: m.key,
+            label: m.data.label || m.dataEn.label || "",
+            value: m.data.value || m.dataEn.value || "",
+            warningAcknowledged: m.data.warningAcknowledged ?? true,
+          }));
+
+          const services: ServiceCardItem[] = serviceEntries.map((s) => ({
+            id: s.key,
+            title: s.data.title || s.dataEn.title || "",
+            description: s.data.description || s.dataEn.description || "",
+            highlights: s.data.highlights || s.dataEn.highlights || [],
+            href: s.data.href || s.dataEn.href || "/consult",
+            image: s.data.image || s.dataEn.image || "",
+            order: s.data.order ?? s.sortOrder,
+            visible: s.status === ContentStatus.PUBLISHED,
+          }));
+
+          const aboutSections: AboutSectionItem[] = aboutSectionEntries.map((a) => ({
+            id: a.key,
+            title: a.data.title || a.dataEn.title || "",
+            body: a.data.body || a.dataEn.body || "",
+          }));
+
+          const credentials: CredentialItem[] = credentialEntries.map((c) => ({
+            id: c.key,
+            title: c.data.title || c.dataEn.title || "",
+            issuer: c.data.issuer || c.dataEn.issuer || "",
+            year: c.data.year || c.dataEn.year || "",
+            certificateImage: c.data.certificateImage || c.dataEn.certificateImage || "",
+          }));
+
+          const gallery: PhotoGalleryItem[] = galleryEntries.map((g) => ({
+            id: g.key,
+            imageUrl: g.data.imageUrl || g.dataEn.imageUrl || "",
+            caption: g.data.caption || g.dataEn.caption || "",
+          }));
+
+          const popups: PopupConfigItem[] = popupEntries.map((p) => ({
+            id: p.key,
+            type: p.data.type || p.dataEn.type || "welcome",
+            headline: p.data.headline || p.dataEn.headline || "",
+            text: p.data.text || p.dataEn.text || "",
+            image: p.data.image || p.dataEn.image || "",
+            startDate: p.data.startDate || p.dataEn.startDate || "",
+            endDate: p.data.endDate || p.dataEn.endDate || "",
+            enabled: p.status === ContentStatus.PUBLISHED,
+          }));
+
+          const legal: LegalPageItem[] = legalEntries.map((l) => ({
+            id: l.key,
+            slug: l.data.slug || l.dataEn.slug || l.key,
+            title: l.data.title || l.dataEn.title || "",
+            content: l.data.content || l.dataEn.content || "",
+            pendingLawyerReview: l.data.pendingLawyerReview ?? true,
+            lastUpdated: l.data.lastUpdated || l.dataEn.lastUpdated || "March 2026",
+          }));
 
           return {
             contact,
@@ -244,11 +413,20 @@ export class ContentStudioService {
             hero,
             faqs,
             reviews,
+            heroCarousel: heroCarousel.length > 0 ? heroCarousel : undefined,
+            trustMetrics: trustMetrics.length > 0 ? trustMetrics : undefined,
+            services: services.length > 0 ? services : undefined,
+            aboutSections: aboutSections.length > 0 ? aboutSections : undefined,
+            credentials: credentials.length > 0 ? credentials : undefined,
+            gallery: gallery.length > 0 ? gallery : undefined,
+            popups: popups.length > 0 ? popups : undefined,
+            legal: legal.length > 0 ? legal : undefined,
             updatedAt: contactEntry?.updatedAt || heroEntry?.updatedAt || new Date().toISOString(),
             updatedBy: contactEntry?.updatedBy || heroEntry?.updatedBy || "system",
           };
         }
       }
+
 
       // 2. Fallback to platformSetting
       if (prisma && prisma.platformSetting) {
@@ -395,6 +573,8 @@ export class ContentStudioService {
                 service: r.service,
                 stars: r.stars,
                 text: r.text,
+                date: r.date || "2026-03-15",
+                consentNote: r.consentNote || "Client consent on file.",
                 verified: r.verified,
               },
               dataHi: {
@@ -403,6 +583,8 @@ export class ContentStudioService {
                 service: r.service,
                 stars: r.stars,
                 text: r.text,
+                date: r.date || "2026-03-15",
+                consentNote: r.consentNote || "Client consent on file.",
                 verified: r.verified,
               },
               status: r.isActive !== false ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
@@ -412,10 +594,140 @@ export class ContentStudioService {
             }).catch((e) => console.error(`Sync review ${r.id} to ContentModel failed:`, e));
           }
         }
+
+        if (updates.heroCarousel) {
+          for (let i = 0; i < updates.heroCarousel.length; i++) {
+            const item = updates.heroCarousel[i];
+            await ContentModelService.saveEntry({
+              collection: "heroCarousel",
+              key: item.id,
+              dataEn: { imageUrl: item.imageUrl, caption: item.caption, order: item.order, visible: item.visible },
+              dataHi: { imageUrl: item.imageUrl, caption: item.caption, order: item.order, visible: item.visible },
+              status: item.visible ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
+              sortOrder: item.order || i + 1,
+              actorEmail,
+              changeSummary: `Synced hero carousel slide ${item.id}`,
+            }).catch((e) => console.error("Sync heroCarousel failed:", e));
+          }
+        }
+
+        if (updates.trustMetrics) {
+          for (let i = 0; i < updates.trustMetrics.length; i++) {
+            const item = updates.trustMetrics[i];
+            await ContentModelService.saveEntry({
+              collection: "trustMetrics",
+              key: item.id,
+              dataEn: { label: item.label, value: item.value, warningAcknowledged: item.warningAcknowledged },
+              dataHi: { label: item.label, value: item.value, warningAcknowledged: item.warningAcknowledged },
+              status: ContentStatus.PUBLISHED,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced trust metric ${item.id}`,
+            }).catch((e) => console.error("Sync trustMetrics failed:", e));
+          }
+        }
+
+        if (updates.services) {
+          for (let i = 0; i < updates.services.length; i++) {
+            const item = updates.services[i];
+            await ContentModelService.saveEntry({
+              collection: "services",
+              key: item.id,
+              dataEn: { title: item.title, description: item.description, highlights: item.highlights, href: item.href, image: item.image, order: item.order, visible: item.visible },
+              dataHi: { title: item.title, description: item.description, highlights: item.highlights, href: item.href, image: item.image, order: item.order, visible: item.visible },
+              status: item.visible ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
+              sortOrder: item.order || i + 1,
+              actorEmail,
+              changeSummary: `Synced service card ${item.id}`,
+            }).catch((e) => console.error("Sync services failed:", e));
+          }
+        }
+
+        if (updates.aboutSections) {
+          for (let i = 0; i < updates.aboutSections.length; i++) {
+            const item = updates.aboutSections[i];
+            await ContentModelService.saveEntry({
+              collection: "aboutSections",
+              key: item.id,
+              dataEn: { title: item.title, body: item.body },
+              dataHi: { title: item.title, body: item.body },
+              status: ContentStatus.PUBLISHED,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced about section ${item.id}`,
+            }).catch((e) => console.error("Sync aboutSections failed:", e));
+          }
+        }
+
+        if (updates.credentials) {
+          for (let i = 0; i < updates.credentials.length; i++) {
+            const item = updates.credentials[i];
+            await ContentModelService.saveEntry({
+              collection: "credentials",
+              key: item.id,
+              dataEn: { title: item.title, issuer: item.issuer, year: item.year, certificateImage: item.certificateImage },
+              dataHi: { title: item.title, issuer: item.issuer, year: item.year, certificateImage: item.certificateImage },
+              status: ContentStatus.PUBLISHED,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced credential ${item.id}`,
+            }).catch((e) => console.error("Sync credentials failed:", e));
+          }
+        }
+
+        if (updates.gallery) {
+          for (let i = 0; i < updates.gallery.length; i++) {
+            const item = updates.gallery[i];
+            await ContentModelService.saveEntry({
+              collection: "gallery",
+              key: item.id,
+              dataEn: { imageUrl: item.imageUrl, caption: item.caption },
+              dataHi: { imageUrl: item.imageUrl, caption: item.caption },
+              status: ContentStatus.PUBLISHED,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced gallery photo ${item.id}`,
+            }).catch((e) => console.error("Sync gallery failed:", e));
+          }
+        }
+
+        if (updates.popups) {
+          for (let i = 0; i < updates.popups.length; i++) {
+            const item = updates.popups[i];
+            await ContentModelService.saveEntry({
+              collection: "popups",
+              key: item.id,
+              dataEn: { type: item.type, headline: item.headline, text: item.text, image: item.image, startDate: item.startDate, endDate: item.endDate, enabled: item.enabled },
+              dataHi: { type: item.type, headline: item.headline, text: item.text, image: item.image, startDate: item.startDate, endDate: item.endDate, enabled: item.enabled },
+              status: item.enabled ? ContentStatus.PUBLISHED : ContentStatus.HIDDEN,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced popup ${item.id}`,
+            }).catch((e) => console.error("Sync popups failed:", e));
+          }
+        }
+
+        if (updates.legal) {
+          for (let i = 0; i < updates.legal.length; i++) {
+            const item = updates.legal[i];
+            await ContentModelService.saveEntry({
+              collection: "legal",
+              key: item.id,
+              slug: item.slug,
+              dataEn: { slug: item.slug, title: item.title, content: item.content, pendingLawyerReview: item.pendingLawyerReview, lastUpdated: item.lastUpdated },
+              dataHi: { slug: item.slug, title: item.title, content: item.content, pendingLawyerReview: item.pendingLawyerReview, lastUpdated: item.lastUpdated },
+              status: ContentStatus.PUBLISHED,
+              sortOrder: i + 1,
+              actorEmail,
+              changeSummary: `Synced legal document ${item.slug}`,
+            }).catch((e) => console.error("Sync legal failed:", e));
+          }
+        }
       }
     } catch (modelErr) {
       console.warn("ContentModelService sync warning:", modelErr);
     }
+
 
     // 2. Also keep platformSetting updated for redundancy
     if (prisma && prisma.platformSetting) {

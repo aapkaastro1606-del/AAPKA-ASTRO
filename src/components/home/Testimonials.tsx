@@ -6,13 +6,15 @@ import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { PLACEHOLDER_TESTIMONIALS } from "@/config/placeholderContent";
 
 export const Testimonials: React.FC = () => {
-  const [reviews, setReviews] = React.useState<any[]>(PLACEHOLDER_TESTIMONIALS);
+  const [reviews, setReviews] = React.useState<any[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
 
   React.useEffect(() => {
     fetch("/api/reviews")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.reviews?.length > 0) {
+        setLoaded(true);
+        if (data.success && Array.isArray(data.reviews)) {
           setReviews(
             data.reviews.map((r: any, idx: number) => ({
               id: r.id || `rev-${idx}`,
@@ -24,10 +26,19 @@ export const Testimonials: React.FC = () => {
               verified: true,
             }))
           );
+        } else {
+          setReviews([]);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setLoaded(true);
+        setReviews([]);
+      });
   }, []);
+
+  if (!loaded || reviews.length === 0) {
+    return null;
+  }
   return (
     <section className="border-t border-[#E8D8C3] bg-[#FFFDF9] py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
