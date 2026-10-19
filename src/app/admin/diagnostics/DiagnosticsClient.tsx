@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { useUser, useSession } from "@clerk/nextjs";
 import {
   Database,
@@ -156,11 +157,11 @@ export default function DiagnosticsClient() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Link
-                href="/admin/staff"
+                href="/admin"
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#7B2D26] hover:underline"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Admin Console</span>
+                <span>Admin Home</span>
               </Link>
               <span className="text-[#C1662F]">&bull;</span>
               <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#FFFDF9] font-temple">
@@ -186,6 +187,27 @@ export default function DiagnosticsClient() {
             </button>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to read system diagnostics & health checks"
+          steps={[
+            {
+              title: "What does this page do?",
+              description: "This probes live database connection, Clerk authentication, Resend email status, AI latency, and background cron health.",
+            },
+            {
+              title: "Green checkmarks",
+              description: "All green indicators mean your live system is running normally with zero failures.",
+            },
+            {
+              title: "Owner Only Protection",
+              description: "This screen is strictly restricted to aapkaastro1606@gmail.com and cannot be viewed by staff or visitors.",
+            },
+          ]}
+          tip="Click 'Re-Probe System' at any time to run a live diagnostic audit against all backend providers."
+          defaultExpanded={false}
+        />
 
         {/* Loading / Error States */}
         {loading && (

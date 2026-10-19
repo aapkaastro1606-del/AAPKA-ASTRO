@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import {
   BookOpen,
   HelpCircle,
@@ -279,10 +280,10 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
           <Link
-            href="/admin/bookings"
+            href="/admin"
             className="inline-flex items-center gap-2 text-xs font-semibold text-[#7B2D26] hover:underline"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Admin Panel
+            <ArrowLeft className="w-4 h-4" /> Back to Admin Home
           </Link>
           <div className="flex items-center gap-2">
             <Link
@@ -335,6 +336,27 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
             {showForm ? "Close Form" : "New Knowledge Entry"}
           </button>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to teach the AI chatbot new answers"
+          steps={[
+            {
+              title: "What is this page for?",
+              description: "This allows you to teach the website AI assistant verified answers about your services, remedies, or rules without writing code.",
+            },
+            {
+              title: "Add a new answer",
+              description: "Click 'New Knowledge Entry'. Enter the question seekers ask and your authentic answer. The assistant learns it instantly.",
+            },
+            {
+              title: "Unanswered Questions Tab",
+              description: "Check the 'Unanswered Questions' tab below to see what seekers asked that the assistant couldn't answer. Click 'Teach Answer' to add it.",
+            },
+          ]}
+          tip="The AI assistant is strictly grounded. It will only give answers you have verified and will never invent remedies or fees."
+          defaultExpanded={true}
+        />
 
         {/* Status Message */}
         {msg && (

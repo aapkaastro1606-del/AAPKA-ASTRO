@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import {
   ShieldCheck,
   UserPlus,
@@ -169,11 +170,11 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-6">
           <div>
             <Link
-              href="/dashboard"
+              href="/admin"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7B2D26] hover:underline mb-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Operator Cockpit</span>
+              <span>Back to Admin Home</span>
             </Link>
             <div className="flex items-center gap-2">
               <h1 className="font-temple text-2xl sm:text-3xl font-bold text-[#7B2D26]">
@@ -197,6 +198,23 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
             <span>Refresh Data</span>
           </button>
         </div>
+
+        {/* How-To Help Panel */}
+        <AdminHelpPanel
+          title="How to manage team access"
+          steps={[
+            {
+              title: "What is this for?",
+              description: "This allows you to give assistants access to individual sections like blog writing or reels without giving full site access.",
+            },
+            {
+              title: "Access Levels",
+              description: "VIEW permits seeing data; MANAGE permits saving changes, creating posts, or editing content.",
+            },
+          ]}
+          tip="All permissions are checked server-side fail-closed. Sensitive owner sections (bookings, diagnostics, leads) remain strictly protected."
+          defaultExpanded={false}
+        />
 
         {/* Feedback message banner */}
         {msg && (

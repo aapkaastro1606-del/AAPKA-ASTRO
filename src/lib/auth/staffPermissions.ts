@@ -10,7 +10,8 @@ export type StaffSection =
   | "analytics"
   | "staff"
   | "bookings"
-  | "leads";
+  | "leads"
+  | "content";
 
 export type AccessLevel = "VIEW" | "MANAGE";
 
@@ -111,6 +112,12 @@ export const STAFF_SECTIONS: readonly StaffSectionMeta[] = [
     path: "/admin/leads",
     description: "Manage seekers who generated free Kundlis with consent, filter leads, and export to CSV (Owner Only).",
     ownerOnly: true,
+  },
+  {
+    id: "content",
+    name: "Content Studio",
+    path: "/admin/content",
+    description: "Edit FAQs, contact details, social links, hero announcements, and seeker testimonials without coding.",
   },
 ];
 

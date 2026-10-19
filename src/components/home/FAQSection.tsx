@@ -9,8 +9,7 @@ import { PLACEHOLDER_ASTROLOGER, ADMIN_CONFIGURABLE_PRICING, FIRST_CONSULTATION_
 export const FAQSection: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  // {/* PLACEHOLDER: replace with real content */}
-  const faqs = [
+  const defaultFaqs = [
     {
       q: "How does the consultation booking and connection process work?",
       a: `Consultations with ${PLACEHOLDER_ASTROLOGER.displayName} follow a simple, transparent, real-world flow: you book and pay the flat consultation fee online → you immediately receive your confirmation on screen and via email containing your official booking reference and direct WhatsApp contact details (+91 93112 15564) → Acharya Niraj Kumar or his sanctum desk coordinates the exact time and connects with you via WhatsApp call or Google Meet, as you prefer or as arranged. Because Acharya Ji consults personally without third-party interns, every session is a genuine 1-on-1 private reading without requiring any complex in-app software or call plugins.`,
@@ -21,7 +20,7 @@ export const FAQSection: React.FC = () => {
     },
     {
       q: "How does consultation booking and fee payment work?",
-      a: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first Astro consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). Vaastu Consultations are flat ₹15,000/- (Regular ₹25,000). You simply select your consultation type, provide your intake details, and complete checkout securely via UPI, Cards, or Net Banking. Upon payment, you receive instant confirmation on screen and by email with a direct WhatsApp link to coordinate your session. There are zero surprise per-minute debits or hidden talktime deductions.",
+      a: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first Astro consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). Vaastu Consultations are flat ₹15,000/- (Regular ₹25,000). You simply select your consultation type, provide your intake details, and complete payment directly via UPI to 9311215564@okbizaxis. Upon verification, your booking is confirmed with a direct meeting link and WhatsApp coordination. There are zero surprise per-minute debits or hidden wallet charges.",
     },
     {
       q: "How accurate is the free Janam Kundli calculator on this website?",
@@ -36,6 +35,19 @@ export const FAQSection: React.FC = () => {
       a: `Absolutely. ${PLACEHOLDER_ASTROLOGER.displayName} specializes in non-demolition Vastu remedies. By utilizing elemental balancing (Pancha Tattva), directional metal tapes, consecrated Vedic yantras, and specific natural remedies, directional defects are balanced effectively without structural damage.`,
     },
   ];
+
+  const [faqs, setFaqs] = useState<{ q: string; a: string }[]>(defaultFaqs);
+
+  React.useEffect(() => {
+    fetch("/api/content")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.content?.faqs) && data.content.faqs.length > 0) {
+          setFaqs(data.content.faqs);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="border-t border-[#E8D8C3] bg-[#FBF3E7] py-16 lg:py-24">

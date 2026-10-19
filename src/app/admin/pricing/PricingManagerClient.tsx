@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { AdminStore, PricingSettings } from "@/lib/store/adminStore";
 import {
   DollarSign,
@@ -113,11 +114,11 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
         {/* Navigation & Header */}
         <div>
           <Link
-            href="/dashboard"
+            href="/admin"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7B2D26] hover:underline mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
+            <span>Back to Admin Home</span>
           </Link>
 
           <div className="flex items-center justify-between">
@@ -142,6 +143,31 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
             </div>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Client */}
+        <AdminHelpPanel
+          title="How to manage consultation prices and festive discounts"
+          steps={[
+            {
+              title: "Astro Consultation Fee",
+              description: "Set the standard price (₹2,100) and promotional first-time seeker price (₹1,051). First-time discounts apply automatically to new users.",
+            },
+            {
+              title: "Vaastu Consultation Fee",
+              description: "Set the comprehensive Devta Vaastu fee (Standard ₹25,000, promotional ₹15,000).",
+            },
+            {
+              title: "Festive Promotions (Navratri / Diwali)",
+              description: "Enable festive promotions with free blessed Rudraksh or special discounts during holy festivals.",
+            },
+            {
+              title: "Click Save All Changes",
+              description: "Once saved, prices update immediately across checkout, the booking modal, and what the AI assistant quotes.",
+            },
+          ]}
+          tip="All prices on Aapka Astro operate on a transparent flat-fee pay-per-booking model. There are no per-minute charges or hidden wallet debits."
+          defaultExpanded={true}
+        />
 
         {/* View-Only Alert Banner */}
         {!canManage && (

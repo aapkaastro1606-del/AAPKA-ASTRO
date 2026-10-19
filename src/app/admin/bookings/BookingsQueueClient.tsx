@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -374,9 +375,9 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Link href="/dashboard" className="text-xs font-bold text-[#7B2D26] hover:underline flex items-center gap-1">
+              <Link href="/admin" className="text-xs font-bold text-[#7B2D26] hover:underline flex items-center gap-1">
                 <ArrowLeft className="h-3 w-3" />
-                Dashboard
+                Admin Home
               </Link>
               <span className="text-[#6E5545]">/</span>
               <span className="text-xs font-bold text-[#6E5545]">Owner Verification Queue</span>
@@ -417,6 +418,31 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
             </button>
           </div>
         </div>
+
+        {/* How-To Help Panel for Non-Technical Owner */}
+        <AdminHelpPanel
+          title="How to verify payments and schedule consultations"
+          steps={[
+            {
+              title: "Step 1: Verify payment in your bank",
+              description: "Look at the 12-digit UTR submitted by the seeker. Open your UPI or Axis Bank app to confirm that the funds were received in your account.",
+            },
+            {
+              title: "Step 2: Click 'Approve'",
+              description: "Once funds are confirmed in your bank, click Approve. This updates the booking to CONFIRMED and emails the seeker their receipt.",
+            },
+            {
+              title: "Step 3: Schedule Slot & Meeting Link",
+              description: "Click 'Schedule Slot' to set the consultation time and paste the Google Meet or WhatsApp link. An email is dispatched to the seeker automatically.",
+            },
+            {
+              title: "If payment did not arrive",
+              description: "Click 'Reject' with an explanation (e.g. 'UTR not found in bank statement'). The seeker is notified to contact WhatsApp support.",
+            },
+          ]}
+          tip="Your bank or UPI statement is the sole definitive proof of payment. Only approve when funds physically appear in your bank account."
+          defaultExpanded={true}
+        />
 
         {/* Feedback Alert */}
         {feedback && (

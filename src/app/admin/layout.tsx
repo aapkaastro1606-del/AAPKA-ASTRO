@@ -12,17 +12,14 @@ export default async function AdminLayout({
   const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
-    redirect("/login?redirect_url=/admin/bookings");
+    redirect("/login?redirect_url=/admin");
   }
 
-  // Admin section strictly requires Owner or staff with active pricing/analytics/staff permissions
-  const hasAdminSectionPerm =
-    auth.permissions.includes("pricing") ||
-    auth.permissions.includes("analytics") ||
-    auth.permissions.includes("staff");
+  // Admin section strictly requires Owner or staff with active permissions
+  const hasAccess = auth.isOwner || (auth.permissions && auth.permissions.length > 0);
 
-  if (!auth.isOwner && !hasAdminSectionPerm) {
-    redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
+  if (!hasAccess) {
+    redirect("/account");
   }
 
   return <>{children}</>;
