@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, getOwnerEmail } from "@/lib/auth/serverAuth";
+import { getOwnerEmail, resolveRequestAuth } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { KundliLeadService } from "@/lib/services/kundliLeadService";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = getAuthFromRequest(req);
+    const auth = await resolveRequestAuth(req);
 
     if (!auth.isAuthenticated || !isOwnerEmail(auth.email)) {
       return NextResponse.json(

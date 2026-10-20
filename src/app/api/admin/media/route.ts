@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { hasStaffSectionAccess, resolveRequestAuth } from "@/lib/auth/serverAuth";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import {
   isPublicStorageConfigured,
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
  * Handles presigned URL generation and media asset registration.
  */
 export async function POST(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -241,7 +241,7 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(

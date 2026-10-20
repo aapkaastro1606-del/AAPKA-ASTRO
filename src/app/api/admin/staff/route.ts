@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { resolveRequestAuth } from "@/lib/auth/serverAuth";
 import {
   StaffPermissionService,
   STAFF_SECTIONS,
@@ -13,7 +13,7 @@ import {
  * Strictly gated to platform Owner.
  */
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   // Strictly gate to Owner
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
  * Body: { email: string, sections: StaffSection[] }
  */
 export async function POST(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
     return NextResponse.json(
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
  * Body: { email: string } or Query: ?email=...
  */
 export async function DELETE(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
     return NextResponse.json(

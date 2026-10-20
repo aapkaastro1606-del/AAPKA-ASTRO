@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { hasStaffSectionAccess, resolveRequestAuth } from "@/lib/auth/serverAuth";
 import { BlogStore, BlogPost } from "@/lib/store/blogStore";
 
 /**
@@ -7,7 +7,7 @@ import { BlogStore, BlogPost } from "@/lib/store/blogStore";
  * Returns all blog posts. Requires VIEW access on "blog".
  */
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
  * Creates or updates a blog article. Requires MANAGE access on "blog".
  */
 export async function POST(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
  * Deletes a blog article by ID. Requires MANAGE access on "blog".
  */
 export async function DELETE(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(

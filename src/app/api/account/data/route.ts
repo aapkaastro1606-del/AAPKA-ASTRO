@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { resolveRequestAuth } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * - Reviews submitted by the user from prisma.review
  */
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated || !auth.userId) {
     return NextResponse.json(

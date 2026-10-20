@@ -251,9 +251,8 @@ export default function ConsultPage() {
       });
 
       booking.bookingId = bookingRef;
-      booking.status = "CONFIRMED";
+      booking.status = "PENDING_PAYMENT";
       booking.orderId = bookingRef;
-      booking.confirmedAt = new Date().toISOString();
 
       AstrologerStateStore.addConfirmedBooking({
         id: `bk-${Date.now()}`,
@@ -268,7 +267,7 @@ export default function ConsultPage() {
         concern: topicText,
         amountPaid: chargedAmount,
         paymentStatus: "AWAITING_VERIFICATION",
-        bookingState: "CONFIRMED",
+        bookingState: "PENDING_PAYMENT",
         bookedAt: new Date().toISOString(),
         preferredSlot: "Immediate Next Window",
       });

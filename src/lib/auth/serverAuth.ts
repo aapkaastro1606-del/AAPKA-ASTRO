@@ -12,6 +12,7 @@ import {
   AccessLevel,
 } from "./staffPermissions";
 import { syncClerkUserToDatabase } from "./syncUser";
+import { getAuthFromRequest } from "./requestAuth";
 import { prisma } from "@/lib/db/prisma";
 
 export interface ServerAuthResult {
@@ -335,3 +336,96 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
     return UNAUTHENTICATED_RESULT;
   }
 });
+
+/**
+ * Universal Request Auth Resolver for Route Handlers.
+ * Combines serverAuth (Clerk session via cookies / JIT sync),
+ * Authorization Bearer JWT header, and mock cookie fallbacks.
+ * Ensures API route handlers never reject valid Clerk sessions.
+ */
+export async function resolveRequestAuth(req: NextRequest): Promise<ServerAuthResult> {
+  // 1. Try serverAuth (Clerk server session) first
+  try {
+    const serverUser = await getServerAuthUser();
+    if (serverUser.isAuthenticated && (serverUser.isOwner || serverUser.userId)) {
+      return serverUser;
+    }
+  } catch {
+    // Continue to next resolvers
+  }
+
+  // 2. Try Bearer token if passed in Authorization header
+  const authHeader = req.headers.get("authorization") || "";
+  if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const parts = token.split(".");
+      if (parts.length >= 2) {
+        const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
+        const claims = JSON.parse(payloadJson);
+        const tokenUserId = claims.sub || null;
+        let tokenEmail = claims.email || claims.primary_email || null;
+
+        if (tokenUserId && !tokenEmail) {
+          try {
+            const dbU = await prisma.user.findFirst({
+              where: { clerkId: tokenUserId },
+              select: { email: true },
+            });
+            if (dbU?.email) tokenEmail = dbU.email;
+          } catch {
+            // DB lookup ignore
+          }
+        }
+
+        if (tokenEmail || tokenUserId) {
+          const isOwner = isOwnerEmail(tokenEmail);
+          const role: UserRole = isOwner ? "OWNER" : "CLIENT";
+          const grants = isOwner
+            ? (STAFF_SECTIONS.map((s) => ({
+                id: `owner_${s.id}`,
+                email: tokenEmail || "",
+                section: s.id,
+                accessLevel: "MANAGE" as AccessLevel,
+                grantedAt: new Date().toISOString(),
+                revokedAt: null,
+              })) as StaffGrant[])
+            : await StaffPermissionService.getGrantsForEmail(tokenEmail || "");
+
+          const permissions = isOwner
+            ? (STAFF_SECTIONS.map((s) => s.id) as StaffSection[])
+            : grants.map((g) => g.section);
+
+          return {
+            isAuthenticated: true,
+            userId: tokenUserId,
+            role,
+            isAstrologer: isAstrologerRole(role) || permissions.length > 0,
+            isAdmin: isOwner || isAdminRole(role),
+            isOwner,
+            email: tokenEmail,
+            permissions,
+            grants,
+          };
+        }
+      }
+    } catch {
+      // Invalid Bearer format
+    }
+  }
+
+  // 3. Fallback to Edge/Cookie request auth
+  const cookieAuth = getAuthFromRequest(req);
+  return {
+    isAuthenticated: cookieAuth.isAuthenticated,
+    userId: cookieAuth.userId,
+    role: cookieAuth.role,
+    isAstrologer: cookieAuth.isAstrologer,
+    isAdmin: cookieAuth.isAdmin,
+    isOwner: cookieAuth.isOwner,
+    email: cookieAuth.email,
+    permissions: cookieAuth.permissions,
+    grants: cookieAuth.grants,
+  };
+}
+

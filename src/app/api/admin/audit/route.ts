@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { resolveRequestAuth } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { checkAdminRateLimit } from "@/lib/admin/rateLimitAndValidation";
 
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await resolveRequestAuth(req);
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(

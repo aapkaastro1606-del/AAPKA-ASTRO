@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { useSession } from "@/components/auth/ClerkAuthWrapper";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -71,6 +72,7 @@ interface PaymentSettingsData {
 }
 
 export default function BookingsQueueClient({ userEmail }: { userEmail: string }) {
+  const { session } = useSession();
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -106,10 +108,22 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session) {
+      try {
+        const token = await session.getToken();
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      } catch {}
+    }
+    return headers;
+  };
+
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/bookings?status=${activeTab}&search=${encodeURIComponent(search)}`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/bookings?status=${activeTab}&search=${encodeURIComponent(search)}`, { headers });
       const data = await res.json();
       if (data.success) {
         setBookings(data.bookings || []);
@@ -126,7 +140,8 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
 
   const fetchPaymentSettings = async () => {
     try {
-      const res = await fetch("/api/admin/payment-settings");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/payment-settings", { headers });
       const data = await res.json();
       if (data.success && data.settings) {
         setPaymentSettings(data.settings);
@@ -159,7 +174,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "approve",
           bookingId: selectedBooking.bookingId,
@@ -198,7 +213,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "schedule",
           bookingId: selectedBooking.bookingId,
@@ -232,7 +247,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "complete",
           bookingId: booking.bookingId,
@@ -264,7 +279,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "reject",
           bookingId: selectedBooking.bookingId,
@@ -294,7 +309,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "refund",
           bookingId: selectedBooking.bookingId,
@@ -325,7 +340,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/payment-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(paymentSettings),
       });
       const data = await res.json();
