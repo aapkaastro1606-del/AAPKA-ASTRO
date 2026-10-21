@@ -46,45 +46,54 @@ export async function POST(req: NextRequest) {
     // Record session and transaction in PostgreSQL via Prisma
     try {
       if (userId && userId !== "guest") {
-        if (productId !== "kundli_pdf") {
-          const defaultAstrologer = await prisma.user.findFirst({
-            where: { role: "ASTROLOGER" },
-            select: { id: true },
-          });
-
-          if (defaultAstrologer) {
-            await prisma.session.create({
-              data: {
-                clientId: userId,
-                astrologerId: defaultAstrologer.id,
-                type: format.toLowerCase().includes("video")
-                  ? "VIDEO"
-                  : format.toLowerCase().includes("voice")
-                  ? "VOICE"
-                  : "CHAT",
-                ratePerMin: 0,
-                totalCost: paidAmount,
-                status: "WAITING",
-                notes: `${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}: ${topic || "Vedic Guidance"}`,
-              },
-            });
-          }
-        }
-
-        await prisma.walletTransaction.create({
-          data: {
-            userId,
-            amount: paidAmount,
-            type: "CREDIT",
-            orderId: orderId,
-            paymentId: paymentId,
-            provider: paymentProvider.name,
-            description:
-              productId === "kundli_pdf"
-                ? "Kundli Full PDF Report Download"
-                : `One-Time Payment: ${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}`,
+        const dbUser = await prisma.user.findFirst({
+          where: {
+            OR: [{ id: userId }, { clerkId: userId }],
           },
+          select: { id: true },
         });
+
+        if (dbUser) {
+          if (productId !== "kundli_pdf") {
+            const defaultAstrologer = await prisma.user.findFirst({
+              where: { role: "ASTROLOGER" },
+              select: { id: true },
+            });
+
+            if (defaultAstrologer) {
+              await prisma.session.create({
+                data: {
+                  clientId: dbUser.id,
+                  astrologerId: defaultAstrologer.id,
+                  type: format.toLowerCase().includes("video")
+                    ? "VIDEO"
+                    : format.toLowerCase().includes("voice")
+                    ? "VOICE"
+                    : "CHAT",
+                  ratePerMin: 0,
+                  totalCost: paidAmount,
+                  status: "WAITING",
+                  notes: `${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}: ${topic || "Vedic Guidance"}`,
+                },
+              });
+            }
+          }
+
+          await prisma.walletTransaction.create({
+            data: {
+              userId: dbUser.id,
+              amount: paidAmount,
+              type: "CREDIT",
+              orderId: orderId,
+              paymentId: paymentId,
+              provider: paymentProvider.name,
+              description:
+                productId === "kundli_pdf"
+                  ? "Kundli Full PDF Report Download"
+                  : `One-Time Payment: ${productId === "vaastu" ? "Vaastu Consultation" : "Astro Consultation"}`,
+            },
+          });
+        }
       }
     } catch {
       // Graceful fallback if database schema is mock in test environments

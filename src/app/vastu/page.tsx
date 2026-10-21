@@ -66,9 +66,39 @@ const VastuPage: React.FC = () => {
     },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!userName || !userPhone) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch("/api/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: userName,
+          phone: userPhone,
+          topic: `Vastu Audit (${propertyType}) in ${city} (${areaSqFt} sq ft): ${specificConcern}`,
+          preferredSlot: "Anytime",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit Vastu audit inquiry. Please try again.");
+      }
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setSubmitError(err.message || "Network error. Please try again or reach us via WhatsApp.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -260,8 +290,14 @@ const VastuPage: React.FC = () => {
                 </div>
               </div>
 
+              {submitError && (
+                <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700 mb-3">
+                  {submitError}
+                </div>
+              )}
               <button
                 type="submit"
+                disabled={submitting}
                 className="w-full rounded-xl bg-[#7B2D26] py-4 font-bold text-white text-sm shadow-md hover:bg-[#64231D] transition-all"
               >
                 Submit Vastu Audit Request &rarr;

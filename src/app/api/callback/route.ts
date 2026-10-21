@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { sanitizeString } from "@/lib/security/inputSanitizer";
 import { prisma } from "@/lib/db/prisma";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,15 +22,9 @@ export async function POST(req: NextRequest) {
     const cleanTopic = sanitizeString(topic || "General Astrological Guidance");
     const cleanSlot = sanitizeString(preferredSlot || "Anytime today");
 
-    // 1. In-memory record
-    const record = ClientAccountStore.requestCallback({
-      clientName: cleanName,
-      phone: cleanPhone,
-      topic: cleanTopic,
-      preferredSlot: cleanSlot,
-    });
+    // Persist callback lead directly to Neon PostgreSQL database
+    let sessionId: string = `CB-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 2. Persist directly to Neon PostgreSQL database
     try {
       if (prisma && prisma.session) {
         // Find or create seeker user
@@ -47,9 +41,9 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        await prisma.session.create({
+        const session = await prisma.session.create({
           data: {
-            bookingId: `CB-${Math.floor(100000 + Math.random() * 900000)}`,
+            bookingId: sessionId,
             type: "VOICE",
             clientId: user.id,
             userName: cleanName,
@@ -60,56 +54,76 @@ export async function POST(req: NextRequest) {
             format: "Voice Call",
             paymentMethod: "UPI_QR",
             paymentStatus: "CALLBACK_REQUEST",
+            bookingStatus: "PENDING_PAYMENT",
             status: "WAITING",
             ratePerMin: 0,
             totalCost: 0,
           },
         });
+        sessionId = session.bookingId || session.id;
       }
     } catch (dbErr) {
       console.error("Failed to persist callback lead to database:", dbErr);
+      return NextResponse.json(
+        { success: false, message: "Failed to record callback request in database." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      message:
-        "Callback request registered with Acharya Ji's sanctum. We will notify you via WhatsApp/Email as soon as he is online.",
-      data: record,
+      message: "Callback request confirmed! Our Acharya team will reach out via WhatsApp/Phone.",
+      record: {
+        id: sessionId,
+        clientName: cleanName,
+        phone: cleanPhone,
+        topic: cleanTopic,
+        preferredSlot: cleanSlot,
+        requestedAt: new Date().toISOString(),
+        status: "WAITING",
+      },
     });
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, message: err.message || "Failed to submit callback request." },
+      { success: false, message: err.message || "Failed to process callback request" },
       { status: 500 }
     );
   }
 }
 
 export async function GET() {
+  const auth = await getServerAuthUser();
+  if (!auth.isAuthenticated || !auth.isOwner) {
+    return NextResponse.json(
+      { success: false, message: "Forbidden: Owner access required." },
+      { status: 403 }
+    );
+  }
+
   try {
     if (prisma && prisma.session) {
       const dbCallbacks = await prisma.session.findMany({
         where: { paymentStatus: "CALLBACK_REQUEST" },
         orderBy: { createdAt: "desc" },
       });
-      if (dbCallbacks.length > 0) {
-        return NextResponse.json({
-          success: true,
-          requests: dbCallbacks.map((c) => ({
-            id: c.id,
-            clientName: c.userName || "Seeker",
-            phone: c.userPhone || "",
-            topic: c.concern || "",
-            preferredSlot: c.preferredSlot || "",
-            requestedAt: c.createdAt.toISOString(),
-            status: c.status,
-          })),
-        });
-      }
+      return NextResponse.json({
+        success: true,
+        requests: dbCallbacks.map((c) => ({
+          id: c.id,
+          clientName: c.userName || "Seeker",
+          phone: c.userPhone || "",
+          topic: c.concern || "",
+          preferredSlot: c.preferredSlot || "",
+          requestedAt: c.createdAt.toISOString(),
+          status: c.status,
+        })),
+      });
     }
-  } catch (e) {
-    console.warn("Could not query DB callbacks, using memory store:", e);
+    return NextResponse.json({ success: true, requests: [] });
+  } catch (e: any) {
+    return NextResponse.json(
+      { success: false, message: e.message || "Could not query callbacks" },
+      { status: 500 }
+    );
   }
-
-  const requests = ClientAccountStore.getCallbackRequests();
-  return NextResponse.json({ success: true, requests });
 }

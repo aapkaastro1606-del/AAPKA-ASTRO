@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       data: {
         paymentScreenshotUrl: storageKey,
         bookingStatus: booking.bookingStatus === "PENDING_PAYMENT" ? "PAYMENT_CLAIMED" : booking.bookingStatus,
-        paymentStatus: "AWAITING_VERIFICATION",
+        paymentStatus: "PAYMENT_CLAIMED",
       },
     });
 

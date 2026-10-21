@@ -46,7 +46,6 @@ import {
   ConsultationBooking,
 } from "@/lib/services/consultationBilling";
 import { BookingEmailService } from "@/lib/services/bookingEmailService";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
@@ -84,9 +83,7 @@ export default function ConsultPage() {
 
   // Booking & Payment State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(() =>
-    ClientAccountStore.getActiveBooking()
-  );
+  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(null);
   const [showUpiModal, setShowUpiModal] = useState(false);
   const [upiBookingInfo, setUpiBookingInfo] = useState<{
     bookingId: string;
@@ -307,7 +304,6 @@ export default function ConsultPage() {
             booking={confirmedBooking}
             onReset={() => {
               setConfirmedBooking(null);
-              ClientAccountStore.setActiveBooking(null);
             }}
           />
         ) : (
@@ -898,8 +894,14 @@ export default function ConsultPage() {
             isOpen={showUpiModal}
             onClose={() => {
               setShowUpiModal(false);
-              const active = ClientAccountStore.getActiveBooking();
-              if (active) setConfirmedBooking(active);
+              if (upiBookingInfo?.bookingId) {
+                fetch(`/api/booking/status?bookingId=${encodeURIComponent(upiBookingInfo.bookingId)}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success && data.booking) setConfirmedBooking(data.booking);
+                  })
+                  .catch(() => {});
+              }
             }}
             bookingId={upiBookingInfo.bookingId}
             amount={upiBookingInfo.amount}
@@ -908,8 +910,14 @@ export default function ConsultPage() {
             clientName={userName}
             clientPhone={userPhone}
             onPaymentSubmitted={() => {
-              const active = ClientAccountStore.getActiveBooking();
-              if (active) setConfirmedBooking(active);
+              if (upiBookingInfo?.bookingId) {
+                fetch(`/api/booking/status?bookingId=${encodeURIComponent(upiBookingInfo.bookingId)}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success && data.booking) setConfirmedBooking(data.booking);
+                  })
+                  .catch(() => {});
+              }
             }}
           />
         )}

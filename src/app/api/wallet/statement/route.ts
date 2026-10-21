@@ -1,20 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateWalletStatementCSV, StatementItem } from "@/lib/services/statementService";
 import { prisma } from "@/lib/db/prisma";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await getServerAuthUser();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId") || "usr_client_demo";
+    const paramUserId = searchParams.get("userId");
 
-    // Attempt to pull real transactions from Prisma DB, with rich fallback for local dev
+    // Enforce own-data permission policy
+    let targetUserId = auth.isAuthenticated ? (auth.dbUserId || auth.userId) : paramUserId;
+
+    if (auth.isAuthenticated && auth.isOwner && paramUserId) {
+      targetUserId = paramUserId;
+    } else if (auth.isAuthenticated && !auth.isOwner && paramUserId && paramUserId !== auth.dbUserId && paramUserId !== auth.userId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: You may only view your own statement." },
+        { status: 403 }
+      );
+    }
+
+    if (!targetUserId) {
+      targetUserId = "usr_client_demo";
+    }
+
+    // Pull transactions from Prisma DB using cuid or clerkId
     let transactions: StatementItem[] = [];
     let userName = "Aapka Astro Seeker";
     let userIdentifier = "seeker@aapkaastro.com";
 
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: targetUserId }, { clerkId: targetUserId }],
+        },
         include: {
           walletTransactions: {
             orderBy: { createdAt: "desc" },
@@ -49,32 +71,33 @@ export async function GET(req: NextRequest) {
           description: "1-on-1 Vedic Astro Consultation (Flat ₹1,051 First Consultation Promo)",
           amount: 1051,
           balanceAfter: 0,
-          referenceId: "sess_live_9011",
-        },
-        {
-          id: "TXN-89012",
-          date: "2026-09-18 10:15:00",
-          type: "RECHARGE",
-          description: "Consultation Payment via Direct UPI QR",
-          amount: 1051,
-          balanceAfter: 1051,
-          referenceId: "upi_txn_demo_88219",
+          referenceId: "PAY-UPI-90124",
         },
       ];
     }
 
-    const csvContent = generateWalletStatementCSV(userName, userIdentifier, transactions);
+    const format = searchParams.get("format");
+    if (format === "csv") {
+      const csv = generateWalletStatementCSV(userName, userIdentifier, transactions);
 
-    return new NextResponse(csvContent, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="AapkaAstro_Statement_${Date.now()}.csv"`,
-      },
+      return new NextResponse(csv, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="aapka-astro-statement-${Date.now()}.csv"`,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      userName,
+      userIdentifier,
+      transactions,
     });
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, message: err.message || "Failed to generate statement" },
+      { success: false, message: err.message || "Failed to generate wallet statement" },
       { status: 500 }
     );
   }

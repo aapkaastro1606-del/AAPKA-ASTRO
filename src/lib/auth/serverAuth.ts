@@ -16,11 +16,14 @@ import { prisma } from "@/lib/db/prisma";
 export interface ServerAuthResult {
   isAuthenticated: boolean;
   userId: string | null;     // Database User ID (cuid)
+  dbUserId?: string | null;  // Canonical alias for Database User ID (cuid)
   clerkId: string | null;    // Clerk User ID (user_...)
   role: UserRole | null;
+  name?: string | null;
   isAstrologer: boolean;
   isAdmin: boolean;
   isOwner: boolean;
+  isStaff?: boolean;
   email: string | null;
   permissions: StaffSection[];
   grants: StaffGrant[];
@@ -266,11 +269,14 @@ async function resolveServerAuthUser(): Promise<ServerAuthResult> {
       return {
         isAuthenticated: true,
         userId: dbUser?.id || null, // Database user id (cuid)
+        dbUserId: dbUser?.id || null,
         clerkId: session.userId,     // Clerk user id (user_...)
         role,
+        name: dbUser?.name || null,
         isAstrologer,
         isAdmin,
         isOwner,
+        isStaff: !isOwner && permissions.length > 0,
         email: verifiedEmail,
         permissions,
         grants,

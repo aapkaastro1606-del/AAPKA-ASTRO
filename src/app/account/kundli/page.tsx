@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore, SavedKundli } from "@/lib/store/clientAccountStore";
+import type { SavedKundli } from "@/lib/store/clientAccountStore";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import {
@@ -24,17 +24,30 @@ export default function AccountKundliPage() {
   const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadKundlis = () => {
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadKundlis = async () => {
     setLoading(true);
-    fetch("/api/account/data")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.kundlis) {
-          setSavedKundlis(data.kundlis);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/account/data");
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setLoadError("Your session expired or you don't have access. Sign in again.");
+        } else {
+          setLoadError("Could not load saved Kundlis. Please retry.");
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.kundlis) {
+        setSavedKundlis(data.kundlis);
+      }
+    } catch {
+      setLoadError("Could not load saved Kundlis. Please retry.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -138,7 +151,18 @@ export default function AccountKundliPage() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {savedKundlis.length === 0 ? (
+          {loadError ? (
+          <div className="rounded-3xl border border-red-200 bg-[#FFFDF9] p-8 text-center max-w-xl mx-auto shadow-sm">
+            <h3 className="font-temple text-lg font-bold text-red-800 mb-2">Could Not Load Kundlis</h3>
+            <p className="text-xs text-[#6E5545] mb-4">{loadError}</p>
+            <button
+              onClick={loadKundlis}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D]"
+            >
+              <span>Retry</span>
+            </button>
+          </div>
+        ) : savedKundlis.length === 0 ? (
             <div className="md:col-span-2 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-10 text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26]">
                 <FileText className="h-7 w-7 text-[#C1662F]" />

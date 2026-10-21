@@ -15,6 +15,7 @@ import {
   Video,
   XCircle,
   RotateCcw,
+  RefreshCw,
   QrCode,
   ArrowRight,
   Edit3,
@@ -79,6 +80,7 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   const { user } = useUser();
   const [activeBooking, setActiveBooking] = useState<UnifiedBooking | null>(propBooking || null);
   const [loading, setLoading] = useState<boolean>(!propBooking);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [astrologerStatus, setAstrologerStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [claimUtr, setClaimUtr] = useState<string>("");
@@ -128,6 +130,8 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   };
 
   const fetchActiveBooking = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const email = user?.primaryEmailAddress?.emailAddress;
       const params = new URLSearchParams();
@@ -135,14 +139,23 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
       if (user?.id) params.set("userId", user.id);
       const qs = params.toString() ? `?${params.toString()}` : "";
       const res = await fetch(`/api/booking/status${qs}`, { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setLoadError("Your session expired or you don't have access. Sign in again.");
+        } else {
+          setLoadError("Could not load booking details. Please retry.");
+        }
+        return;
+      }
       const data = await res.json();
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
+        setLoadError(null);
       } else if (!propBooking) {
         setActiveBooking(null);
       }
-    } catch (err) {
-      console.warn("Failed to load active booking status:", err);
+    } catch (err: any) {
+      setLoadError("Could not load booking details. Please retry.");
     } finally {
       setLoading(false);
     }
@@ -270,6 +283,42 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
         <Clock className="h-8 w-8 text-[#C1662F] animate-spin mx-auto mb-3" />
         <h3 className="font-temple text-lg font-bold text-[#7B2D26]">Loading Booking Details...</h3>
         <p className="text-xs text-[#6E5545] mt-1">Checking live status with sanctum server.</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    const isAuthError = loadError.includes("session expired") || loadError.includes("don't have access");
+    return (
+      <div className="rounded-3xl border border-red-200 bg-[#FFFDF9] p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 border border-red-200">
+          <AlertCircle className="h-8 w-8 text-red-600" />
+        </div>
+        <h3 className="font-temple text-xl font-bold text-red-800">
+          {isAuthError ? "Session Expired" : "Could Not Load Booking Details"}
+        </h3>
+        <p className="text-xs sm:text-sm text-[#6E5545] mt-2 max-w-md mx-auto leading-relaxed">
+          {loadError}
+        </p>
+
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {isAuthError ? (
+            <Link
+              href="/login?redirect_url=/account/consult"
+              className="w-full sm:w-auto rounded-xl bg-[#7B2D26] px-6 py-3 text-xs font-bold text-white hover:bg-[#64221C] transition-all shadow-md text-center"
+            >
+              Sign In Again
+            </Link>
+          ) : (
+            <button
+              onClick={fetchActiveBooking}
+              className="w-full sm:w-auto rounded-xl bg-[#7B2D26] px-6 py-3 text-xs font-bold text-white hover:bg-[#64221C] transition-all shadow-md text-center flex items-center justify-center gap-1.5"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Retry</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }

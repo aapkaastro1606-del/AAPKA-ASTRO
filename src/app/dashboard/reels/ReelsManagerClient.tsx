@@ -38,12 +38,34 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
   const [categoryInput, setCategoryInput] = useState<"Horoscope" | "Vastu" | "Gemstone" | "Remedy">("Horoscope");
   const [pinInput, setPinInput] = useState(true);
 
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const fetchReels = async () => {
+    try {
+      const res = await fetch("/api/dashboard/reels");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.reels)) {
+          setReels(data.reels);
+          setLoadError(null);
+          return;
+        }
+      }
+      setReels([...ReelsStore.getAllReels()]);
+    } catch {
+      setReels([...ReelsStore.getAllReels()]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshReels = () => {
-    setReels([...ReelsStore.getAllReels()]);
+    fetchReels();
   };
 
   useEffect(() => {
-    refreshReels();
+    fetchReels();
 
     const handleUpdate = () => refreshReels();
     window.addEventListener("aapka_reels_updated", handleUpdate);
@@ -58,13 +80,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     ReelsStore.togglePin(id);
     refreshReels();
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "togglePin", reelId: id }),
       });
-    } catch {
-      // offline fallback handled by store
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to update pin status on server.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to update pin status on server.");
+      refreshReels();
     }
   };
 
@@ -76,13 +104,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     ReelsStore.toggleHide(id);
     refreshReels();
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "toggleHide", reelId: id }),
       });
-    } catch {
-      // offline fallback handled by store
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to update visibility on server.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to update visibility on server.");
+      refreshReels();
     }
   };
 
@@ -94,13 +128,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     ReelsStore.reorderReel(id, direction);
     refreshReels();
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reorder", reelId: id, direction }),
       });
-    } catch {
-      // offline fallback handled by store
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to reorder reels on server.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to reorder reels on server.");
+      refreshReels();
     }
   };
 
@@ -115,13 +155,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     ReelsStore.removeReel(id);
     refreshReels();
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "removeReel", reelId: id }),
       });
-    } catch {
-      // offline fallback handled by store
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to remove reel from server.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to remove reel from server.");
+      refreshReels();
     }
   };
 
@@ -148,13 +194,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     refreshReels();
 
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "addReel", reelData }),
       });
-    } catch {
-      // offline fallback handled by store
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to add reel to server database.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to add reel to server database.");
+      refreshReels();
     }
 
     setUrlInput("");
@@ -168,13 +220,19 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
     ReelsStore.resetToDefaults();
     refreshReels();
     try {
-      await fetch("/api/dashboard/reels", {
+      const res = await fetch("/api/dashboard/reels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reset" }),
       });
-    } catch {
-      // fallback
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to reset reels on server.");
+        refreshReels();
+      }
+    } catch (e: any) {
+      alert("Network error: Failed to reset reels on server.");
+      refreshReels();
     }
   };
 

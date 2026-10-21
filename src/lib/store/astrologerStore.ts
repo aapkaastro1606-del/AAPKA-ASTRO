@@ -39,8 +39,8 @@ export interface ConfirmedBookingItem {
   format: string;
   concern: string;
   amountPaid: number;
-  paymentStatus: "PAID" | "AWAITING_VERIFICATION";
-  bookingState: "PENDING_PAYMENT" | "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED";
+  paymentStatus: "PAID" | "AWAITING_VERIFICATION" | "CONFIRMED" | "PENDING_PAYMENT";
+  bookingState: "PENDING_PAYMENT" | "CONFIRMED" | "SCHEDULED" | "AWAITING_SESSION" | "COMPLETED";
   bookedAt: string;
   preferredSlot?: string;
   birthDetails?: {
@@ -318,7 +318,7 @@ export class AstrologerStateStore {
     return item;
   }
 
-  static updateBookingState(id: string, state: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED"): void {
+  static updateBookingState(id: string, state: "CONFIRMED" | "SCHEDULED" | "AWAITING_SESSION" | "COMPLETED"): void {
     const list = this.getConfirmedBookings().map((b) =>
       b.id === id || b.bookingId === id ? { ...b, bookingState: state } : b
     );

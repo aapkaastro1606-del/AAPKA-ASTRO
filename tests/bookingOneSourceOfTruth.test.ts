@@ -21,11 +21,20 @@ describe("BOOKINGS: ONE SOURCE OF TRUTH", () => {
     await prisma.session.deleteMany({
       where: { userEmail: testSeekerEmail },
     });
-    await prisma.user.deleteMany({
+    const staleUsers = await prisma.user.findMany({
       where: {
         OR: [{ email: testSeekerEmail }, { phone: "+919876543210" }],
       },
+      select: { id: true },
     });
+    if (staleUsers.length > 0) {
+      await prisma.session.deleteMany({
+        where: { clientId: { in: staleUsers.map((u) => u.id) } },
+      });
+      await prisma.user.deleteMany({
+        where: { id: { in: staleUsers.map((u) => u.id) } },
+      });
+    }
 
     // Ensure test user exists in PostgreSQL
     createdUser = await prisma.user.create({

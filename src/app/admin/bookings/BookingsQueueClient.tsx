@@ -154,12 +154,16 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/payment-settings", { headers });
+      if (!res.ok) {
+        setFeedback({ type: "error", text: "Could not load payment routing settings. Retry." });
+        return;
+      }
       const data = await res.json();
       if (data.success && data.settings) {
         setPaymentSettings(data.settings);
       }
-    } catch (e) {
-      console.warn("Failed to fetch payment settings:", e);
+    } catch (e: any) {
+      setFeedback({ type: "error", text: "Could not load payment routing settings. Retry." });
     }
   };
 

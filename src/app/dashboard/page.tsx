@@ -47,7 +47,7 @@ export default function AstrologerDashboardPage() {
   const [confirmedBookings, setConfirmedBookings] = useState<ConfirmedBookingItem[]>(() =>
     AstrologerStateStore.getConfirmedBookings()
   );
-  const [bookingFilter, setBookingFilter] = useState<"ALL" | "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED">("ALL");
+  const [bookingFilter, setBookingFilter] = useState<"ALL" | "CONFIRMED" | "SCHEDULED" | "COMPLETED">("ALL");
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [runningCron, setRunningCron] = useState(false);
   const [cronReport, setCronReport] = useState<any>(null);
@@ -90,7 +90,7 @@ export default function AstrologerDashboardPage() {
     setStatus(newStatus);
   };
 
-  const handleUpdateBookingState = (id: string, newState: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED") => {
+  const handleUpdateBookingState = (id: string, newState: "CONFIRMED" | "SCHEDULED" | "COMPLETED") => {
     AstrologerStateStore.updateBookingState(id, newState);
     setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
   };
@@ -113,7 +113,7 @@ export default function AstrologerDashboardPage() {
       format: "WhatsApp Call / Google Meet",
       concern: "Career progression, foreign settlement yog, and Saturn Sade Sati remedies",
       amountPaid: 1051,
-      paymentStatus: "PAID",
+      paymentStatus: "CONFIRMED",
       bookingState: "CONFIRMED",
       bookedAt: new Date().toISOString(),
       preferredSlot: "Today • Immediate Next Window",
@@ -632,13 +632,13 @@ export default function AstrologerDashboardPage() {
                             Update State:
                           </span>
                           <div className="flex items-center justify-end gap-1.5">
-                            {item.bookingState !== "AWAITING_SESSION" && item.bookingState !== "COMPLETED" && (
+                            {item.bookingState !== "SCHEDULED" && item.bookingState !== "COMPLETED" && (
                               <button
                                 type="button"
-                                onClick={() => handleUpdateBookingState(item.id, "AWAITING_SESSION")}
+                                onClick={() => handleUpdateBookingState(item.id, "SCHEDULED")}
                                 className="rounded-lg bg-[#E8A33D]/20 text-[#C1662F] hover:bg-[#E8A33D]/30 border border-[#E8A33D]/40 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
                               >
-                                &rarr; Awaiting Session
+                                &rarr; Scheduled
                               </button>
                             )}
 

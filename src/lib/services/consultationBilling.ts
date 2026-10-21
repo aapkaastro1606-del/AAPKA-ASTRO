@@ -136,7 +136,7 @@ export interface ConsultationBooking {
   discountApplied: number;
   amountPaid: number;
   currency: string;
-  status: "PENDING_PAYMENT" | "CONFIRMED" | "IN_SESSION" | "COMPLETED" | "CANCELLED";
+  status: "PENDING_PAYMENT" | "PAYMENT_CLAIMED" | "CONFIRMED" | "SCHEDULED" | "COMPLETED" | "REJECTED" | "CANCELLED" | "EXPIRED";
   paymentId?: string;
   orderId?: string;
   createdAt: string;
