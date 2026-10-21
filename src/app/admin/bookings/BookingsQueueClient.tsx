@@ -251,6 +251,36 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     }
   };
 
+  // Action: Owner Cancel
+  const handleOwnerCancel = async (booking: BookingItem) => {
+    const reason = prompt(`Cancel booking ${booking.bookingId}? Enter reason:`, "Cancelled by Owner");
+    if (reason === null) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          action: "cancel",
+          bookingId: booking.bookingId,
+          reason: reason.trim() || "Cancelled by Owner",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFeedback({ type: "success", text: `Booking ${booking.bookingId} cancelled.` });
+        fetchBookings();
+      } else {
+        setFeedback({ type: "error", text: data.message || "Failed to cancel booking." });
+      }
+    } catch (e: any) {
+      setFeedback({ type: "error", text: e.message || "Cancel request failed." });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Action: Complete
   const handleComplete = async (booking: BookingItem) => {
     if (!confirm(`Mark consultation ${booking.bookingId} as COMPLETED?`)) return;
@@ -496,12 +526,13 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
         <div className="flex flex-wrap items-center gap-2 border-b border-[#E8D8C3] pb-3">
           {[
             { id: "ALL", label: "All Bookings" },
-            { id: "PAYMENT_CLAIMED", label: "Needs Verification (Claimed)", alert: true },
+            { id: "PAYMENT_CLAIMED", label: "Needs Verification", alert: true },
             { id: "PENDING_PAYMENT", label: "Awaiting Seeker Payment" },
             { id: "CONFIRMED", label: "Confirmed (Ready to Schedule)" },
             { id: "SCHEDULED", label: "Scheduled Sessions" },
             { id: "COMPLETED", label: "Completed" },
             { id: "REJECTED", label: "Rejected" },
+            { id: "CANCELLED", label: "Cancelled" },
           ].map((tab) => {
             const count = counts[tab.id] || 0;
             const isActive = activeTab === tab.id;
@@ -843,6 +874,17 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
                             <span>Mark Completed</span>
                           </button>
                         </>
+                      )}
+
+                      {/* OWNER CANCEL ACTION */}
+                      {booking.bookingStatus !== "COMPLETED" && booking.bookingStatus !== "CANCELLED" && (
+                        <button
+                          type="button"
+                          onClick={() => handleOwnerCancel(booking)}
+                          className="px-2.5 py-1.5 text-stone-500 hover:text-rose-700 text-xs font-semibold"
+                        >
+                          Cancel
+                        </button>
                       )}
 
                       {/* REFUND ACTION */}

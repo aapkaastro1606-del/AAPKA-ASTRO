@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ClientAccountStore } from "@/lib/store/clientAccountStore";
@@ -21,7 +21,20 @@ import {
 
 export default function AccountHistoryPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const consultations = ClientAccountStore.getConsultationHistory();
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/account/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.consultations) {
+          setConsultations(data.consultations);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (isUserLoaded && !user) {

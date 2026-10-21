@@ -56,6 +56,8 @@ export async function GET(req: NextRequest) {
       scheduledCount,
       completedCount,
       rejectedCount,
+      cancelledCount,
+      expiredCount,
     ] = await Promise.all([
       prisma.session.count(),
       prisma.session.count({ where: { bookingStatus: "PAYMENT_CLAIMED" } }),
@@ -64,6 +66,8 @@ export async function GET(req: NextRequest) {
       prisma.session.count({ where: { bookingStatus: "SCHEDULED" } }),
       prisma.session.count({ where: { bookingStatus: "COMPLETED" } }),
       prisma.session.count({ where: { bookingStatus: "REJECTED" } }),
+      prisma.session.count({ where: { bookingStatus: "CANCELLED" } }),
+      prisma.session.count({ where: { bookingStatus: "EXPIRED" } }),
     ]);
 
     const bookings = await prisma.session.findMany({
@@ -84,6 +88,8 @@ export async function GET(req: NextRequest) {
         SCHEDULED: scheduledCount,
         COMPLETED: completedCount,
         REJECTED: rejectedCount,
+        CANCELLED: cancelledCount,
+        EXPIRED: expiredCount,
       },
       bookings: await Promise.all(
         bookings.map(async (b) => {
@@ -228,6 +234,19 @@ export async function POST(req: NextRequest) {
         const result = await BookingWorkflowService.rejectBooking({
           bookingId,
           reason,
+          actorEmail,
+          actorId,
+          ipAddress,
+          userAgent,
+        });
+        return NextResponse.json(result);
+      }
+
+      case "cancel": {
+        const result = await BookingWorkflowService.cancelBooking({
+          bookingId,
+          reason,
+          actorRole: "OWNER",
           actorEmail,
           actorId,
           ipAddress,

@@ -136,14 +136,9 @@ export default function ConsultPage() {
     const currentStatus = AstrologerStateStore.getStatus();
     const currentQueue = AstrologerStateStore.getQueue();
     const currentSession = AstrologerStateStore.getActiveSession();
-    const currentActiveBooking = ClientAccountStore.getActiveBooking();
-
     setStatus(currentStatus);
     setQueue(currentQueue);
     setActiveSession(currentSession);
-    if (currentActiveBooking && !confirmedBooking) {
-      setConfirmedBooking(currentActiveBooking);
-    }
 
     if (currentSession) {
       setMessages(AstrologerStateStore.getMessages(currentSession.id));
@@ -233,46 +228,8 @@ export default function ConsultPage() {
       const bookingRef = data.bookingId;
       const chargedAmount = data.amount;
 
-      // 2. Register local booking records for immediate optimistic UI
-      const booking = ConsultationBookingService.createBooking({
-        userId: user?.id || `user_${Date.now()}`,
-        clientName: userName,
-        phone: userPhone,
-        productId: selectedProduct,
-        format: consultFormat,
-        topic: topicText,
-        preferredSlot: "Direct WhatsApp / Google Meet Coordination",
-        dateOfBirth: isAstro ? birthDate : undefined,
-        timeOfBirth: isAstro ? birthTime : undefined,
-        placeOfBirth: isAstro ? birthPlace : undefined,
-        propertyType: !isAstro ? propertyType : undefined,
-        propertyLocation: !isAstro ? propertyCity : undefined,
-        isFirstTime: isAstro,
-      });
-
-      booking.bookingId = bookingRef;
-      booking.status = "PENDING_PAYMENT";
-      booking.orderId = bookingRef;
-
-      AstrologerStateStore.addConfirmedBooking({
-        id: `bk-${Date.now()}`,
-        bookingId: bookingRef,
-        userId: user?.id || `user_${Date.now()}`,
-        userName,
-        userPhone,
-        userEmail: userEmail || user?.primaryEmailAddress?.emailAddress || "",
-        productId: selectedProduct,
-        productName: data.serviceName,
-        format: consultFormat,
-        concern: topicText,
-        amountPaid: chargedAmount,
-        paymentStatus: "AWAITING_VERIFICATION",
-        bookingState: "PENDING_PAYMENT",
-        bookedAt: new Date().toISOString(),
-        preferredSlot: "Immediate Next Window",
-      });
-
-      ClientAccountStore.setActiveBooking(booking);
+      // Note: The server creates the booking as PENDING_PAYMENT.
+      // The browser never sets status or registers mock confirmed state in ClientAccountStore.
 
       setUpiBookingInfo({
         bookingId: bookingRef,
@@ -313,7 +270,7 @@ export default function ConsultPage() {
       AstrologerStateStore.endSession();
       setActiveSession(null);
       setSessionSeconds(0);
-      ClientAccountStore.setActiveBooking(null);
+      
       setConfirmedBooking(null);
     }
   };

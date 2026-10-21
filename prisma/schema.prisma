@@ -165,6 +165,9 @@ model WalletTransaction {
 
 // ------------------------------------------------------------------------------
 // 4. Session (client_id, astrologer_id, type: chat/voice/video, start_time, end_time, rate_per_min, total_cost, status)
+// NOTE: This table stores consultation bookings across all products (Astro, Vaastu, Kundli PDF).
+// Each record represents a consultation booking and its lifecycle (PENDING_PAYMENT -> PAYMENT_CLAIMED -> CONFIRMED -> SCHEDULED -> COMPLETED, plus REJECTED, CANCELLED, EXPIRED).
+// Do not rename this table in this pass; all booking APIs and foreign keys resolve to this model.
 // ------------------------------------------------------------------------------
 model Session {
   id                   String        @id @default(cuid())

@@ -21,9 +21,25 @@ import {
 
 export default function AccountKundliPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [savedKundlis, setSavedKundlis] = useState<SavedKundli[]>(() =>
-    ClientAccountStore.getSavedKundlis()
-  );
+  const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadKundlis = () => {
+    setLoading(true);
+    fetch("/api/account/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.kundlis) {
+          setSavedKundlis(data.kundlis);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadKundlis();
+  }, []);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -43,34 +59,47 @@ export default function AccountKundliPage() {
     nakshatra: "Magha",
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to remove this saved chart?")) {
-      ClientAccountStore.deleteSavedKundli(id);
-      setSavedKundlis(ClientAccountStore.getSavedKundlis());
+      await fetch(`/api/account/data?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      loadKundlis();
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.birthDate || !formData.birthTime || !formData.birthPlace) {
       alert("Please fill in all birth coordinates.");
       return;
     }
 
-    ClientAccountStore.addSavedKundli(formData);
-    setSavedKundlis(ClientAccountStore.getSavedKundlis());
-    setShowAddModal(false);
-    setFormData({
-      name: "",
-      relation: "Other",
-      birthDate: "",
-      birthTime: "",
-      birthPlace: "",
-      gender: "Male",
-      lagna: "Taurus (Vrishabha)",
-      rashi: "Moon Sign",
-      nakshatra: "Rohini",
-    });
+    try {
+      const res = await fetch("/api/account/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadKundlis();
+        setShowAddModal(false);
+        setFormData({
+          name: "",
+          relation: "Other" as SavedKundli["relation"],
+          birthDate: "",
+          birthTime: "",
+          birthPlace: "",
+          gender: "Male" as SavedKundli["gender"],
+          lagna: "Taurus (Vrishabha)",
+          rashi: "Moon Sign",
+          nakshatra: "Rohini",
+        });
+      } else {
+        alert(data.message || "Failed to save Kundli.");
+      }
+    } catch {
+      alert("Network error saving chart. Please try again.");
+    }
   };
 
   return (

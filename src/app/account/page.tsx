@@ -28,10 +28,10 @@ import {
 
 export default function ClientAccountDashboard() {
   const { user, isLoaded } = useUser();
-  const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
+  const [activeBooking, setActiveBooking] = useState<any>(null);
+  const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
+  const [consultations, setConsultations] = useState<any[]>([]);
   const profile = ClientAccountStore.getProfile();
-  const savedKundlis = ClientAccountStore.getSavedKundlis();
-  const consultations = ClientAccountStore.getConsultationHistory();
   const astrologerStatus = AstrologerStateStore.getStatus();
 
   const displayName =
@@ -54,24 +54,16 @@ export default function ClientAccountDashboard() {
 
   useEffect(() => {
     const sync = () => {
-      const email = user?.primaryEmailAddress?.emailAddress;
-      const params = new URLSearchParams();
-      if (email) params.set("userEmail", email);
-      if (user?.id) params.set("userId", user.id);
-      const qs = params.toString() ? `?${params.toString()}` : "";
-
-      fetch(`/api/booking/status${qs}`)
+      fetch("/api/account/data")
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.booking) {
-            setActiveBooking(data.booking);
-          } else {
-            setActiveBooking(ClientAccountStore.getActiveBooking());
+          if (data.success) {
+            setActiveBooking(data.activeBooking || null);
+            setSavedKundlis(data.kundlis || []);
+            setConsultations(data.consultations || []);
           }
         })
-        .catch(() => {
-          setActiveBooking(ClientAccountStore.getActiveBooking());
-        });
+        .catch(() => {});
     };
     sync();
     window.addEventListener("astro_state_changed", sync);
@@ -274,7 +266,7 @@ export default function ClientAccountDashboard() {
                       {(activeBooking.bookingStatus || activeBooking.status) === "SCHEDULED"
                         ? "SESSION SCHEDULED"
                         : (activeBooking.bookingStatus || activeBooking.status) === "PAYMENT_CLAIMED"
-                        ? "VERIFYING PAYMENT"
+                        ? "NEEDS VERIFICATION"
                         : (activeBooking.bookingStatus || activeBooking.status) === "PENDING_PAYMENT"
                         ? "AWAITING PAYMENT"
                         : (activeBooking.bookingStatus || activeBooking.status) === "COMPLETED"

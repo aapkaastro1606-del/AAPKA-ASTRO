@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, PlusCircle, FileText } from "lucide-react";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { ClientConsultationStatusView } from "@/components/consult/ClientConsultationStatusView";
 import ConsultPageComponent from "@/app/consult/page";
 
 export default function AccountConsultPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
+  const [activeBooking, setActiveBooking] = useState<any>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +19,7 @@ export default function AccountConsultPage() {
     }
   }, [isUserLoaded, user]);
 
-  const loadBooking = async () => {
+  const loadBooking = useCallback(async () => {
     try {
       const email = user?.primaryEmailAddress?.emailAddress;
       const params = new URLSearchParams();
@@ -33,24 +32,20 @@ export default function AccountConsultPage() {
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
       } else {
-        const local = ClientAccountStore.getActiveBooking();
-        if (local) setActiveBooking(local);
+        setActiveBooking(null);
       }
     } catch {
-      const local = ClientAccountStore.getActiveBooking();
-      if (local) setActiveBooking(local);
+      setActiveBooking(null);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadBooking();
   }, [user]);
 
   useEffect(() => {
     loadBooking();
+  }, [loadBooking]);
 
+  useEffect(() => {
     const sync = () => {
       loadBooking();
     };
@@ -58,7 +53,7 @@ export default function AccountConsultPage() {
     return () => {
       window.removeEventListener("aapka_booking_updated", sync);
     };
-  }, []);
+  }, [loadBooking]);
 
   return (
     <div className="bg-[#FBF3E7] min-h-screen py-8">
@@ -98,22 +93,14 @@ export default function AccountConsultPage() {
         {/* Content: Show Consultation Status View or New Booking Intake */}
         {showBookingForm || !activeBooking ? (
           <div>
-            {!activeBooking && !loading && (
-              <div className="mb-6">
-                <ClientConsultationStatusView onBookNew={() => setShowBookingForm(true)} />
-              </div>
-            )}
-            <div className="border-t border-[#E8D8C3]/60 pt-6">
-              <div className="text-center max-w-xl mx-auto mb-6">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26]">
-                  Schedule New Session
-                </span>
-                <h2 className="font-temple text-xl font-bold text-[#3B2A1E] mt-1">
-                  Book 1-on-1 Consultation with Acharya Niraj Kumar
-                </h2>
-              </div>
-              <ConsultPageComponent />
+            <div className="mb-6 rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
+              <p className="text-xs font-semibold text-[#7B2D26]">
+                {activeBooking
+                  ? "Booking an additional consultation slot. Your existing active consultation remains safely coordinated."
+                  : "Book your 1-on-1 consultation with Acharya Niraj Kumar."}
+              </p>
             </div>
+            <ConsultPageComponent />
           </div>
         ) : (
           <ClientConsultationStatusView
