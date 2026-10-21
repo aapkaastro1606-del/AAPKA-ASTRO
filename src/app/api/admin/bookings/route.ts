@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveRequestAuth } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { prisma } from "@/lib/db/prisma";
 import { BookingWorkflowService } from "@/lib/services/bookingWorkflowService";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = await resolveRequestAuth(req);
+    const auth = await getServerAuthUser();
 
     if (!auth.isAuthenticated || !isOwnerEmail(auth.email)) {
       return NextResponse.json(
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = await resolveRequestAuth(req);
+    const auth = await getServerAuthUser();
 
     if (!auth.isAuthenticated || !isOwnerEmail(auth.email)) {
       return NextResponse.json(

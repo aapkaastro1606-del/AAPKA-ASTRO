@@ -14,6 +14,7 @@ import {
   POST as staffPost,
   DELETE as staffDelete,
 } from "../src/app/api/admin/staff/route";
+import { __setTestAuthUser } from "../src/lib/auth/serverAuth";
 
 describe("Site Owner Recognition Engine", () => {
   test("isOwnerEmail correctly identifies configured owner emails (case-insensitive)", () => {
@@ -226,12 +227,13 @@ describe("StaffPermissionService Lifecycle (CRUD & Memory Fallback)", () => {
 });
 
 describe("Staff Permissions Admin API (/api/admin/staff)", () => {
+  beforeEach(() => {
+    __setTestAuthUser(null);
+  });
+
   test("GET /api/admin/staff returns 403 Forbidden for non-owner / client", async () => {
-    const req = new NextRequest("http://localhost:3000/api/admin/staff", {
-      headers: {
-        cookie: "aapka_astro_session=active; aapka_astro_role=CLIENT",
-      },
-    });
+    __setTestAuthUser({ isAuthenticated: true, isOwner: false, role: "CLIENT", email: "client@test.com" });
+    const req = new NextRequest("http://localhost:3000/api/admin/staff");
 
     const res = await staffGet(req);
     assert.strictEqual(res.status, 403);
@@ -241,17 +243,8 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   });
 
   test("GET /api/admin/staff returns 200 OK for Owner", async () => {
-    const mockOwnerUser = {
-      id: "usr_owner_001",
-      email: "aapkaastro1606@gmail.com",
-      role: "ADMIN",
-    };
-
-    const req = new NextRequest("http://localhost:3000/api/admin/staff", {
-      headers: {
-        cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(mockOwnerUser))}`,
-      },
-    });
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
+    const req = new NextRequest("http://localhost:3000/api/admin/staff");
 
     const res = await staffGet(req);
     assert.strictEqual(res.status, 200);
@@ -262,11 +255,11 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   });
 
   test("POST /api/admin/staff returns 403 for unauthorized caller", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: false, role: "CLIENT", email: "client@test.com" });
     const req = new NextRequest("http://localhost:3000/api/admin/staff", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: "aapka_astro_session=active; aapka_astro_role=CLIENT",
       },
       body: JSON.stringify({ email: "temp@aapkaastro.com", sections: ["blog"] }),
     });
@@ -276,6 +269,7 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   });
 
   test("POST /api/admin/staff allows Owner to assign sections", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const mockOwnerUser = {
       id: "usr_owner_001",
       email: "aapkaastro1606@gmail.com",
@@ -301,6 +295,7 @@ describe("Staff Permissions Admin API (/api/admin/staff)", () => {
   });
 
   test("DELETE /api/admin/staff allows Owner to revoke permissions", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const mockOwnerUser = {
       id: "usr_owner_001",
       email: "aapkaastro1606@gmail.com",

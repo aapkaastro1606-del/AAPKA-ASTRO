@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PresenceService } from "@/lib/redis/presence";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     // Server-Side RBAC Enforcement: Only Astrologer or Admin can mutate status
-    const authState = getAuthFromRequest(req);
+    const authState = await getServerAuthUser();
     if (!authState.isAuthenticated || !authState.isAstrologer) {
       return NextResponse.json(
         {

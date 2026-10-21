@@ -108,15 +108,8 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
-  const getAuthHeaders = async (): Promise<Record<string, string>> => {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (session) {
-      try {
-        const token = await session.getToken();
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-      } catch {}
-    }
-    return headers;
+  const getAuthHeaders = (): Record<string, string> => {
+    return { "Content-Type": "application/json" };
   };
 
   const fetchBookings = async () => {

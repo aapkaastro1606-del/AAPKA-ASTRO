@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { PLACEHOLDER_TESTIMONIALS } from "@/config/placeholderContent";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +60,7 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = getAuthFromRequest(req);
+    const auth = await getServerAuthUser();
     const body = await req.json();
     const { clientName, service, rating, comment } = body;
 

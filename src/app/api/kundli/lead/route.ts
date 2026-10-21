@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { KundliLeadService } from "@/lib/services/kundliLeadService";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { kundliLeadRateLimiter } from "@/lib/security/rateLimiter";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
-    const auth = getAuthFromRequest(req);
+    const auth = await getServerAuthUser();
     const userAgent = req.headers.get("user-agent") || null;
 
     const result = await KundliLeadService.captureLead({

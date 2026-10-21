@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { isClerkConfigured } from "./clerkConfig";
 import { UserRole, isAstrologerRole, isAdminRole } from "./roles";
@@ -12,12 +11,12 @@ import {
   AccessLevel,
 } from "./staffPermissions";
 import { syncClerkUserToDatabase } from "./syncUser";
-import { getAuthFromRequest } from "./requestAuth";
 import { prisma } from "@/lib/db/prisma";
 
 export interface ServerAuthResult {
   isAuthenticated: boolean;
-  userId: string | null;
+  userId: string | null;     // Database User ID (cuid)
+  clerkId: string | null;    // Clerk User ID (user_...)
   role: UserRole | null;
   isAstrologer: boolean;
   isAdmin: boolean;
@@ -27,9 +26,10 @@ export interface ServerAuthResult {
   grants: StaffGrant[];
 }
 
-const UNAUTHENTICATED_RESULT: ServerAuthResult = {
+export const UNAUTHENTICATED_RESULT: ServerAuthResult = {
   isAuthenticated: false,
   userId: null,
+  clerkId: null,
   role: null,
   isAstrologer: false,
   isAdmin: false,
@@ -38,6 +38,45 @@ const UNAUTHENTICATED_RESULT: ServerAuthResult = {
   permissions: [],
   grants: [],
 };
+
+function isTestEnvironment(): boolean {
+  return (
+    process.env.NODE_ENV === "test" ||
+    process.env.IS_STAGING_ENVIRONMENT === "true" ||
+    process.env.npm_lifecycle_event === "test" ||
+    Boolean(process.env.VITEST) ||
+    process.argv.some((arg) => arg.includes("test"))
+  );
+}
+
+// Test harness override strictly scoped to test environments
+let testAuthOverride: ServerAuthResult | null = null;
+
+export function __setTestAuthUser(user: Partial<ServerAuthResult> | null) {
+  if (!isTestEnvironment()) {
+    throw new Error("__setTestAuthUser can only be used in test environments");
+  }
+  if (!user) {
+    testAuthOverride = null;
+    return;
+  }
+  testAuthOverride = {
+    isAuthenticated: user.isAuthenticated ?? true,
+    userId: user.userId ?? "test_db_user_id",
+    clerkId: user.clerkId ?? "test_clerk_id",
+    role: user.role ?? "CLIENT",
+    isAstrologer: user.isAstrologer ?? false,
+    isAdmin: user.isAdmin ?? false,
+    isOwner: user.isOwner ?? false,
+    email: user.email ?? null,
+    permissions: user.permissions ?? [],
+    grants: user.grants ?? [],
+  };
+}
+
+export function __getTestAuthUser(): ServerAuthResult | null {
+  return testAuthOverride;
+}
 
 export function getOwnerEmail(): string {
   return process.env.OWNER_EMAIL?.trim().toLowerCase() || "aapkaastro1606@gmail.com";
@@ -84,16 +123,16 @@ export function hasStaffSectionAccess(
 export { getAuthFromRequest, type RequestAuthResult } from "./requestAuth";
 
 /**
- * Extracts and verifies authentication and role on the server inside Server Components,
- * Layouts, and Server Actions.
- *
- * Cached per request using React cache() to avoid duplicate API and DB calls.
- * Strictly verifies the primary email via currentUser() or the Clerk Backend API
- * and confirms it is marked verified. Never relies on session-token claims or
- * browser-supplied emails.
+ * Internal resolver that checks Clerk's official server verification,
+ * reads the verified primary email from Clerk, finds or provisions the database user,
+ * computes roles strictly from OWNER_EMAIL, and returns the DB user id and Clerk id.
  */
-export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
-  // If Clerk is configured with valid production/test keys, inspect Clerk session
+async function resolveServerAuthUser(): Promise<ServerAuthResult> {
+  // Test override check for test runner
+  if (isTestEnvironment() && testAuthOverride !== null) {
+    return testAuthOverride;
+  }
+
   if (isClerkConfigured()) {
     try {
       const { auth, currentUser, clerkClient } = await import("@clerk/nextjs/server");
@@ -103,8 +142,7 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
         return UNAUTHENTICATED_RESULT;
       }
 
-      // DO NOT rely on session-token claims (the default token has no email)
-      // DO NOT trust any email supplied by the browser
+      // DO NOT rely on unverified claims
       // Read verified primary email via currentUser() or the Clerk Backend API
       let verifiedEmail: string | null = null;
       let fullName: string | undefined;
@@ -155,9 +193,7 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
         } catch {}
       }
 
-      // 1. Just-in-time sync on first authenticated server request:
-      // Awaited synchronously so sign-in creates or updates the row and wallet in Neon
-      // even if the webhook is missing, delayed, or failed.
+      // 1. Just-in-time sync on authenticated server request:
       let dbUser: any = null;
       if (session.userId) {
         try {
@@ -169,10 +205,18 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
         } catch (syncErr: any) {
           console.warn("Just-in-time database sync warning:", syncErr?.message || syncErr);
         }
+
+        if (!dbUser && prisma?.user) {
+          try {
+            dbUser = await prisma.user.findFirst({
+              where: { clerkId: session.userId },
+            });
+          } catch {}
+        }
       }
 
-      // 2. Roles are computed, never trusted from the database:
-      // OWNER only when the verified email equals OWNER_EMAIL.
+      // 2. Roles are computed, never trusted from client or database:
+      // OWNER strictly when verified email equals OWNER_EMAIL.
       const isOwner = Boolean(verifiedEmail && isOwnerEmail(verifiedEmail));
       let role: UserRole = "CLIENT";
 
@@ -182,7 +226,6 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
           StaffPermissionService.ensureOwnerRoleInDatabase(verifiedEmail).catch(() => {});
         }
       } else {
-        // If not the Owner, inspect database role for anomalies
         const dbRole = dbUser?.role;
         if (dbRole === "OWNER") {
           console.warn(
@@ -201,6 +244,7 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
           role = "CLIENT";
         }
       }
+
       const grants = isOwner
         ? (STAFF_SECTIONS.map((s) => ({
             id: `owner_${s.id}`,
@@ -221,7 +265,8 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
 
       return {
         isAuthenticated: true,
-        userId: session.userId,
+        userId: dbUser?.id || null, // Database user id (cuid)
+        clerkId: session.userId,     // Clerk user id (user_...)
         role,
         isAstrologer,
         isAdmin,
@@ -231,201 +276,35 @@ export const getServerAuthUser = cache(async (): Promise<ServerAuthResult> => {
         grants,
       };
     } catch (err: any) {
-      console.warn("Clerk server auth check error, falling back to cookie auth:", err?.message || err);
-    }
-  }
-
-  // Fallback to cookie-based session verification (for tests / preview)
-  try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("aapka_astro_session")?.value;
-    const roleCookie = cookieStore.get("aapka_astro_role")?.value;
-    const mockUserCookie = cookieStore.get("aapka_astro_mock_user")?.value;
-    const emailCookie = cookieStore.get("aapka_astro_email")?.value;
-
-    let role: UserRole = "CLIENT";
-    let userId: string | null = null;
-    let email: string | null = emailCookie || null;
-    let isAuthenticated = false;
-    let mockGrants: StaffGrant[] | null = null;
-    let mockPermissions: StaffSection[] | null = null;
-
-    if (mockUserCookie) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(mockUserCookie));
-        if (parsed.role) {
-          role = String(parsed.role).toUpperCase() as UserRole;
-        }
-        if (parsed.id) {
-          userId = parsed.id;
-        }
-        if (parsed.email) {
-          email = parsed.email;
-        }
-        if (Array.isArray(parsed.grants)) {
-          mockGrants = parsed.grants;
-        }
-        if (Array.isArray(parsed.permissions)) {
-          mockPermissions = parsed.permissions;
-        }
-        isAuthenticated = true;
-      } catch {
-        // ignore
-      }
-    } else if (roleCookie) {
-      role = String(roleCookie).toUpperCase() as UserRole;
-      isAuthenticated = true;
-      userId = "mock_user";
-    } else if (sessionCookie === "active") {
-      isAuthenticated = true;
-      role = "CLIENT";
-      userId = "mock_user";
-    }
-
-    if (!isAuthenticated) {
+      console.warn("Clerk server auth check notice:", err?.message || err);
       return UNAUTHENTICATED_RESULT;
     }
-
-    const isOwner = isOwnerEmail(email);
-
-    // Roles are computed, never trusted: OWNER only when email matches OWNER_EMAIL
-    if (role === "OWNER" && !isOwner) {
-      console.warn(
-        `[SECURITY ANOMALY] Session claimed role OWNER for non-owner email "${email}". Demoted to CLIENT.`
-      );
-      role = "CLIENT";
-    }
-
-    if (isOwner) {
-      role = "OWNER";
-      if (email) {
-        StaffPermissionService.ensureOwnerRoleInDatabase(email).catch(() => {});
-      }
-    }
-
-    const grants = isOwner
-      ? (STAFF_SECTIONS.map((s) => ({
-          id: `owner_${s.id}`,
-          email: email || "",
-          section: s.id,
-          accessLevel: "MANAGE" as AccessLevel,
-          grantedAt: new Date().toISOString(),
-          revokedAt: null,
-        })) as StaffGrant[])
-      : mockGrants || (await StaffPermissionService.getGrantsForEmail(email || ""));
-
-    const permissions = isOwner
-      ? (STAFF_SECTIONS.map((s) => s.id) as StaffSection[])
-      : mockPermissions || (grants.length > 0 ? grants.map((g) => g.section) : await StaffPermissionService.getPermissionsForEmail(email || ""));
-
-    const isAstrologer = isAstrologerRole(role) || permissions.length > 0;
-    const isAdmin = isOwner || isAdminRole(role);
-
-    return {
-      isAuthenticated: true,
-      userId,
-      role,
-      isAstrologer,
-      isAdmin,
-      isOwner,
-      email,
-      permissions,
-      grants,
-    };
-  } catch (err: any) {
-    return UNAUTHENTICATED_RESULT;
   }
-});
+
+  return UNAUTHENTICATED_RESULT;
+}
+
+const cachedServerAuthUser = cache(resolveServerAuthUser);
+
+/**
+ * Extracts and verifies authentication and role on the server inside Server Components,
+ * Layouts, and Route Handlers.
+ *
+ * One server helper for every API route and server component.
+ * Uses official Clerk session verification, verified primary email,
+ * and Neon database sync.
+ */
+export async function getServerAuthUser(): Promise<ServerAuthResult> {
+  if (isTestEnvironment() && testAuthOverride !== null) {
+    return testAuthOverride;
+  }
+  return cachedServerAuthUser();
+}
 
 /**
  * Universal Request Auth Resolver for Route Handlers.
- * Combines serverAuth (Clerk session via cookies / JIT sync),
- * Authorization Bearer JWT header, and mock cookie fallbacks.
- * Ensures API route handlers never reject valid Clerk sessions.
+ * Delegates directly to getServerAuthUser().
  */
-export async function resolveRequestAuth(req: NextRequest): Promise<ServerAuthResult> {
-  // 1. Try serverAuth (Clerk server session) first
-  try {
-    const serverUser = await getServerAuthUser();
-    if (serverUser.isAuthenticated && (serverUser.isOwner || serverUser.userId)) {
-      return serverUser;
-    }
-  } catch {
-    // Continue to next resolvers
-  }
-
-  // 2. Try Bearer token if passed in Authorization header
-  const authHeader = req.headers.get("authorization") || "";
-  if (authHeader.startsWith("Bearer ")) {
-    const token = authHeader.slice(7).trim();
-    try {
-      const parts = token.split(".");
-      if (parts.length >= 2) {
-        const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
-        const claims = JSON.parse(payloadJson);
-        const tokenUserId = claims.sub || null;
-        let tokenEmail = claims.email || claims.primary_email || null;
-
-        if (tokenUserId && !tokenEmail) {
-          try {
-            const dbU = await prisma.user.findFirst({
-              where: { clerkId: tokenUserId },
-              select: { email: true },
-            });
-            if (dbU?.email) tokenEmail = dbU.email;
-          } catch {
-            // DB lookup ignore
-          }
-        }
-
-        if (tokenEmail || tokenUserId) {
-          const isOwner = isOwnerEmail(tokenEmail);
-          const role: UserRole = isOwner ? "OWNER" : "CLIENT";
-          const grants = isOwner
-            ? (STAFF_SECTIONS.map((s) => ({
-                id: `owner_${s.id}`,
-                email: tokenEmail || "",
-                section: s.id,
-                accessLevel: "MANAGE" as AccessLevel,
-                grantedAt: new Date().toISOString(),
-                revokedAt: null,
-              })) as StaffGrant[])
-            : await StaffPermissionService.getGrantsForEmail(tokenEmail || "");
-
-          const permissions = isOwner
-            ? (STAFF_SECTIONS.map((s) => s.id) as StaffSection[])
-            : grants.map((g) => g.section);
-
-          return {
-            isAuthenticated: true,
-            userId: tokenUserId,
-            role,
-            isAstrologer: isAstrologerRole(role) || permissions.length > 0,
-            isAdmin: isOwner || isAdminRole(role),
-            isOwner,
-            email: tokenEmail,
-            permissions,
-            grants,
-          };
-        }
-      }
-    } catch {
-      // Invalid Bearer format
-    }
-  }
-
-  // 3. Fallback to Edge/Cookie request auth
-  const cookieAuth = getAuthFromRequest(req);
-  return {
-    isAuthenticated: cookieAuth.isAuthenticated,
-    userId: cookieAuth.userId,
-    role: cookieAuth.role,
-    isAstrologer: cookieAuth.isAstrologer,
-    isAdmin: cookieAuth.isAdmin,
-    isOwner: cookieAuth.isOwner,
-    email: cookieAuth.email,
-    permissions: cookieAuth.permissions,
-    grants: cookieAuth.grants,
-  };
+export async function resolveRequestAuth(_req?: NextRequest): Promise<ServerAuthResult> {
+  return getServerAuthUser();
 }
-

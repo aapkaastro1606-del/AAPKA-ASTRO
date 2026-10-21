@@ -46,22 +46,7 @@ export default function DiagnosticsClient() {
       setRefreshing(true);
       setError(null);
 
-      // Pass Bearer token if signed in on client
-      let token: string | null = null;
-      if (session) {
-        try {
-          token = await session.getToken();
-        } catch {
-          // ignore token fetch error
-        }
-      }
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      const res = await fetch("/api/admin/diagnostics", { headers });
+      const res = await fetch("/api/admin/diagnostics");
       if (!res.ok) {
         if (res.status === 403) {
           throw new Error(

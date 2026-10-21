@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { DEFAULT_CONTENT_STUDIO } from "@/lib/services/contentStudioService";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req?: NextRequest) {
   try {
     const lang = (req?.nextUrl?.searchParams?.get("lang") === "hi" ? "hi" : "en") as "en" | "hi";
-    const auth = req ? getAuthFromRequest(req) : { isOwner: false };
+    const auth = await getServerAuthUser();
     const wantsDraft = req?.nextUrl?.searchParams?.get("previewDraft") === "true";
     const isOwnerDraftPreview = Boolean(auth.isOwner && wantsDraft);
 

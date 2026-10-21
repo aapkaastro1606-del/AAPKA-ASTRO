@@ -13,6 +13,7 @@ import {
   POST as teamPost,
   DELETE as teamDelete,
 } from "../src/app/api/admin/team/route";
+import { __setTestAuthUser } from "../src/lib/auth/serverAuth";
 
 describe("Team Access Management - Server-Side Owner-Only Route Access", () => {
   test("unauthenticated visitor requesting /admin/team is redirected to /login", () => {
@@ -220,6 +221,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   });
 
   test("GET /api/admin/team returns 200 OK with staff and audit logs for Owner", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerUser = {
       id: "usr_owner_001",
       email: "aapkaastro1606@gmail.com",
@@ -242,6 +244,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   });
 
   test("POST /api/admin/team allows Owner to invite a staff member with access level", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerUser = {
       id: "usr_owner_001",
       email: "aapkaastro1606@gmail.com",
@@ -269,6 +272,7 @@ describe("Team Access Management - API Endpoint Security (/api/admin/team)", () 
   });
 
   test("DELETE /api/admin/team allows Owner to revoke access", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerUser = {
       id: "usr_owner_001",
       email: "aapkaastro1606@gmail.com",

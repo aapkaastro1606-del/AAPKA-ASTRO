@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveRequestAuth } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import {
   StaffPermissionService,
   STAFF_SECTIONS,
@@ -16,7 +16,7 @@ import {
  * Strictly Owner-only. Rejects anyone else (including staff with MANAGE access to other sections).
  */
 export async function GET(req: NextRequest) {
-  const auth = await resolveRequestAuth(req);
+  const auth = await getServerAuthUser();
 
   // Strictly gate to platform Owner
   if (!auth.isAuthenticated || !auth.isOwner) {
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
  * Strictly Owner-only.
  */
 export async function POST(req: NextRequest) {
-  const auth = await resolveRequestAuth(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated || !auth.isOwner) {
     return NextResponse.json(
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
  * Strictly Owner-only. Sets revokedAt and revokedByUserId.
  */
 export async function DELETE(req: NextRequest) {
-  const auth = await resolveRequestAuth(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated || !auth.isOwner) {
     return NextResponse.json(

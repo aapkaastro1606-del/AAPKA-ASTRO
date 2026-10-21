@@ -80,4 +80,8 @@ export const ClerkWebhookTracker = {
     }
     return inMemoryLastWebhook ? { ...inMemoryLastWebhook } : null;
   },
+
+  async getLastEvent(): Promise<WebhookEventRecord | null> {
+    return this.getLastWebhook();
+  },
 };
