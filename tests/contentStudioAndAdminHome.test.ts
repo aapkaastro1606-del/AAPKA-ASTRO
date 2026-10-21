@@ -173,7 +173,8 @@ describe("Content Studio & Admin Home Hub Test Suite", () => {
       const deletedData = await ContentStudioService.deleteFaq(addedFaq.id, testEmail);
       const deletedFaq = deletedData.faqs.find((f) => f.id === addedFaq.id);
       assert.equal(deletedFaq, undefined, "FAQ must be removed after deletion");
-      assert.equal(deletedData.faqs.length, initialCount);
+      assert.ok(!deletedData.faqs.some((f) => f.id === addedFaq.id), "Deleted FAQ ID must not be present");
+      assert.equal(deletedData.faqs.length, addedData.faqs.length - 1);
     });
   });
 
