@@ -169,6 +169,8 @@ describe("BOOKINGS: ONE SOURCE OF TRUTH", () => {
   });
 
   describe("2. Database Lifecycle: Create, Claim, Owner Queue, and Status Synchronization", () => {
+    const testLifeCycleUtr = "12" + String(Date.now()).slice(-10);
+
     it("creates the booking with a server-generated reference in PENDING_PAYMENT status", async () => {
       const result = await BookingWorkflowService.createBooking({
         userId: createdUser.id,
@@ -197,20 +199,20 @@ describe("BOOKINGS: ONE SOURCE OF TRUTH", () => {
     it("client claims payment with UTR; transitions to PAYMENT_CLAIMED", async () => {
       const claimResult = await BookingWorkflowService.claimPayment({
         bookingId: testBookingRef,
-        utr: "123456789012",
+        utr: testLifeCycleUtr,
         userId: createdUser.id,
       });
 
       assert.ok(claimResult.success);
       assert.equal(claimResult.bookingStatus, "PAYMENT_CLAIMED");
-      assert.equal(claimResult.utr, "123456789012");
+      assert.equal(claimResult.utr, testLifeCycleUtr);
 
       const session = await prisma.session.findUnique({
         where: { bookingId: testBookingRef },
       });
       assert.ok(session);
       assert.equal(session.bookingStatus, "PAYMENT_CLAIMED");
-      assert.equal(session.utr, "123456789012");
+      assert.equal(session.utr, testLifeCycleUtr);
     });
 
     it("booking appears in Owner queue under 'Needs Verification' with matching status", async () => {
