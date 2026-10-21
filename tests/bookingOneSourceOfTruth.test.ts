@@ -17,6 +17,16 @@ describe("BOOKINGS: ONE SOURCE OF TRUTH", () => {
   let testBookingRef: string;
 
   before(async () => {
+    // Clean up any stale records from previous runs
+    await prisma.session.deleteMany({
+      where: { userEmail: testSeekerEmail },
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [{ email: testSeekerEmail }, { phone: "+919876543210" }],
+      },
+    });
+
     // Ensure test user exists in PostgreSQL
     createdUser = await prisma.user.create({
       data: {
@@ -24,7 +34,7 @@ describe("BOOKINGS: ONE SOURCE OF TRUTH", () => {
         identifier: testSeekerEmail,
         name: "Test Seeker One Truth",
         email: testSeekerEmail,
-        phone: "+919876543210",
+        phone: `+9198${Date.now().toString().slice(-8)}`,
         role: "CLIENT",
       },
     });

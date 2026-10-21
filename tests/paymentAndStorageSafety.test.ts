@@ -240,7 +240,7 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
   });
 
   test("8. Duplicate UTR submission across bookings is strictly blocked", async () => {
-    const testUtr = `UTR-UNIQUE-${Date.now()}`;
+    const testUtr = "6289" + String(Date.now()).slice(-8);
     const userA = `user-a-${Date.now()}`;
     const userB = `user-b-${Date.now()}`;
 

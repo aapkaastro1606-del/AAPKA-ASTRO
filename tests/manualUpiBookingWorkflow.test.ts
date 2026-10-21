@@ -11,8 +11,8 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   let secondAstroBookingId: string = "";
   let vaastuBookingId: string = "";
   let kundliPdfBookingId: string = "";
-  const mockUtr1 = `UTR${Date.now()}111`;
-  const mockUtr2 = `UTR${Date.now()}222`;
+  const mockUtr1 = "4289" + String(Date.now()).slice(-8);
+  const mockUtr2 = "5289" + String(Date.now() + 500).slice(-8);
 
   before(async () => {
     // Ensure clean state for test user if exists

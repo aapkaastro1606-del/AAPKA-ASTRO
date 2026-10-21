@@ -17,6 +17,7 @@ import {
   RotateCcw,
   QrCode,
   ArrowRight,
+  Edit3,
 } from "lucide-react";
 import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
@@ -83,6 +84,48 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   const [claimUtr, setClaimUtr] = useState<string>("");
   const [claiming, setClaiming] = useState<boolean>(false);
   const [cancelling, setCancelling] = useState<boolean>(false);
+  const [isEditingUtr, setIsEditingUtr] = useState<boolean>(false);
+  const [utrInput, setUtrInput] = useState<string>("");
+  const [utrError, setUtrError] = useState<string | null>(null);
+  const [utrSuccess, setUtrSuccess] = useState<string | null>(null);
+  const [isSavingUtr, setIsSavingUtr] = useState<boolean>(false);
+
+  const handleSavePaymentReference = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUtrError(null);
+    setUtrSuccess(null);
+    const trimmed = utrInput.trim();
+
+    if (!/^\d{12}$/.test(trimmed)) {
+      setUtrError("UTR must be exactly 12 numeric digits.");
+      return;
+    }
+
+    setIsSavingUtr(true);
+    try {
+      const res = await fetch("/api/booking/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: (booking?.bookingId || booking?.id) as string,
+          utr: trimmed,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUtrSuccess(`Payment reference updated to ${trimmed}. The sanctum desk has been notified.`);
+        setIsEditingUtr(false);
+        fetchActiveBooking();
+        window.dispatchEvent(new CustomEvent("aapka_booking_updated"));
+      } else {
+        setUtrError(data.message || "Failed to update payment reference. Please check your reference.");
+      }
+    } catch {
+      setUtrError("Network error. Could not update reference. Please try again.");
+    } finally {
+      setIsSavingUtr(false);
+    }
+  };
 
   const fetchActiveBooking = async () => {
     try {
@@ -521,11 +564,90 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
               <p className="text-[#6E5545]">
                 As soon as our Owner verifies the credit in our bank account, your consultation time slot and Google Meet or WhatsApp call link will be published here and emailed to you.
               </p>
-              {booking.utr && (
-                <div className="pt-2 border-t border-[#E8D8C3] font-mono text-[11px] text-[#7D6B5D]">
-                  Submitted UTR / Ref: <strong className="text-[#3B2A1E]">{booking.utr}</strong>
+              <div className="pt-2 border-t border-[#E8D8C3] text-left space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="font-mono text-[11px] text-[#7D6B5D]">
+                    {booking.utr ? (
+                      <>
+                        Submitted UTR / Ref: <strong className="text-[#3B2A1E] font-bold">{booking.utr}</strong>
+                      </>
+                    ) : (
+                      <span className="italic text-[#8C7A6B]">No payment reference submitted yet</span>
+                    )}
+                  </span>
+                  {!isEditingUtr && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUtrInput(booking.utr || "");
+                        setUtrError(null);
+                        setUtrSuccess(null);
+                        setIsEditingUtr(true);
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7B2D26] hover:underline cursor-pointer"
+                    >
+                      <Edit3 className="h-3 w-3 text-[#C1662F]" />
+                      <span>Add or update payment reference</span>
+                    </button>
+                  )}
                 </div>
-              )}
+
+                {utrSuccess && (
+                  <p className="text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg p-2">
+                    {utrSuccess}
+                  </p>
+                )}
+
+                {isEditingUtr && (
+                  <form onSubmit={handleSavePaymentReference} className="pt-2 border-t border-[#E8D8C3]/50 space-y-2">
+                    <label className="block text-[11px] font-bold text-[#7B2D26]">
+                      Add or update payment reference (12-digit UTR):
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={12}
+                          value={utrInput}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            setUtrInput(val);
+                            if (utrError) setUtrError(null);
+                          }}
+                          placeholder="Enter 12-digit UPI reference"
+                          className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-[#D5C2B1] bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:ring-1 focus:ring-[#7B2D26]"
+                        />
+                        <span className="absolute right-2 top-2 text-[10px] text-[#A69383]">
+                          {utrInput.length}/12
+                        </span>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isSavingUtr || utrInput.length !== 12}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#7B2D26] hover:bg-[#66241E] text-white text-xs font-bold disabled:opacity-50 transition-all cursor-pointer"
+                      >
+                        {isSavingUtr ? "Saving..." : "Save Reference"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingUtr(false);
+                          setUtrError(null);
+                        }}
+                        className="px-3 py-2 rounded-lg bg-[#FAF5EE] border border-[#E8D8C3] text-xs font-bold text-[#6E5545] hover:bg-[#F3ECE2] cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {utrError && (
+                      <p className="text-[11px] font-medium text-red-600 bg-red-50 border border-red-200 rounded p-1.5">
+                        {utrError}
+                      </p>
+                    )}
+                  </form>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
