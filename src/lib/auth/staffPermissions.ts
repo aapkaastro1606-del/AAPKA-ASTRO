@@ -11,7 +11,8 @@ export type StaffSection =
   | "staff"
   | "bookings"
   | "leads"
-  | "content";
+  | "content"
+  | "knowledge";
 
 export type AccessLevel = "VIEW" | "MANAGE";
 
@@ -899,6 +900,10 @@ export class StaffPermissionService {
   /**
    * Revokes all active staff permissions for a given email.
    */
+  static async revokeAll(email: string, revokedByUserId?: string): Promise<boolean> {
+    return this.revokeStaff(email, revokedByUserId);
+  }
+
   static async revokeStaff(email: string, revokedByUserId?: string): Promise<boolean> {
     if (!email) return false;
     const normalized = email.trim().toLowerCase();

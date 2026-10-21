@@ -1,7 +1,9 @@
 import React, { Suspense } from "react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute, canAccessSection } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import { ContentStudioService } from "@/lib/services/contentStudioService";
 import ContentStudioClient from "./ContentStudioClient";
 
@@ -19,12 +21,22 @@ export default async function ContentStudioPage() {
     redirect("/login?redirect_url=/admin/content");
   }
 
-  const hasAccess = auth.isOwner || hasStaffSectionAccess(auth, "content", "VIEW");
-  if (!hasAccess) {
-    redirect("/admin");
+  // Canonical permission check: Owner or Staff with 'content' permission
+  const decision = canAccessRoute(auth, "/admin/content");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Content Studio"
+        message={decision.reason || "You don't have access to this section. Your account requires the 'content' permission."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
-  const canManage = auth.isOwner || hasStaffSectionAccess(auth, "content", "MANAGE");
+  const canManage = auth.isOwner || canAccessSection(auth, "content", "MANAGE");
   const content = await ContentStudioService.getContent();
 
   return (

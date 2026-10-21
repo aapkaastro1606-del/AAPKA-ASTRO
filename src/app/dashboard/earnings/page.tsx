@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute, canAccessSection } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import EarningsManagerClient from "./EarningsManagerClient";
 
 export const dynamic = "force-dynamic";
@@ -17,20 +19,25 @@ export default async function AstrologerEarningsPage() {
     redirect("/login?redirect_url=/dashboard/earnings");
   }
 
-  // Operator check: Owner, verified Astrologer, or staff with "earnings" permission
-  const isAuthorized =
-    auth.isOwner ||
-    auth.role === "ASTROLOGER" ||
-    hasStaffSectionAccess(auth, "earnings", "VIEW");
-
-  if (!isAuthorized) {
-    redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
+  // Canonical permission check
+  const decision = canAccessRoute(auth, "/dashboard/earnings");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Revenue & Earnings"
+        message={decision.reason || "You don't have access to this section. Your account requires the 'earnings' permission."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   const canManage =
     auth.isOwner ||
     auth.role === "ASTROLOGER" ||
-    hasStaffSectionAccess(auth, "earnings", "MANAGE");
+    canAccessSection(auth, "earnings", "MANAGE");
 
   return <EarningsManagerClient canManage={canManage} />;
 }

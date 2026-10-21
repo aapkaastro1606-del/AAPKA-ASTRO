@@ -6,16 +6,13 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/account/data
- * Fetches the authenticated user's database records:
- * - Profile and wallet balance
- * - Saved Janam Kundli charts from prisma.kundliRecord
- * - Consultation sessions and active booking from prisma.session
- * - Reviews submitted by the user from prisma.review
+ * Personal seeker account data endpoint (Area 4: My account, my bookings, my Kundli).
+ * Gated to authenticated user. Returns only their own data.
  */
 export async function GET(req: NextRequest) {
   const auth = await getServerAuthUser();
 
-  if (!auth.isAuthenticated || !auth.userId) {
+  if (!auth.isAuthenticated) {
     return NextResponse.json(
       { success: false, message: "Unauthorized: Please sign in." },
       { status: 401 }
@@ -23,23 +20,23 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const uid = auth.userId || "";
+
     // 1. User profile and wallet
-    const dbUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { id: auth.userId },
-          { clerkId: auth.userId },
-        ],
-      },
-      include: { wallet: true },
-    });
+    const dbUser = uid
+      ? await prisma.user.findFirst({
+          where: {
+            OR: [{ id: uid }, { clerkId: uid }],
+          },
+        })
+      : null;
 
     // 2. Saved Kundlis for user
     const savedKundlis = await prisma.kundliRecord.findMany({
       where: {
         OR: [
-          { userId: auth.userId },
-          ...(dbUser ? [{ userId: dbUser.id }] : []),
+          ...(uid ? [{ userId: uid }] : []),
+          ...(dbUser?.id ? [{ userId: dbUser.id }] : []),
           ...(dbUser?.phone ? [{ phone: dbUser.phone }] : []),
         ],
       },
@@ -50,68 +47,62 @@ export async function GET(req: NextRequest) {
     const sessions = await prisma.session.findMany({
       where: {
         OR: [
-          { clientId: auth.userId },
-          ...(dbUser ? [{ clientId: dbUser.id }] : []),
-          ...(dbUser?.phone ? [{ userPhone: dbUser.phone }] : []),
+          ...(uid ? [{ clientId: uid }] : []),
+          ...(dbUser?.id ? [{ clientId: dbUser.id }] : []),
+          ...(auth.email ? [{ userEmail: auth.email }] : []),
         ],
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // 4. Reviews submitted by user
-    const reviews = await prisma.review.findMany({
-      where: {
-        OR: [
-          { userId: auth.userId },
-          ...(dbUser ? [{ userId: dbUser.id }] : []),
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Identify active booking (any session in WAITING or CONFIRMED state)
+    // Active booking if any
     const activeSession = sessions.find(
-      (s) => s.paymentStatus === "AWAITING_VERIFICATION" || s.paymentStatus === "CONFIRMED" || s.status === "WAITING"
+      (s) => s.bookingStatus === "CONFIRMED" || s.bookingStatus === "PAYMENT_CLAIMED"
     );
+
+    const userPayload = {
+      id: dbUser?.id || auth.userId || "user_unknown",
+      email: dbUser?.email || auth.email || "",
+      name: dbUser?.name || (auth.email ? auth.email.split("@")[0] : "Seeker"),
+      phone: dbUser?.phone || null,
+      role: dbUser?.role || auth.role || "CLIENT",
+      walletBalance: dbUser?.walletBalance || 0,
+      createdAt: dbUser?.createdAt ? dbUser.createdAt.toISOString() : new Date().toISOString(),
+    };
 
     return NextResponse.json({
       success: true,
-      profile: {
-        id: dbUser?.id || auth.userId,
-        name: dbUser?.name || "Seeker",
-        email: dbUser?.email || auth.email || "",
-        phone: dbUser?.phone || "",
-        walletBalance: dbUser?.walletBalance || 0,
-        role: dbUser?.role || auth.role || "CLIENT",
-      },
-      savedKundlis: savedKundlis.map((k) => ({
-        id: k.id,
-        name: k.name,
-        relation: k.relation || "Self",
-        birthDate: k.dob.toISOString().split("T")[0],
-        birthTime: k.timeOfBirth,
-        birthPlace: k.placeOfBirth,
-        gender: k.gender,
-        createdAt: k.createdAt.toISOString().split("T")[0],
-      })),
+      user: userPayload,
+      profile: userPayload,
+      kundlis: savedKundlis.map((k) => {
+        const chartData = (typeof k.chartDataJson === "object" && k.chartDataJson !== null ? k.chartDataJson : {}) as Record<string, any>;
+        return {
+          id: k.id,
+          name: k.name || "Kundli",
+          dateOfBirth: k.dob ? k.dob.toISOString() : "",
+          dob: k.dob ? k.dob.toISOString() : "",
+          timeOfBirth: k.timeOfBirth,
+          placeOfBirth: k.placeOfBirth,
+          rashi: chartData.rashi || chartData.moon_sign || null,
+          nakshatra: chartData.nakshatra || null,
+          lagna: chartData.lagna || chartData.ascendant || null,
+          createdAt: k.createdAt.toISOString(),
+        };
+      }),
       consultations: sessions.map((s) => ({
         id: s.id,
         bookingId: s.bookingId || s.id,
-        service: s.productType === "vaastu" ? "Vaastu Shastra Consultation" : "Vedic Astrology Consultation",
+        productName: s.productType === "vaastu" ? "Vaastu Shastra Consultation" : "Vedic Astrology Consultation",
         format: s.format,
-        concern: s.concern,
-        totalCost: s.totalCost,
+        durationMinutes: 30,
+        amountPaid: s.totalCost,
+        status: s.bookingStatus,
         paymentStatus: s.paymentStatus,
-        status: s.status,
-        date: s.createdAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        preferredDay: s.preferredDay,
+        preferredTimeWindow: s.preferredTimeWindow,
+        scheduledSlot: s.scheduledSlot || null,
         meetingLink: s.meetingLink,
-      })),
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        rating: r.rating,
-        comment: r.comment,
-        service: r.service,
-        date: r.createdAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        createdAt: s.createdAt.toISOString(),
       })),
       activeBooking: activeSession
         ? {
@@ -128,9 +119,23 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Failed to load account data from database:", error);
-    return NextResponse.json(
-      { success: false, message: error.message || "Failed to load account data." },
-      { status: 500 }
-    );
+    // Graceful fallback when database is offline or degraded
+    const fallbackUser = {
+      id: auth.userId || "user_offline",
+      email: auth.email || "",
+      name: auth.email ? auth.email.split("@")[0] : "Seeker",
+      role: auth.role || "CLIENT",
+      walletBalance: 0,
+      createdAt: new Date().toISOString(),
+    };
+    return NextResponse.json({
+      success: true,
+      user: fallbackUser,
+      profile: fallbackUser,
+      kundlis: [],
+      consultations: [],
+      activeBooking: null,
+      databaseStatus: "degraded",
+    });
   }
 }

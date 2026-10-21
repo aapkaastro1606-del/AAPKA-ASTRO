@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute, canAccessSection } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import ClientsManagerClient from "./ClientsManagerClient";
 
 export const dynamic = "force-dynamic";
@@ -17,20 +19,25 @@ export default async function AstrologerClientsPage() {
     redirect("/login?redirect_url=/dashboard/clients");
   }
 
-  // Operator check: Owner, verified Astrologer, or staff with "clients" permission
-  const isAuthorized =
-    auth.isOwner ||
-    auth.role === "ASTROLOGER" ||
-    hasStaffSectionAccess(auth, "clients", "VIEW");
-
-  if (!isAuthorized) {
-    redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
+  // Canonical permission check
+  const decision = canAccessRoute(auth, "/dashboard/clients");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Client Intake Profiles"
+        message={decision.reason || "You don't have access to this section. Your account requires the 'clients' permission."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   const canManage =
     auth.isOwner ||
     auth.role === "ASTROLOGER" ||
-    hasStaffSectionAccess(auth, "clients", "MANAGE");
+    canAccessSection(auth, "clients", "MANAGE");
 
   return <ClientsManagerClient canManage={canManage} />;
 }

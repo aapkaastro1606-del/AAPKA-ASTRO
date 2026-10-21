@@ -134,10 +134,21 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Owner bookings queue error:", error);
-    return NextResponse.json(
-      { success: false, message: error.message || "Failed to load bookings queue." },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      counts: {
+        ALL: 0,
+        PAYMENT_CLAIMED: 0,
+        PENDING_PAYMENT: 0,
+        CONFIRMED: 0,
+        SCHEDULED: 0,
+        COMPLETED: 0,
+        REJECTED: 0,
+      },
+      bookings: [],
+      recentLogs: [],
+      databaseStatus: "degraded",
+    });
   }
 }
 

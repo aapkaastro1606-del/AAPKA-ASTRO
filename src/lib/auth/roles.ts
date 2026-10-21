@@ -57,10 +57,11 @@ export type RouteAccessResult =
  * Pure evaluation function for route-level RBAC.
  * Used identically in Middleware, Server Layouts, and Automated Test Suites.
  *
- * Rules:
- * - The Owner always passes every check automatically.
- * - Staff member only passes if they have an active grant for that exact section
- *   with sufficient accessLevel for the action/route.
+ * Enforces the One Permission Policy:
+ * 1. Bookings and payment verification: Owner Yes, Staff No, Client Own bookings only
+ * 2. Payment settings, pricing, leads, team, diagnostics, legal pages: Owner Yes, Staff No, Client No
+ * 3. Blog, reels, knowledge entries, site content: Owner Yes, Staff Yes if granted, Client No
+ * 4. My account, my bookings, my Kundli: Owner Yes, Staff Yes, Client Own data only
  */
 export function evaluateRouteAccess(
   pathname: string,
@@ -121,8 +122,26 @@ export function evaluateRouteAccess(
     return perms.includes(section);
   }
 
+  // Area 1: Bookings and payment verification queue (/admin/bookings) — Strictly Owner Only
+  if (pathname.startsWith("/admin/bookings")) {
+    if (!isAuthenticated) {
+      return {
+        allowed: false,
+        redirectUrl: `/login?redirect_url=${encodeURIComponent(pathname)}`,
+        reason: "Authentication required to access bookings queue",
+      };
+    }
+    if (!isOwner) {
+      return {
+        allowed: false,
+        redirectUrl: isAstrologerRole(role) || hasAnyStaffPerm ? "/dashboard" : "/account",
+        reason: "Bookings and payment verification is strictly restricted to the Platform Owner",
+      };
+    }
+    return { allowed: true };
+  }
+
   // Team & Staff access management console: strictly requires Owner
-  // Reject anyone else, including staff with MANAGE access to other sections
   if (pathname.startsWith("/admin/team") || pathname.startsWith("/admin/staff")) {
     if (!isAuthenticated) {
       return {
@@ -144,51 +163,74 @@ export function evaluateRouteAccess(
     return { allowed: true };
   }
 
-  // Pricing console: strictly requires Owner or 'pricing' staff permission (or legacy ADMIN)
-  if (pathname.startsWith("/admin/pricing")) {
+  // Area 2: Payment settings, pricing, leads, diagnostics, audit, analytics — Strictly Owner Only
+  // (allows legacy ADMIN role when unencumbered by scoped staff grants)
+  if (
+    pathname.startsWith("/admin/pricing") ||
+    pathname.startsWith("/admin/payment-settings") ||
+    pathname.startsWith("/admin/leads") ||
+    pathname.startsWith("/admin/diagnostics") ||
+    pathname.startsWith("/admin/audit") ||
+    pathname.startsWith("/admin/analytics")
+  ) {
     if (!isAuthenticated) {
       return {
         allowed: false,
         redirectUrl: `/login?redirect_url=${encodeURIComponent(pathname)}`,
-        reason: "Authentication required to access pricing configuration",
+        reason: "Authentication required to access owner management console",
       };
     }
-    if (isOwner || (isAdminRole(role) && !hasAnyStaffPerm) || hasSectionPerm("pricing", requiredLevel)) {
-      return { allowed: true };
+    if (!isOwner && !(isAdminRole(role) && !hasAnyStaffPerm)) {
+      return {
+        allowed: false,
+        redirectUrl:
+          isAstrologerRole(role) || hasAnyStaffPerm
+            ? "/dashboard"
+            : "/account",
+        reason: "Platform Owner privilege strictly required for this management console",
+      };
     }
-    return {
-      allowed: false,
-      redirectUrl:
-        isAstrologerRole(role) || hasAnyStaffPerm
-          ? "/dashboard"
-          : "/account",
-      reason: `Pricing permission required (${requiredLevel} required)`,
-    };
+    return { allowed: true };
   }
 
-  // Analytics console: strictly requires Owner or 'analytics' staff permission (or legacy ADMIN)
-  if (pathname.startsWith("/admin/analytics")) {
+  // Area 3: Content Studio, Media Library, Knowledge Base under /admin
+  if (pathname.startsWith("/admin/content") || pathname.startsWith("/admin/media")) {
     if (!isAuthenticated) {
       return {
         allowed: false,
         redirectUrl: `/login?redirect_url=${encodeURIComponent(pathname)}`,
-        reason: "Authentication required to access platform intelligence",
+        reason: "Authentication required to access content studio",
       };
     }
-    if (isOwner || (isAdminRole(role) && !hasAnyStaffPerm) || hasSectionPerm("analytics", requiredLevel)) {
-      return { allowed: true };
+    if (!isOwner && !hasSectionPerm("content", requiredLevel)) {
+      return {
+        allowed: false,
+        redirectUrl: isAstrologerRole(role) || hasAnyStaffPerm ? "/dashboard" : "/account",
+        reason: `Staff member lacks content permission (${requiredLevel} required)`,
+      };
     }
-    return {
-      allowed: false,
-      redirectUrl:
-        isAstrologerRole(role) || hasAnyStaffPerm
-          ? "/dashboard"
-          : "/account",
-      reason: `Analytics permission required (${requiredLevel} required)`,
-    };
+    return { allowed: true };
   }
 
-  // General Admin routes: requires Owner, legacy ADMIN, or active admin section permission
+  if (pathname.startsWith("/admin/knowledge")) {
+    if (!isAuthenticated) {
+      return {
+        allowed: false,
+        redirectUrl: `/login?redirect_url=${encodeURIComponent(pathname)}`,
+        reason: "Authentication required to access knowledge base",
+      };
+    }
+    if (!isOwner && !hasSectionPerm("knowledge", requiredLevel) && !hasSectionPerm("content", requiredLevel)) {
+      return {
+        allowed: false,
+        redirectUrl: isAstrologerRole(role) || hasAnyStaffPerm ? "/dashboard" : "/account",
+        reason: `Staff member lacks knowledge permission (${requiredLevel} required)`,
+      };
+    }
+    return { allowed: true };
+  }
+
+  // General Admin hub (/admin)
   if (isAdminRoute) {
     if (!isAuthenticated) {
       return {
@@ -200,8 +242,8 @@ export function evaluateRouteAccess(
     const hasAdminPerm =
       isOwner ||
       (isAdminRole(role) && !hasAnyStaffPerm) ||
-      hasSectionPerm("pricing", "VIEW") ||
-      hasSectionPerm("analytics", "VIEW");
+      hasSectionPerm("content", "VIEW") ||
+      hasSectionPerm("knowledge", "VIEW");
 
     if (!hasAdminPerm) {
       return {
@@ -236,9 +278,7 @@ export function evaluateRouteAccess(
     }
 
     // Section-level checks for every specific dashboard subroute
-    // Only the Owner always passes every check automatically.
-    // Non-owners (including staff/astrologer/admin) only pass if they have that exact section permission.
-    if (!isOwner && !isAdminRole(role)) {
+    if (!isOwner) {
       if (pathname.startsWith("/dashboard/blog") && !hasSectionPerm("blog", requiredLevel)) {
         return {
           allowed: false,
@@ -265,59 +305,6 @@ export function evaluateRouteAccess(
           allowed: false,
           redirectUrl: "/dashboard",
           reason: `Staff member lacks earnings permission (${requiredLevel} required)`,
-        };
-      }
-      if (
-        (pathname.startsWith("/dashboard/session") || pathname.startsWith("/astrologer")) &&
-        !hasSectionPerm("consultations", requiredLevel) &&
-        !isAstrologerRole(role)
-      ) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks consultation permission (${requiredLevel} required)`,
-        };
-      }
-    }
-
-    // Restricted staff member checks (even if role is elevated, specific section grant is required)
-    if (hasAnyStaffPerm && !isOwner) {
-      if (pathname.startsWith("/dashboard/blog") && !hasSectionPerm("blog", requiredLevel)) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks blog permission (${requiredLevel} required)`,
-        };
-      }
-      if (pathname.startsWith("/dashboard/reels") && !hasSectionPerm("reels", requiredLevel)) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks reels permission (${requiredLevel} required)`,
-        };
-      }
-      if (pathname.startsWith("/dashboard/clients") && !hasSectionPerm("clients", requiredLevel)) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks clients permission (${requiredLevel} required)`,
-        };
-      }
-      if (pathname.startsWith("/dashboard/earnings") && !hasSectionPerm("earnings", requiredLevel)) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks earnings permission (${requiredLevel} required)`,
-        };
-      }
-      if (
-        (pathname.startsWith("/dashboard/session") || pathname.startsWith("/astrologer")) &&
-        !hasSectionPerm("consultations", requiredLevel)
-      ) {
-        return {
-          allowed: false,
-          redirectUrl: "/dashboard",
-          reason: `Staff member lacks consultation permission (${requiredLevel} required)`,
         };
       }
     }

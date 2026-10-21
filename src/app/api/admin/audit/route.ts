@@ -68,9 +68,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("GET /api/admin/audit error:", err);
-    return NextResponse.json(
-      { success: false, message: "Failed to load audit logs", error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      logs: [],
+      databaseStatus: "degraded",
+      message: "Database unreachable, returned empty audit logs.",
+    });
   }
 }

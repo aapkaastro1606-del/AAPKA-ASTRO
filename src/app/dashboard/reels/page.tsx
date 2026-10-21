@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute, canAccessSection } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import ReelsManagerClient from "./ReelsManagerClient";
 
 export const dynamic = "force-dynamic";
@@ -7,9 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * /dashboard/reels
  * Server Component enforcing section-level RBAC for the Reels Curation Desk.
- * - Owner always passes automatically.
- * - Staff member requires active VIEW grant on "reels".
- * - Passing canManage={true|false} signals whether curation actions (pin/hide/sync) are authorized.
+ * Area 3: Blog, reels, knowledge entries, site content (Owner: Yes, Staff: Yes if granted, Client: No).
  */
 export default async function AstrologerReelsPage() {
   const auth = await getServerAuthUser();
@@ -18,12 +18,22 @@ export default async function AstrologerReelsPage() {
     redirect("/login?redirect_url=/dashboard/reels");
   }
 
-  // Server-side section-level check: requires VIEW on "reels"
-  if (!hasStaffSectionAccess(auth, "reels", "VIEW")) {
-    redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
+  // Canonical permission check: Owner or Staff with 'reels' permission
+  const decision = canAccessRoute(auth, "/dashboard/reels");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Instagram Reel Curation"
+        message={decision.reason || "You don't have access to this section. Your account requires the 'reels' permission."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
-  const canManage = hasStaffSectionAccess(auth, "reels", "MANAGE");
+  const canManage = auth.isOwner || canAccessSection(auth, "reels", "MANAGE");
 
   return <ReelsManagerClient canManage={canManage} />;
 }

@@ -161,7 +161,7 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
     }
   };
 
-  const availableSections = STAFF_SECTIONS.filter((s) => s.id !== "staff");
+  const availableSections = STAFF_SECTIONS.filter((s) => !s.ownerOnly);
 
   return (
     <div className="min-h-screen bg-[#FBF3E7] text-[#3B2A1E] py-8 px-4 sm:px-6 lg:px-8">

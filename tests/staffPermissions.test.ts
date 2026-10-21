@@ -145,7 +145,7 @@ describe("Route-Level Access Control for Scoped Staff", () => {
     assert.strictEqual(access.allowed, true);
   });
 
-  test("Employee with 'pricing' permission can access /admin/pricing", () => {
+  test("Employee with 'pricing' permission is blocked from /admin/pricing under One Permission Policy (Owner Only)", () => {
     const access = evaluateRouteAccess(
       "/admin/pricing",
       "CLIENT",
@@ -153,7 +153,7 @@ describe("Route-Level Access Control for Scoped Staff", () => {
       ["pricing"],
       "manager@aapkaastro.com"
     );
-    assert.strictEqual(access.allowed, true);
+    assert.strictEqual(access.allowed, false);
   });
 
   test("Employee with 'pricing' permission is blocked from /admin/staff", () => {
