@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import {
   ShieldCheck,
   UserPlus,
@@ -40,6 +41,7 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
   const [saving, setSaving] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   // Invitation / Grant Form state
   const [targetEmail, setTargetEmail] = useState("");
@@ -48,16 +50,34 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
 
   const fetchData = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/team");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setStaffList([]);
+        setAuditLogs([]);
+        setMsg({ type: "error", text: err.message || "Failed to load team data." });
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setStaffList(data.staff || []);
         setAuditLogs(data.auditLogs || []);
+        setFetchError(null);
       } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setStaffList([]);
+        setAuditLogs([]);
         setMsg({ type: "error", text: data.message || "Failed to load team data." });
       }
     } catch (e: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setStaffList([]);
+      setAuditLogs([]);
       setMsg({ type: "error", text: e.message || "Failed to connect to team management API." });
     } finally {
       setLoading(false);
@@ -370,16 +390,18 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
             </span>
           </div>
 
-          {loading ? (
-            <div className="p-8 text-center text-xs text-[#6E5545]">
-              <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-[#7B2D26]" />
-              Loading team permissions...
-            </div>
-          ) : staffList.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#6E5545] border border-dashed border-[#E8D8C3] rounded-xl">
-              No staff members have been granted access yet. Use the invitation form above to grant access to an employee.
-            </div>
-          ) : (
+          <DataStateView
+            loading={loading}
+            error={fetchError}
+            isEmpty={staffList.length === 0}
+            onRetry={fetchData}
+            loadingMessage="Loading team permissions..."
+            emptyView={
+              <div className="p-8 text-center text-xs text-[#6E5545] border border-dashed border-[#E8D8C3] rounded-xl">
+                No staff members have been granted access yet. Use the invitation form above to grant access to an employee.
+              </div>
+            }
+          >
             <div className="space-y-3">
               {staffList.map((member) => (
                 <div
@@ -475,7 +497,7 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
                 </div>
               ))}
             </div>
-          )}
+          </DataStateView>
         </div>
 
         {/* Section 3: Simple Audit List (who granted what, to whom, and when) */}
@@ -494,11 +516,18 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
             </div>
           </div>
 
-          {auditLogs.length === 0 ? (
-            <div className="p-6 text-center text-xs text-[#6E5545] border border-dashed border-[#E8D8C3] rounded-xl">
-              No grant or revocation logs recorded yet.
-            </div>
-          ) : (
+          <DataStateView
+            loading={loading}
+            error={fetchError}
+            isEmpty={auditLogs.length === 0}
+            onRetry={fetchData}
+            loadingMessage="Loading audit events..."
+            emptyView={
+              <div className="p-6 text-center text-xs text-[#6E5545] border border-dashed border-[#E8D8C3] rounded-xl">
+                No grant or revocation logs recorded yet.
+              </div>
+            }
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -575,7 +604,7 @@ export default function TeamManagementClient({ currentUserEmail }: Props) {
                 </tbody>
               </table>
             </div>
-          )}
+          </DataStateView>
         </div>
       </div>
     </div>

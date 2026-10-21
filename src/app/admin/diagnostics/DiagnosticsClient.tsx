@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import { useUser, useSession } from "@clerk/nextjs";
 import {
   Database,
@@ -32,6 +33,7 @@ export default function DiagnosticsClient() {
   const [data, setData] = useState<DiagnosticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const userEmail =
@@ -45,25 +47,29 @@ export default function DiagnosticsClient() {
     try {
       setRefreshing(true);
       setError(null);
+      setFetchError(null);
 
       const res = await fetch("/api/admin/diagnostics");
       if (!res.ok) {
-        if (res.status === 403) {
-          throw new Error(
-            `Access Forbidden: Only the platform Owner (${OWNER_EMAIL}) is authorized to access System Diagnostics.`
-          );
-        }
-        throw new Error(`Diagnostics probe failed with HTTP status ${res.status}`);
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setError(err.message || "Failed to load diagnostics.");
+        return;
       }
 
       const json = await res.json();
       if (json.success && json.diagnostics) {
         setData(json.diagnostics);
+        setFetchError(null);
       } else {
-        throw new Error(json.message || "Failed to retrieve diagnostics.");
+        const err = parseFetchError(res, json);
+        setFetchError(err);
+        setError(err.message || "Failed to retrieve diagnostics.");
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to load diagnostics.");
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setError("Could not load. Retry.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -219,6 +225,14 @@ export default function DiagnosticsClient() {
           </div>
         )}
 
+        <DataStateView
+          loading={loading}
+          error={fetchError}
+          isEmpty={!data}
+          onRetry={fetchDiagnostics}
+          loadingMessage="Probing live system diagnostics..."
+          emptyView={null}
+        >
         {data && (
           <div className="space-y-6">
             {/* Critical Status Alert if Clerk is in Test mode on a non-localhost host */}
@@ -697,6 +711,7 @@ export default function DiagnosticsClient() {
             </div>
           </div>
         )}
+        </DataStateView>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateTableRow, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import {
   ShieldCheck,
   UserPlus,
@@ -25,6 +26,7 @@ export default function StaffManagementClient() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   // Form state
   const [targetEmail, setTargetEmail] = useState("");
@@ -32,15 +34,30 @@ export default function StaffManagementClient() {
 
   const fetchStaff = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/staff");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setStaffList([]);
+        setMsg({ type: "error", text: err.message || "Failed to load staff list." });
+        return;
+      }
       const data = await res.json();
       if (data.success && data.staff) {
         setStaffList(data.staff);
+        setFetchError(null);
       } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setStaffList([]);
         setMsg({ type: "error", text: data.message || "Failed to load staff list." });
       }
     } catch (e: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setStaffList([]);
       setMsg({ type: "error", text: e.message || "Failed to connect to staff API." });
     } finally {
       setLoading(false);
@@ -361,7 +378,20 @@ export default function StaffManagementClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8D8C3]">
-                {staffList.map((member) => (
+                <DataStateTableRow
+                  colSpan={4}
+                  loading={loading}
+                  error={fetchError}
+                  isEmpty={staffList.length === 0}
+                  onRetry={fetchStaff}
+                  loadingMessage="Loading staff members..."
+                  emptyView={
+                    <td colSpan={4} className="py-12 text-center text-xs text-[#6E5545]">
+                      No staff members found.
+                    </td>
+                  }
+                >
+                  {staffList.map((member) => (
                   <tr key={member.email} className="hover:bg-[#FBF3E7]/50 transition-colors">
                     <td className="py-3.5 px-4 font-medium text-[#3B2A1E]">
                       <div className="flex items-center gap-2">
@@ -422,7 +452,8 @@ export default function StaffManagementClient() {
                       )}
                     </td>
                   </tr>
-                ))}
+                  ))}
+                </DataStateTableRow>
               </tbody>
             </table>
           </div>

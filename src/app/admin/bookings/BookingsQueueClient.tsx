@@ -29,6 +29,7 @@ import {
   Eye,
 } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 
 interface BookingItem {
   id: string;
@@ -107,6 +108,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     unpaidExpiryDays: 2,
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   const getAuthHeaders = (): Record<string, string> => {
     return { "Content-Type": "application/json" };
@@ -114,17 +116,34 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
 
   const fetchBookings = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`/api/admin/bookings?status=${activeTab}&search=${encodeURIComponent(search)}`, { headers });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setBookings([]);
+        setFeedback({ type: "error", text: err.message || "Failed to load bookings queue." });
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         setBookings(data.bookings || []);
         setCounts(data.counts || {});
+        setFetchError(null);
       } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setBookings([]);
         setFeedback({ type: "error", text: data.message || "Failed to load bookings queue." });
       }
     } catch (e: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setBookings([]);
       setFeedback({ type: "error", text: e.message || "Failed to reach bookings API." });
     } finally {
       setLoading(false);
@@ -537,20 +556,22 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
         </form>
 
         {/* Bookings Queue List */}
-        {loading ? (
-          <div className="p-12 text-center text-[#6E5545] text-xs">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[#7B2D26]" />
-            Loading verification queue from PostgreSQL database...
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="p-12 rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FFFDF9] text-center max-w-lg mx-auto">
-            <CheckCircle2 className="h-10 w-10 text-[#6B8E5A] mx-auto mb-2" />
-            <h3 className="font-temple text-base font-bold text-[#7B2D26]">Queue is Up to Date</h3>
-            <p className="text-xs text-[#6E5545] mt-1">
-              No bookings found matching filter <span className="font-bold font-mono">[{activeTab}]</span>.
-            </p>
-          </div>
-        ) : (
+        <DataStateView
+          loading={loading}
+          error={fetchError}
+          isEmpty={bookings.length === 0}
+          onRetry={fetchBookings}
+          loadingMessage="Loading verification queue from PostgreSQL database..."
+          emptyView={
+            <div className="p-12 rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FFFDF9] text-center max-w-lg mx-auto">
+              <CheckCircle2 className="h-10 w-10 text-[#6B8E5A] mx-auto mb-2" />
+              <h3 className="font-temple text-base font-bold text-[#7B2D26]">Queue is Up to Date</h3>
+              <p className="text-xs text-[#6E5545] mt-1">
+                No bookings found matching filter <span className="font-bold font-mono">[{activeTab}]</span>.
+              </p>
+            </div>
+          }
+        >
           <div className="space-y-4">
             {bookings.map((booking) => {
               const cleanPhone = (booking.userPhone || "").replace(/[^0-9]/g, "");
@@ -843,7 +864,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
               );
             })}
           </div>
-        )}
+        </DataStateView>
       </div>
 
       {/* MODAL 1: APPROVE PAYMENT */}

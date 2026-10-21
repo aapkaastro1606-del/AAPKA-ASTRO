@@ -40,6 +40,7 @@ import {
   FileText,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import { CharacterCount } from "@/components/content/CharacterCount";
 import { LanguageTabs } from "@/components/content/LanguageTabs";
 import { RevisionHistoryModal } from "@/components/content/RevisionHistoryModal";
@@ -88,6 +89,7 @@ export default function ContentStudioClient({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reloadError, setReloadError] = useState<DataStateError | null>(null);
 
   // Drag and drop sorting state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -178,14 +180,28 @@ export default function ContentStudioClient({
 
   // Reload studio data from backend
   const reloadData = async () => {
+    setReloadError(null);
     try {
       const res = await fetch("/api/admin/content");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setReloadError(err);
+        setErrorMessage(err.message || "Failed to load content.");
+        return;
+      }
       const json = await res.json();
       if (json.success && json.content) {
         setContent(json.content);
+        setReloadError(null);
+      } else {
+        const err = parseFetchError(res, json);
+        setReloadError(err);
+        setErrorMessage(json.message || "Failed to load content.");
       }
     } catch {
-      // Ignored
+      setReloadError({ status: 500, message: "Could not load. Retry." });
+      setErrorMessage("Could not load. Retry.");
     }
   };
 
@@ -594,6 +610,35 @@ export default function ContentStudioClient({
             <button onClick={() => setErrorMessage(null)} className="text-red-700 hover:text-red-900">
               <X className="w-4 h-4" />
             </button>
+          </div>
+        )}
+
+        {reloadError && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" data-testid="error-state">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <span>
+                {reloadError.status === 401 || reloadError.status === 403
+                  ? "Your session expired or you don't have access. Sign in again."
+                  : "Could not load. Retry."}
+              </span>
+            </div>
+            {reloadError.status === 401 || reloadError.status === 403 ? (
+              <a
+                href="/login?redirect_url=/admin/content"
+                className="px-3 py-1.5 rounded-lg bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#60231E]"
+              >
+                Sign in again
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={reloadData}
+                className="px-3 py-1.5 rounded-lg bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#60231E] cursor-pointer"
+              >
+                Retry
+              </button>
+            )}
           </div>
         )}
 

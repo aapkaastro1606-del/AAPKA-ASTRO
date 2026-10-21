@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import {
   BookOpen,
   HelpCircle,
@@ -55,6 +56,7 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   // Search & filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,35 +72,55 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
   const [formPublished, setFormPublished] = useState(true);
   const [convertingQuestionId, setConvertingQuestionId] = useState<string | null>(null);
 
-  const fetchEntries = async () => {
-    try {
-      const res = await fetch("/api/admin/knowledge");
-      const data = await res.json();
-      if (data.success) {
-        setEntries(data.entries || []);
-      }
-    } catch (err: any) {
-      console.error("Failed to load knowledge entries:", err);
-    }
-  };
-
-  const fetchUnanswered = async () => {
-    try {
-      const res = await fetch("/api/admin/knowledge/unanswered");
-      const data = await res.json();
-      if (data.success) {
-        setUnanswered(data.questions || []);
-      }
-    } catch (err: any) {
-      console.error("Failed to load unanswered questions:", err);
-    }
-  };
-
   const loadAll = async () => {
     setLoading(true);
-    await Promise.all([fetchEntries(), fetchUnanswered()]);
-    setLoading(false);
+    setFetchError(null);
+    try {
+      const [resEntries, resUnanswered] = await Promise.all([
+        fetch("/api/admin/knowledge"),
+        fetch("/api/admin/knowledge/unanswered"),
+      ]);
+
+      if (!resEntries.ok) {
+        const errData = await resEntries.json().catch(() => ({}));
+        const err = parseFetchError(resEntries, errData);
+        setFetchError(err);
+        setEntries([]);
+        return;
+      }
+      if (!resUnanswered.ok) {
+        const errData = await resUnanswered.json().catch(() => ({}));
+        const err = parseFetchError(resUnanswered, errData);
+        setFetchError(err);
+        return;
+      }
+
+      const dataEntries = await resEntries.json();
+      const dataUnanswered = await resUnanswered.json();
+
+      if (dataEntries.success) {
+        setEntries(dataEntries.entries || []);
+      } else {
+        const err = parseFetchError(resEntries, dataEntries);
+        setFetchError(err);
+        setEntries([]);
+        return;
+      }
+
+      if (dataUnanswered.success) {
+        setUnanswered(dataUnanswered.questions || []);
+      }
+      setFetchError(null);
+    } catch (err: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const fetchEntries = () => loadAll();
+  const fetchUnanswered = () => loadAll();
 
   useEffect(() => {
     loadAll();
@@ -597,18 +619,23 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
             </div>
 
             {/* Entries List */}
-            {loading ? (
-              <div className="p-8 text-center text-xs text-[#6E5545]">Loading knowledge base...</div>
-            ) : filteredEntries.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-white border border-[#E8D8C3] text-center space-y-2">
-                <p className="text-xs font-semibold text-[#6E5545]">
-                  No custom knowledge entries match your filter.
-                </p>
-                <p className="text-[11px] text-[#8C7464]">
-                  The AI Assistant currently uses verified static site files and live database pricing. You can add specialized Q&amp;A pairs here!
-                </p>
-              </div>
-            ) : (
+            <DataStateView
+              loading={loading}
+              error={fetchError}
+              isEmpty={filteredEntries.length === 0}
+              onRetry={loadAll}
+              loadingMessage="Loading knowledge base..."
+              emptyView={
+                <div className="p-8 rounded-2xl bg-white border border-[#E8D8C3] text-center space-y-2">
+                  <p className="text-xs font-semibold text-[#6E5545]">
+                    No custom knowledge entries match your filter.
+                  </p>
+                  <p className="text-[11px] text-[#8C7464]">
+                    The AI Assistant currently uses verified static site files and live database pricing. You can add specialized Q&amp;A pairs here!
+                  </p>
+                </div>
+              }
+            >
               <div className="space-y-3">
                 {filteredEntries.map((entry) => (
                   <div
@@ -664,7 +691,7 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
                   </div>
                 ))}
               </div>
-            )}
+            </DataStateView>
           </div>
         )}
 
@@ -690,19 +717,24 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
               </button>
             </div>
 
-            {loading ? (
-              <div className="p-8 text-center text-xs text-[#6E5545]">Loading logged queries...</div>
-            ) : unanswered.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-white border border-[#E8D8C3] text-center space-y-2">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                <p className="text-xs font-semibold text-[#6E5545]">
-                  No unanswered or low-confidence questions logged!
-                </p>
-                <p className="text-[11px] text-[#8C7464]">
-                  When visitors ask queries that don't match the current knowledge base, they will appear here with frequency counts.
-                </p>
-              </div>
-            ) : (
+            <DataStateView
+              loading={loading}
+              error={fetchError}
+              isEmpty={unanswered.length === 0}
+              onRetry={loadAll}
+              loadingMessage="Loading logged queries..."
+              emptyView={
+                <div className="p-8 rounded-2xl bg-white border border-[#E8D8C3] text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                  <p className="text-xs font-semibold text-[#6E5545]">
+                    No unanswered or low-confidence questions logged!
+                  </p>
+                  <p className="text-[11px] text-[#8C7464]">
+                    When visitors ask queries that don't match the current knowledge base, they will appear here with frequency counts.
+                  </p>
+                </div>
+              }
+            >
               <div className="rounded-2xl bg-white border border-[#E8D8C3] overflow-hidden shadow-xs">
                 <div className="divide-y divide-[#E8D8C3]">
                   {unanswered.map((q) => (
@@ -754,7 +786,7 @@ export default function KnowledgeManagerClient({ currentUserEmail }: Props) {
                   ))}
                 </div>
               </div>
-            )}
+            </DataStateView>
           </div>
         )}
       </div>

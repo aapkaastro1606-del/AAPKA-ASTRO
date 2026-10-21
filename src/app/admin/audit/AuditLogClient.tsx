@@ -18,6 +18,7 @@ import {
   Layers,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 
 export interface AuditLogItem {
   id: string;
@@ -39,17 +40,32 @@ export default function AuditLogClient({ initialLogs, ownerEmail }: AuditLogClie
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAction, setSelectedAction] = useState<string>("ALL");
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   const refreshLogs = async () => {
     setIsLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/audit?limit=100");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setLogs([]);
+        return;
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.logs)) {
         setLogs(data.logs);
+        setFetchError(null);
+      } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setLogs([]);
       }
     } catch (err) {
-      console.error("Failed to refresh audit logs:", err);
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setLogs([]);
     } finally {
       setIsLoading(false);
     }
@@ -198,12 +214,19 @@ export default function AuditLogClient({ initialLogs, ownerEmail }: AuditLogClie
             <span className="text-[11px] text-[#6E5545]">Latest events first</span>
           </div>
 
-          {filteredLogs.length === 0 ? (
-            <div className="p-8 text-center space-y-2">
-              <AlertCircle className="h-8 w-8 text-[#8C7A6B] mx-auto opacity-50" />
-              <p className="text-xs text-[#6E5545]">No audit logs match your search criteria.</p>
-            </div>
-          ) : (
+          <DataStateView
+            loading={isLoading}
+            error={fetchError}
+            isEmpty={filteredLogs.length === 0}
+            onRetry={refreshLogs}
+            loadingMessage="Loading tamper-evident audit logs..."
+            emptyView={
+              <div className="p-8 text-center space-y-2">
+                <AlertCircle className="h-8 w-8 text-[#8C7A6B] mx-auto opacity-50" />
+                <p className="text-xs text-[#6E5545]">No audit logs match your search criteria.</p>
+              </div>
+            }
+          >
             <div className="divide-y divide-[#E8D8C3]/60">
               {filteredLogs.map((log) => (
                 <div key={log.id} className="p-4 hover:bg-[#FBF3E7]/30 transition-colors flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs">
@@ -248,7 +271,7 @@ export default function AuditLogClient({ initialLogs, ownerEmail }: AuditLogClie
                 </div>
               ))}
             </div>
-          )}
+          </DataStateView>
         </div>
       </div>
     </div>

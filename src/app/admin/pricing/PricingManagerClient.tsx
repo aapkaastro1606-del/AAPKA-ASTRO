@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import { AdminStore, PricingSettings } from "@/lib/store/adminStore";
 import {
   DollarSign,
@@ -35,6 +36,38 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
   const [pricing, setPricing] = useState<PricingSettings>(() => AdminStore.getPricing());
   const [saved, setSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
+
+  const fetchPricing = async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await fetch("/api/admin/pricing");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.pricing) {
+        setPricing(data.pricing);
+        setFetchError(null);
+      } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+      }
+    } catch {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPricing();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +230,14 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
           </div>
         )}
 
+        <DataStateView
+          loading={loading}
+          error={fetchError}
+          isEmpty={false}
+          onRetry={fetchPricing}
+          loadingMessage="Loading pricing & products from database..."
+          emptyView={null}
+        >
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* PRODUCT 1: Astro Consultation */}
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-7 sm:p-8 shadow-sm space-y-6">
@@ -641,6 +682,7 @@ export default function PricingManagerClient({ canManage }: PricingManagerClient
             )}
           </div>
         </form>
+        </DataStateView>
       </div>
     </div>
   );
