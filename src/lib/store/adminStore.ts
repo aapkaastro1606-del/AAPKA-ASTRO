@@ -63,32 +63,15 @@ let memoryPricing: PricingSettings = {
 };
 
 let memoryAnalytics: PlatformAnalytics = {
-  totalRevenue: 284500,
-  monthlyRevenue: 64200,
-  totalConsultationMinutes: 14850,
-  activeUsersToday: 428,
-  conversionRate: 18.4,
-  totalRecharges: 1290,
-  trafficSources: [
-    { source: "Organic Search / Google", percentage: 44 },
-    { source: "Instagram Reels & Profile", percentage: 32 },
-    { source: "Direct / Word of Mouth", percentage: 16 },
-    { source: "Referral / WhatsApp", percentage: 8 },
-  ],
-  consultationBreakdown: [
-    { type: "Audio Call", count: 480, percentage: 45 },
-    { type: "Live Chat", count: 370, percentage: 35 },
-    { type: "Video Call", count: 210, percentage: 20 },
-  ],
-  dailyTrends: [
-    { day: "Mon", revenue: 8400, minutes: 420 },
-    { day: "Tue", revenue: 9200, minutes: 480 },
-    { day: "Wed", revenue: 11500, minutes: 590 },
-    { day: "Thu", revenue: 14200, minutes: 710 },
-    { day: "Fri", revenue: 12800, minutes: 640 },
-    { day: "Sat", revenue: 18900, minutes: 980 },
-    { day: "Sun", revenue: 21400, minutes: 1120 },
-  ],
+  totalRevenue: 0,
+  monthlyRevenue: 0,
+  totalConsultationMinutes: 0,
+  activeUsersToday: 0,
+  conversionRate: 0,
+  totalRecharges: 0,
+  trafficSources: [],
+  consultationBreakdown: [],
+  dailyTrends: [],
 };
 
 export const AdminStore = {

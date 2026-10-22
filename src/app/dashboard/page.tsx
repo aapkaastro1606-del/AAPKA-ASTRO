@@ -1,34 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  AstrologerStateStore,
-  AstrologerStatus,
-  QueueItem,
-  ConfirmedBookingItem,
-  ActiveSession,
-} from "@/lib/store/astrologerStore";
-import { AdminStore } from "@/lib/store/adminStore";
+import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
-import { MandalaDivider } from "@/components/ui/MandalaDivider";
-import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import {
   ShieldCheck,
   PhoneCall,
   Video,
-  MessageSquare,
   Users,
   DollarSign,
   BookOpen,
   Film,
-  TrendingUp,
   Clock,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  Settings,
   RefreshCw,
   Calendar,
   Tag,
@@ -36,23 +23,137 @@ import {
   UserCheck,
   MessageCircle,
   FileText,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
+
+interface RealBooking {
+  id: string;
+  bookingId: string;
+  userName: string;
+  userPhone: string;
+  userEmail?: string | null;
+  productType: string;
+  format: string;
+  totalCost: number;
+  lockedAmount?: number;
+  bookingStatus: string;
+  paymentStatus: string;
+  scheduledSlot?: string | null;
+  meetingLink?: string | null;
+  concern?: string | null;
+  createdAt: string;
+  intakeDetails?: any;
+}
 
 export default function AstrologerDashboardPage() {
   const router = useRouter();
   const { isOwner, isAdmin, isAstrologer, hasPermission } = useCurrentUserRole();
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [confirmedBookings, setConfirmedBookings] = useState<ConfirmedBookingItem[]>(() =>
-    AstrologerStateStore.getConfirmedBookings()
-  );
+  const [presenceUpdating, setPresenceUpdating] = useState(false);
+  const [bookings, setBookings] = useState<RealBooking[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingFilter, setBookingFilter] = useState<"ALL" | "CONFIRMED" | "SCHEDULED" | "COMPLETED">("ALL");
-  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [runningCron, setRunningCron] = useState(false);
   const [cronReport, setCronReport] = useState<any>(null);
-  const analytics = AdminStore.getAnalytics();
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
+  // 1. Fetch Authoritative Presence from PostgreSQL
+  const fetchPresence = useCallback(async () => {
+    try {
+      const res = await fetch("/api/astrologer/presence");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.status) {
+          setStatus(data.status);
+          AstrologerStateStore.setStatus(data.status);
+        }
+      }
+    } catch {
+      setStatus(AstrologerStateStore.getStatus());
+    }
+  }, []);
+
+  // 2. Fetch Real Bookings from PostgreSQL
+  const fetchRealBookings = useCallback(async () => {
+    if (!isOwner && !isAdmin && !hasPermission("consultations")) return;
+    setLoadingBookings(true);
+    try {
+      const res = await fetch("/api/admin/bookings?status=ALL");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.success && Array.isArray(data.bookings)) {
+          setBookings(data.bookings);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch live bookings:", err);
+    } finally {
+      setLoadingBookings(false);
+    }
+  }, [isOwner, isAdmin, hasPermission]);
+
+  useEffect(() => {
+    fetchPresence();
+    fetchRealBookings();
+
+    const interval = setInterval(() => {
+      fetchPresence();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [fetchPresence, fetchRealBookings]);
+
+  // 3. Mutate Presence in PostgreSQL
+  const handleStatusChange = async (newStatus: AstrologerStatus) => {
+    setStatus(newStatus);
+    setPresenceUpdating(true);
+    try {
+      const res = await fetch("/api/astrologer/presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        AstrologerStateStore.setStatus(newStatus);
+        window.dispatchEvent(new Event("astro_state_changed"));
+      }
+    } catch (e) {
+      console.error("Presence update failed:", e);
+    } finally {
+      setPresenceUpdating(false);
+    }
+  };
+
+  // 4. Update Booking State in PostgreSQL
+  const handleUpdateBookingState = async (bookingId: string, action: "schedule" | "complete") => {
+    setActionFeedback(null);
+    try {
+      const bodyPayload: any = { action, bookingId };
+      if (action === "schedule") {
+        bodyPayload.scheduledSlot = "Tomorrow at 4:00 PM IST";
+        bodyPayload.meetingLink = "WhatsApp call";
+      }
+
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionFeedback(`Booking ${bookingId} updated successfully.`);
+        fetchRealBookings();
+      } else {
+        setActionFeedback(`Update failed: ${data.message || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      setActionFeedback(`Request error: ${err.message}`);
+    }
+  };
+
+  // 5. Daily Automation Trigger
   const handleRunAutomation = async () => {
     setRunningCron(true);
     try {
@@ -66,75 +167,24 @@ export default function AstrologerDashboardPage() {
     }
   };
 
-  const sync = () => {
-    setStatus(AstrologerStateStore.getStatus());
-    setQueue(AstrologerStateStore.getQueue());
-    setActiveSession(AstrologerStateStore.getActiveSession());
-    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
-  };
+  // 6. Calculate authentic real revenue from PostgreSQL sessions
+  const paidConfirmedSessions = bookings.filter((b) =>
+    ["CONFIRMED", "SCHEDULED", "COMPLETED"].includes(b.bookingStatus)
+  );
 
-  useEffect(() => {
-    sync();
-    window.addEventListener("astro_state_changed", sync);
-    window.addEventListener("aapka_booking_updated", sync);
-    const interval = setInterval(sync, 2000);
-    return () => {
-      window.removeEventListener("astro_state_changed", sync);
-      window.removeEventListener("aapka_booking_updated", sync);
-      clearInterval(interval);
-    };
-  }, []);
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthlyRevenue = paidConfirmedSessions
+    .filter((b) => new Date(b.createdAt) >= startOfMonth)
+    .reduce((sum, b) => sum + (b.totalCost || b.lockedAmount || 0), 0);
 
-  const handleStatusChange = (newStatus: AstrologerStatus) => {
-    AstrologerStateStore.setStatus(newStatus);
-    setStatus(newStatus);
-  };
-
-  const handleUpdateBookingState = (id: string, newState: "CONFIRMED" | "SCHEDULED" | "COMPLETED") => {
-    AstrologerStateStore.updateBookingState(id, newState);
-    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
-  };
-
-  const handleRemoveBooking = (id: string) => {
-    AstrologerStateStore.removeConfirmedBooking(id);
-    setConfirmedBookings(AstrologerStateStore.getConfirmedBookings());
-  };
-
-  const handleSimulateNewBooking = () => {
-    const newBooking: ConfirmedBookingItem = {
-      id: `bk-${Date.now()}`,
-      bookingId: `AA-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      userId: `usr_${Date.now()}`,
-      userName: "Rahul Sengupta",
-      userPhone: "+91 98200 11223",
-      userEmail: "rahul.sengupta@example.com",
-      productId: "astro",
-      productName: "Astro Consultation",
-      format: "WhatsApp Call / Google Meet",
-      concern: "Career progression, foreign settlement yog, and Saturn Sade Sati remedies",
-      amountPaid: 1051,
-      paymentStatus: "CONFIRMED",
-      bookingState: "CONFIRMED",
-      bookedAt: new Date().toISOString(),
-      preferredSlot: "Today • Immediate Next Window",
-      birthDetails: {
-        name: "Rahul Sengupta",
-        gender: "male",
-        birthDate: "1991-11-12",
-        birthTime: "10:15",
-        birthPlace: "Kolkata, WB",
-        latitude: 22.5726,
-        longitude: 88.3639,
-        timezone: 5.5,
-      },
-    };
-    AstrologerStateStore.addConfirmedBooking(newBooking);
-    sync();
-  };
-
-  const filteredBookings = confirmedBookings.filter((b) => {
+  // Filter Bookings by Tab
+  const filteredBookings = bookings.filter((b) => {
     if (bookingFilter === "ALL") return true;
-    return b.bookingState === bookingFilter;
+    if (bookingFilter === "CONFIRMED") return b.bookingStatus === "CONFIRMED";
+    if (bookingFilter === "SCHEDULED") return b.bookingStatus === "SCHEDULED";
+    if (bookingFilter === "COMPLETED") return b.bookingStatus === "COMPLETED";
+    return true;
   });
 
   return (
@@ -149,53 +199,47 @@ export default function AstrologerDashboardPage() {
               className="h-16 w-16 rounded-2xl object-cover border-2 border-[#7B2D26] shadow-sm"
             />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-temple text-2xl font-bold text-[#7B2D26]">
-                  {isOwner
-                    ? "Platform Control Desk"
-                    : isAstrologer
-                    ? `${PLACEHOLDER_ASTROLOGER.displayName} Cockpit`
-                    : "Staff Operator Console"}
-                </h1>
-                <span className="rounded-md bg-[#7B2D26] px-2 py-0.5 text-[10px] font-bold text-white uppercase">
-                  {isOwner
-                    ? "Site Owner"
-                    : isAdmin
-                    ? "Platform Admin"
-                    : isAstrologer
-                    ? "Astrologer Admin"
-                    : "Staff Operator"}
-                </span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-temple text-2xl font-bold text-[#7B2D26]">Platform Control Desk</span>
+                {isOwner && (
+                  <span className="rounded-md bg-[#7B2D26] px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                    Site Owner
+                  </span>
+                )}
+                {!isOwner && isAstrologer && (
+                  <span className="rounded-md bg-[#C1662F] px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                    Astrologer Console
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-[#6E5545] mt-0.5">
+              <p className="text-xs text-[#6E5545]">
                 {isOwner
                   ? "Unrestricted Site Owner Console • Full control across all platform sections"
-                  : isAstrologer
-                  ? "Single-Astrologer Control Desk • Manage your live presence and client consultations"
-                  : "Scoped Employee Desk • Access granted to your assigned site sections"}
+                  : "Single-Astrologer Control Desk • Manage your live presence and client consultations"}
               </p>
             </div>
           </div>
 
-          {/* Real-time Presence Broadcaster Toggle (Only if consultations permitted) */}
-          {(isOwner || isAdmin || isAstrologer || hasPermission("consultations")) && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#FBF3E7] p-2.5 rounded-2xl border border-[#E8D8C3]">
-              <span className="text-xs font-bold text-[#6E5545] px-2">Broadcaster Status:</span>
-              <div className="flex rounded-xl bg-[#FFFDF9] p-1 border border-[#E8D8C3] gap-1">
+          {/* Real-time Presence Broadcaster (Syncs to PostgreSQL in Real-Time) */}
+          {(isOwner || isAstrologer || isAdmin) && (
+            <div className="flex items-center gap-3 bg-[#FAF5EE] p-3 rounded-2xl border border-[#E8D8C3]">
+              <span className="text-xs font-bold text-[#3B2A1E]">Broadcaster Status:</span>
+              <div className="flex items-center gap-1.5">
                 {[
-                  { id: "AVAILABLE", label: "Available", color: "bg-[#6B8E5A] text-white" },
-                  { id: "BUSY", label: "Busy", color: "bg-[#E8A33D] text-[#3B2A1E]" },
-                  { id: "BREAK", label: "Break", color: "bg-[#C1662F] text-white" },
-                  { id: "OFFLINE", label: "Offline", color: "bg-[#A8988B] text-white" },
+                  { id: "AVAILABLE", label: "Available", color: "bg-[#6B8E5A]" },
+                  { id: "BUSY", label: "Busy", color: "bg-[#E8A33D]" },
+                  { id: "BREAK", label: "Break", color: "bg-[#C1662F]" },
+                  { id: "OFFLINE", label: "Offline", color: "bg-stone-500" },
                 ].map((btn) => (
                   <button
                     key={btn.id}
                     type="button"
+                    disabled={presenceUpdating}
                     onClick={() => handleStatusChange(btn.id as AstrologerStatus)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                    className={`rounded-xl px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
                       status === btn.id
-                        ? `${btn.color} shadow-sm`
-                        : "text-[#6E5545] hover:text-[#3B2A1E]"
+                        ? `${btn.color} text-white shadow-xs scale-105`
+                        : "bg-[#FFFDF9] text-[#6E5545] border border-[#E8D8C3] hover:text-[#3B2A1E]"
                     }`}
                   >
                     {btn.label}
@@ -206,36 +250,21 @@ export default function AstrologerDashboardPage() {
           )}
         </div>
 
-        {/* Active Session Callout (if active and consultation permitted) */}
-        {activeSession && (isOwner || isAdmin || isAstrologer || hasPermission("consultations")) && (
-          <div className="rounded-3xl border-2 border-[#6B8E5A] bg-[#F4F9F2] p-6 shadow-md flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6B8E5A] text-white animate-pulse">
-                <PhoneCall className="h-6 w-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#2A4720]">
-                  LIVE CONSULTATION IN PROGRESS
-                </span>
-                <h3 className="font-temple text-lg font-bold text-[#2A4720]">
-                  Active with {activeSession.userName} ({activeSession.type.toUpperCase()})
-                </h3>
-                <p className="text-xs text-[#4F6D40]">
-                  Session ID: {activeSession.id} • Consultation: Flat Pre-Paid (No per-minute debits)
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href={`/dashboard/session/${activeSession.id}`}
-              className="rounded-xl bg-[#2A4720] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#1f3517] transition-all shadow-md"
+        {/* Action Feedback Banner */}
+        {actionFeedback && (
+          <div className="rounded-2xl bg-amber-50 border border-amber-300 p-4 text-xs font-bold text-amber-900 flex items-center justify-between">
+            <span>{actionFeedback}</span>
+            <button
+              type="button"
+              onClick={() => setActionFeedback(null)}
+              className="text-amber-800 underline text-[11px]"
             >
-              Open Workbench &rarr;
-            </Link>
+              Dismiss
+            </button>
           </div>
         )}
 
-        {/* Management Tool Navigation Cards (Filtered by per-section permissions) */}
+        {/* Management Tool Navigation Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {hasPermission("earnings") && (
             <Link
@@ -247,13 +276,13 @@ export default function AstrologerDashboardPage() {
                   <DollarSign className="h-5 w-5" />
                 </div>
                 <span className="font-mono text-xs font-bold text-[#6B8E5A]">
-                  +₹{analytics.monthlyRevenue.toLocaleString("en-IN")}
+                  +₹{monthlyRevenue.toLocaleString("en-IN")}
                 </span>
               </div>
               <h3 className="font-temple text-sm font-bold text-[#7B2D26] group-hover:text-[#C1662F]">
                 Earnings &amp; Payouts
               </h3>
-              <p className="text-[11px] text-[#6E5545] mt-0.5">Daily &amp; monthly revenue</p>
+              <p className="text-[11px] text-[#6E5545] mt-0.5">Real-time consultation revenue</p>
             </Link>
           )}
 
@@ -320,12 +349,12 @@ export default function AstrologerDashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6B8E5A]/15 text-[#6B8E5A]">
                   <Tag className="h-5 w-5" />
                 </div>
-                <span className="text-[10px] font-bold text-[#6B8E5A]">Rates</span>
+                <span className="text-[10px] font-bold text-[#6B8E5A]">Flat Fees</span>
               </div>
               <h3 className="font-temple text-sm font-bold text-[#7B2D26] group-hover:text-[#C1662F]">
-                Pricing &amp; Rates
+                Flat Consultation Rates
               </h3>
-              <p className="text-[11px] text-[#6E5545] mt-0.5">Configure per-min fees</p>
+              <p className="text-[11px] text-[#6E5545] mt-0.5">Configure flat fees &amp; promos</p>
             </Link>
           )}
 
@@ -343,7 +372,7 @@ export default function AstrologerDashboardPage() {
               <h3 className="font-temple text-sm font-bold text-[#7B2D26] group-hover:text-[#C1662F]">
                 Intelligence Analytics
               </h3>
-              <p className="text-[11px] text-[#6E5545] mt-0.5">Funnels &amp; volume data</p>
+              <p className="text-[11px] text-[#6E5545] mt-0.5">Real traffic &amp; telemetry</p>
             </Link>
           )}
 
@@ -368,7 +397,7 @@ export default function AstrologerDashboardPage() {
           )}
         </div>
 
-        {/* Daily Automation Status & Manual Trigger Widget (Only for Owner/Admin/Analytics) */}
+        {/* Daily Automation Status & Manual Trigger Widget */}
         {(isOwner || isAdmin || hasPermission("analytics")) && (
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -395,7 +424,7 @@ export default function AstrologerDashboardPage() {
                 type="button"
                 disabled={runningCron}
                 onClick={handleRunAutomation}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] px-4 py-2.5 text-xs font-bold text-[#FFFDF9] hover:bg-[#63231E] transition-all shadow-sm disabled:opacity-60 shrink-0"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7B2D26] px-4 py-2.5 text-xs font-bold text-[#FFFDF9] hover:bg-[#63231E] transition-all shadow-sm disabled:opacity-60 shrink-0 cursor-pointer"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${runningCron ? "animate-spin" : ""}`} />
                 <span>{runningCron ? "Executing Automation..." : "Run Daily Automation Now"}</span>
@@ -420,7 +449,9 @@ export default function AstrologerDashboardPage() {
                   </div>
                   <div>
                     <span className="text-[#A89080] text-[10px] block uppercase font-bold">Database Cached</span>
-                    <span className="font-bold text-[#3B2A1E]">{cronReport.databasePersisted ? "Yes (PostgreSQL)" : "Fallback (In-Memory)"}</span>
+                    <span className="font-bold text-[#3B2A1E]">
+                      {cronReport.databasePersisted ? "Yes (PostgreSQL)" : "Fallback (In-Memory)"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[#A89080] text-[10px] block uppercase font-bold">Tithi Active</span>
@@ -432,7 +463,7 @@ export default function AstrologerDashboardPage() {
           </div>
         )}
 
-        {/* Confirmed & Paid Consultation Bookings (Only for Consultations operator or Owner/Admin) */}
+        {/* Confirmed & Paid Consultation Bookings (Real-Time from PostgreSQL) */}
         {(isOwner || isAstrologer || hasPermission("consultations")) && (
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#E8D8C3]">
@@ -443,21 +474,31 @@ export default function AstrologerDashboardPage() {
                     <span>Confirmed &amp; Paid Consultation Bookings</span>
                   </h2>
                   <span className="rounded-full bg-[#6B8E5A]/15 border border-[#6B8E5A]/30 px-2.5 py-0.5 text-xs font-bold text-[#2A4720]">
-                    {confirmedBookings.length} Total
+                    {bookings.length} Total
                   </span>
                 </div>
                 <p className="text-xs text-[#6E5545] mt-1">
-                  Client bookings confirmed with upfront payment. Reach out directly via WhatsApp call or Google Meet at the arranged slot.
+                  Client bookings confirmed with upfront payment (synced in real-time from PostgreSQL database). Coordinate via 1-click WhatsApp or phone call.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start md:self-auto">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/admin/bookings"
+                  className="rounded-xl border border-[#7B2D26] bg-[#FFFDF9] hover:bg-[#FAF5EE] px-3.5 py-2 text-xs font-bold text-[#7B2D26] transition-all shadow-xs flex items-center gap-1.5"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#C1662F]" />
+                  <span>Open Full Owner Queue</span>
+                </Link>
+
                 <button
                   type="button"
-                  onClick={handleSimulateNewBooking}
-                  className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-3.5 py-2 text-xs font-bold text-[#7B2D26] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  onClick={fetchRealBookings}
+                  disabled={loadingBookings}
+                  className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-3.5 py-2 text-xs font-bold text-[#3B2A1E] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                 >
-                  <span>+ Simulate Paid Booking</span>
+                  <RefreshCw className={`h-3.5 w-3.5 ${loadingBookings ? "animate-spin" : ""}`} />
+                  <span>Refresh</span>
                 </button>
               </div>
             </div>
@@ -465,21 +506,21 @@ export default function AstrologerDashboardPage() {
             {/* Filter Tabs */}
             <div className="flex flex-wrap items-center gap-2 mb-6">
               {[
-                { id: "ALL", label: "All Bookings", count: confirmedBookings.length },
+                { id: "ALL", label: "All Bookings", count: bookings.length },
                 {
                   id: "CONFIRMED",
                   label: "Confirmed",
-                  count: confirmedBookings.filter((b) => b.bookingState === "CONFIRMED").length,
+                  count: bookings.filter((b) => b.bookingStatus === "CONFIRMED").length,
                 },
                 {
-                  id: "AWAITING_SESSION",
-                  label: "Awaiting Session",
-                  count: confirmedBookings.filter((b) => b.bookingState === "AWAITING_SESSION").length,
+                  id: "SCHEDULED",
+                  label: "Scheduled",
+                  count: bookings.filter((b) => b.bookingStatus === "SCHEDULED").length,
                 },
                 {
                   id: "COMPLETED",
                   label: "Completed",
-                  count: confirmedBookings.filter((b) => b.bookingState === "COMPLETED").length,
+                  count: bookings.filter((b) => b.bookingStatus === "COMPLETED").length,
                 },
               ].map((tab) => (
                 <button
@@ -504,19 +545,31 @@ export default function AstrologerDashboardPage() {
               ))}
             </div>
 
-            {filteredBookings.length === 0 ? (
+            {loadingBookings ? (
+              <div className="py-12 text-center text-[#6E5545] space-y-2">
+                <RefreshCw className="h-8 w-8 text-[#7B2D26] animate-spin mx-auto opacity-70" />
+                <p className="text-xs font-bold">Loading real-time bookings from PostgreSQL...</p>
+              </div>
+            ) : filteredBookings.length === 0 ? (
               <div className="py-12 text-center text-[#6E5545] space-y-2">
                 <Clock className="h-10 w-10 text-[#C1662F] mx-auto opacity-50" />
-                <p className="text-sm font-medium">No bookings in this category.</p>
+                <p className="text-sm font-medium">No bookings found in this category.</p>
                 <p className="text-xs">
-                  Incoming paid consultation bookings will appear here instantly with full client contact details.
+                  Real client consultation bookings will appear here instantly as soon as they are submitted.
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredBookings.map((item) => {
-                  const cleanedPhone = item.userPhone.replace(/[^0-9]/g, "");
-                  const whatsappMsg = `Pranam ${item.userName}, this is Acharya Niraj Kumar connecting regarding your booked ${item.productName} (Ref: ${item.bookingId}). Please let me know if you are ready for our consultation session via WhatsApp Call or Google Meet.`;
+                  const cleanedPhone = (item.userPhone || "").replace(/[^0-9]/g, "");
+                  const productName =
+                    item.productType === "vaastu"
+                      ? "Vaastu Consultation"
+                      : item.productType === "kundli_pdf"
+                      ? "Kundli PDF Report"
+                      : "Astro Consultation";
+
+                  const whatsappMsg = `Pranam ${item.userName}, this is Acharya Niraj Kumar connecting regarding your booked ${productName} (Ref: ${item.bookingId}). Please let me know if you are ready for our consultation session via WhatsApp Call or Google Meet.`;
                   const whatsappHref = `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(whatsappMsg)}`;
 
                   return (
@@ -531,71 +584,54 @@ export default function AstrologerDashboardPage() {
                             {item.bookingId}
                           </span>
                           <span className="rounded-md bg-[#6B8E5A]/15 text-[#2A4720] border border-[#6B8E5A]/30 px-2 py-0.5 text-[10px] font-bold">
-                            PAID: Flat ₹{item.amountPaid.toLocaleString("en-IN")}
+                            ₹{(item.totalCost || item.lockedAmount || 0).toLocaleString("en-IN")}
                           </span>
                           <span className="rounded-md bg-[#FFFDF9] px-2 py-0.5 text-[10px] font-bold text-[#C1662F] border border-[#E8D8C3] uppercase">
-                            {item.productName}
+                            {productName}
                           </span>
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                              item.bookingState === "COMPLETED"
+                              item.bookingStatus === "COMPLETED"
                                 ? "bg-[#6B8E5A]/20 text-[#2A4720] border border-[#6B8E5A]/30"
-                                : item.bookingState === "AWAITING_SESSION"
-                                ? "bg-[#E8A33D]/20 text-[#C1662F] border border-[#E8A33D]/30"
-                                : "bg-[#7B2D26]/10 text-[#7B2D26] border border-[#7B2D26]/20"
+                                : item.bookingStatus === "SCHEDULED"
+                                ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                : item.bookingStatus === "CONFIRMED"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : "bg-amber-100 text-amber-800 border border-amber-300"
                             }`}
                           >
-                            State:{" "}
-                            {item.bookingState === "CONFIRMED"
-                              ? "Confirmed"
-                              : item.bookingState === "AWAITING_SESSION"
-                              ? "Awaiting Session"
-                              : "Completed"}
+                            Status: {item.bookingStatus === "CONFIRMED" ? "Awaiting Session" : item.bookingStatus}
                           </span>
                         </div>
 
-                        {/* Client Identity & Phone */}
                         <div>
-                          <h3 className="font-temple text-lg font-bold text-[#7B2D26]">
-                            {item.userName}
+                          <h3 className="font-temple text-base font-bold text-[#3B2A1E]">
+                            {item.userName || "Seeker"}
                           </h3>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#6E5545] mt-1 font-body">
-                            <span className="font-bold text-[#3B2A1E]">
-                              Phone: <span className="font-mono text-[#7B2D26] font-bold">{item.userPhone}</span>
-                            </span>
+                          <div className="text-xs text-[#6E5545] space-x-2 mt-0.5">
+                            <span>Phone: <strong>{item.userPhone || "Not provided"}</strong></span>
                             {item.userEmail && <span>&bull; {item.userEmail}</span>}
-                            <span>
-                              &bull; Preferred Slot:{" "}
-                              <strong>{item.preferredSlot || "Immediate Next Window"}</strong>
-                            </span>
-                            <span>
-                              &bull; Format: <strong>{item.format}</strong>
-                            </span>
+                            <span>&bull; Format: <strong>{item.format || "WhatsApp Call"}</strong></span>
                           </div>
+                          {item.scheduledSlot && (
+                            <div className="text-xs font-bold text-blue-900 mt-1">
+                              Confirmed Slot: <span className="bg-blue-100 px-2 py-0.5 rounded">{item.scheduledSlot}</span>
+                              {item.meetingLink && <span className="text-stone-600 font-normal ml-2">({item.meetingLink})</span>}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Consultation Topic / Concern */}
-                        <div className="bg-[#FFFDF9] p-3 rounded-xl border border-[#E8D8C3] text-xs">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C1662F] block mb-0.5">
-                            Client&apos;s Focus &amp; Question:
-                          </span>
-                          <p className="text-[#3B2A1E] font-medium leading-relaxed">{item.concern}</p>
-                          {item.birthDetails && (
-                            <p className="text-[11px] text-[#6E5545] mt-1.5 pt-1.5 border-t border-[#E8D8C3]/50">
-                              Born: <strong>{item.birthDetails.birthDate}</strong> at{" "}
-                              <strong>{item.birthDetails.birthTime}</strong> ({item.birthDetails.birthPlace})
-                            </p>
-                          )}
-                          {item.propertyDetails && (
-                            <p className="text-[11px] text-[#6E5545] mt-1.5 pt-1.5 border-t border-[#E8D8C3]/50">
-                              Property: <strong>{item.propertyDetails.propertyType}</strong> (
-                              {item.propertyDetails.propertyLocation})
-                            </p>
-                          )}
-                        </div>
+                        {item.concern && (
+                          <div className="bg-[#FFFDF9] rounded-xl p-3 border border-[#E8D8C3]/80 text-xs">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#C1662F] block mb-1">
+                              Client Query / Focus:
+                            </span>
+                            <p className="text-[#3B2A1E] font-medium leading-relaxed">{item.concern}</p>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Right: Direct Outreach CTAs & State Controls (Direct Outreach & Status Actions) */}
+                      {/* Right: Direct Outreach CTAs & State Controls */}
                       <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end justify-between gap-3 w-full lg:w-auto shrink-0">
                         {/* Direct Outreach CTAs */}
                         <div className="flex flex-col gap-2 w-full">
@@ -609,60 +645,47 @@ export default function AstrologerDashboardPage() {
                             <span>Reach Out on WhatsApp</span>
                           </a>
 
-                          <a
-                            href={`tel:${cleanedPhone}`}
-                            className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FAF5EE] px-4 py-2 text-xs font-bold text-[#3B2A1E] transition-all flex items-center justify-center gap-1.5"
-                          >
-                            <PhoneCall className="h-3.5 w-3.5 text-[#7B2D26]" />
-                            <span>Call {item.userPhone}</span>
-                          </a>
-
-                          <Link
-                            href={`/dashboard/session/${item.id}`}
-                            className="rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] hover:bg-[#E8D8C3] px-4 py-2 text-xs font-bold text-[#7B2D26] transition-all flex items-center justify-center gap-1.5"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span>Open Chart &amp; Remedies</span>
-                          </Link>
+                          {cleanedPhone && (
+                            <a
+                              href={`tel:${cleanedPhone}`}
+                              className="rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FAF5EE] px-4 py-2 text-xs font-bold text-[#3B2A1E] transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <PhoneCall className="h-3.5 w-3.5 text-[#7B2D26]" />
+                              <span>Call Seeker</span>
+                            </a>
+                          )}
                         </div>
 
                         {/* Booking State Progression Controls */}
-                        <div className="pt-2 border-t border-[#E8D8C3]/60 w-full text-right">
-                          <span className="text-[10px] uppercase font-bold text-[#6E5545] block mb-1">
-                            Update State:
-                          </span>
-                          <div className="flex items-center justify-end gap-1.5">
-                            {item.bookingState !== "SCHEDULED" && item.bookingState !== "COMPLETED" && (
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateBookingState(item.id, "SCHEDULED")}
-                                className="rounded-lg bg-[#E8A33D]/20 text-[#C1662F] hover:bg-[#E8A33D]/30 border border-[#E8A33D]/40 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
-                              >
-                                &rarr; Scheduled
-                              </button>
-                            )}
+                        {isOwner && (
+                          <div className="pt-2 border-t border-[#E8D8C3]/60 w-full text-right">
+                            <span className="text-[10px] uppercase font-bold text-[#6E5545] block mb-1">
+                              Quick State Update:
+                            </span>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {item.bookingStatus !== "SCHEDULED" && item.bookingStatus !== "COMPLETED" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateBookingState(item.bookingId, "schedule")}
+                                  className="rounded-lg bg-[#E8A33D]/20 text-[#C1662F] hover:bg-[#E8A33D]/30 border border-[#E8A33D]/40 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+                                >
+                                  &rarr; Set Scheduled
+                                </button>
+                              )}
 
-                            {item.bookingState !== "COMPLETED" && (
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateBookingState(item.id, "COMPLETED")}
-                                className="rounded-lg bg-[#6B8E5A] text-white hover:bg-[#58754a] px-2.5 py-1 text-[11px] font-bold transition-all shadow-xs cursor-pointer"
-                              >
-                                &check; Mark Completed
-                              </button>
-                            )}
-
-                            {item.bookingState === "COMPLETED" && (
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateBookingState(item.id, "CONFIRMED")}
-                                className="text-[11px] text-[#7D6B5D] hover:underline cursor-pointer"
-                              >
-                                Reset to Confirmed
-                              </button>
-                            )}
+                              {item.bookingStatus !== "COMPLETED" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateBookingState(item.bookingId, "complete")}
+                                  className="rounded-lg bg-[#6B8E5A] text-white hover:bg-[#58754a] px-2.5 py-1 text-[11px] font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span>Mark Completed</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   );

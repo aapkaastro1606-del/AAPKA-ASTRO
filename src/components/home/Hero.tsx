@@ -12,15 +12,29 @@ export const Hero: React.FC = () => {
   const [status, setStatus] = useState<AstrologerStatus>("AVAILABLE");
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
-  const sync = () => {
-    setStatus(AstrologerStateStore.getStatus());
+  const sync = async () => {
+    try {
+      const res = await fetch("/api/astrologer/presence");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.status) {
+          setStatus(data.status);
+        }
+      }
+    } catch {
+      setStatus(AstrologerStateStore.getStatus());
+    }
     setQueue(AstrologerStateStore.getQueue());
   };
 
   useEffect(() => {
     sync();
     window.addEventListener("astro_state_changed", sync);
-    return () => window.removeEventListener("astro_state_changed", sync);
+    const interval = setInterval(sync, 10000);
+    return () => {
+      window.removeEventListener("astro_state_changed", sync);
+      clearInterval(interval);
+    };
   }, []);
 
   const queueLength = queue.length;

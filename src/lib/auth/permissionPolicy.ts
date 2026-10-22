@@ -643,6 +643,18 @@ export function canAccessApiRoute(
   }
 
   // Area 3: Blog, reels, knowledge, site content
+    if (normPath.startsWith("/api/admin/analytics")) {
+    const requiredLevel = isManage ? "MANAGE" : "VIEW";
+    if (canAccessSection(auth, "analytics", requiredLevel)) {
+      return { allowed: true, status: 200 };
+    }
+    return {
+      allowed: false,
+      status: 403,
+      message: "Forbidden: Analytics permission required.",
+    };
+  }
+
   if (normPath.startsWith("/api/dashboard/blog")) {
     const requiredLevel = isManage ? "MANAGE" : "VIEW";
     if (canAccessSection(auth, "blog", requiredLevel)) {

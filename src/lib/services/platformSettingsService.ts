@@ -5,6 +5,21 @@ import { AuditLogService } from "@/lib/services/auditLogService";
 import { BookingEmailService } from "@/lib/services/bookingEmailService";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 
+
+export interface AstrologerPresence {
+  status: "AVAILABLE" | "BUSY" | "BREAK" | "OFFLINE";
+  statusMessage?: string;
+  nextAvailableAt?: string;
+  updatedAt?: string;
+}
+
+export const DEFAULT_PRESENCE: AstrologerPresence = {
+  status: "AVAILABLE",
+  statusMessage: "Available right now for 1-on-1 consultations",
+  nextAvailableAt: "Tomorrow, 10:00 AM IST",
+  updatedAt: new Date().toISOString(),
+};
+
 export interface PaymentSettings {
   upiId: string;
   payeeName: string;
@@ -301,6 +316,65 @@ export class PlatformSettingsService {
       newSettings: updated,
       ipAddress: ipAddress,
     }).catch((err) => console.warn("Failed to dispatch owner alert email:", err));
+
+    return updated;
+  }
+  /**
+   * Fetch Astrologer presence from PostgreSQL.
+   */
+  static async getPresence(): Promise<AstrologerPresence> {
+    try {
+      if (!prisma || !prisma.platformSetting) {
+        return { ...DEFAULT_PRESENCE };
+      }
+
+      const record = await prisma.platformSetting.findUnique({
+        where: { id: SINGLETON_ID },
+      });
+
+      const features = (record?.features as any) || {};
+      if (features.presence && features.presence.status) {
+        return {
+          ...DEFAULT_PRESENCE,
+          ...features.presence,
+        };
+      }
+
+      return { ...DEFAULT_PRESENCE };
+    } catch (error) {
+      console.error("PlatformSettingsService.getPresence error:", error);
+      return { ...DEFAULT_PRESENCE };
+    }
+  }
+
+  /**
+   * Update Astrologer presence in PostgreSQL.
+   */
+  static async setPresence(updates: Partial<AstrologerPresence>): Promise<AstrologerPresence> {
+    const current = await this.getPresence();
+    const updated: AstrologerPresence = {
+      ...current,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (prisma && prisma.platformSetting) {
+      const record = await prisma.platformSetting.findUnique({
+        where: { id: SINGLETON_ID },
+      });
+      const features = (record?.features as any) || {};
+      await prisma.platformSetting.upsert({
+        where: { id: SINGLETON_ID },
+        create: {
+          id: SINGLETON_ID,
+          pricing: DEFAULT_DATABASE_PRICING as any,
+          features: { ...features, presence: updated },
+        },
+        update: {
+          features: { ...features, presence: updated },
+        },
+      });
+    }
 
     return updated;
   }

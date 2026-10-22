@@ -49,54 +49,70 @@ export default function SessionWorkbenchClient({ sessionId }: SessionWorkbenchCl
 
   useEffect(() => {
     const storedSess = AstrologerStateStore.getActiveSession();
-    const fallbackSess: ActiveSession = {
-      id: sessionId,
-      userId: "usr_demo",
-      userName: "Devendra Verma",
-      userPhone: "+91 98111 22334",
-      type: "voice",
-      startedAt: new Date().toISOString(),
-      ratePerMin: 20,
-      elapsedSeconds: 0,
-      status: "active",
-      concern: "Mahadasha change & business investment timing",
-      notes: "",
-      remedies: [],
-      birthDetails: {
-        name: "Devendra Verma",
-        gender: "male",
-        birthDate: "1988-04-18",
-        birthTime: "06:45",
-        birthPlace: "Lucknow, UP",
-        latitude: 26.8467,
-        longitude: 80.9462,
-        timezone: 5.5,
-      },
-    };
-    const sess: ActiveSession = storedSess && storedSess.id === sessionId ? storedSess : fallbackSess;
-    setActiveSession(sess);
+    if (storedSess && (storedSess.id === sessionId || storedSess.bookingId === sessionId)) {
+      setActiveSession(storedSess);
+      if (storedSess.birthDetails) {
+        const k = calculateKundli({
+          name: storedSess.birthDetails.name,
+          gender: storedSess.birthDetails.gender,
+          birthDate: storedSess.birthDetails.birthDate,
+          birthTime: storedSess.birthDetails.birthTime,
+          birthPlace: storedSess.birthDetails.birthPlace,
+          latitude: storedSess.birthDetails.latitude,
+          longitude: storedSess.birthDetails.longitude,
+          timezone: storedSess.birthDetails.timezone,
+        });
+        setClientKundli(k);
+      }
+    } else {
+      // Fetch real session from admin bookings API
+      fetch(`/api/admin/bookings?search=${encodeURIComponent(sessionId)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.bookings && data.bookings.length > 0) {
+            const b = data.bookings[0];
+            const realSess: ActiveSession = {
+              id: b.id,
+              bookingId: b.bookingId,
+              userId: b.clientId || b.id,
+              userName: b.userName || "Seeker",
+              userPhone: b.userPhone || "",
+              type: "voice",
+              startedAt: b.createdAt || new Date().toISOString(),
+              ratePerMin: 0,
+              elapsedSeconds: 0,
+              status: "active",
+              concern: b.concern || "Consultation guidance",
+              notes: "",
+              remedies: [],
+              birthDetails: b.intakeDetails?.birthDetails || {
+                name: b.userName || "Seeker",
+                gender: "male",
+                birthDate: "1990-01-01",
+                birthTime: "12:00",
+                birthPlace: "New Delhi",
+                latitude: 28.6139,
+                longitude: 77.2090,
+                timezone: 5.5,
+              },
+            };
+            setActiveSession(realSess);
+            const k = calculateKundli(realSess.birthDetails);
+            setClientKundli(k);
+          }
+        })
+        .catch(() => {});
+    }
 
-    const k = calculateKundli({
-      name: sess.birthDetails.name,
-      gender: sess.birthDetails.gender,
-      birthDate: sess.birthDetails.birthDate,
-      birthTime: sess.birthDetails.birthTime,
-      birthPlace: sess.birthDetails.birthPlace,
-      latitude: sess.birthDetails.latitude,
-      longitude: sess.birthDetails.longitude,
-      timezone: sess.birthDetails.timezone,
-    });
-    setClientKundli(k);
-
-    const msgs = AstrologerStateStore.getMessages(sess.id);
+    const msgs = AstrologerStateStore.getMessages(sessionId);
     if (msgs.length === 0) {
       AstrologerStateStore.sendMessage(
-        sess.id,
+        sessionId,
         "user",
         `Pranam Acharya Ji! Seeking clarity on my career and financial prospects during my upcoming Dasha.`
       );
     }
-    setMessages(AstrologerStateStore.getMessages(sess.id));
+    setMessages(AstrologerStateStore.getMessages(sessionId));
 
     const timer = setInterval(() => {
       setSessionSeconds((prev) => prev + 1);

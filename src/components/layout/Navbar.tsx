@@ -93,7 +93,19 @@ export const Navbar: React.FC = () => {
     };
   }, [isSignedIn, user]);
 
-  const syncState = () => {
+  const syncState = async () => {
+    try {
+      const res = await fetch("/api/astrologer/presence");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.status) {
+          setStatus(data.status);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
     setStatus(AstrologerStateStore.getStatus());
   };
 
@@ -101,7 +113,7 @@ export const Navbar: React.FC = () => {
     setMounted(true);
     syncState();
     window.addEventListener("astro_state_changed", syncState);
-    const interval = setInterval(syncState, 2000);
+    const interval = setInterval(syncState, 10000);
     return () => {
       window.removeEventListener("astro_state_changed", syncState);
       clearInterval(interval);
