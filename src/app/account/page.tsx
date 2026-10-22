@@ -30,7 +30,16 @@ export default function ClientAccountDashboard() {
   const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
   const [consultations, setConsultations] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const astrologerStatus = "AVAILABLE";
+  const [astrologerStatus, setAstrologerStatus] = useState<string>("AVAILABLE");
+
+  useEffect(() => {
+    fetch("/api/astrologer/presence")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.status) setAstrologerStatus(data.status);
+      })
+      .catch(() => {});
+  }, []);
 
   const displayName =
     user?.fullName ||

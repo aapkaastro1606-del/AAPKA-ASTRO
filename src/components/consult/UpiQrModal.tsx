@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Globe,
   ArrowRight,
+  ArrowLeft,
   AlertCircle,
 } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -219,10 +220,10 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-lg rounded-2xl border-2 border-[#E8D8C3] bg-[#FFFDF9] shadow-2xl my-8 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-fade-in overflow-y-auto" onClick={onClose}>
+      <div className="relative w-full max-w-lg rounded-2xl border-2 border-[#E8D8C3] bg-[#FFFDF9] shadow-2xl my-8 overflow-hidden max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header Bar */}
-        <div className="flex items-center justify-between border-b border-[#E8D8C3] bg-[#7B2D26] px-6 py-4 text-[#FBF3E7]">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-[#E8D8C3] bg-[#7B2D26] px-5 sm:px-6 py-4 text-[#FBF3E7] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#64221C] text-[#E8A33D]">
               <DiyaIcon size={20} />
@@ -244,7 +245,7 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
           {step === "PAY" ? (
             <>
               {/* Booking Summary Box */}
@@ -423,6 +424,18 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
                     Message us on WhatsApp for payment options &rarr;
                   </a>
                 </span>
+              </div>
+
+              {/* Cancel & Go Back Option */}
+              <div className="pt-2 border-t border-[#E8D8C3]/80">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] hover:bg-[#FAF5EE] py-3 px-4 font-bold text-[#6E5545] hover:text-[#7B2D26] transition-all text-xs cursor-pointer shadow-2xs"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Cancel &amp; Go Back to Booking Form</span>
+                </button>
               </div>
             </>
           ) : (

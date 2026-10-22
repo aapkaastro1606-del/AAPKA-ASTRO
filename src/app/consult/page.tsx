@@ -129,7 +129,23 @@ export default function ConsultPage() {
   const promoFee = productConfig.promoPrice;
   const discountAmount = standardFee - promoFee;
 
+  const syncPresence = async () => {
+    try {
+      const res = await fetch("/api/astrologer/presence");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.status) {
+          setStatus(data.status);
+          AstrologerStateStore.setStatus(data.status);
+        }
+      }
+    } catch {
+      setStatus(AstrologerStateStore.getStatus());
+    }
+  };
+
   const syncAll = () => {
+    syncPresence();
     const currentStatus = AstrologerStateStore.getStatus();
     const currentQueue = AstrologerStateStore.getQueue();
     const currentSession = AstrologerStateStore.getActiveSession();

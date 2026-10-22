@@ -169,9 +169,18 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
       fetchActiveBooking();
     }
 
-    setAstrologerStatus(AstrologerStateStore.getStatus());
+    const fetchPresence = () => {
+      fetch("/api/astrologer/presence")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.status) setAstrologerStatus(d.status);
+        })
+        .catch(() => setAstrologerStatus(AstrologerStateStore.getStatus()));
+    };
+    fetchPresence();
 
     const handleSync = () => {
+      fetchPresence();
       setAstrologerStatus(AstrologerStateStore.getStatus());
       fetchActiveBooking();
     };

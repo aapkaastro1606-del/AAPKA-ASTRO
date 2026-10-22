@@ -53,57 +53,6 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
     fetchClients();
   }, []);
 
-  const fallbackClients = [
-    {
-      id: "cli-1",
-      name: "Aarav Sharma",
-      phone: "+91 98765 43210",
-      totalSessions: 3,
-      totalSpend: "₹1,051",
-      lastConsulted: "18 Sep 2026",
-      lagna: "Capricorn",
-      rashi: "Libra",
-      primaryConcern: "Career Promotion & Foreign Relocation",
-      notes: "In Rahu-Guru dasha. Prescribed Yellow Sapphire and Brihaspati mantra.",
-    },
-    {
-      id: "cli-2",
-      name: "Pooja Deshmukh",
-      phone: "+91 98220 11223",
-      totalSessions: 2,
-      totalSpend: "₹1,051",
-      lastConsulted: "14 Sep 2026",
-      lagna: "Taurus",
-      rashi: "Pisces",
-      primaryConcern: "Marriage Timing & Manglik Milan",
-      notes: "Low Manglik dosha cancelled by Jupiter aspect in 7th house.",
-    },
-    {
-      id: "cli-3",
-      name: "Vikram Singhania",
-      phone: "+91 94250 99887",
-      totalSessions: 4,
-      totalSpend: "₹15,000",
-      lastConsulted: "02 Sep 2026",
-      lagna: "Leo",
-      rashi: "Aries",
-      primaryConcern: "Commercial Vastu for Textile Showroom",
-      notes: "Installed copper helix in South-East cash counter. Reports positive uptick.",
-    },
-    {
-      id: "cli-4",
-      name: "Sunita Aggarwal",
-      phone: "+91 98140 33445",
-      totalSessions: 1,
-      totalSpend: "Free Kundli Lead",
-      lastConsulted: "28 Aug 2026",
-      lagna: "Virgo",
-      rashi: "Cancer",
-      primaryConcern: "Free Janam Kundli generated",
-      notes: "Timing aligned with Sun Mahadasha commencement.",
-    },
-  ];
-
   const filtered = clients.filter(
     (c) =>
       c.name?.toLowerCase().includes(search.toLowerCase()) ||
