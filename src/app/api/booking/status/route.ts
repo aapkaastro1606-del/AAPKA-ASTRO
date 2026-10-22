@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, getServerAuthUser } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { PlatformSettingsService } from "@/lib/services/platformSettingsService";
 
@@ -76,18 +76,7 @@ export async function GET(req: NextRequest) {
       // ignore
     }
 
-    if (!userIdentifier) {
-      const cookieAuth = getAuthFromRequest(req);
-      if (cookieAuth.isAuthenticated && cookieAuth.userId) {
-        userIdentifier = cookieAuth.userId;
-        userEmailAddress = cookieAuth.email;
-      }
-    }
-
-    const queryEmail = searchParams.get("userEmail");
-    const queryUserId = searchParams.get("userId");
-    if (!userIdentifier && queryUserId) userIdentifier = queryUserId;
-    if (!userEmailAddress && queryEmail) userEmailAddress = queryEmail;
+    // Unauthenticated query string overrides are strictly disabled for privacy
 
     if (!userIdentifier && !userEmailAddress) {
       return NextResponse.json(

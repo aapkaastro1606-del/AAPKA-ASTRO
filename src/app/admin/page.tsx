@@ -2,6 +2,8 @@ import React from "react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import { prisma } from "@/lib/db/prisma";
 import AdminHomeClient, { ActivityItem } from "./AdminHomeClient";
 
@@ -19,11 +21,19 @@ export default async function AdminHomePage() {
     redirect("/login?redirect_url=/admin");
   }
 
-  // Admin section strictly requires Owner or staff with active permissions
-  const hasAccess = auth.isOwner || (auth.permissions && auth.permissions.length > 0);
-
-  if (!hasAccess) {
-    redirect("/account");
+  // Canonical page check: identical to admin layout check
+  const decision = canAccessRoute(auth, "/admin");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Admin Control Centre"
+        message={decision.reason || "You don't have access to this section."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   // 1. Fetch pending approvals count (UPI verification queue)

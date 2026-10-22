@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
 import { cleanupExpiredUnansweredQuestions } from "@/lib/assistant/retriever";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +13,15 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const auth = await getServerAuthUser();
-    if (!auth.isAuthenticated || !auth.isOwner) {
+    if (!auth.isAuthenticated) {
       return NextResponse.json(
-        { success: false, error: "unauthorized", message: "Owner access required." },
+        { success: false, error: "unauthorized", message: "Authentication required." },
+        { status: 401 }
+      );
+    }
+    if (!auth.isOwner && !hasStaffSectionAccess(auth, "knowledge", "VIEW")) {
+      return NextResponse.json(
+        { success: false, error: "forbidden", message: "VIEW access to Chatbot Knowledge Base required." },
         { status: 403 }
       );
     }
@@ -73,9 +79,15 @@ const ActionSchema = z.discriminatedUnion("action", [
 export async function POST(req: NextRequest) {
   try {
     const auth = await getServerAuthUser();
-    if (!auth.isAuthenticated || !auth.isOwner) {
+    if (!auth.isAuthenticated) {
       return NextResponse.json(
-        { success: false, error: "unauthorized", message: "Owner access required." },
+        { success: false, error: "unauthorized", message: "Authentication required." },
+        { status: 401 }
+      );
+    }
+    if (!auth.isOwner && !hasStaffSectionAccess(auth, "knowledge", "MANAGE")) {
+      return NextResponse.json(
+        { success: false, error: "forbidden", message: "MANAGE access to Chatbot Knowledge Base required." },
         { status: 403 }
       );
     }
@@ -164,9 +176,15 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const auth = await getServerAuthUser();
-    if (!auth.isAuthenticated || !auth.isOwner) {
+    if (!auth.isAuthenticated) {
       return NextResponse.json(
-        { success: false, error: "unauthorized", message: "Owner access required." },
+        { success: false, error: "unauthorized", message: "Authentication required." },
+        { status: 401 }
+      );
+    }
+    if (!auth.isOwner && !hasStaffSectionAccess(auth, "knowledge", "MANAGE")) {
+      return NextResponse.json(
+        { success: false, error: "forbidden", message: "MANAGE access to Chatbot Knowledge Base required." },
         { status: 403 }
       );
     }

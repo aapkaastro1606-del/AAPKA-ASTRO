@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { hasStaffSectionAccess, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { ContentStudioService, ContentStudioData } from "@/lib/services/contentStudioService";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { seedContentModel } from "@/lib/content/contentSeeder";
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: parsed.error }, { status: parsed.status });
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateTableRow, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 
 interface KundliLeadItem {
   id: string;
@@ -71,6 +72,7 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
   const [deletingLead, setDeletingLead] = useState<KundliLeadItem | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -83,7 +85,17 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
       params.set("page", String(page));
       params.set("pageSize", "25");
 
+      setFetchError(null);
       const res = await fetch(`/api/admin/leads?${params.toString()}`);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setLeads([]);
+        setNotice({ type: "error", text: err.message || "Failed to load leads." });
+        return;
+      }
+
       const data = await res.json();
 
       if (data.success) {
@@ -93,10 +105,16 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
         if (data.stats) {
           setStats(data.stats);
         }
+        setFetchError(null);
       } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setLeads([]);
         setNotice({ type: "error", text: data.message || "Failed to load leads." });
       }
     } catch (err: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setLeads([]);
       setNotice({ type: "error", text: "Network error loading leads." });
     } finally {
       setLoading(false);
@@ -400,23 +418,20 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8D8C3]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#6E5545]">
-                      <div className="inline-flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin text-[#7B2D26]" />
-                        <span>Loading leads from PostgreSQL...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#6E5545]">
+                <DataStateTableRow
+                  colSpan={6}
+                  loading={loading}
+                  error={fetchError}
+                  isEmpty={leads.length === 0}
+                  onRetry={fetchLeads}
+                  loadingMessage="Loading verified Kundli leads from PostgreSQL database..."
+                  emptyView={
+                    <td colSpan={6} className="py-12 text-center text-xs text-[#6E5545]">
                       No Kundli leads matching your filters.
                     </td>
-                  </tr>
-                ) : (
-                  leads.map((lead) => (
+                  }
+                >
+                  {leads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-[#FBF3E7]/40 transition-colors">
                       {/* Seeker Name & Info */}
                       <td className="py-3.5 px-4">
@@ -506,8 +521,8 @@ export default function LeadsManagerClient({ userEmail }: LeadsManagerClientProp
                         </button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
+                </DataStateTableRow>
               </tbody>
             </table>
           </div>

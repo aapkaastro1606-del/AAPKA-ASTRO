@@ -46,7 +46,6 @@ import {
   ConsultationBooking,
 } from "@/lib/services/consultationBilling";
 import { BookingEmailService } from "@/lib/services/bookingEmailService";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
@@ -84,9 +83,7 @@ export default function ConsultPage() {
 
   // Booking & Payment State
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(() =>
-    ClientAccountStore.getActiveBooking()
-  );
+  const [confirmedBooking, setConfirmedBooking] = useState<ConsultationBooking | null>(null);
   const [showUpiModal, setShowUpiModal] = useState(false);
   const [upiBookingInfo, setUpiBookingInfo] = useState<{
     bookingId: string;
@@ -136,14 +133,9 @@ export default function ConsultPage() {
     const currentStatus = AstrologerStateStore.getStatus();
     const currentQueue = AstrologerStateStore.getQueue();
     const currentSession = AstrologerStateStore.getActiveSession();
-    const currentActiveBooking = ClientAccountStore.getActiveBooking();
-
     setStatus(currentStatus);
     setQueue(currentQueue);
     setActiveSession(currentSession);
-    if (currentActiveBooking && !confirmedBooking) {
-      setConfirmedBooking(currentActiveBooking);
-    }
 
     if (currentSession) {
       setMessages(AstrologerStateStore.getMessages(currentSession.id));
@@ -233,47 +225,8 @@ export default function ConsultPage() {
       const bookingRef = data.bookingId;
       const chargedAmount = data.amount;
 
-      // 2. Register local booking records for immediate optimistic UI
-      const booking = ConsultationBookingService.createBooking({
-        userId: user?.id || `user_${Date.now()}`,
-        clientName: userName,
-        phone: userPhone,
-        productId: selectedProduct,
-        format: consultFormat,
-        topic: topicText,
-        preferredSlot: "Direct WhatsApp / Google Meet Coordination",
-        dateOfBirth: isAstro ? birthDate : undefined,
-        timeOfBirth: isAstro ? birthTime : undefined,
-        placeOfBirth: isAstro ? birthPlace : undefined,
-        propertyType: !isAstro ? propertyType : undefined,
-        propertyLocation: !isAstro ? propertyCity : undefined,
-        isFirstTime: isAstro,
-      });
-
-      booking.bookingId = bookingRef;
-      booking.status = "CONFIRMED";
-      booking.orderId = bookingRef;
-      booking.confirmedAt = new Date().toISOString();
-
-      AstrologerStateStore.addConfirmedBooking({
-        id: `bk-${Date.now()}`,
-        bookingId: bookingRef,
-        userId: user?.id || `user_${Date.now()}`,
-        userName,
-        userPhone,
-        userEmail: userEmail || user?.primaryEmailAddress?.emailAddress || "",
-        productId: selectedProduct,
-        productName: data.serviceName,
-        format: consultFormat,
-        concern: topicText,
-        amountPaid: chargedAmount,
-        paymentStatus: "AWAITING_VERIFICATION",
-        bookingState: "CONFIRMED",
-        bookedAt: new Date().toISOString(),
-        preferredSlot: "Immediate Next Window",
-      });
-
-      ClientAccountStore.setActiveBooking(booking);
+      // Note: The server creates the booking as PENDING_PAYMENT.
+      // The browser never sets status or registers mock confirmed state in ClientAccountStore.
 
       setUpiBookingInfo({
         bookingId: bookingRef,
@@ -314,7 +267,7 @@ export default function ConsultPage() {
       AstrologerStateStore.endSession();
       setActiveSession(null);
       setSessionSeconds(0);
-      ClientAccountStore.setActiveBooking(null);
+      
       setConfirmedBooking(null);
     }
   };
@@ -351,7 +304,6 @@ export default function ConsultPage() {
             booking={confirmedBooking}
             onReset={() => {
               setConfirmedBooking(null);
-              ClientAccountStore.setActiveBooking(null);
             }}
           />
         ) : (
@@ -942,8 +894,14 @@ export default function ConsultPage() {
             isOpen={showUpiModal}
             onClose={() => {
               setShowUpiModal(false);
-              const active = ClientAccountStore.getActiveBooking();
-              if (active) setConfirmedBooking(active);
+              if (upiBookingInfo?.bookingId) {
+                fetch(`/api/booking/status?bookingId=${encodeURIComponent(upiBookingInfo.bookingId)}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success && data.booking) setConfirmedBooking(data.booking);
+                  })
+                  .catch(() => {});
+              }
             }}
             bookingId={upiBookingInfo.bookingId}
             amount={upiBookingInfo.amount}
@@ -952,8 +910,14 @@ export default function ConsultPage() {
             clientName={userName}
             clientPhone={userPhone}
             onPaymentSubmitted={() => {
-              const active = ClientAccountStore.getActiveBooking();
-              if (active) setConfirmedBooking(active);
+              if (upiBookingInfo?.bookingId) {
+                fetch(`/api/booking/status?bookingId=${encodeURIComponent(upiBookingInfo.bookingId)}`)
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success && data.booking) setConfirmedBooking(data.booking);
+                  })
+                  .catch(() => {});
+              }
             }}
           />
         )}

@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import PricingManagerClient from "./PricingManagerClient";
 
 export const dynamic = "force-dynamic";
 
 /**
  * /admin/pricing
- * Server Component enforcing section-level RBAC for Consultation Pricing.
- * - Owner always passes automatically.
- * - Staff member requires active VIEW grant on "pricing".
- * - Passing canManage={true|false} signals whether mutations (updating rates/discounts) are authorized.
+ * Server Component enforcing Area 2 (Payment settings, pricing, leads, team, diagnostics, legal pages).
+ * Owner: Yes, Staff: No, Client: No.
  */
 export default async function AdminPricingPage() {
   const auth = await getServerAuthUser();
@@ -18,9 +18,19 @@ export default async function AdminPricingPage() {
     redirect("/login?redirect_url=/admin/pricing");
   }
 
-  // Server-side check: Pricing is strictly Owner-only
-  if (!auth.isOwner) {
-    redirect(auth.permissions.length > 0 ? "/dashboard" : "/account");
+  // Canonical permission check: Owner Only
+  const decision = canAccessRoute(auth, "/admin/pricing");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Pricing & Coupons"
+        message={decision.reason || "You don't have access to this section. Pricing and discount management is strictly reserved for the Platform Owner."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   return <PricingManagerClient canManage={true} />;

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateUserConsultationRate } from "@/lib/services/consultationDiscountService";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await getServerAuthUser();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId") || "usr_client_demo";
+    const candidateUserId = searchParams.get("userId");
+    const userId = auth.isAuthenticated ? (auth.dbUserId || auth.userId || "guest") : (candidateUserId || "guest");
     const productId = (searchParams.get("product") as "astro" | "vaastu") || "astro";
     const type = searchParams.get("type") || "voice";
 

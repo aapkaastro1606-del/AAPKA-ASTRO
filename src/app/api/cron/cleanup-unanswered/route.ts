@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { cleanupExpiredUnansweredQuestions } from "@/lib/assistant/retriever";
 
@@ -18,7 +18,7 @@ async function handleCleanup(req: NextRequest) {
     const isCronAuthorized =
       Boolean(process.env.CRON_SECRET) && bearerSecret === process.env.CRON_SECRET;
 
-    const auth = getAuthFromRequest(req);
+    const auth = await getServerAuthUser();
     const isOwnerAuthorized = auth.isAuthenticated && isOwnerEmail(auth.email);
 
     if (!isCronAuthorized && !isOwnerAuthorized) {

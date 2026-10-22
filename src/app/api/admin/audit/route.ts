@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 import { checkAdminRateLimit } from "@/lib/admin/rateLimitAndValidation";
 
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -69,7 +69,10 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     console.error("GET /api/admin/audit error:", err);
     return NextResponse.json(
-      { success: false, message: "Failed to load audit logs", error: err.message },
+      {
+        success: false,
+        message: err.message || "Failed to load audit logs.",
+      },
       { status: 500 }
     );
   }

@@ -53,6 +53,7 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [screenshotUploaded, setScreenshotUploaded] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   // Dynamic payment settings loaded from database
   const [paymentSettings, setPaymentSettings] = useState({
@@ -183,8 +184,9 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   // 4. Transitions UI to status page ("Payment received for verification. Promise no time.")
   const handleIHavePaid = async () => {
     setClaiming(true);
+    setClaimError(null);
     try {
-      await fetch("/api/booking/claim", {
+      const res = await fetch("/api/booking/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -192,10 +194,13 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
           utr: utrInput.trim() || undefined,
         }),
       });
-    } catch (e) {
-      console.warn("Claim API dispatch completed:", e);
-    } finally {
-      setClaiming(false);
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setClaimError(data.message || "Failed to submit payment claim. Please check your details and try again.");
+        return;
+      }
+
       setStep("CLAIMED");
 
       // Open WhatsApp with prefilled message
@@ -206,6 +211,10 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
       if (onPaymentSubmitted) {
         onPaymentSubmitted();
       }
+    } catch (e: any) {
+      setClaimError(e.message || "Network error. Failed to record payment claim.");
+    } finally {
+      setClaiming(false);
     }
   };
 
@@ -380,6 +389,11 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
 
               {/* Primary "I Have Paid" Button */}
               <div className="space-y-2.5 pt-1">
+                {claimError && (
+                  <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700 text-left font-medium">
+                    {claimError}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={handleIHavePaid}

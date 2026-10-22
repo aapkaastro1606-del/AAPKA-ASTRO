@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore, SavedKundli } from "@/lib/store/clientAccountStore";
+import type { SavedKundli } from "@/lib/store/clientAccountStore";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
 import {
@@ -21,9 +21,38 @@ import {
 
 export default function AccountKundliPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [savedKundlis, setSavedKundlis] = useState<SavedKundli[]>(() =>
-    ClientAccountStore.getSavedKundlis()
-  );
+  const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadKundlis = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/account/data");
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setLoadError("Your session expired or you don't have access. Sign in again.");
+        } else {
+          setLoadError("Could not load saved Kundlis. Please retry.");
+        }
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.kundlis) {
+        setSavedKundlis(data.kundlis);
+      }
+    } catch {
+      setLoadError("Could not load saved Kundlis. Please retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadKundlis();
+  }, []);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -43,34 +72,47 @@ export default function AccountKundliPage() {
     nakshatra: "Magha",
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to remove this saved chart?")) {
-      ClientAccountStore.deleteSavedKundli(id);
-      setSavedKundlis(ClientAccountStore.getSavedKundlis());
+      await fetch(`/api/account/data?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      loadKundlis();
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.birthDate || !formData.birthTime || !formData.birthPlace) {
       alert("Please fill in all birth coordinates.");
       return;
     }
 
-    ClientAccountStore.addSavedKundli(formData);
-    setSavedKundlis(ClientAccountStore.getSavedKundlis());
-    setShowAddModal(false);
-    setFormData({
-      name: "",
-      relation: "Other",
-      birthDate: "",
-      birthTime: "",
-      birthPlace: "",
-      gender: "Male",
-      lagna: "Taurus (Vrishabha)",
-      rashi: "Moon Sign",
-      nakshatra: "Rohini",
-    });
+    try {
+      const res = await fetch("/api/account/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadKundlis();
+        setShowAddModal(false);
+        setFormData({
+          name: "",
+          relation: "Other" as SavedKundli["relation"],
+          birthDate: "",
+          birthTime: "",
+          birthPlace: "",
+          gender: "Male" as SavedKundli["gender"],
+          lagna: "Taurus (Vrishabha)",
+          rashi: "Moon Sign",
+          nakshatra: "Rohini",
+        });
+      } else {
+        alert(data.message || "Failed to save Kundli.");
+      }
+    } catch {
+      alert("Network error saving chart. Please try again.");
+    }
   };
 
   return (
@@ -109,7 +151,18 @@ export default function AccountKundliPage() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {savedKundlis.length === 0 ? (
+          {loadError ? (
+          <div className="rounded-3xl border border-red-200 bg-[#FFFDF9] p-8 text-center max-w-xl mx-auto shadow-sm">
+            <h3 className="font-temple text-lg font-bold text-red-800 mb-2">Could Not Load Kundlis</h3>
+            <p className="text-xs text-[#6E5545] mb-4">{loadError}</p>
+            <button
+              onClick={loadKundlis}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D]"
+            >
+              <span>Retry</span>
+            </button>
+          </div>
+        ) : savedKundlis.length === 0 ? (
             <div className="md:col-span-2 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-10 text-center space-y-4">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26]">
                 <FileText className="h-7 w-7 text-[#C1662F]" />

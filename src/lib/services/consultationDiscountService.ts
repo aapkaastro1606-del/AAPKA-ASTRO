@@ -63,10 +63,18 @@ export async function calculateUserConsultationRate(
 
   try {
     if (userId && userId !== "guest") {
+      const dbUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: userId }, { clerkId: userId }],
+        },
+        select: { id: true },
+      });
+      const targetUserId = dbUser ? dbUser.id : userId;
+
       const priorSessionCount = await prisma.session.count({
         where: {
-          clientId: userId,
-          paymentStatus: { in: ["CONFIRMED", "COMPLETED"] },
+          clientId: targetUserId,
+          bookingStatus: { in: ["CONFIRMED", "SCHEDULED", "COMPLETED"] },
         },
       });
 

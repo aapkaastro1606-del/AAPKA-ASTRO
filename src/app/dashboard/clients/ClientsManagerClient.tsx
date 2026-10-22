@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { DataStateTableRow, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import {
   Users,
   Search,
@@ -17,19 +18,39 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
   const [search, setSearch] = useState("");
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
 
-  React.useEffect(() => {
+  const fetchClients = () => {
+    setLoading(true);
+    setFetchError(null);
     fetch("/api/dashboard/clients")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.clients?.length > 0) {
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const err = parseFetchError(res, errData);
+          setFetchError(err);
+          setClients([]);
+          return;
+        }
+        const data = await res.json();
+        if (data.success && Array.isArray(data.clients)) {
           setClients(data.clients);
+          setFetchError(null);
         } else {
-          setClients(fallbackClients);
+          const err = parseFetchError(res, data);
+          setFetchError(err);
+          setClients([]);
         }
       })
-      .catch(() => setClients(fallbackClients))
+      .catch(() => {
+        setFetchError({ status: 500, message: "Could not load. Retry." });
+        setClients([]);
+      })
       .finally(() => setLoading(false));
+  };
+
+  React.useEffect(() => {
+    fetchClients();
   }, []);
 
   const fallbackClients = [
@@ -149,7 +170,20 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8D8C3]">
-                {filtered.map((client) => (
+                <DataStateTableRow
+                  colSpan={5}
+                  loading={loading}
+                  error={fetchError}
+                  isEmpty={filtered.length === 0}
+                  onRetry={fetchClients}
+                  loadingMessage="Loading client directory..."
+                  emptyView={
+                    <td colSpan={5} className="py-12 text-center text-xs text-[#6E5545]">
+                      No clients found matching your query.
+                    </td>
+                  }
+                >
+                  {filtered.map((client) => (
                   <tr key={client.id} className="hover:bg-[#FBF3E7]/50">
                     <td className="py-4 pr-4">
                       <div className="font-temple font-bold text-[#7B2D26] text-sm">
@@ -197,7 +231,8 @@ export default function ClientsManagerClient({ canManage }: ClientsManagerClient
                       </Link>
                     </td>
                   </tr>
-                ))}
+                  ))}
+                </DataStateTableRow>
               </tbody>
             </table>
           </div>

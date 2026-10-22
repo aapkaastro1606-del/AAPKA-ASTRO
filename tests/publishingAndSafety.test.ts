@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import { checkAdminRateLimit, parseAndValidateJsonBody } from "../src/lib/admin/rateLimitAndValidation";
 import { revalidateAffectedContent, CONTENT_CACHE_TAGS } from "../src/lib/content/revalidation";
-import { hasStaffSectionAccess, ServerAuthResult } from "../src/lib/auth/serverAuth";
+import { hasStaffSectionAccess, ServerAuthResult, __setTestAuthUser } from "../src/lib/auth/serverAuth";
 import { isOwnerEmail } from "../src/lib/auth/staffPermissions";
 import { GET as pricingGet, POST as pricingPost } from "../src/app/api/admin/pricing/route";
 import { GET as paymentGet, POST as paymentPost } from "../src/app/api/admin/payment-settings/route";
@@ -176,6 +176,7 @@ describe("Publishing & Safety Verification Suite", () => {
     });
 
     it("POST /api/admin/pricing rejects non-owner staff with 403 Forbidden", async () => {
+      __setTestAuthUser(staffAuth);
       const req = new NextRequest("http://localhost:3000/api/admin/pricing", {
         method: "POST",
         headers: {
@@ -193,6 +194,7 @@ describe("Publishing & Safety Verification Suite", () => {
     });
 
     it("POST /api/admin/payment-settings rejects non-owner staff with 403 Forbidden", async () => {
+      __setTestAuthUser(staffAuth);
       const req = new NextRequest("http://localhost:3000/api/admin/payment-settings", {
         method: "POST",
         headers: {
@@ -210,6 +212,7 @@ describe("Publishing & Safety Verification Suite", () => {
     });
 
     it("GET /api/admin/audit rejects non-owner staff with 403 Forbidden", async () => {
+      __setTestAuthUser(staffAuth);
       const req = new NextRequest("http://localhost:3000/api/admin/audit", {
         headers: {
           cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(staffAuth))}`,
@@ -224,6 +227,7 @@ describe("Publishing & Safety Verification Suite", () => {
     });
 
     it("GET /api/admin/audit allows platform Owner with 200 OK", async () => {
+      __setTestAuthUser(ownerAuth);
       const req = new NextRequest("http://localhost:3000/api/admin/audit?limit=5", {
         headers: {
           cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(ownerAuth))}`,

@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
     }
 
     let syncedUser: any = null;
-    if (authUser.userId && authUser.userId !== "mock_user") {
+    const effectiveClerkId = authUser.clerkId || authUser.userId;
+    if (effectiveClerkId && effectiveClerkId !== "mock_user") {
       syncedUser = await syncClerkUserToDatabase({
-        clerkId: authUser.userId,
+        clerkId: effectiveClerkId,
         email: authUser.email,
         name: null,
       });

@@ -1,7 +1,9 @@
 import React from "react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerAuthUser, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute, canAccessSection } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { isPublicStorageConfigured } from "@/lib/storage/r2PublicStorage";
 import MediaLibraryClient from "./MediaLibraryClient";
@@ -20,12 +22,22 @@ export default async function AdminMediaPage() {
     redirect("/login?redirect_url=/admin/media");
   }
 
-  const canView = auth.isOwner || hasStaffSectionAccess(auth, "content", "VIEW");
-  if (!canView) {
-    redirect("/admin");
+  // Canonical permission check: Owner or Staff with 'content' permission
+  const decision = canAccessRoute(auth, "/admin/media");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Media Library"
+        message={decision.reason || "You don't have access to this section. Your account requires the 'content' permission."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
-  const canManage = auth.isOwner || hasStaffSectionAccess(auth, "content", "MANAGE");
+  const canManage = auth.isOwner || canAccessSection(auth, "content", "MANAGE");
   const storageConfig = isPublicStorageConfigured();
 
   // Load initial media assets with usage analysis

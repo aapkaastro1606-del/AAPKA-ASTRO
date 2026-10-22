@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import { evaluateRouteAccess } from "../src/lib/auth/roles";
 import { hasSectionAccess, StaffGrant } from "../src/lib/auth/staffPermissions";
-import { hasStaffSectionAccess } from "../src/lib/auth/serverAuth";
+import { hasStaffSectionAccess, __setTestAuthUser } from "../src/lib/auth/serverAuth";
 import {
   GET as blogGet,
   POST as blogPost,
@@ -185,6 +185,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
   };
 
   test("GET /api/dashboard/blog succeeds (200 OK) for staff with blog:VIEW", async () => {
+    __setTestAuthUser(staffBlogView);
     const req = new NextRequest("http://localhost:3000/api/dashboard/blog", {
       headers: {
         cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(staffBlogView))}`,
@@ -199,6 +200,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
   });
 
   test("POST /api/dashboard/blog rejects (403 Forbidden) for staff with only blog:VIEW", async () => {
+    __setTestAuthUser(staffBlogView);
     const req = new NextRequest("http://localhost:3000/api/dashboard/blog", {
       method: "POST",
       headers: {
@@ -219,6 +221,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
   });
 
   test("DELETE /api/dashboard/blog rejects (403 Forbidden) for staff with only blog:VIEW", async () => {
+    __setTestAuthUser(staffBlogView);
     const req = new NextRequest("http://localhost:3000/api/dashboard/blog?id=blog-1", {
       method: "DELETE",
       headers: {
@@ -234,6 +237,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
   });
 
   test("POST /api/dashboard/blog succeeds (200 OK) for staff with blog:MANAGE", async () => {
+    __setTestAuthUser(staffBlogManage);
     const req = new NextRequest("http://localhost:3000/api/dashboard/blog", {
       method: "POST",
       headers: {
@@ -255,6 +259,7 @@ describe("Server-Side API Enforcement for VIEW vs MANAGE Operations", () => {
   });
 
   test("POST /api/dashboard/blog succeeds (200 OK) for platform Owner", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const req = new NextRequest("http://localhost:3000/api/dashboard/blog", {
       method: "POST",
       headers: {
@@ -301,6 +306,7 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
   };
 
   test("GET /api/admin/pricing rejects (403 Forbidden) non-owner staff as pricing is strictly Owner-only", async () => {
+    __setTestAuthUser(staffPricingView);
     const req = new NextRequest("http://localhost:3000/api/admin/pricing", {
       headers: {
         cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(staffPricingView))}`,
@@ -315,6 +321,7 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
   });
 
   test("POST /api/admin/pricing rejects (403 Forbidden) non-owner staff as pricing is strictly Owner-only", async () => {
+    __setTestAuthUser(staffPricingView);
     const req = new NextRequest("http://localhost:3000/api/admin/pricing", {
       method: "POST",
       headers: {
@@ -332,6 +339,7 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
   });
 
   test("GET & POST /api/admin/pricing succeeds (200 OK) for platform Owner", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const reqGet = new NextRequest("http://localhost:3000/api/admin/pricing", {
       headers: {
         cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(ownerUser))}`,
@@ -353,6 +361,7 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
   });
 
   test("GET /api/dashboard/reels allows staff with reels:VIEW", async () => {
+    __setTestAuthUser(staffReelsView);
     const req = new NextRequest("http://localhost:3000/api/dashboard/reels", {
       headers: {
         cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(staffReelsView))}`,
@@ -367,6 +376,7 @@ describe("Server-Side API Enforcement for Pricing and Reels Sections", () => {
   });
 
   test("POST /api/dashboard/reels rejects (403 Forbidden) staff with only reels:VIEW", async () => {
+    __setTestAuthUser(staffReelsView);
     const req = new NextRequest("http://localhost:3000/api/dashboard/reels", {
       method: "POST",
       headers: {

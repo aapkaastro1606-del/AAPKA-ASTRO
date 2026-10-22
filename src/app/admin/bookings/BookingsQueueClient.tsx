@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { useSession } from "@/components/auth/ClerkAuthWrapper";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -28,6 +29,7 @@ import {
   Eye,
 } from "lucide-react";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 
 interface BookingItem {
   id: string;
@@ -71,6 +73,7 @@ interface PaymentSettingsData {
 }
 
 export default function BookingsQueueClient({ userEmail }: { userEmail: string }) {
+  const { session } = useSession();
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -105,19 +108,42 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     unpaidExpiryDays: 2,
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
+
+  const getAuthHeaders = (): Record<string, string> => {
+    return { "Content-Type": "application/json" };
+  };
 
   const fetchBookings = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
-      const res = await fetch(`/api/admin/bookings?status=${activeTab}&search=${encodeURIComponent(search)}`);
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/bookings?status=${activeTab}&search=${encodeURIComponent(search)}`, { headers });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setBookings([]);
+        setFeedback({ type: "error", text: err.message || "Failed to load bookings queue." });
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         setBookings(data.bookings || []);
         setCounts(data.counts || {});
+        setFetchError(null);
       } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setBookings([]);
         setFeedback({ type: "error", text: data.message || "Failed to load bookings queue." });
       }
     } catch (e: any) {
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setBookings([]);
       setFeedback({ type: "error", text: e.message || "Failed to reach bookings API." });
     } finally {
       setLoading(false);
@@ -126,13 +152,18 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
 
   const fetchPaymentSettings = async () => {
     try {
-      const res = await fetch("/api/admin/payment-settings");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/payment-settings", { headers });
+      if (!res.ok) {
+        setFeedback({ type: "error", text: "Could not load payment routing settings. Retry." });
+        return;
+      }
       const data = await res.json();
       if (data.success && data.settings) {
         setPaymentSettings(data.settings);
       }
-    } catch (e) {
-      console.warn("Failed to fetch payment settings:", e);
+    } catch (e: any) {
+      setFeedback({ type: "error", text: "Could not load payment routing settings. Retry." });
     }
   };
 
@@ -159,7 +190,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "approve",
           bookingId: selectedBooking.bookingId,
@@ -198,7 +229,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "schedule",
           bookingId: selectedBooking.bookingId,
@@ -224,6 +255,36 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     }
   };
 
+  // Action: Owner Cancel
+  const handleOwnerCancel = async (booking: BookingItem) => {
+    const reason = prompt(`Cancel booking ${booking.bookingId}? Enter reason:`, "Cancelled by Owner");
+    if (reason === null) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          action: "cancel",
+          bookingId: booking.bookingId,
+          reason: reason.trim() || "Cancelled by Owner",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFeedback({ type: "success", text: `Booking ${booking.bookingId} cancelled.` });
+        fetchBookings();
+      } else {
+        setFeedback({ type: "error", text: data.message || "Failed to cancel booking." });
+      }
+    } catch (e: any) {
+      setFeedback({ type: "error", text: e.message || "Cancel request failed." });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Action: Complete
   const handleComplete = async (booking: BookingItem) => {
     if (!confirm(`Mark consultation ${booking.bookingId} as COMPLETED?`)) return;
@@ -232,7 +293,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "complete",
           bookingId: booking.bookingId,
@@ -264,7 +325,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "reject",
           bookingId: selectedBooking.bookingId,
@@ -294,7 +355,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           action: "refund",
           bookingId: selectedBooking.bookingId,
@@ -325,7 +386,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
     try {
       const res = await fetch("/api/admin/payment-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(paymentSettings),
       });
       const data = await res.json();
@@ -469,12 +530,13 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
         <div className="flex flex-wrap items-center gap-2 border-b border-[#E8D8C3] pb-3">
           {[
             { id: "ALL", label: "All Bookings" },
-            { id: "PAYMENT_CLAIMED", label: "Needs Verification (Claimed)", alert: true },
+            { id: "PAYMENT_CLAIMED", label: "Needs Verification", alert: true },
             { id: "PENDING_PAYMENT", label: "Awaiting Seeker Payment" },
             { id: "CONFIRMED", label: "Confirmed (Ready to Schedule)" },
             { id: "SCHEDULED", label: "Scheduled Sessions" },
             { id: "COMPLETED", label: "Completed" },
             { id: "REJECTED", label: "Rejected" },
+            { id: "CANCELLED", label: "Cancelled" },
           ].map((tab) => {
             const count = counts[tab.id] || 0;
             const isActive = activeTab === tab.id;
@@ -529,20 +591,22 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
         </form>
 
         {/* Bookings Queue List */}
-        {loading ? (
-          <div className="p-12 text-center text-[#6E5545] text-xs">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[#7B2D26]" />
-            Loading verification queue from PostgreSQL database...
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="p-12 rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FFFDF9] text-center max-w-lg mx-auto">
-            <CheckCircle2 className="h-10 w-10 text-[#6B8E5A] mx-auto mb-2" />
-            <h3 className="font-temple text-base font-bold text-[#7B2D26]">Queue is Up to Date</h3>
-            <p className="text-xs text-[#6E5545] mt-1">
-              No bookings found matching filter <span className="font-bold font-mono">[{activeTab}]</span>.
-            </p>
-          </div>
-        ) : (
+        <DataStateView
+          loading={loading}
+          error={fetchError}
+          isEmpty={bookings.length === 0}
+          onRetry={fetchBookings}
+          loadingMessage="Loading verification queue from PostgreSQL database..."
+          emptyView={
+            <div className="p-12 rounded-2xl border border-dashed border-[#E8D8C3] bg-[#FFFDF9] text-center max-w-lg mx-auto">
+              <CheckCircle2 className="h-10 w-10 text-[#6B8E5A] mx-auto mb-2" />
+              <h3 className="font-temple text-base font-bold text-[#7B2D26]">Queue is Up to Date</h3>
+              <p className="text-xs text-[#6E5545] mt-1">
+                No bookings found matching filter <span className="font-bold font-mono">[{activeTab}]</span>.
+              </p>
+            </div>
+          }
+        >
           <div className="space-y-4">
             {bookings.map((booking) => {
               const cleanPhone = (booking.userPhone || "").replace(/[^0-9]/g, "");
@@ -816,6 +880,17 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
                         </>
                       )}
 
+                      {/* OWNER CANCEL ACTION */}
+                      {booking.bookingStatus !== "COMPLETED" && booking.bookingStatus !== "CANCELLED" && (
+                        <button
+                          type="button"
+                          onClick={() => handleOwnerCancel(booking)}
+                          className="px-2.5 py-1.5 text-stone-500 hover:text-rose-700 text-xs font-semibold"
+                        >
+                          Cancel
+                        </button>
+                      )}
+
                       {/* REFUND ACTION */}
                       {(booking.bookingStatus === "CONFIRMED" || booking.bookingStatus === "SCHEDULED") && (
                         <button
@@ -835,7 +910,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
               );
             })}
           </div>
-        )}
+        </DataStateView>
       </div>
 
       {/* MODAL 1: APPROVE PAYMENT */}

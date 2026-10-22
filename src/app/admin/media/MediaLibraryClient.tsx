@@ -22,6 +22,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { DataStateView, parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import { CharacterCount } from "@/components/content/CharacterCount";
 import { optimizeImageClient, OptimizationResult } from "@/lib/media/imageOptimizer";
 import { StorageConfigStatus, MAX_IMAGE_SIZE_BYTES } from "@/lib/storage/r2PublicStorage";
@@ -83,18 +84,37 @@ export default function MediaLibraryClient({
     error: null,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<DataStateError | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Refresh assets
   const refreshAssets = async () => {
+    setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/media");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const err = parseFetchError(res, errData);
+        setFetchError(err);
+        setAssets([]);
+        return;
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.assets)) {
         setAssets(data.assets);
+        setFetchError(null);
+      } else {
+        const err = parseFetchError(res, data);
+        setFetchError(err);
+        setAssets([]);
       }
     } catch (e) {
-      console.error("Failed to refresh media assets:", e);
+      setFetchError({ status: 500, message: "Could not load. Retry." });
+      setAssets([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -448,19 +468,26 @@ export default function MediaLibraryClient({
         </div>
 
         {/* Media Grid */}
-        {filteredAssets.length === 0 ? (
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center">
-            <div className="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto mb-3">
-              <ImageIcon className="w-6 h-6" />
+        <DataStateView
+          loading={loading}
+          error={fetchError}
+          isEmpty={filteredAssets.length === 0}
+          onRetry={refreshAssets}
+          loadingMessage="Loading media assets..."
+          emptyView={
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center">
+              <div className="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-medium text-slate-300">No media assets found</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                {searchQuery
+                  ? `No images match your search "${searchQuery}".`
+                  : "No photos uploaded yet in this category."}
+              </p>
             </div>
-            <h3 className="text-base font-medium text-slate-300">No media assets found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              {searchQuery
-                ? `No images match your search "${searchQuery}".`
-                : "No photos uploaded yet in this category."}
-            </p>
-          </div>
-        ) : (
+          }
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredAssets.map((asset) => (
               <div
@@ -599,7 +626,7 @@ export default function MediaLibraryClient({
               </div>
             ))}
           </div>
-        )}
+        </DataStateView>
 
         {/* Upload Modal */}
         {isUploadOpen && (

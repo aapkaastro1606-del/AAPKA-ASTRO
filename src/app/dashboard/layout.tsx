@@ -1,6 +1,8 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +17,19 @@ export default async function DashboardLayout({
     redirect("/login?redirect_url=/dashboard");
   }
 
-  // Operator Cockpit & Desks require Owner status or at least one active staff section permission
-  const hasAccess = auth.isOwner || auth.permissions.length > 0 || auth.role === "ASTROLOGER";
-
-  if (!hasAccess) {
-    redirect("/account");
+  // Canonical layout check
+  const decision = canAccessRoute(auth, "/dashboard");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Operator Cockpit"
+        message={decision.reason || "You don't have access to this section. Operator areas are restricted to authorized staff and practitioners."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   return <>{children}</>;

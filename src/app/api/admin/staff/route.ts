@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import {
   StaffPermissionService,
-  STAFF_SECTIONS,
-  StaffSection,
   isOwnerEmail,
 } from "@/lib/auth/staffPermissions";
+import {
+  STAFF_GRANTABLE_SECTIONS,
+  isGrantableStaffSection,
+  StaffSection,
+} from "@/lib/auth/permissionPolicy";
 
 /**
  * GET /api/admin/staff
@@ -13,7 +16,7 @@ import {
  * Strictly gated to platform Owner.
  */
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   // Strictly gate to Owner
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
@@ -31,7 +34,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       staff,
-      availableSections: STAFF_SECTIONS,
+      availableSections: STAFF_GRANTABLE_SECTIONS,
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -47,13 +50,13 @@ export async function GET(req: NextRequest) {
  * Body: { email: string, sections: StaffSection[] }
  */
 export async function POST(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
     return NextResponse.json(
       {
         success: false,
-        message: "Forbidden: Platform Owner privilege required to configure staff permissions.",
+        message: "Forbidden: Platform Owner privilege required to manage staff permissions.",
       },
       { status: 403 }
     );
@@ -63,9 +66,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, sections } = body;
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
+    if (!email || typeof email !== "string") {
       return NextResponse.json(
         { success: false, message: "Valid employee email is required." },
+        { status: 400 }
+      );
+    }
+
+    if (isOwnerEmail(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "The platform owner has permanent, unrestricted access and cannot be assigned scoped permissions.",
+        },
         { status: 400 }
       );
     }
@@ -77,10 +90,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Filter valid section IDs
-    const validSectionIds = STAFF_SECTIONS.map((s) => s.id);
+    // Strictly forbid assigning owner-only sections to staff (e.g. bookings, pricing, leads, staff)
+    const invalidRequested = sections.filter((s: string) => !isGrantableStaffSection(s));
+    if (invalidRequested.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Cannot assign owner-only sections to staff: ${invalidRequested.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
     const sanitizedSections = sections.filter((s: string) =>
-      validSectionIds.includes(s as StaffSection)
+      isGrantableStaffSection(s)
     ) as StaffSection[];
 
     await StaffPermissionService.setPermissions(
@@ -106,11 +129,11 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/admin/staff
- * Revokes all staff permissions for a given email.
- * Body: { email: string } or Query: ?email=...
+ * Revokes all section permissions for a staff member.
+ * Query param: ?email=...
  */
 export async function DELETE(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated || (!auth.isOwner && auth.role !== "OWNER")) {
     return NextResponse.json(
@@ -123,32 +146,33 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    let email = req.nextUrl.searchParams.get("email");
-    if (!email) {
-      const body = await req.json().catch(() => ({}));
-      email = body.email;
-    }
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
 
     if (!email) {
       return NextResponse.json(
-        { success: false, message: "Email is required to revoke permissions." },
+        { success: false, message: "Target employee email is required as query param." },
         { status: 400 }
       );
     }
 
     if (isOwnerEmail(email)) {
       return NextResponse.json(
-        { success: false, message: "Cannot revoke permissions for the platform Owner account." },
+        {
+          success: false,
+          message: "Cannot revoke permissions for the platform owner.",
+        },
         { status: 400 }
       );
     }
 
-    await StaffPermissionService.revokeStaff(email);
+    await StaffPermissionService.revokeAll(email, auth.email || "Owner");
+
     const updatedStaff = await StaffPermissionService.listStaffMembers();
 
     return NextResponse.json({
       success: true,
-      message: `Permissions successfully revoked for ${email}`,
+      message: `All permissions revoked successfully for ${email}`,
       staff: updatedStaff,
     });
   } catch (error: any) {

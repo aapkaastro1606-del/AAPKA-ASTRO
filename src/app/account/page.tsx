@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { AstrologerStateStore } from "@/lib/store/astrologerStore";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -28,11 +26,11 @@ import {
 
 export default function ClientAccountDashboard() {
   const { user, isLoaded } = useUser();
-  const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
-  const profile = ClientAccountStore.getProfile();
-  const savedKundlis = ClientAccountStore.getSavedKundlis();
-  const consultations = ClientAccountStore.getConsultationHistory();
-  const astrologerStatus = AstrologerStateStore.getStatus();
+  const [activeBooking, setActiveBooking] = useState<any>(null);
+  const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const astrologerStatus = "AVAILABLE";
 
   const displayName =
     user?.fullName ||
@@ -40,7 +38,7 @@ export default function ClientAccountDashboard() {
     (user as any)?.username ||
     user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
     "Seeker";
-  const displayEmail = user?.primaryEmailAddress?.emailAddress || profile.email;
+  const displayEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isOwner =
     displayEmail?.toLowerCase() ===
     (process.env.NEXT_PUBLIC_OWNER_EMAIL?.toLowerCase() || "aapkaastro1606@gmail.com");
@@ -53,25 +51,27 @@ export default function ClientAccountDashboard() {
   }, [isLoaded, user]);
 
   useEffect(() => {
-    const sync = () => {
-      const email = user?.primaryEmailAddress?.emailAddress;
-      const params = new URLSearchParams();
-      if (email) params.set("userEmail", email);
-      if (user?.id) params.set("userId", user.id);
-      const qs = params.toString() ? `?${params.toString()}` : "";
-
-      fetch(`/api/booking/status${qs}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.booking) {
-            setActiveBooking(data.booking);
+    const sync = async () => {
+      try {
+        const res = await fetch("/api/account/data");
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            setLoadError("Your session expired or you don't have access. Sign in again.");
           } else {
-            setActiveBooking(ClientAccountStore.getActiveBooking());
+            setLoadError("Could not load account data. Please retry.");
           }
-        })
-        .catch(() => {
-          setActiveBooking(ClientAccountStore.getActiveBooking());
-        });
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          setActiveBooking(data.activeBooking || null);
+          setSavedKundlis(data.kundlis || []);
+          setConsultations(data.consultations || []);
+          setLoadError(null);
+        }
+      } catch {
+        setLoadError("Could not load account data. Please retry.");
+      }
     };
     sync();
     window.addEventListener("astro_state_changed", sync);
@@ -90,6 +90,29 @@ export default function ClientAccountDashboard() {
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
+        {loadError && (
+          <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-xs text-red-700 flex items-center justify-between gap-3">
+            <span>{loadError}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("astro_state_changed"));
+                }}
+                className="font-bold underline hover:no-underline cursor-pointer"
+              >
+                Retry
+              </button>
+              <span>•</span>
+              <Link
+                href="/login?redirect_url=/account"
+                className="font-bold underline hover:no-underline"
+              >
+                Sign In Again
+              </Link>
+            </div>
+          </div>
+        )}
         {/* Top Profile Banner */}
         <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -122,7 +145,7 @@ export default function ClientAccountDashboard() {
                 )}
               </div>
               <p className="text-xs text-[#6E5545] mt-1">
-                {displayEmail} {(user as any)?.createdAt ? `• Member since ${new Date((user as any).createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}` : profile.joinedDate ? `• Member since ${profile.joinedDate}` : ""}
+                {displayEmail} {(user as any)?.createdAt ? `• Member since ${new Date((user as any).createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}` : ""}
               </p>
             </div>
           </div>
@@ -274,7 +297,7 @@ export default function ClientAccountDashboard() {
                       {(activeBooking.bookingStatus || activeBooking.status) === "SCHEDULED"
                         ? "SESSION SCHEDULED"
                         : (activeBooking.bookingStatus || activeBooking.status) === "PAYMENT_CLAIMED"
-                        ? "VERIFYING PAYMENT"
+                        ? "NEEDS VERIFICATION"
                         : (activeBooking.bookingStatus || activeBooking.status) === "PENDING_PAYMENT"
                         ? "AWAITING PAYMENT"
                         : (activeBooking.bookingStatus || activeBooking.status) === "COMPLETED"

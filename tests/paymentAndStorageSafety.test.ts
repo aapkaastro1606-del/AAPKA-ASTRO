@@ -14,6 +14,7 @@ import { stripExifData, stripJpegExif, stripPngExif } from "../src/lib/utils/ima
 import { S3StorageProvider } from "../src/lib/providers/storage/S3StorageProvider";
 import { MockStorageProvider } from "../src/lib/providers/storage/MockStorageProvider";
 import { GET as diagnosticsHandler } from "../src/app/api/admin/diagnostics/route";
+import { __setTestAuthUser } from "../src/lib/auth/serverAuth";
 import { NextRequest } from "next/server";
 
 describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () => {
@@ -73,6 +74,7 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
   });
 
   test("3. Diagnostics endpoint returns payee name, masked UPI ID, and storage configuration", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerCookie = encodeURIComponent(
       JSON.stringify({
         role: "OWNER",
@@ -238,7 +240,7 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
   });
 
   test("8. Duplicate UTR submission across bookings is strictly blocked", async () => {
-    const testUtr = `UTR-UNIQUE-${Date.now()}`;
+    const testUtr = "6289" + String(Date.now()).slice(-8);
     const userA = `user-a-${Date.now()}`;
     const userB = `user-b-${Date.now()}`;
 

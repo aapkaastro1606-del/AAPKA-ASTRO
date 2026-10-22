@@ -214,7 +214,6 @@ export default function AdminHomeClient({
       count: unansweredChatCount,
       badge: unansweredChatCount > 0 ? `${unansweredChatCount} New Qs` : undefined,
       section: "knowledge",
-      ownerOnly: true,
       accent: "purple",
     },
     {

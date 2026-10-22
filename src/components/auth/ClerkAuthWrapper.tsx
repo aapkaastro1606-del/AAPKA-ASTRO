@@ -9,6 +9,7 @@ import {
   SignUp as RealSignUp,
   useUser as useRealUser,
   useAuth as useRealAuth,
+  useSession as useRealSession,
 } from "@clerk/nextjs";
 import { LogIn, Sparkles } from "lucide-react";
 import { isClerkConfigured } from "@/lib/auth/clerkConfig";
@@ -148,3 +149,4 @@ export const SignUp: React.FC<any> = (props) => {
 
 export const useUser = useRealUser;
 export const useAuth = useRealAuth;
+export const useSession = useRealSession;

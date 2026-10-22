@@ -8,7 +8,7 @@ import {
   evaluateRouteAccess,
 } from "../src/lib/auth/roles";
 import { isOwnerEmail } from "../src/lib/auth/staffPermissions";
-import { getAuthFromRequest } from "../src/lib/auth/serverAuth";
+import { getAuthFromRequest, getServerAuthUser, __setTestAuthUser } from "../src/lib/auth/serverAuth";
 import { NextRequest } from "next/server";
 import { POST as presencePost } from "../src/app/api/astrologer/presence/route";
 import { GET as staffGet } from "../src/app/api/admin/staff/route";
@@ -171,33 +171,29 @@ describe("Role-Based Access Control (RBAC) - Request & Cookie Extraction", () =>
     assert.strictEqual(auth.role, null);
   });
 
-  test("getAuthFromRequest correctly recognizes client session cookie and denies staff access", () => {
+  test("getAuthFromRequest rejects client session cookie and denies mock cookies", () => {
     const req = new NextRequest("http://localhost:3000/dashboard", {
       headers: {
         cookie: "aapka_astro_session=active; aapka_astro_role=CLIENT",
       },
     });
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    assert.strictEqual(auth.role, "CLIENT");
-    assert.strictEqual(auth.isAstrologer, false);
-    assert.strictEqual(auth.isAdmin, false);
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.role, null);
   });
 
-  test("getAuthFromRequest correctly recognizes astrologer session cookie", () => {
+  test("getAuthFromRequest rejects astrologer session cookie", () => {
     const req = new NextRequest("http://localhost:3000/dashboard", {
       headers: {
         cookie: "aapka_astro_session=active; aapka_astro_role=ASTROLOGER",
       },
     });
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    assert.strictEqual(auth.role, "ASTROLOGER");
-    assert.strictEqual(auth.isAstrologer, true);
-    assert.strictEqual(auth.isAdmin, false);
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.role, null);
   });
 
-  test("getAuthFromRequest correctly decodes mock user JSON cookie", () => {
+  test("getAuthFromRequest strictly rejects mock user JSON cookie", () => {
     const mockUser = {
       id: "usr_mock_123",
       name: "Aarav",
@@ -210,15 +206,15 @@ describe("Role-Based Access Control (RBAC) - Request & Cookie Extraction", () =>
       },
     });
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    assert.strictEqual(auth.userId, "usr_mock_123");
-    assert.strictEqual(auth.role, "CLIENT");
-    assert.strictEqual(auth.isAstrologer, false);
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.userId, null);
+    assert.strictEqual(auth.role, null);
   });
 });
 
 describe("Role-Based Access Control (RBAC) - API Endpoint Role Gating", () => {
   test("POST /api/astrologer/presence returns 403 Forbidden for unauthenticated request", async () => {
+    __setTestAuthUser(null);
     const req = new NextRequest("http://localhost:3000/api/astrologer/presence", {
       method: "POST",
       headers: {
@@ -235,6 +231,7 @@ describe("Role-Based Access Control (RBAC) - API Endpoint Role Gating", () => {
   });
 
   test("POST /api/astrologer/presence returns 403 Forbidden for client account", async () => {
+    __setTestAuthUser({ isAuthenticated: true, role: "CLIENT", isAstrologer: false, isAdmin: false });
     const req = new NextRequest("http://localhost:3000/api/astrologer/presence", {
       method: "POST",
       headers: {
@@ -248,14 +245,15 @@ describe("Role-Based Access Control (RBAC) - API Endpoint Role Gating", () => {
     assert.strictEqual(res.status, 403);
     const body = await res.json();
     assert.strictEqual(body.success, false);
+    __setTestAuthUser(null);
   });
 
   test("POST /api/astrologer/presence permits astrologer role", async () => {
+    __setTestAuthUser({ isAuthenticated: true, role: "ASTROLOGER", isAstrologer: true, isAdmin: false });
     const req = new NextRequest("http://localhost:3000/api/astrologer/presence", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        cookie: "aapka_astro_session=active; aapka_astro_role=ASTROLOGER",
       },
       body: JSON.stringify({ status: "AVAILABLE", statusMessage: "Live & Ready" }),
     });
@@ -265,11 +263,12 @@ describe("Role-Based Access Control (RBAC) - API Endpoint Role Gating", () => {
     const body = await res.json();
     assert.strictEqual(body.success, true);
     assert.strictEqual(body.presence.status, "AVAILABLE");
+    __setTestAuthUser(null);
   });
 });
 
 describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection", () => {
-  test("non-owner account attempting to pass aapka_astro_role=OWNER cookie is strictly downgraded to CLIENT", () => {
+  test("non-owner account attempting to pass aapka_astro_role=OWNER cookie is strictly unauthenticated", () => {
     const req = new NextRequest("http://localhost:3000/dashboard", {
       headers: {
         cookie: "aapka_astro_session=active; aapka_astro_role=OWNER; aapka_astro_email=attacker@malicious.com",
@@ -277,15 +276,14 @@ describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection
     });
 
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    // Anti-tamper must strip OWNER and assign CLIENT
-    assert.strictEqual(auth.role, "CLIENT");
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.role, null);
     assert.strictEqual(auth.isOwner, false);
     assert.strictEqual(auth.isAdmin, false);
     assert.strictEqual(auth.isAstrologer, false);
   });
 
-  test("non-owner passing mock user cookie with role='OWNER' is strictly downgraded to CLIENT", () => {
+  test("non-owner passing mock user cookie with role='OWNER' is strictly unauthenticated", () => {
     const forgedMockUser = {
       id: "usr_attacker_666",
       name: "Attacker",
@@ -300,14 +298,14 @@ describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection
     });
 
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    assert.strictEqual(auth.role, "CLIENT");
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.role, null);
     assert.strictEqual(auth.isOwner, false);
     assert.strictEqual(auth.isAdmin, false);
     assert.strictEqual(auth.isAstrologer, false);
   });
 
-  test("unauthenticated or email-less user claiming OWNER is downgraded to CLIENT", () => {
+  test("unauthenticated or email-less user claiming OWNER is strictly unauthenticated", () => {
     const req = new NextRequest("http://localhost:3000/dashboard", {
       headers: {
         cookie: "aapka_astro_session=active; aapka_astro_role=OWNER",
@@ -315,35 +313,35 @@ describe("Role-Based Access Control (RBAC) - Anti-Tamper & Owner Role Protection
     });
 
     const auth = getAuthFromRequest(req);
-    assert.strictEqual(auth.isAuthenticated, true);
-    assert.strictEqual(auth.role, "CLIENT");
+    assert.strictEqual(auth.isAuthenticated, false);
+    assert.strictEqual(auth.role, null);
     assert.strictEqual(auth.isOwner, false);
   });
 
-  test("authenticated user with OWNER_EMAIL is recognized as OWNER with isOwner=true", () => {
-    const ownerUser = {
-      id: "usr_owner_real",
-      name: "Aapka Astro Admin",
+  test("authenticated user with OWNER_EMAIL is recognized as OWNER with isOwner=true", async () => {
+    __setTestAuthUser({
+      isAuthenticated: true,
+      userId: "usr_owner_real",
+      role: "OWNER",
+      isOwner: true,
+      isAdmin: true,
+      isAstrologer: true,
       email: "aapkaastro1606@gmail.com",
-      role: "CLIENT", // Even if client-side session initially said CLIENT
-    };
-
-    const req = new NextRequest("http://localhost:3000/dashboard", {
-      headers: {
-        cookie: `aapka_astro_mock_user=${encodeURIComponent(JSON.stringify(ownerUser))}`,
-      },
+      permissions: ["bookings", "leads", "content", "pricing"],
     });
 
-    const auth = getAuthFromRequest(req);
+    const auth = await getServerAuthUser();
     assert.strictEqual(auth.isAuthenticated, true);
     assert.strictEqual(auth.role, "OWNER");
     assert.strictEqual(auth.isOwner, true);
     assert.strictEqual(auth.isAdmin, true);
     assert.strictEqual(auth.isAstrologer, true);
     assert.ok(auth.permissions.length > 0);
+    __setTestAuthUser(null);
   });
 
   test("non-owner attempting to access /api/admin/staff with forged OWNER cookie receives 403 Forbidden", async () => {
+    __setTestAuthUser(null);
     const req = new NextRequest("http://localhost:3000/api/admin/staff", {
       headers: {
         cookie: "aapka_astro_session=active; aapka_astro_role=OWNER; aapka_astro_email=attacker@malicious.com",

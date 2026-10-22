@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -21,7 +20,38 @@ import {
 
 export default function AccountHistoryPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const consultations = ClientAccountStore.getConsultationHistory();
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadHistory = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/account/data");
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setLoadError("Your session expired or you don't have access. Sign in again.");
+        } else {
+          setLoadError("Could not load consultation records. Please retry.");
+        }
+        return;
+      }
+      const data = await res.json();
+      if (data.success && data.consultations) {
+        setConsultations(data.consultations);
+      }
+    } catch {
+      setLoadError("Could not load consultation records. Please retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -68,7 +98,19 @@ export default function AccountHistoryPage() {
 
         {/* Records List */}
         <div className="space-y-6">
-          {consultations.length === 0 ? (
+          {loadError ? (
+          <div className="rounded-3xl border border-red-200 bg-[#FFFDF9] p-8 text-center max-w-xl mx-auto shadow-sm">
+            <h3 className="font-temple text-lg font-bold text-red-800 mb-2">Could Not Load Consultations</h3>
+            <p className="text-xs text-[#6E5545] mb-4">{loadError}</p>
+            <button
+              onClick={loadHistory}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7B2D26] px-4 py-2 text-xs font-bold text-white hover:bg-[#64231D]"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </button>
+          </div>
+        ) : consultations.length === 0 ? (
             <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-12 text-center">
               <Clock className="h-10 w-10 text-[#C1662F] mx-auto mb-3" />
               <h3 className="font-temple text-lg font-bold text-[#7B2D26]">No Past Sessions Yet</h3>

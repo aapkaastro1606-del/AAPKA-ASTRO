@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { hasStaffSectionAccess, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { prisma } from "@/lib/db/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });

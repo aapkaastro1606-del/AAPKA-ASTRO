@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore, ClientReview, ConsultationRecord } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -15,13 +14,35 @@ import {
   Sparkles,
   ShieldCheck,
   MessageSquare,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
+
+export interface ReviewItem {
+  id: string;
+  clientName: string;
+  service: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
 
 export default function AccountReviewsPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const profile = ClientAccountStore.getProfile();
-  const pastReviews = ClientAccountStore.getReviews();
-  const completedConsultations = ClientAccountStore.getConsultations();
+  const [pastReviews, setPastReviews] = useState<ReviewItem[]>([]);
+  const [completedConsultations, setCompletedConsultations] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [service, setService] = useState("Voice Call Consultation");
+  const [comment, setComment] = useState("");
+  const [consentPublic, setConsentPublic] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -29,37 +50,80 @@ export default function AccountReviewsPage() {
     }
   }, [isUserLoaded, user]);
 
-  const [selectedSessionId, setSelectedSessionId] = useState<string>(
-    completedConsultations[0]?.id || ""
-  );
-  const [rating, setRating] = useState(5);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [service, setService] = useState("Voice Call Consultation");
-  const [comment, setComment] = useState("");
-  const [consentPublic, setConsentPublic] = useState(true);
-  const [submitted, setSubmitted] = useState(false);
+  const loadData = async () => {
+    setLoadingData(true);
+    setLoadError(null);
+    try {
+      // 1. Fetch user's completed consultations from DB
+      const accountRes = await fetch("/api/account/data");
+      const accountData = await accountRes.json();
+      if (accountRes.ok && accountData.success) {
+        const consults = (accountData.consultations || []).filter(
+          (c: any) => c.status === "COMPLETED" || c.status === "CONFIRMED" || c.status === "SCHEDULED"
+        );
+        setCompletedConsultations(consults);
+        if (consults.length > 0) {
+          setSelectedSessionId(consults[0].id || consults[0].bookingId);
+        }
+      }
 
-  const handleSubmit = (e: React.FormEvent) => {
+      // 2. Fetch reviews from PostgreSQL
+      const reviewsRes = await fetch("/api/reviews");
+      const reviewsData = await reviewsRes.json();
+      if (reviewsRes.ok && reviewsData.success) {
+        setPastReviews(reviewsData.reviews || []);
+      }
+    } catch (err: any) {
+      setLoadError("Could not load consultation records and reviews. Please retry.");
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const reviewerName = user?.fullName || user?.firstName || "Seeker";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) return;
 
-    // Verify session completion
     if (!selectedSessionId && completedConsultations.length === 0) {
-      alert("A verified completed consultation is required before leaving a review.");
+      setSubmitError("A verified completed consultation is required before leaving a review.");
       return;
     }
 
-    ClientAccountStore.addReview({
-      clientName: profile.name,
-      service,
-      rating,
-      comment,
-      consentPublic,
-      consultationId: selectedSessionId,
-    });
+    setSubmitting(true);
+    setSubmitError(null);
 
-    setSubmitted(true);
-    setComment("");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: reviewerName,
+          service,
+          rating,
+          comment: comment.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit review.");
+      }
+
+      setSubmitted(true);
+      setComment("");
+      // Refresh reviews list from server
+      loadData();
+    } catch (err: any) {
+      setSubmitError(err.message || "Network error. Failed to record review in database.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -83,6 +147,22 @@ export default function AccountReviewsPage() {
           </p>
         </div>
 
+        {loadError && (
+          <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-xs text-red-700 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <span>{loadError}</span>
+            </div>
+            <button
+              onClick={loadData}
+              className="inline-flex items-center gap-1 font-bold text-red-800 underline hover:no-underline"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Review Form Card */}
         <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 sm:p-10 shadow-sm">
           {submitted ? (
@@ -92,7 +172,7 @@ export default function AccountReviewsPage() {
                 Thank You for Your Sacred Feedback!
               </h3>
               <p className="text-xs sm:text-sm text-[#4F6D40] max-w-md mx-auto">
-                Your review has been recorded. It brings great joy to {PLACEHOLDER_ASTROLOGER.displayName} and assists others seeking authentic guidance.
+                Your review has been securely saved to the database. It brings great joy to {PLACEHOLDER_ASTROLOGER.displayName} and assists others seeking authentic guidance.
               </p>
               <button
                 type="button"
@@ -101,6 +181,10 @@ export default function AccountReviewsPage() {
               >
                 Submit another review
               </button>
+            </div>
+          ) : loadingData ? (
+            <div className="text-center py-12 text-xs font-semibold text-[#6E5545]">
+              Loading verified consultations ledger...
             </div>
           ) : completedConsultations.length === 0 ? (
             <div className="text-center py-8 space-y-4">
@@ -124,6 +208,12 @@ export default function AccountReviewsPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {submitError && (
+                <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700">
+                  {submitError}
+                </div>
+              )}
+
               {/* Verified Session Selector */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#C1662F] mb-1">
@@ -133,20 +223,20 @@ export default function AccountReviewsPage() {
                   value={selectedSessionId}
                   onChange={(e) => {
                     setSelectedSessionId(e.target.value);
-                    const matched = completedConsultations.find((c: ConsultationRecord) => c.id === e.target.value);
-                    if (matched) setService(matched.mode);
+                    const matched = completedConsultations.find((c: any) => (c.id || c.bookingId) === e.target.value);
+                    if (matched) setService(matched.format || matched.mode || "Astro Consultation");
                   }}
                   className="w-full rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] p-3 text-xs font-semibold text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26]"
                 >
-                  {completedConsultations.map((c: ConsultationRecord) => (
-                    <option key={c.id} value={c.id}>
-                      {c.date} • {c.mode} ({c.duration}) — Topic: &ldquo;{c.topic}&rdquo;
+                  {completedConsultations.map((c: any) => (
+                    <option key={c.id || c.bookingId} value={c.id || c.bookingId}>
+                      {c.bookingId || c.id} • {c.format || c.mode || "Astro Consultation"} — Topic: &ldquo;{c.topic || c.concern || "Vedic Guidance"}&rdquo;
                     </option>
                   ))}
                 </select>
                 <span className="text-[10px] text-[#6B8E5A] font-semibold flex items-center gap-1 mt-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-[#6B8E5A]" />
-                  <span>Verified session from your Aapka Astro consultation ledger</span>
+                  <span>Verified session from your Aapka Astro database ledger</span>
                 </span>
               </div>
 
@@ -209,7 +299,7 @@ export default function AccountReviewsPage() {
                   <input
                     type="text"
                     disabled
-                    value={profile.name}
+                    value={reviewerName}
                     className="w-full rounded-xl border border-[#E8D8C3] bg-[#E8D8C3]/30 p-3 font-semibold text-[#6E5545]"
                   />
                 </div>
@@ -244,10 +334,11 @@ export default function AccountReviewsPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[#7B2D26] py-3.5 text-xs font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full rounded-xl bg-[#7B2D26] py-3.5 text-xs font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Send className="h-4 w-4 text-[#E8A33D]" />
-                <span>Publish Honest Review</span>
+                <span>{submitting ? "Saving to Database..." : "Publish Honest Review"}</span>
               </button>
             </form>
           )}
@@ -257,7 +348,7 @@ export default function AccountReviewsPage() {
         {pastReviews.length > 0 && (
           <div className="rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-sm">
             <h3 className="font-temple text-xl font-bold text-[#7B2D26] mb-4">
-              Your Previously Submitted Feedback
+              Previously Submitted Feedback
             </h3>
             <div className="space-y-4">
               {pastReviews.map((r) => (
@@ -268,13 +359,15 @@ export default function AccountReviewsPage() {
                         <Star key={i} className="h-4 w-4 fill-[#E8A33D]" />
                       ))}
                     </div>
-                    <span className="text-[11px] text-[#6E5545]">{r.date}</span>
+                    <span className="text-[11px] text-[#6E5545]">
+                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                    </span>
                   </div>
                   <p className="text-xs text-[#3B2A1E] leading-relaxed italic">
                     &ldquo;{r.comment}&rdquo;
                   </p>
                   <span className="mt-2 block text-[10px] font-bold text-[#C1662F]">
-                    {r.service}
+                    {r.service} • {r.clientName}
                   </span>
                 </div>
               ))}

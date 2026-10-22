@@ -7,12 +7,13 @@ import { isOwnerEmail } from "../src/lib/auth/staffPermissions";
 
 describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
   const testUserId = `test-user-${Date.now()}`;
+  const testUserPhone = `+9198${String(Date.now()).slice(-8)}`;
   let firstAstroBookingId: string = "";
   let secondAstroBookingId: string = "";
   let vaastuBookingId: string = "";
   let kundliPdfBookingId: string = "";
-  const mockUtr1 = `UTR${Date.now()}111`;
-  const mockUtr2 = `UTR${Date.now()}222`;
+  const mockUtr1 = "4289" + String(Date.now()).slice(-8);
+  const mockUtr2 = "5289" + String(Date.now() + 500).slice(-8);
 
   before(async () => {
     // Ensure clean state for test user if exists
@@ -48,7 +49,7 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
     const result = await BookingWorkflowService.createBooking({
       userId: testUserId,
       clientName: "Rahul Sharma",
-      clientPhone: "+91 98765 43210",
+      clientPhone: testUserPhone,
       clientEmail: `test-${testUserId}@aapkaastro.com`,
       productType: "astro",
       format: "Google Meet",

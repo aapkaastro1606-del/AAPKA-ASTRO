@@ -1,6 +1,9 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +18,26 @@ export default async function AdminLayout({
     redirect("/login?redirect_url=/admin");
   }
 
-  // Admin section strictly requires Owner or staff with active permissions
-  const hasAccess = auth.isOwner || (auth.permissions && auth.permissions.length > 0);
+  // Canonical layout check: derived from the one permission policy
+  const decision = canAccessRoute(auth, "/admin");
 
-  if (!hasAccess) {
-    redirect("/account");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Administration Control Centre"
+        message={decision.reason || "You don't have access to this section."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-[#FFFDF9] flex flex-col lg:flex-row">
+      <AdminSidebar auth={auth} />
+      <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+    </div>
+  );
 }

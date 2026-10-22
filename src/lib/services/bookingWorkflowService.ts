@@ -4,6 +4,15 @@ import { AuditLogService } from "./auditLogService";
 import { BookingEmailService } from "./bookingEmailService";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 import { storageProvider } from "@/lib/providers/storage";
+import {
+  BookingStatus,
+  assertBookingTransition,
+  canTransitionBooking,
+  BOOKING_STATUS_LABELS,
+} from "@/lib/booking/bookingStateMachine";
+
+export type { BookingStatus };
+export { BOOKING_STATUS_LABELS };
 
 /**
  * Validates that an input is not an inline base64 image or raw encoded string.
@@ -402,6 +411,32 @@ export class BookingWorkflowService {
       throw new Error(`Booking ${bookingId} not found.`);
     }
 
+    const isOwner = userId ? isOwnerEmail(userId) : false;
+    const actorRole = isOwner ? "OWNER" : "CLIENT";
+
+    // Lock payment reference after approval or rejection
+    if (
+      booking.bookingStatus === "CONFIRMED" ||
+      booking.bookingStatus === "SCHEDULED" ||
+      booking.bookingStatus === "COMPLETED"
+    ) {
+      throw new Error(
+        "Payment reference is locked because this booking has already been verified and approved."
+      );
+    }
+
+    if (booking.bookingStatus === "REJECTED") {
+      throw new Error(
+        "Payment reference is locked because this booking has been rejected."
+      );
+    }
+
+    if (booking.bookingStatus === "CANCELLED") {
+      throw new Error(
+        "Payment reference is locked because this booking has been cancelled."
+      );
+    }
+
     if (booking.bookingStatus === "EXPIRED" || (booking.expiresAt && new Date(booking.expiresAt) < new Date())) {
       if (booking.bookingStatus !== "EXPIRED") {
         await prisma.session.update({
@@ -412,6 +447,9 @@ export class BookingWorkflowService {
       throw new Error("This booking has expired. Please create a new booking.");
     }
 
+    const transitionAction = booking.bookingStatus === "PAYMENT_CLAIMED" ? "UPDATE_UTR" : "CLAIM_PAYMENT";
+    assertBookingTransition(booking.bookingStatus as BookingStatus, transitionAction, actorRole);
+
     const cleanUtr = utr?.trim() || null;
 
     if (cleanUtr) {
@@ -421,8 +459,10 @@ export class BookingWorkflowService {
         );
       }
 
-      if (cleanUtr.length < 6) {
-        throw new Error("Invalid UTR / Transaction Reference. UTR must be at least 6 characters.");
+      if (!/^\d{12}$/.test(cleanUtr)) {
+        throw new Error(
+          "Invalid UTR. The UPI payment reference must be exactly 12 numeric digits."
+        );
       }
 
       // Check for duplicate UTR across all other active/confirmed bookings
@@ -436,14 +476,14 @@ export class BookingWorkflowService {
 
       if (duplicate) {
         throw new Error(
-          `This UTR / Transaction Reference (${cleanUtr}) has already been submitted for booking ${duplicate.bookingId || duplicate.id}. Duplicate UTRs are not permitted.`
+          `This 12-digit UTR (${cleanUtr}) has already been submitted for another booking (${duplicate.bookingId || duplicate.id}). Duplicate UTRs are not permitted. Please verify your transaction reference.`
         );
       }
     }
 
     const paymentSettings = await PlatformSettingsService.getPaymentSettings();
 
-    // Update status to PAYMENT_CLAIMED
+    // Update status to PAYMENT_CLAIMED and record/update UTR
     const updated = await prisma.session.update({
       where: { id: booking.id },
       data: {
@@ -453,14 +493,21 @@ export class BookingWorkflowService {
       },
     });
 
-    // 1. Audit log payment claim
+    const isUtrUpdate = booking.bookingStatus === "PAYMENT_CLAIMED" && booking.utr !== cleanUtr;
+    const auditAction = isUtrUpdate ? "BOOKING_UTR_UPDATED" : "PAYMENT_CLAIMED";
+
+    // 1. Audit log payment claim or UTR update
     await AuditLogService.log({
-      action: "PAYMENT_CLAIMED",
-      actorId: userId || booking.clientId,
+      action: auditAction,
+      actorId: userId || booking.clientId || "anonymous",
+      actorEmail: booking.userEmail,
       targetId: booking.bookingId || booking.id,
       targetType: "BOOKING",
+      previousState: { utr: booking.utr, bookingStatus: booking.bookingStatus },
       newState: { utr: cleanUtr, bookingStatus: "PAYMENT_CLAIMED" },
-      notes: `Payment claimed by user. UTR=${cleanUtr || "Not provided"}`,
+      notes: isUtrUpdate
+        ? `Payment reference updated from "${booking.utr || "none"}" to "${cleanUtr}".`
+        : `Payment claimed by user. UTR=${cleanUtr || "Not provided"}`,
       ipAddress: ipAddress,
       userAgent: userAgent,
     });
@@ -531,6 +578,8 @@ export class BookingWorkflowService {
     if (!booking) {
       throw new Error(`Booking ${params.bookingId} not found.`);
     }
+
+    assertBookingTransition(booking.bookingStatus as BookingStatus, "OWNER_APPROVE", "OWNER");
 
     // Duplicate UTR check across all previously confirmed/scheduled/completed bookings
     const targetUtr = params.verifiedUtr?.trim() || booking.utr;
@@ -654,6 +703,8 @@ export class BookingWorkflowService {
       throw new Error(`Booking ${params.bookingId} not found.`);
     }
 
+    assertBookingTransition(booking.bookingStatus as BookingStatus, "OWNER_SCHEDULE", "OWNER");
+
     const updated = await prisma.session.update({
       where: { id: booking.id },
       data: {
@@ -735,6 +786,8 @@ export class BookingWorkflowService {
       throw new Error(`Booking ${params.bookingId} not found.`);
     }
 
+    assertBookingTransition(booking.bookingStatus as BookingStatus, "OWNER_COMPLETE", "OWNER");
+
     await prisma.session.update({
       where: { id: booking.id },
       data: {
@@ -784,6 +837,8 @@ export class BookingWorkflowService {
     if (!booking) {
       throw new Error(`Booking ${params.bookingId} not found.`);
     }
+
+    assertBookingTransition(booking.bookingStatus as BookingStatus, "OWNER_REJECT", "OWNER");
 
     await prisma.session.update({
       where: { id: booking.id },
@@ -879,7 +934,41 @@ export class BookingWorkflowService {
   /**
    * Allows a seeker or operator to cancel a pending unpaid booking so the user can re-book.
    */
-  static async cancelBooking(bookingId: string, reason?: string) {
+  static async cancelBooking(
+    params:
+      | string
+      | {
+          bookingId: string;
+          reason?: string;
+          actorRole?: "OWNER" | "CLIENT";
+          actorEmail?: string;
+          actorId?: string;
+          ipAddress?: string | null;
+          userAgent?: string | null;
+        },
+    reasonArg?: string
+  ) {
+    let bookingId: string;
+    let reason: string | undefined;
+    let actorRole: "OWNER" | "CLIENT" = "CLIENT";
+    let actorEmail: string | undefined;
+    let actorId: string | undefined;
+    let ipAddress: string | null | undefined;
+    let userAgent: string | null | undefined;
+
+    if (typeof params === "string") {
+      bookingId = params.trim();
+      reason = reasonArg;
+    } else {
+      bookingId = params.bookingId.trim();
+      reason = params.reason;
+      actorRole = params.actorRole || "CLIENT";
+      actorEmail = params.actorEmail;
+      actorId = params.actorId;
+      ipAddress = params.ipAddress;
+      userAgent = params.userAgent;
+    }
+
     if (!prisma || !prisma.session) throw new Error("Database service unavailable.");
 
     const booking = await prisma.session.findUnique({
@@ -890,16 +979,28 @@ export class BookingWorkflowService {
       throw new Error(`Booking ${bookingId} not found.`);
     }
 
-    if (!["PENDING_PAYMENT", "PAYMENT_CLAIMED"].includes(booking.bookingStatus)) {
-      throw new Error(`Only pending bookings can be cancelled. Current status is ${booking.bookingStatus}.`);
-    }
+    const action = actorRole === "OWNER" ? "OWNER_CANCEL" : "CLIENT_CANCEL";
+    assertBookingTransition(booking.bookingStatus as BookingStatus, action, actorRole);
 
     await prisma.session.update({
       where: { id: booking.id },
       data: {
         bookingStatus: "CANCELLED",
-        rejectionReason: reason || "Cancelled by seeker",
+        rejectionReason: reason || (actorRole === "OWNER" ? "Cancelled by Owner" : "Cancelled by seeker"),
       },
+    });
+
+    await AuditLogService.log({
+      action: "BOOKING_CANCELLED",
+      actorId,
+      actorEmail: actorEmail || (actorRole === "CLIENT" ? booking.userEmail || undefined : undefined),
+      targetId: booking.bookingId || booking.id,
+      targetType: "BOOKING",
+      previousState: { bookingStatus: booking.bookingStatus },
+      newState: { bookingStatus: "CANCELLED" },
+      notes: `${actorRole === "OWNER" ? "Cancelled by Owner" : "Cancelled by client"}. Reason: ${reason || "None"}`,
+      ipAddress,
+      userAgent,
     });
 
     return { success: true, bookingStatus: "CANCELLED" };

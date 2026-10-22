@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { BookingWorkflowService, isBase64Payload } from "@/lib/services/bookingWorkflowService";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = getAuthFromRequest(req);
+    const auth = await getServerAuthUser();
     const body = await req.json();
     const { bookingId, utr, screenshot } = body;
 

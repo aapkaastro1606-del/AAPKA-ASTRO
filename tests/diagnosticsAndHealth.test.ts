@@ -1,10 +1,14 @@
-import { test, describe } from "node:test";
+import { test, describe, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { GET as healthHandler } from "@/app/api/health/route";
 import { GET as diagnosticsHandler } from "@/app/api/admin/diagnostics/route";
+import { __setTestAuthUser } from "@/lib/auth/serverAuth";
 import { NextRequest } from "next/server";
 
 describe("System Health & Diagnostics Audit Suite", () => {
+  beforeEach(() => {
+    __setTestAuthUser(null);
+  });
   test("GET /api/health (shallow) returns status, commitSha, and environment with zero database wakeups", async () => {
     const req = new NextRequest("http://localhost:3000/api/health");
     const res = await healthHandler(req);
@@ -54,6 +58,7 @@ describe("System Health & Diagnostics Audit Suite", () => {
   });
 
   test("GET /api/health?deep=1 allows platform Owner session", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerCookie = encodeURIComponent(
       JSON.stringify({
         role: "OWNER",
@@ -84,6 +89,7 @@ describe("System Health & Diagnostics Audit Suite", () => {
   });
 
   test("GET /api/admin/diagnostics allows platform Owner and returns complete diagnostic metrics", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerCookie = encodeURIComponent(
       JSON.stringify({
         role: "OWNER",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest, hasStaffSectionAccess } from "@/lib/auth/serverAuth";
+import { hasStaffSectionAccess, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { ReelsStore } from "@/lib/store/reelsStore";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * Lists all curated reels directly from PostgreSQL (Neon). Requires VIEW access on "reels".
  */
 export async function GET(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
  * Modifies reels curation in PostgreSQL (pin, hide, add, remove, reorder). Requires MANAGE access on "reels".
  */
 export async function POST(req: NextRequest) {
-  const auth = getAuthFromRequest(req);
+  const auth = await getServerAuthUser();
 
   if (!auth.isAuthenticated) {
     return NextResponse.json(

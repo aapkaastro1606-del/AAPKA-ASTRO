@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { KundliLeadService } from "../src/lib/services/kundliLeadService";
 import { GET as adminLeadsGet, DELETE as adminLeadsDelete } from "../src/app/api/admin/leads/route";
 import { GET as adminLeadsExportGet } from "../src/app/api/admin/leads/export/route";
+import { __setTestAuthUser } from "../src/lib/auth/serverAuth";
 import { POST as leadCapturePost } from "../src/app/api/kundli/lead/route";
 import { prisma } from "../src/lib/db/prisma";
 
@@ -171,6 +172,7 @@ describe("Free Kundli Lead Capture & DPDP Compliance", () => {
   });
 
   test("non-owner request to admin leads routes is blocked with 403 Forbidden", async () => {
+    __setTestAuthUser(null);
     // Unauthorized client request without owner session
     const req = new NextRequest("http://localhost:3000/api/admin/leads", {
       headers: {
@@ -192,6 +194,7 @@ describe("Free Kundli Lead Capture & DPDP Compliance", () => {
   });
 
   test("owner can query leads, export RFC 4180 CSV, and delete-on-request with audit logging", async () => {
+    __setTestAuthUser({ isAuthenticated: true, isOwner: true, role: "OWNER", email: "aapkaastro1606@gmail.com" });
     const ownerEmail = "aapkaastro1606@gmail.com";
 
     // Create a lead to test export & deletion

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { getAuthFromRequest, getServerAuthUser } from "@/lib/auth/serverAuth";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { isOwnerEmail } from "@/lib/auth/staffPermissions";
 
 export const dynamic = "force-dynamic";
@@ -68,20 +68,13 @@ export async function GET(req: NextRequest) {
 
   let isOwner = false;
   if (!hasValidCronSecret) {
-    // Check cookie / mock auth
-    const cookieAuth = getAuthFromRequest(req);
-    if (cookieAuth.isOwner || (cookieAuth.email && isOwnerEmail(cookieAuth.email))) {
-      isOwner = true;
-    } else {
-      // Check live server session
-      try {
-        const serverUser = await getServerAuthUser();
-        if (serverUser.isOwner || (serverUser.email && isOwnerEmail(serverUser.email))) {
-          isOwner = true;
-        }
-      } catch {
-        // ignore
+    try {
+      const serverUser = await getServerAuthUser();
+      if (serverUser.isOwner || (serverUser.email && isOwnerEmail(serverUser.email))) {
+        isOwner = true;
       }
+    } catch {
+      // ignore
     }
   }
 

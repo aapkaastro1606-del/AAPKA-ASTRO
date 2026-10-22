@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, PlusCircle, FileText } from "lucide-react";
 import { useUser } from "@/components/auth/ClerkAuthWrapper";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { ClientConsultationStatusView } from "@/components/consult/ClientConsultationStatusView";
 import ConsultPageComponent from "@/app/consult/page";
 
 export default function AccountConsultPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const [activeBooking, setActiveBooking] = useState<any>(() => ClientAccountStore.getActiveBooking());
+  const [activeBooking, setActiveBooking] = useState<any>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<{ status?: number; message: string } | null>(null);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -20,7 +20,9 @@ export default function AccountConsultPage() {
     }
   }, [isUserLoaded, user]);
 
-  const loadBooking = async () => {
+  const loadBooking = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
     try {
       const email = user?.primaryEmailAddress?.emailAddress;
       const params = new URLSearchParams();
@@ -29,28 +31,52 @@ export default function AccountConsultPage() {
       const qs = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`/api/booking/status${qs}`, { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setFetchError({
+            status: res.status,
+            message: "Your session expired or you don't have access. Sign in again.",
+          });
+        } else {
+          setFetchError({
+            status: res.status,
+            message: "Could not load. Retry.",
+          });
+        }
+        setActiveBooking(null);
+        return;
+      }
+
       const data = await res.json();
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
+        setFetchError(null);
+      } else if (data.success) {
+        setActiveBooking(null);
+        setFetchError(null);
       } else {
-        const local = ClientAccountStore.getActiveBooking();
-        if (local) setActiveBooking(local);
+        setFetchError({
+          status: 500,
+          message: data.message || "Could not load. Retry.",
+        });
+        setActiveBooking(null);
       }
     } catch {
-      const local = ClientAccountStore.getActiveBooking();
-      if (local) setActiveBooking(local);
+      setFetchError({
+        status: 500,
+        message: "Could not load. Retry.",
+      });
+      setActiveBooking(null);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadBooking();
   }, [user]);
 
   useEffect(() => {
     loadBooking();
+  }, [loadBooking]);
 
+  useEffect(() => {
     const sync = () => {
       loadBooking();
     };
@@ -58,7 +84,7 @@ export default function AccountConsultPage() {
     return () => {
       window.removeEventListener("aapka_booking_updated", sync);
     };
-  }, []);
+  }, [loadBooking]);
 
   return (
     <div className="bg-[#FBF3E7] min-h-screen py-8">
@@ -95,25 +121,53 @@ export default function AccountConsultPage() {
           )}
         </div>
 
-        {/* Content: Show Consultation Status View or New Booking Intake */}
-        {showBookingForm || !activeBooking ? (
-          <div>
-            {!activeBooking && !loading && (
-              <div className="mb-6">
-                <ClientConsultationStatusView onBookNew={() => setShowBookingForm(true)} />
+        {/* Content: Show Loading, Error, Consultation Status View or New Booking Intake */}
+        {loading ? (
+          <div
+            className="p-12 text-center text-[#6E5545] text-xs bg-[#FFFDF9] rounded-2xl border border-[#E8D8C3]"
+            data-testid="loading-state"
+          >
+            <div className="animate-spin h-6 w-6 border-2 border-[#7B2D26] border-t-transparent rounded-full mx-auto mb-2" />
+            <span>Loading consultation details...</span>
+          </div>
+        ) : fetchError ? (
+          <div
+            className="p-8 rounded-2xl border border-red-200 bg-red-50 text-center max-w-lg mx-auto space-y-4"
+            data-testid="error-state"
+            data-error-type={fetchError.status === 401 || fetchError.status === 403 ? "auth" : "server"}
+          >
+            <p className="font-bold text-red-900 text-sm">{fetchError.message}</p>
+            {fetchError.status === 401 || fetchError.status === 403 ? (
+              <div>
+                <Link
+                  href="/login?redirect_url=/account/consult"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#64221C] transition-all"
+                >
+                  Sign in again
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={loadBooking}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#64221C] transition-all cursor-pointer"
+                >
+                  Retry
+                </button>
               </div>
             )}
-            <div className="border-t border-[#E8D8C3]/60 pt-6">
-              <div className="text-center max-w-xl mx-auto mb-6">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#7B2D26]">
-                  Schedule New Session
-                </span>
-                <h2 className="font-temple text-xl font-bold text-[#3B2A1E] mt-1">
-                  Book 1-on-1 Consultation with Acharya Niraj Kumar
-                </h2>
-              </div>
-              <ConsultPageComponent />
+          </div>
+        ) : showBookingForm || !activeBooking ? (
+          <div>
+            <div className="mb-6 rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
+              <p className="text-xs font-semibold text-[#7B2D26]">
+                {activeBooking
+                  ? "Booking an additional consultation slot. Your existing active consultation remains safely coordinated."
+                  : "Book your 1-on-1 consultation with Acharya Niraj Kumar."}
+              </p>
             </div>
+            <ConsultPageComponent />
           </div>
         ) : (
           <ClientConsultationStatusView

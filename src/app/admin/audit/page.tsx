@@ -2,6 +2,8 @@ import React from "react";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
+import { canAccessRoute } from "@/lib/auth/permissionPolicy";
+import AccessDeniedView from "@/components/auth/AccessDeniedView";
 import { prisma } from "@/lib/db/prisma";
 import AuditLogClient, { AuditLogItem } from "./AuditLogClient";
 
@@ -19,9 +21,19 @@ export default async function AuditLogPage() {
     redirect("/login?redirect_url=/admin/audit");
   }
 
-  // Strictly Owner-only
-  if (!auth.isOwner) {
-    redirect("/admin");
+  // Canonical permission check: Owner Only
+  const decision = canAccessRoute(auth, "/admin/audit");
+  if (!decision.allowed) {
+    return (
+      <AccessDeniedView
+        sectionTitle="Audit Trail & Security Logs"
+        message={decision.reason || "You don't have access to this section. Audit logs are strictly reserved for the Platform Owner."}
+        userEmail={auth.email}
+        userRole={auth.role}
+        returnHref={decision.returnUrl}
+        returnLabel={decision.returnLabel}
+      />
+    );
   }
 
   let initialLogs: AuditLogItem[] = [];
@@ -32,18 +44,19 @@ export default async function AuditLogPage() {
         orderBy: { createdAt: "desc" },
       });
 
-      initialLogs = records.map((l) => ({
-        id: l.id,
-        action: l.action,
-        actorEmail: l.actorEmail || "System",
-        targetId: l.targetId,
-        targetType: l.targetType,
-        notes: l.notes,
-        createdAt: l.createdAt.toISOString(),
+      initialLogs = records.map((r) => ({
+        id: r.id,
+        action: r.action,
+        actorId: r.actorId,
+        actorEmail: r.actorEmail || "System",
+        targetId: r.targetId,
+        targetType: r.targetType,
+        notes: r.notes,
+        createdAt: r.createdAt.toISOString(),
       }));
     }
   } catch (err) {
-    console.error("Error loading initial audit logs:", err);
+    console.error("Failed to load audit logs:", err);
   }
 
   return (

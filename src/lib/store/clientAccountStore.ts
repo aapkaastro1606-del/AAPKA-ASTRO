@@ -76,13 +76,16 @@ let memoryClientProfile: ClientProfile = {
 };
 
 let memorySavedKundlis: SavedKundli[] = [];
-
 let memoryConsultations: ConsultationRecord[] = [];
-
 let memoryReviews: ClientReview[] = [];
-
 let memoryCallbacks: CallbackRequest[] = [];
 
+/**
+ * ClientAccountStore
+ * NOTE: The server (PostgreSQL via /api/account/data and /api/booking/status) is the
+ * SINGLE SOURCE OF TRUTH for identity, bookings, payments, and saved records.
+ * Local browser storage must never hold booking state or payment status.
+ */
 export const ClientAccountStore = {
   getProfile: (): ClientProfile => ({ ...memoryClientProfile }),
 
@@ -155,39 +158,41 @@ export const ClientAccountStore = {
     return newReq;
   },
 
+  /**
+   * @deprecated Server is the single source of truth for bookings.
+   * Query /api/booking/status or /api/account/data instead.
+   * Never rely on browser storage for booking status.
+   */
   getActiveBooking: (): ConsultationBooking | null => {
+    // Browser storage is strictly prohibited from storing or serving booking status
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("aapka_active_booking");
-        if (stored) return JSON.parse(stored);
+        localStorage.removeItem("aapka_active_booking");
       } catch {}
     }
     return null;
   },
 
-  setActiveBooking: (booking: ConsultationBooking | null) => {
+  /**
+   * @deprecated Server is the single source of truth for bookings.
+   */
+  setActiveBooking: (_booking: ConsultationBooking | null) => {
     if (typeof window !== "undefined") {
       try {
-        if (booking) {
-          localStorage.setItem("aapka_active_booking", JSON.stringify(booking));
-        } else {
-          localStorage.removeItem("aapka_active_booking");
-        }
+        localStorage.removeItem("aapka_active_booking");
         window.dispatchEvent(new Event("aapka_booking_updated"));
       } catch {}
     }
   },
 
-  updateActiveBookingState: (status: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED") => {
+  /**
+   * @deprecated Server enforces booking state transitions.
+   */
+  updateActiveBookingState: (_status: "CONFIRMED" | "AWAITING_SESSION" | "COMPLETED") => {
     if (typeof window !== "undefined") {
       try {
-        const stored = localStorage.getItem("aapka_active_booking");
-        if (stored) {
-          const booking = JSON.parse(stored);
-          booking.status = status;
-          localStorage.setItem("aapka_active_booking", JSON.stringify(booking));
-          window.dispatchEvent(new Event("aapka_booking_updated"));
-        }
+        localStorage.removeItem("aapka_active_booking");
+        window.dispatchEvent(new Event("aapka_booking_updated"));
       } catch {}
     }
   },

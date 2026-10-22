@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -14,11 +14,34 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { PLACEHOLDER_ASTROLOGER, FLAT_CONSULTATION_PRICING, FIRST_CONSULTATION_OFFER } from "@/config/placeholderContent";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 
 export default function WalletPage() {
-  const consultations = ClientAccountStore.getConsultationHistory();
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/account/data")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Could not load consultation records.");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.success && Array.isArray(data.consultations)) {
+          setConsultations(data.consultations);
+          setLoadError(null);
+        }
+      })
+      .catch((err) => {
+        setLoadError(err.message || "Failed to load receipts.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const handleDownloadInvoice = (id: string) => {
     setDownloadingId(id);

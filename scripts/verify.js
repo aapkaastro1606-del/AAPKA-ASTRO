@@ -204,7 +204,7 @@ async function main() {
     .filter((f) => f.endsWith(".test.ts"))
     .map((f) => `"${path.join("tests", f).replace(/\\/g, "/")}"`);
   const envArg = fs.existsSync(".env.test") ? "--env-file=.env.test " : "";
-  const testCmd = `npx tsx ${envArg}--test ${testFiles.join(" ")}`;
+  const testCmd = `npx tsx ${envArg}--test --test-concurrency=1 ${testFiles.join(" ")}`;
   runCommand(testCmd, "3. Automated Test Suites");
 
   // Stage 4: Next.js Production Build

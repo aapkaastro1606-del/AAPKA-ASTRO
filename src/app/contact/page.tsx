@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ClientAccountStore } from "@/lib/store/clientAccountStore";
 import { PLACEHOLDER_ASTROLOGER, PLACEHOLDER_CONTACT_INFO } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -29,18 +28,39 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
 
-    ClientAccountStore.requestCallback({
-      clientName: formData.name,
-      phone: formData.phone,
-      topic: formData.topic,
-      preferredSlot: formData.preferredSlot,
-    });
+    setSubmitting(true);
+    setSubmitError(null);
 
-    setSubmitted(true);
+    try {
+      const res = await fetch("/api/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: formData.name,
+          phone: formData.phone,
+          topic: `${formData.topic}${formData.email ? ` (Email: ${formData.email})` : ""}${formData.message ? ` - ${formData.message}` : ""}`,
+          preferredSlot: formData.preferredSlot,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit callback request. Please try again.");
+      }
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setSubmitError(err.message || "Network error. Please try again or reach us directly on WhatsApp.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -263,8 +283,14 @@ export default function ContactPage() {
                       />
                     </div>
 
+                    {submitError && (
+                      <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700">
+                        {submitError}
+                      </div>
+                    )}
                     <button
                       type="submit"
+                      disabled={submitting}
                       className="w-full rounded-xl bg-[#7B2D26] py-3.5 text-xs sm:text-sm font-bold text-[#FBF3E7] hover:bg-[#96372E] transition-all shadow-md flex items-center justify-center gap-2"
                     >
                       <Send className="h-4 w-4 text-[#E8A33D]" />

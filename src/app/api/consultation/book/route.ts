@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookingWorkflowService } from "@/lib/services/bookingWorkflowService";
+import { getServerAuthUser } from "@/lib/auth/serverAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +11,10 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getServerAuthUser();
     const body = await req.json();
     const {
-      userId = "guest",
+      userId: bodyUserId = "guest",
       clientName,
       clientPhone,
       clientEmail,
@@ -25,14 +27,18 @@ export async function POST(req: NextRequest) {
       propertyDetails,
     } = body;
 
+    const resolvedUserId = auth.isAuthenticated ? (auth.dbUserId || auth.userId || bodyUserId) : bodyUserId;
+    const resolvedEmail = auth.isAuthenticated ? (auth.email || clientEmail) : clientEmail;
+    const resolvedName = auth.isAuthenticated ? (auth.name || clientName) : clientName;
+
     const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip");
     const userAgent = req.headers.get("user-agent");
 
     const result = await BookingWorkflowService.createBooking({
-      userId,
-      clientName: clientName?.trim() || "Seeker",
+      userId: resolvedUserId,
+      clientName: (resolvedName || "Seeker").trim(),
       clientPhone: clientPhone?.trim() || "",
-      clientEmail: clientEmail?.trim() || null,
+      clientEmail: resolvedEmail?.trim() || null,
       productType: productId,
       format,
       preferredDay,
@@ -57,7 +63,8 @@ export async function POST(req: NextRequest) {
       paymentSettings: result.paymentSettings,
       upiId: result.paymentSettings.upiId,
       whatsappNumber: result.paymentSettings.whatsappNumber,
-      paymentStatus: "AWAITING_VERIFICATION",
+      bookingStatus: "PENDING_PAYMENT",
+      paymentStatus: "PENDING_PAYMENT",
     });
   } catch (error: any) {
     console.error("Consultation booking creation error:", error);
