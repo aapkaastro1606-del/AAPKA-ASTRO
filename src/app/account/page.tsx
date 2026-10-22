@@ -93,12 +93,24 @@ export default function ClientAccountDashboard() {
         {loadError && (
           <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-xs text-red-700 flex items-center justify-between gap-3">
             <span>{loadError}</span>
-            <Link
-              href="/login?redirect_url=/account"
-              className="font-bold underline hover:no-underline"
-            >
-              Sign In Again
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("astro_state_changed"));
+                }}
+                className="font-bold underline hover:no-underline cursor-pointer"
+              >
+                Retry
+              </button>
+              <span>•</span>
+              <Link
+                href="/login?redirect_url=/account"
+                className="font-bold underline hover:no-underline"
+              >
+                Sign In Again
+              </Link>
+            </div>
           </div>
         )}
         {/* Top Profile Banner */}

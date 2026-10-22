@@ -12,6 +12,7 @@ export default function AccountConsultPage() {
   const [activeBooking, setActiveBooking] = useState<any>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<{ status?: number; message: string } | null>(null);
 
   useEffect(() => {
     if (isUserLoaded && !user) {
@@ -20,6 +21,8 @@ export default function AccountConsultPage() {
   }, [isUserLoaded, user]);
 
   const loadBooking = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
     try {
       const email = user?.primaryEmailAddress?.emailAddress;
       const params = new URLSearchParams();
@@ -28,13 +31,41 @@ export default function AccountConsultPage() {
       const qs = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`/api/booking/status${qs}`, { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setFetchError({
+            status: res.status,
+            message: "Your session expired or you don't have access. Sign in again.",
+          });
+        } else {
+          setFetchError({
+            status: res.status,
+            message: "Could not load. Retry.",
+          });
+        }
+        setActiveBooking(null);
+        return;
+      }
+
       const data = await res.json();
       if (data.success && data.booking) {
         setActiveBooking(data.booking);
+        setFetchError(null);
+      } else if (data.success) {
+        setActiveBooking(null);
+        setFetchError(null);
       } else {
+        setFetchError({
+          status: 500,
+          message: data.message || "Could not load. Retry.",
+        });
         setActiveBooking(null);
       }
     } catch {
+      setFetchError({
+        status: 500,
+        message: "Could not load. Retry.",
+      });
       setActiveBooking(null);
     } finally {
       setLoading(false);
@@ -90,8 +121,44 @@ export default function AccountConsultPage() {
           )}
         </div>
 
-        {/* Content: Show Consultation Status View or New Booking Intake */}
-        {showBookingForm || !activeBooking ? (
+        {/* Content: Show Loading, Error, Consultation Status View or New Booking Intake */}
+        {loading ? (
+          <div
+            className="p-12 text-center text-[#6E5545] text-xs bg-[#FFFDF9] rounded-2xl border border-[#E8D8C3]"
+            data-testid="loading-state"
+          >
+            <div className="animate-spin h-6 w-6 border-2 border-[#7B2D26] border-t-transparent rounded-full mx-auto mb-2" />
+            <span>Loading consultation details...</span>
+          </div>
+        ) : fetchError ? (
+          <div
+            className="p-8 rounded-2xl border border-red-200 bg-red-50 text-center max-w-lg mx-auto space-y-4"
+            data-testid="error-state"
+            data-error-type={fetchError.status === 401 || fetchError.status === 403 ? "auth" : "server"}
+          >
+            <p className="font-bold text-red-900 text-sm">{fetchError.message}</p>
+            {fetchError.status === 401 || fetchError.status === 403 ? (
+              <div>
+                <Link
+                  href="/login?redirect_url=/account/consult"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#64221C] transition-all"
+                >
+                  Sign in again
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={loadBooking}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#7B2D26] text-white text-xs font-bold hover:bg-[#64221C] transition-all cursor-pointer"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+        ) : showBookingForm || !activeBooking ? (
           <div>
             <div className="mb-6 rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-4 text-center">
               <p className="text-xs font-semibold text-[#7B2D26]">

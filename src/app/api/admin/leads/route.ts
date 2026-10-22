@@ -42,17 +42,13 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("[API /api/admin/leads] Error fetching leads:", error);
-    // Graceful fallback when database is temporarily offline or degraded
-    return NextResponse.json({
-      success: true,
-      leads: [],
-      total: 0,
-      page: 1,
-      pageSize: 25,
-      totalPages: 0,
-      stats: { total: 0, today: 0 },
-      databaseStatus: "degraded",
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to fetch leads.",
+      },
+      { status: 500 }
+    );
   }
 }
 

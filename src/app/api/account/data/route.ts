@@ -142,23 +142,13 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Failed to load account data from database:", error);
-    const fallbackUser = {
-      id: auth.userId || "user_offline",
-      email: auth.email || "",
-      name: auth.email ? auth.email.split("@")[0] : "Seeker",
-      role: auth.role || "CLIENT",
-      walletBalance: 0,
-      createdAt: new Date().toISOString(),
-    };
-    return NextResponse.json({
-      success: true,
-      user: fallbackUser,
-      profile: fallbackUser,
-      kundlis: [],
-      consultations: [],
-      activeBooking: null,
-      databaseStatus: "degraded",
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to load account data.",
+      },
+      { status: 500 }
+    );
   }
 }
 
