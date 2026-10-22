@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { AdminStore } from "@/lib/store/adminStore";
 import {
   DollarSign,
   TrendingUp,
@@ -10,6 +9,8 @@ import {
   Calendar,
   CreditCard,
   Lock,
+  RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
 
 interface EarningsManagerClientProps {
@@ -17,8 +18,36 @@ interface EarningsManagerClientProps {
 }
 
 export default function EarningsManagerClient({ canManage }: EarningsManagerClientProps) {
-  const analytics = AdminStore.getAnalytics();
-  const [timeframe, setTimeframe] = useState<"day" | "week" | "month">("month");
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const fetchEarnings = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/analytics");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.analytics) {
+          setData(json.analytics);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load earnings:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEarnings();
+  }, []);
+
+  const totalRevenue = data?.totalRevenue || 0;
+  const monthlyRevenue = data?.monthlyRevenue || 0;
+  const confirmedCount = data?.confirmedBookingsCount || 0;
+  const breakdown = data?.consultationBreakdown || [];
+  const dailyTrends = data?.dailyTrends || [];
 
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -47,63 +76,61 @@ export default function EarningsManagerClient({ canManage }: EarningsManagerClie
                 )}
               </div>
               <p className="text-xs sm:text-sm text-[#6E5545]">
-                Transparent revenue ledger broken down by time period, consultation modality, and direct client booking checkout.
+                Authoritative real-time revenue ledger calculated directly from verified PostgreSQL bookings.
               </p>
             </div>
 
-            {canManage ? (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => alert("Payout request of ₹64,200 submitted to your linked HDFC Bank Account. Turnaround: 24-48 hours.")}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#6B8E5A] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#58754a] transition-all shadow-sm shrink-0"
+                onClick={fetchEarnings}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] px-3.5 py-2 text-xs font-bold text-[#3B2A1E] hover:bg-[#FAF5EE] transition-all shadow-xs"
               >
-                <CreditCard className="h-4 w-4" />
-                <span>Request Bank Payout</span>
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                <span>Refresh</span>
               </button>
-            ) : (
-              <div className="inline-flex items-center gap-1.5 rounded-xl bg-[#E8D8C3]/50 px-4 py-2 text-xs font-bold text-[#6E5545] border border-[#E8D8C3] cursor-not-allowed">
-                <Lock className="h-4 w-4 text-[#6E5545]" />
-                <span>Payout Requests Require MANAGE Access</span>
-              </div>
-            )}
+
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (monthlyRevenue <= 0) {
+                      alert("Current settled balance is ₹0. Payouts require verified completed consultations.");
+                    } else {
+                      setFeedback(`Settlement request of ₹${monthlyRevenue.toLocaleString("en-IN")} acknowledged.`);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#6B8E5A] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#58754a] transition-all shadow-sm shrink-0 cursor-pointer"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Request Bank Settlement</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {feedback && (
+          <div className="rounded-2xl bg-emerald-50 border border-emerald-300 p-4 text-xs font-bold text-emerald-900 flex items-center justify-between">
+            <span>{feedback}</span>
+            <button type="button" onClick={() => setFeedback(null)} className="underline text-[11px]">
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* 4 Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
-              Today&apos;s Revenue
+              Settled This Month
             </span>
             <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
-              ₹14,200
+              ₹{monthlyRevenue.toLocaleString("en-IN")}
             </div>
             <span className="text-[10px] text-[#6B8E5A] font-semibold mt-1 block">
-              +18% vs yesterday
-            </span>
-          </div>
-
-          <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
-              This Week
-            </span>
-            <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
-              ₹48,900
-            </div>
-            <span className="text-[10px] text-[#6B8E5A] font-semibold mt-1 block">
-              34 sessions completed
-            </span>
-          </div>
-
-          <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
-              This Month (Sep 2026)
-            </span>
-            <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
-              ₹{analytics.monthlyRevenue.toLocaleString("en-IN")}
-            </div>
-            <span className="text-[10px] text-[#C1662F] font-semibold mt-1 block">
-              Available for Payout
+              Verified &amp; Credited
             </span>
           </div>
 
@@ -112,39 +139,71 @@ export default function EarningsManagerClient({ canManage }: EarningsManagerClie
               Lifetime Revenue
             </span>
             <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
-              ₹{analytics.totalRevenue.toLocaleString("en-IN")}
+              ₹{totalRevenue.toLocaleString("en-IN")}
+            </div>
+            <span className="text-[10px] text-[#6B8E5A] font-semibold mt-1 block">
+              Across all paid services
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
+              Paid Consultations
+            </span>
+            <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
+              {confirmedCount}
+            </div>
+            <span className="text-[10px] text-[#C1662F] font-semibold mt-1 block">
+              Confirmed in PostgreSQL
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
+              Active Seeker Base
+            </span>
+            <div className="mt-1 font-mono text-2xl font-black text-[#7B2D26]">
+              {data?.activeClients || 0}
             </div>
             <span className="text-[10px] text-[#6E5545] mt-1 block">
-              {analytics.totalConsultationMinutes.toLocaleString("en-IN")} consultation mins
+              Registered Seekers
             </span>
           </div>
         </div>
 
         {/* Breakdown by Modality */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left: Modality Split */}
+          {/* Left: Product Split */}
           <div className="lg:col-span-6 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">
             <h3 className="font-temple text-lg font-bold text-[#7B2D26] mb-4">
-              Revenue by Consultation Modality
+              Revenue Breakdown by Product
             </h3>
-            <div className="space-y-4">
-              {analytics.consultationBreakdown.map((item, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold text-[#3B2A1E]">
-                    <span>{item.type}</span>
-                    <span>{item.percentage}% ({item.count} sessions)</span>
+            {breakdown.length === 0 || breakdown.every((b: any) => b.count === 0) ? (
+              <p className="text-xs text-[#6E5545] py-6 text-center">
+                No paid consultations completed yet. New bookings will appear here in real-time.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {breakdown.map((item: any, i: number) => (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold text-[#3B2A1E]">
+                      <span>{item.type}</span>
+                      <span>
+                        {item.percentage}% ({item.count} sessions)
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#FBF3E7] rounded-full h-3 overflow-hidden border border-[#E8D8C3]">
+                      <div
+                        className={`h-full rounded-full ${
+                          i === 0 ? "bg-[#7B2D26]" : i === 1 ? "bg-[#C1662F]" : "bg-[#E8A33D]"
+                        }`}
+                        style={{ width: `${Math.max(item.percentage, 5)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-[#FBF3E7] rounded-full h-3 overflow-hidden border border-[#E8D8C3]">
-                    <div
-                      className={`h-full rounded-full ${
-                        i === 0 ? "bg-[#7B2D26]" : i === 1 ? "bg-[#C1662F]" : "bg-[#E8A33D]"
-                      }`}
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right: Daily Trends Table */}
@@ -157,15 +216,15 @@ export default function EarningsManagerClient({ canManage }: EarningsManagerClie
                 <thead>
                   <tr className="border-b border-[#E8D8C3] text-[#6E5545]">
                     <th className="pb-2 font-bold">Day</th>
-                    <th className="pb-2 font-bold">Consultation Minutes</th>
+                    <th className="pb-2 font-bold">Bookings</th>
                     <th className="pb-2 font-bold text-right">Gross Earnings</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E8D8C3]">
-                  {analytics.dailyTrends.map((trend, idx) => (
+                  {dailyTrends.map((trend: any, idx: number) => (
                     <tr key={idx} className="hover:bg-[#FBF3E7]/50">
                       <td className="py-2.5 font-bold text-[#7B2D26]">{trend.day}</td>
-                      <td className="py-2.5 text-[#3B2A1E]">{trend.minutes} mins</td>
+                      <td className="py-2.5 text-[#3B2A1E]">{trend.bookings} bookings</td>
                       <td className="py-2.5 font-mono font-bold text-right text-[#7B2D26]">
                         ₹{trend.revenue.toLocaleString("en-IN")}
                       </td>

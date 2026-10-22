@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * Guaranteed never to crash or return empty: falls back to built-in code defaults.
  * Allows previewing DRAFT entries if and only if caller is authenticated as the Owner.
  */
-export async function GET(req?: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const lang = (req?.nextUrl?.searchParams?.get("lang") === "hi" ? "hi" : "en") as "en" | "hi";
     const auth = await getServerAuthUser();
