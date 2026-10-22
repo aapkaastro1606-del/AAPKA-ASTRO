@@ -51,22 +51,31 @@ export const Navbar: React.FC = () => {
     hasAdminAccess: boolean;
     adminUrl: string | null;
     label: string | null;
+    isEligibleForFirstTimeDiscount: boolean;
   }>({
     isOwner: false,
     hasAdminAccess: false,
     adminUrl: null,
     label: null,
+    isEligibleForFirstTimeDiscount: true,
   });
 
   const navRef = useRef<HTMLElement | null>(null);
 
   const isAuthenticatedUser = Boolean(mounted && isLoaded && isSignedIn && user);
   const isHi = language === "hi" || pathname?.startsWith("/hi");
+  const isEligibleForDiscount = !isAuthenticatedUser || serverNavState.isEligibleForFirstTimeDiscount !== false;
 
   // Server-authoritative nav check: never advertise /admin publicly
   useEffect(() => {
     if (!isSignedIn || !user) {
-      setServerNavState({ isOwner: false, hasAdminAccess: false, adminUrl: null, label: null });
+      setServerNavState({
+        isOwner: false,
+        hasAdminAccess: false,
+        adminUrl: null,
+        label: null,
+        isEligibleForFirstTimeDiscount: true,
+      });
       return;
     }
     let isCurrent = true;
@@ -79,12 +88,19 @@ export const Navbar: React.FC = () => {
             hasAdminAccess: Boolean(data.hasAdminAccess),
             adminUrl: data.adminUrl || null,
             label: data.label || null,
+            isEligibleForFirstTimeDiscount: data.isEligibleForFirstTimeDiscount !== undefined ? Boolean(data.isEligibleForFirstTimeDiscount) : true,
           });
         }
       })
       .catch(() => {
         if (isCurrent) {
-          setServerNavState({ isOwner: false, hasAdminAccess: false, adminUrl: null, label: null });
+          setServerNavState({
+            isOwner: false,
+            hasAdminAccess: false,
+            adminUrl: null,
+            label: null,
+            isEligibleForFirstTimeDiscount: true,
+          });
         }
       });
 
@@ -398,9 +414,13 @@ export const Navbar: React.FC = () => {
             className="inline-flex items-center justify-center gap-1 sm:gap-1.5 hover:underline max-w-full"
           >
             <span className="font-bold text-[#E8A33D] shrink-0">
-              {isHi
-                ? "विशेष छूट • वास्तविक ₹2,100 ➔ अब मात्र ₹1,051/- (50% छूट)"
-                : "Special Offer • Regular ₹2,100 ➔ Now Flat ₹1,051/- (50% Off)"}
+              {isEligibleForDiscount
+                ? (isHi
+                  ? "विशेष छूट • वास्तविक ₹2,100 ➔ अब मात्र ₹1,051/- (50% छूट)"
+                  : "Special Offer • Regular ₹2,100 ➔ Now Flat ₹1,051/- (50% Off)")
+                : (isHi
+                  ? "वैदिक ज्योतिष परामर्श • आचार्य नीरज कुमार के साथ 1-on-1 अपॉइंटमेंट (फ्लैट ₹2,100)"
+                  : "Vedic Astrology Consultation • Direct 1-on-1 Guidance with Acharya Niraj Kumar (Flat ₹2,100)")}
             </span>
             <span className="truncate">
               {isHi
@@ -626,15 +646,28 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] hover:shadow-[0_6px_18px_rgba(123,45,38,0.38)] transition-all whitespace-nowrap shrink-0"
               >
                 <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">
-                  <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
-                  <span>{isHi ? "₹1,051" : "₹1,051"}</span>
-                </span>
-                <span className="hidden sm:inline">
-                  {isHi ? "परामर्श " : "Book Consultation "}
-                  <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
-                  <span className="text-[#FFE29A]">➔ ₹1,051</span>
-                </span>
+                {isEligibleForDiscount ? (
+                  <>
+                    <span className="sm:hidden">
+                      <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
+                      <span>₹1,051</span>
+                    </span>
+                    <span className="hidden sm:inline">
+                      {isHi ? "परामर्श " : "Book Consultation "}
+                      <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
+                      <span className="text-[#FFE29A]">➔ ₹1,051</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="sm:hidden">
+                      <span>₹2,100</span>
+                    </span>
+                    <span className="hidden sm:inline">
+                      {isHi ? "परामर्श बुक करें • ₹2,100" : "Book Consultation • ₹2,100"}
+                    </span>
+                  </>
+                )}
               </Link>
             ) : (
               <button
@@ -644,15 +677,28 @@ export const Navbar: React.FC = () => {
                 className="inline-flex items-center gap-1 sm:gap-1.5 2xl:gap-2 rounded-xl bg-[#7B2D26] hover:bg-[#5E201A] text-[#FFFDF9] border-2 border-[#E8A33D] px-2 sm:px-3 2xl:px-4 py-1.5 sm:py-2 text-xs 2xl:text-sm font-extrabold tracking-wide shadow-[0_4px_14px_rgba(123,45,38,0.28)] transition-all cursor-pointer whitespace-nowrap shrink-0"
               >
                 <PhoneCall className="h-3.5 w-3.5 2xl:h-4 2xl:w-4 text-[#E8A33D] shrink-0" />
-                <span className="sm:hidden">
-                  <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
-                  <span>{isHi ? "₹1,051" : "₹1,051"}</span>
-                </span>
-                <span className="hidden sm:inline">
-                  {isHi ? "परामर्श " : "Book Consultation "}
-                  <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
-                  <span className="text-[#FFE29A]">➔ ₹1,051</span>
-                </span>
+                {isEligibleForDiscount ? (
+                  <>
+                    <span className="sm:hidden">
+                      <span className="line-through text-red-200/90 mr-0.5 text-[10px]">₹2,100</span>
+                      <span>₹1,051</span>
+                    </span>
+                    <span className="hidden sm:inline">
+                      {isHi ? "परामर्श " : "Book Consultation "}
+                      <span className="line-through text-red-200 font-bold decoration-red-300 mr-1">₹2,100</span>
+                      <span className="text-[#FFE29A]">➔ ₹1,051</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="sm:hidden">
+                      <span>₹2,100</span>
+                    </span>
+                    <span className="hidden sm:inline">
+                      {isHi ? "परामर्श बुक करें • ₹2,100" : "Book Consultation • ₹2,100"}
+                    </span>
+                  </>
+                )}
               </button>
             )}
 

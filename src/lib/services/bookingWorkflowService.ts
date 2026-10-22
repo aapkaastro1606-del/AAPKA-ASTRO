@@ -100,24 +100,34 @@ export class BookingWorkflowService {
    * Evaluates whether an Astro consultation is eligible for the first-time ₹1,051 rate.
    * Defined as: the user has NO confirmed, scheduled, or completed Astro consultations.
    */
-  static async checkFirstTimeAstroEligibility(userId: string): Promise<boolean> {
+  static async checkFirstTimeAstroEligibility(userId: string, email?: string): Promise<boolean> {
     if (!prisma || !prisma.session) return false;
+
+    const cleanUserId = userId && userId !== "guest" ? userId : null;
+    const cleanEmail = email && email.trim() ? email.trim().toLowerCase() : null;
 
     const dbUser = await prisma.user.findFirst({
       where: {
-        OR: [{ id: userId }, { clerkId: userId }],
+        OR: [
+          ...(cleanUserId ? [{ id: cleanUserId }, { clerkId: cleanUserId }] : []),
+          ...(cleanEmail ? [{ email: cleanEmail }] : []),
+        ],
       },
-      select: { id: true },
+      select: { id: true, email: true },
     });
-    const targetUserId = dbUser ? dbUser.id : userId;
+    const targetUserId = dbUser ? dbUser.id : cleanUserId;
+    const targetEmail = dbUser?.email || cleanEmail;
 
     const confirmedCount = await prisma.session.count({
       where: {
-        clientId: targetUserId,
         productType: "astro",
         bookingStatus: {
           in: ["CONFIRMED", "SCHEDULED", "COMPLETED"],
         },
+        OR: [
+          ...(targetUserId ? [{ clientId: targetUserId }] : []),
+          ...(targetEmail ? [{ userEmail: targetEmail }] : []),
+        ],
       },
     });
 
@@ -259,13 +269,17 @@ export class BookingWorkflowService {
           let serviceName = "Astro Consultation";
 
           if (params.productType === "astro") {
+            const targetEmail = dbUser.email || (params.clientEmail ? params.clientEmail.trim().toLowerCase() : null);
             const priorConfirmedCount = await tx.session.count({
               where: {
-                clientId: dbUser.id,
                 productType: "astro",
                 bookingStatus: {
                   in: ["CONFIRMED", "SCHEDULED", "COMPLETED"],
                 },
+                OR: [
+                  { clientId: dbUser.id },
+                  ...(targetEmail ? [{ userEmail: targetEmail }] : []),
+                ],
               },
             });
             isFirstTimeAstro = priorConfirmedCount === 0;

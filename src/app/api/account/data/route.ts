@@ -60,6 +60,11 @@ export async function GET(req: NextRequest) {
       ["PENDING_PAYMENT", "PAYMENT_CLAIMED", "CONFIRMED", "SCHEDULED"].includes(s.bookingStatus)
     );
 
+    const confirmedAstroCount = sessions.filter(
+      (s) => s.productType === "astro" && ["CONFIRMED", "SCHEDULED", "COMPLETED"].includes(s.bookingStatus)
+    ).length;
+    const isEligibleForFirstTimeDiscount = confirmedAstroCount === 0;
+
     const userPayload = {
       id: dbUser?.id || auth.userId || "user_unknown",
       email: dbUser?.email || auth.email || "",
@@ -74,6 +79,7 @@ export async function GET(req: NextRequest) {
       success: true,
       user: userPayload,
       profile: userPayload,
+      isEligibleForFirstTimeDiscount,
       kundlis: savedKundlis.map((k) => {
         const chartData = (typeof k.chartDataJson === "object" && k.chartDataJson !== null ? k.chartDataJson : {}) as Record<string, any>;
         return {

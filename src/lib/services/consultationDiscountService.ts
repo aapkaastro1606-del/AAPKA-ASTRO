@@ -27,7 +27,8 @@ export interface ConsultationRateCalculation {
 export async function calculateUserConsultationRate(
   userId: string,
   productId: "astro" | "vaastu" = "astro",
-  type: string = "voice"
+  type: string = "voice",
+  email?: string
 ): Promise<ConsultationRateCalculation> {
   const settings = await PlatformSettingsService.getPricing();
 
@@ -62,19 +63,30 @@ export async function calculateUserConsultationRate(
   let isFirstConsultation = true;
 
   try {
-    if (userId && userId !== "guest") {
+    const cleanUserId = userId && userId !== "guest" ? userId : null;
+    const cleanEmail = email && email.trim() ? email.trim().toLowerCase() : null;
+
+    if (cleanUserId || cleanEmail) {
       const dbUser = await prisma.user.findFirst({
         where: {
-          OR: [{ id: userId }, { clerkId: userId }],
+          OR: [
+            ...(cleanUserId ? [{ id: cleanUserId }, { clerkId: cleanUserId }] : []),
+            ...(cleanEmail ? [{ email: cleanEmail }] : []),
+          ],
         },
-        select: { id: true },
+        select: { id: true, email: true },
       });
-      const targetUserId = dbUser ? dbUser.id : userId;
+      const targetUserId = dbUser ? dbUser.id : cleanUserId;
+      const targetEmail = dbUser?.email || cleanEmail;
 
       const priorSessionCount = await prisma.session.count({
         where: {
-          clientId: targetUserId,
+          productType: "astro",
           bookingStatus: { in: ["CONFIRMED", "SCHEDULED", "COMPLETED"] },
+          OR: [
+            ...(targetUserId ? [{ clientId: targetUserId }] : []),
+            ...(targetEmail ? [{ userEmail: targetEmail }] : []),
+          ],
         },
       });
 

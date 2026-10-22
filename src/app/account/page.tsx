@@ -30,6 +30,7 @@ export default function ClientAccountDashboard() {
   const [savedKundlis, setSavedKundlis] = useState<any[]>([]);
   const [consultations, setConsultations] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isEligibleForFirstTimeDiscount, setIsEligibleForFirstTimeDiscount] = useState<boolean>(true);
   const [astrologerStatus, setAstrologerStatus] = useState<string>("AVAILABLE");
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function ClientAccountDashboard() {
           setActiveBooking(data.activeBooking || null);
           setSavedKundlis(data.kundlis || []);
           setConsultations(data.consultations || []);
+          setIsEligibleForFirstTimeDiscount(data.isEligibleForFirstTimeDiscount !== undefined ? Boolean(data.isEligibleForFirstTimeDiscount) : true);
           setLoadError(null);
         }
       } catch {
@@ -167,19 +169,32 @@ export default function ClientAccountDashboard() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545] block">
                   Astro Consultation
                 </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xs font-black text-red-700 line-through decoration-red-600">Reg. ₹2,100</span>
-                  <span className="font-mono text-lg font-black text-[#7B2D26]">Now ₹1,051/-</span>
-                </div>
-                <span className="text-[9px] text-[#6B8E5A] font-bold block">
-                  50% Off First Booking
-                </span>
+                {isEligibleForFirstTimeDiscount ? (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs font-black text-red-700 line-through decoration-red-600">Reg. ₹2,100</span>
+                      <span className="font-mono text-lg font-black text-[#7B2D26]">Now ₹1,051/-</span>
+                    </div>
+                    <span className="text-[9px] text-[#6B8E5A] font-bold block">
+                      50% Off First Booking
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-mono text-lg font-black text-[#7B2D26]">Flat ₹2,100/-</span>
+                    </div>
+                    <span className="text-[9px] text-[#6B8E5A] font-bold block">
+                      Priority 1-on-1 Consultation
+                    </span>
+                  </>
+                )}
               </div>
               <Link
-                href="/consult?product=astro&offer=FIRST1051"
+                href={isEligibleForFirstTimeDiscount ? "/consult?product=astro&offer=FIRST1051" : "/consult?product=astro"}
                 className="rounded-xl bg-[#7B2D26] px-3.5 py-2 text-xs font-bold text-[#FFFDF9] hover:bg-[#64221C] transition-all shadow-sm shrink-0"
               >
-                Book
+                {isEligibleForFirstTimeDiscount ? "Book (₹1,051)" : "Book (₹2,100)"}
               </Link>
             </div>
 

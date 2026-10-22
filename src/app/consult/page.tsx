@@ -109,6 +109,9 @@ export default function ConsultPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // First-time discount eligibility for logged-in / returning seekers
+  const [isFirstTimeAstro, setIsFirstTimeAstro] = useState<boolean>(true);
+
   // Read URL query params on mount to select product
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -122,11 +125,41 @@ export default function ConsultPage() {
     }
   }, []);
 
+  // Check server-side discount eligibility whenever user or email changes
+  useEffect(() => {
+    let isCurrent = true;
+    const targetUserId = user?.id || "";
+    const targetEmail = userEmail || user?.primaryEmailAddress?.emailAddress || "";
+
+    if (!targetUserId && !targetEmail) {
+      setIsFirstTimeAstro(true);
+      return;
+    }
+
+    const params = new URLSearchParams({ product: "astro" });
+    if (targetUserId) params.set("userId", targetUserId);
+    if (targetEmail) params.set("email", targetEmail);
+
+    fetch(`/api/consultation/rate?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isCurrent && data?.calculation) {
+          setIsFirstTimeAstro(Boolean(data.calculation.isFirstConsultation));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user, userEmail]);
+
   // Pricing calculations
   const productConfig = CONSULTATION_PRODUCTS[selectedProduct];
   const isAstro = selectedProduct === "astro";
   const standardFee = productConfig.standardPrice;
-  const promoFee = productConfig.promoPrice;
+  const promoFee = isAstro && !isFirstTimeAstro ? standardFee : productConfig.promoPrice;
+  const hasDiscount = isAstro ? isFirstTimeAstro : true;
   const discountAmount = standardFee - promoFee;
 
   const syncPresence = async () => {
@@ -385,32 +418,57 @@ export default function ConsultPage() {
 
                 {/* Promotional Banner (Astro vs Vaastu) */}
                 {isAstro ? (
-                  <div className="mt-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
-                        First Consultation Offer
-                      </span>
-                      <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
-                        50% Savings
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
-                      <div className="inline-flex items-baseline gap-1.5 bg-red-50 border border-red-200/80 px-2.5 py-1 rounded-xl">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-800">Regular:</span>
-                        <span className="font-temple text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                  isFirstTimeAstro ? (
+                    <div className="mt-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
+                          First Consultation Offer
+                        </span>
+                        <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
+                          50% Savings
+                        </span>
                       </div>
-                      <div className="inline-flex items-baseline gap-1">
-                        <span className="text-xs font-bold text-[#7B2D26] uppercase">Now:</span>
-                        <span className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26]">₹1,051/-</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#2A4720] bg-[#6B8E5A]/20 px-2 py-0.5 rounded-full">50% Off First Booking</span>
-                    </div>
 
-                    <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
-                      A comprehensive 1-on-1 personal reading covering all your questions. Pay once per booking with zero surprise per-minute debits.
-                    </p>
-                  </div>
+                      <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+                        <div className="inline-flex items-baseline gap-1.5 bg-red-50 border border-red-200/80 px-2.5 py-1 rounded-xl">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-800">Regular:</span>
+                          <span className="font-temple text-2xl sm:text-3xl font-black text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                        </div>
+                        <div className="inline-flex items-baseline gap-1">
+                          <span className="text-xs font-bold text-[#7B2D26] uppercase">Now:</span>
+                          <span className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26]">₹1,051/-</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#2A4720] bg-[#6B8E5A]/20 px-2 py-0.5 rounded-full">50% Off First Booking</span>
+                      </div>
+
+                      <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
+                        A comprehensive 1-on-1 personal reading covering all your questions. Pay once per booking with zero surprise per-minute debits.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-5 rounded-2xl border border-[#E8D8C3] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-[#7B2D26] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white font-temple">
+                          Priority Consultation
+                        </span>
+                        <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[11px] font-bold text-[#2A4720]">
+                          Verified Seeker
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+                        <div className="inline-flex items-baseline gap-1.5 bg-[#FAF5EE] border border-[#E8D8C3] px-3 py-1 rounded-xl">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6E5545]">Consultation Fee:</span>
+                          <span className="font-temple text-2xl sm:text-3xl font-black text-[#7B2D26]">₹2,100/-</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#2A4720] bg-[#6B8E5A]/20 px-2 py-0.5 rounded-full">Dedicated 1-on-1 Session</span>
+                      </div>
+
+                      <p className="mt-2 text-xs text-[#6E5545] leading-relaxed font-body">
+                        Welcome back! A comprehensive continuing consultation with Acharya Niraj Kumar. Flat ₹2,100/- per session with zero surprise per-minute debits.
+                      </p>
+                    </div>
+                  )
                 ) : (
                   <div className="mt-5 rounded-2xl border border-[#C1662F] bg-gradient-to-br from-[#FAF1E4] to-[#FFFDF9] p-5 shadow-xs">
                     <div className="flex items-center justify-between">
@@ -488,14 +546,26 @@ export default function ConsultPage() {
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-temple font-bold text-sm text-[#7B2D26]">Astro Consultation</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7B2D26] text-white">
-                        50% OFF
-                      </span>
+                      {isFirstTimeAstro ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7B2D26] text-white">
+                          50% OFF
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#6B8E5A] text-white">
+                          PRIORITY
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-temple font-black text-xl text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
-                      <span className="font-temple font-black text-lg text-[#7B2D26]">Now ₹1,051</span>
-                    </div>
+                    {isFirstTimeAstro ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-temple font-black text-xl text-red-700 line-through decoration-red-600 decoration-2">₹2,100</span>
+                        <span className="font-temple font-black text-lg text-[#7B2D26]">Now ₹1,051</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-temple font-black text-xl text-[#7B2D26]">Flat ₹2,100</span>
+                      </div>
+                    )}
                     <span className="text-[10px] text-[#6E5545] block mt-1">
                       Personal Horoscope &amp; Kundli Guidance
                     </span>
@@ -561,12 +631,20 @@ export default function ConsultPage() {
                       <span className="text-xs font-bold">Voice Call</span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">Direct WhatsApp Audio</span>
                       <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
-                          ₹{standardFee.toLocaleString("en-IN")}
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
-                          Now ₹{promoFee.toLocaleString("en-IN")}
-                        </span>
+                        {hasDiscount && discountAmount > 0 ? (
+                          <>
+                            <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                              ₹{standardFee.toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                              Now ₹{promoFee.toLocaleString("en-IN")}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-2 py-0.5 rounded">
+                            Flat ₹{standardFee.toLocaleString("en-IN")}
+                          </span>
+                        )}
                       </div>
                     </button>
 
@@ -585,12 +663,20 @@ export default function ConsultPage() {
                       </span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">Google Meet / Video</span>
                       <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
-                          ₹{standardFee.toLocaleString("en-IN")}
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
-                          Now ₹{promoFee.toLocaleString("en-IN")}
-                        </span>
+                        {hasDiscount && discountAmount > 0 ? (
+                          <>
+                            <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                              ₹{standardFee.toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                              Now ₹{promoFee.toLocaleString("en-IN")}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-2 py-0.5 rounded">
+                            Flat ₹{standardFee.toLocaleString("en-IN")}
+                          </span>
+                        )}
                       </div>
                     </button>
 
@@ -609,12 +695,20 @@ export default function ConsultPage() {
                       </span>
                       <span className="text-[10px] text-[#6E5545] mt-0.5">WhatsApp / Client Desk</span>
                       <div className="mt-1 flex items-center justify-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
-                          ₹{standardFee.toLocaleString("en-IN")}
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
-                          Now ₹{promoFee.toLocaleString("en-IN")}
-                        </span>
+                        {hasDiscount && discountAmount > 0 ? (
+                          <>
+                            <span className="text-xs font-black text-red-700 line-through decoration-red-600 decoration-2">
+                              ₹{standardFee.toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-1.5 py-0.5 rounded">
+                              Now ₹{promoFee.toLocaleString("en-IN")}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-mono font-bold text-[#7B2D26] bg-[#7B2D26]/10 px-2 py-0.5 rounded">
+                            Flat ₹{standardFee.toLocaleString("en-IN")}
+                          </span>
+                        )}
                       </div>
                     </button>
                   </div>
@@ -758,18 +852,27 @@ export default function ConsultPage() {
 
                 {/* 5. Order Summary & Direct Pay-Per-Booking Card */}
                 <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-5 space-y-2.5">
-                  <div className="flex items-center justify-between text-xs text-[#6B5A4E]">
-                    <span>Standard Consultation Fee:</span>
-                    <span className="font-semibold line-through">₹{standardFee.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-[#6B8E5A]">
-                    <span>
-                      {isAstro
-                        ? "First Consultation Special Discount (50% Off):"
-                        : "Vaastu Standing Promotional Discount:"}
-                    </span>
-                    <span className="font-bold">-₹{discountAmount.toLocaleString("en-IN")}</span>
-                  </div>
+                  {hasDiscount && discountAmount > 0 ? (
+                    <>
+                      <div className="flex items-center justify-between text-xs text-[#6B5A4E]">
+                        <span>Standard Consultation Fee:</span>
+                        <span className="font-semibold line-through">₹{standardFee.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-[#6B8E5A]">
+                        <span>
+                          {isAstro
+                            ? "First Consultation Special Discount (50% Off):"
+                            : "Vaastu Standing Promotional Discount:"}
+                        </span>
+                        <span className="font-bold">-₹{discountAmount.toLocaleString("en-IN")}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between text-xs text-[#6B5A4E]">
+                      <span>Consultation Fee:</span>
+                      <span className="font-bold text-[#3B2A1E]">Flat ₹{standardFee.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
                   <div className="border-t border-[#E8D8C3] pt-2 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-bold text-[#3B2A1E] font-temple">Net Amount Payable:</span>
@@ -793,13 +896,15 @@ export default function ConsultPage() {
                   <span>
                     {isProcessingPayment ? (
                       "Initiating Booking..."
-                    ) : (
+                    ) : hasDiscount && discountAmount > 0 ? (
                       <span className="flex items-center gap-1.5 flex-wrap justify-center">
                         <span className="line-through text-red-200/90 text-xs sm:text-sm font-bold decoration-red-300">
                           ₹{standardFee.toLocaleString("en-IN")}
                         </span>
                         <span>Proceed to Pay ₹{promoFee.toLocaleString("en-IN")} &amp; Start Consultation</span>
                       </span>
+                    ) : (
+                      <span>Proceed to Pay ₹{promoFee.toLocaleString("en-IN")} &amp; Start Consultation</span>
                     )}
                   </span>
                 </button>
@@ -843,7 +948,11 @@ export default function ConsultPage() {
                     onChange={(e) => setSelectedProduct(e.target.value as "astro" | "vaastu")}
                     className="w-full rounded-xl border border-[#D4C3B3] bg-[#FAF5EE] p-2.5 text-[#3B2A1E]"
                   >
-                    <option value="astro">Astro Consultation (Regular ₹2,100 ➔ Now Flat ₹1,051)</option>
+                    <option value="astro">
+                      {isFirstTimeAstro
+                        ? "Astro Consultation (Regular ₹2,100 ➔ Now Flat ₹1,051)"
+                        : "Astro Consultation (Flat ₹2,100)"}
+                    </option>
                     <option value="vaastu">Vaastu Consultation (Regular ₹25,000 ➔ Now Flat ₹15,000)</option>
                   </select>
                 </div>
@@ -877,12 +986,20 @@ export default function ConsultPage() {
                   <div className="flex justify-between items-center text-[#6B5A4E]">
                     <span>Dedicated 1-on-1 Consultation:</span>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs font-black text-red-700 line-through decoration-red-600">
-                        ₹{standardFee.toLocaleString("en-IN")}
-                      </span>
-                      <strong className="text-[#7B2D26] font-bold text-sm">
-                        Now Flat ₹{promoFee.toLocaleString("en-IN")}/-
-                      </strong>
+                      {hasDiscount && discountAmount > 0 ? (
+                        <>
+                          <span className="text-xs font-black text-red-700 line-through decoration-red-600">
+                            ₹{standardFee.toLocaleString("en-IN")}
+                          </span>
+                          <strong className="text-[#7B2D26] font-bold text-sm">
+                            Now Flat ₹{promoFee.toLocaleString("en-IN")}/-
+                          </strong>
+                        </>
+                      ) : (
+                        <strong className="text-[#7B2D26] font-bold text-sm">
+                          Flat ₹{standardFee.toLocaleString("en-IN")}/-
+                        </strong>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] text-[#7D6B5D] block">
