@@ -2,6 +2,8 @@ import {
   DEFAULT_FEATURED_REELS,
   FeaturedInstagramReel,
   INSTAGRAM_PROFILE_URL,
+  extractInstagramShortcode,
+  getReelFallbackPoster,
 } from "@/config/featuredReels";
 
 export type AstroReel = FeaturedInstagramReel;
@@ -79,9 +81,17 @@ export const ReelsStore = {
       const { prisma } = await import("@/lib/db/prisma");
       if (!prisma || !prisma.instagramMedia) return;
 
-      const count = await prisma.instagramMedia.count();
-      if (count === 0) {
-        for (const r of DEFAULT_FEATURED_REELS) {
+      for (const r of DEFAULT_FEATURED_REELS) {
+        const existing = await prisma.instagramMedia.findFirst({
+          where: {
+            OR: [
+              { externalId: r.id },
+              { permalink: r.instagramUrl },
+            ],
+          },
+        });
+
+        if (!existing) {
           await prisma.instagramMedia.create({
             data: {
               externalId: r.id,
@@ -94,6 +104,11 @@ export const ReelsStore = {
               displayOrder: r.order,
               mediaType: "REEL",
             },
+          });
+        } else if (!existing.thumbnailUrl && r.posterUrl) {
+          await prisma.instagramMedia.update({
+            where: { id: existing.id },
+            data: { thumbnailUrl: r.posterUrl },
           });
         }
       }
@@ -116,11 +131,15 @@ export const ReelsStore = {
             const defaultMatch = DEFAULT_FEATURED_REELS.find(
               (df) => df.id === r.externalId || df.instagramUrl === r.permalink
             );
+            const shortcode = extractInstagramShortcode(r.permalink);
+            const localFallback = shortcode ? `/videos/reels/posters/thumb-${shortcode}.jpg` : undefined;
+            const posterUrl = r.thumbnailUrl || defaultMatch?.posterUrl || localFallback || getReelFallbackPoster(r.category);
+
             return {
               id: r.externalId,
               instagramUrl: r.permalink,
               videoUrl: defaultMatch?.videoUrl || undefined,
-              posterUrl: r.thumbnailUrl || defaultMatch?.posterUrl || undefined,
+              posterUrl,
               videoDuration: defaultMatch?.videoDuration || "1:00",
               caption: r.caption || "Vedic Guidance",
               category: (r.category as any) || "Horoscope",
@@ -149,34 +168,65 @@ export const ReelsStore = {
   },
 
   /**
-   * Adds a new curated Instagram reel to database
+   * Adds a new curated Instagram reel to database with automatic thumbnail resolution
    */
   async addReelAsync(data: {
     instagramUrl: string;
     caption?: string;
     category?: "Horoscope" | "Vastu" | "Gemstone" | "Remedy";
     pinnedToHome?: boolean;
+    posterUrl?: string;
   }): Promise<AstroReel> {
-    const newReel = this.addReel(data);
+    let resolvedPoster = data.posterUrl;
+    if (!resolvedPoster) {
+      const { InstagramThumbnailService } = await import("@/lib/services/instagramThumbnailService");
+      const { posterUrl } = await InstagramThumbnailService.resolveThumbnail(data.instagramUrl, data.category);
+      resolvedPoster = posterUrl;
+    }
+
+    const newReel = this.addReel({ ...data, posterUrl: resolvedPoster });
     try {
       const { prisma } = await import("@/lib/db/prisma");
       if (prisma && prisma.instagramMedia) {
-        await prisma.instagramMedia.create({
-          data: {
-            externalId: newReel.id,
-            permalink: newReel.instagramUrl,
-            thumbnailUrl: newReel.posterUrl || null,
-            caption: newReel.caption,
-            category: newReel.category,
-            pinned: newReel.pinnedToHome,
-            hidden: newReel.isHidden,
-            displayOrder: newReel.order,
-            mediaType: "REEL",
+        const existing = await prisma.instagramMedia.findFirst({
+          where: {
+            OR: [
+              { externalId: newReel.id },
+              { permalink: newReel.instagramUrl },
+            ],
           },
         });
+
+        if (existing) {
+          await prisma.instagramMedia.update({
+            where: { id: existing.id },
+            data: {
+              thumbnailUrl: resolvedPoster || null,
+              caption: newReel.caption,
+              category: newReel.category,
+              pinned: newReel.pinnedToHome,
+              hidden: newReel.isHidden,
+              displayOrder: newReel.order,
+            },
+          });
+        } else {
+          await prisma.instagramMedia.create({
+            data: {
+              externalId: newReel.id,
+              permalink: newReel.instagramUrl,
+              thumbnailUrl: resolvedPoster || null,
+              caption: newReel.caption,
+              category: newReel.category,
+              pinned: newReel.pinnedToHome,
+              hidden: newReel.isHidden,
+              displayOrder: newReel.order,
+              mediaType: "REEL",
+            },
+          });
+        }
       }
     } catch (e) {
-      console.error("[ReelsStore] DB create failed:", e);
+      console.error("[ReelsStore] DB create/update failed:", e);
     }
     return newReel;
   },
@@ -186,16 +236,26 @@ export const ReelsStore = {
     caption?: string;
     category?: "Horoscope" | "Vastu" | "Gemstone" | "Remedy";
     pinnedToHome?: boolean;
+    posterUrl?: string;
   }): AstroReel => {
     initClientStorage();
+    const shortcode = extractInstagramShortcode(data.instagramUrl);
+    const id = shortcode ? `reel-${shortcode}` : `reel-${Date.now()}`;
     const newOrder = memoryReels.length > 0 ? Math.max(...memoryReels.map((r) => r.order)) + 1 : 1;
+    const resolvedPoster = data.posterUrl || (shortcode ? `/videos/reels/posters/thumb-${shortcode}.jpg` : getReelFallbackPoster(data.category));
+
+    // Remove if already in memory to prevent duplicate cards
+    memoryReels = memoryReels.filter((r) => r.id !== id && r.instagramUrl !== data.instagramUrl.trim());
+
     const newReel: AstroReel = {
-      id: `reel-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id,
       instagramUrl: data.instagramUrl.trim(),
       caption: data.caption?.trim() || "Vedic Guidance by Acharya Niraj Kumar",
       category: data.category || "Horoscope",
       pinnedToHome: data.pinnedToHome !== undefined ? data.pinnedToHome : true,
       isHidden: false,
+      posterUrl: resolvedPoster,
+      videoDuration: "1:00",
       order: newOrder,
       date: "Recent Guidance",
     };

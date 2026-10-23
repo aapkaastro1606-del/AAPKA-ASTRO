@@ -39,6 +39,15 @@ export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
 
+  const defaultPoster = "/videos/reels/posters/thumb-DeZIvudACZW.jpg";
+  const [imgSrc, setImgSrc] = useState<string>(posterUrl || defaultPoster);
+
+  useEffect(() => {
+    if (posterUrl) {
+      setImgSrc(posterUrl);
+    }
+  }, [posterUrl]);
+
   // Lazy loading observer: Only mount/activate video when scrolled near viewport
   useEffect(() => {
     const el = containerRef.current;
@@ -129,14 +138,22 @@ export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
 
         {/* Video Canvas Container (9:16 Aspect Ratio) */}
         <div
-          onClick={videoUrl ? togglePlay : undefined}
+          onClick={(e) => {
+            if (videoUrl) {
+              togglePlay(e);
+            } else if (url) {
+              e.stopPropagation();
+              window.open(url, "_blank", "noopener,noreferrer");
+            }
+          }}
+          title={videoUrl ? (isPlaying ? "Pause video" : "Play video") : "Watch this reel on Instagram"}
           className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-[#2A1D15] cursor-pointer shadow-inner select-none"
         >
           {videoUrl && isInView ? (
             <video
               ref={videoRef}
               src={videoUrl}
-              poster={posterUrl}
+              poster={imgSrc}
               preload="metadata"
               playsInline
               loop
@@ -147,15 +164,14 @@ export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
               className="h-full w-full object-cover"
             />
           ) : (
-            posterUrl && (
-              <img
-                src={posterUrl}
-                alt={caption || "Aapka Astro Reel"}
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
-              />
-            )
+            <img
+              src={imgSrc}
+              alt={caption || "Aapka Astro Reel"}
+              loading="lazy"
+              decoding="async"
+              onError={() => setImgSrc(defaultPoster)}
+              className="h-full w-full object-cover"
+            />
           )}
 
           {/* Top Duration Badge */}
@@ -181,8 +197,8 @@ export const InstagramReelEmbed: React.FC<InstagramReelEmbedProps> = ({
             </button>
           )}
 
-          {/* Center Play Overlay Icon (when paused) */}
-          {videoUrl && !isPlaying && (
+          {/* Center Play Overlay Icon (shown when paused or when static poster is active) */}
+          {!isPlaying && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/25 transition-opacity pointer-events-none">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8A33D] text-[#3B2A1E] shadow-xl transform group-hover:scale-110 transition-transform">
                 <Play className="h-6 w-6 fill-[#3B2A1E] ml-0.5" />

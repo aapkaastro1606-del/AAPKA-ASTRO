@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasStaffSectionAccess, getServerAuthUser } from "@/lib/auth/serverAuth";
 import { ReelsStore } from "@/lib/store/reelsStore";
+import { InstagramThumbnailService } from "@/lib/services/instagramThumbnailService";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/dashboard/reels
  * Lists all curated reels directly from PostgreSQL (Neon). Requires VIEW access on "reels".
+ * Also supports thumbnail resolution via ?action=resolveThumbnail&url=...
  */
 export async function GET(req: NextRequest) {
   const auth = await getServerAuthUser();
@@ -26,6 +28,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const action = req.nextUrl.searchParams.get("action");
+    if (action === "resolveThumbnail") {
+      const url = req.nextUrl.searchParams.get("url");
+      if (!url) {
+        return NextResponse.json({ success: false, message: "URL is required" }, { status: 400 });
+      }
+      const category = req.nextUrl.searchParams.get("category") || undefined;
+      const result = await InstagramThumbnailService.resolveThumbnail(url, category);
+      return NextResponse.json({ success: true, ...result });
+    }
+
     const reels = await ReelsStore.getAllReelsAsync();
     return NextResponse.json({ success: true, reels });
   } catch (error: any) {

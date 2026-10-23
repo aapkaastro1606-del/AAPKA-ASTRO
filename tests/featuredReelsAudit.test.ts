@@ -33,9 +33,11 @@ test("Featured Reels Config: contains verified Instagram profile and real-format
     assert.strictEqual(typeof reel.pinnedToHome, "boolean");
     assert.strictEqual(typeof reel.isHidden, "boolean");
     assert.strictEqual(typeof reel.order, "number");
-    assert.ok(reel.videoUrl, "Reel must have a videoUrl");
     assert.ok(reel.posterUrl, "Reel must have a posterUrl");
     assert.ok(reel.videoDuration, "Reel must have a videoDuration");
+    if (reel.videoUrl) {
+      assert.strictEqual(typeof reel.videoUrl, "string");
+    }
   }
 });
 

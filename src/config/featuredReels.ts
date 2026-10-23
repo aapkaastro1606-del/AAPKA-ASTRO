@@ -26,6 +26,30 @@ export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/aapkaastrologer/
 export const INSTAGRAM_HANDLE = "@aapkaastrologer";
 
 /**
+ * Extracts the unique shortcode from any Instagram Reel or Post URL.
+ */
+export function extractInstagramShortcode(instagramUrl: string): string | null {
+  if (!instagramUrl) return null;
+  const clean = instagramUrl.trim();
+  const match = clean.match(/\/(?:reel|p|reels)\/([A-Za-z0-9_-]+)/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Returns a reliable fallback poster path based on category or default Acharya Ji branding.
+ */
+export function getReelFallbackPoster(category?: string | null): string {
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("horo") || cat.includes("rashi")) {
+    return "/videos/reels/posters/thumb-Dedvn-PhujK.jpg";
+  }
+  if (cat.includes("vastu") || cat.includes("vaastu")) {
+    return "/videos/reels/posters/thumb-Dds0dUhy58r.jpg";
+  }
+  return "/videos/reels/posters/thumb-DeZIvudACZW.jpg";
+}
+
+/**
  * Authentic Featured Reels by Acharya Niraj Kumar
  * Sourced directly from @aapkaastrologer with real MP4 streams and video posters.
  */
@@ -94,5 +118,17 @@ export const DEFAULT_FEATURED_REELS: FeaturedInstagramReel[] = [
     isHidden: false,
     order: 5,
     date: "Vastu Balance",
+  },
+  {
+    id: "reel-De0z_CylNj5",
+    instagramUrl: "https://www.instagram.com/reel/De0z_CylNj5/?rpxt=MTE4cDJpbXNkeXdzcw==",
+    posterUrl: "/videos/reels/posters/thumb-De0z_CylNj5.jpg",
+    videoDuration: "1:00",
+    caption: "23 October 2026 Rashifal: जानिए Kal Ki Chal में धनु, मकर, कुंभ और मीन राशि वालों के लिए आज का दिन कैसा रहने वाला है? करियर, धन और शुभ रंग से जुड़े संकेत",
+    category: "Horoscope",
+    pinnedToHome: true,
+    isHidden: false,
+    order: 6,
+    date: "Daily Horoscope",
   },
 ];

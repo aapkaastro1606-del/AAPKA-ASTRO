@@ -20,6 +20,9 @@ import {
   Trash2,
   Sparkles,
   RotateCcw,
+  Play,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { InstagramIcon } from "@/components/ui/InstagramIcon";
 
@@ -37,6 +40,28 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
   const [captionInput, setCaptionInput] = useState("");
   const [categoryInput, setCategoryInput] = useState<"Horoscope" | "Vastu" | "Gemstone" | "Remedy">("Horoscope");
   const [pinInput, setPinInput] = useState(true);
+  const [resolvingThumbnail, setResolvingThumbnail] = useState(false);
+  const [detectedPoster, setDetectedPoster] = useState<string | null>(null);
+
+  const resolveThumbnailPreview = async (url: string, category: string) => {
+    if (!url || !url.includes("instagram.com")) return;
+    setResolvingThumbnail(true);
+    try {
+      const res = await fetch(
+        `/api/dashboard/reels?action=resolveThumbnail&url=${encodeURIComponent(url.trim())}&category=${category}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.posterUrl) {
+          setDetectedPoster(data.posterUrl);
+        }
+      }
+    } catch {
+      // ignore preview failure
+    } finally {
+      setResolvingThumbnail(false);
+    }
+  };
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -188,6 +213,7 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
       caption: captionInput.trim() || "Vedic Guidance by Acharya Niraj Kumar",
       category: categoryInput,
       pinnedToHome: pinInput,
+      posterUrl: detectedPoster || undefined,
     };
 
     ReelsStore.addReel(reelData);
@@ -211,6 +237,7 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
 
     setUrlInput("");
     setCaptionInput("");
+    setDetectedPoster(null);
     setIsAddOpen(false);
   };
 
@@ -360,17 +387,72 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
                 <label className="block text-xs font-bold text-[#3B2A1E] mb-1">
                   Instagram Reel / Post URL <span className="text-rose-600">*</span>
                 </label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://www.instagram.com/reel/C9XYZ123abc/"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  className="w-full rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] px-3.5 py-2.5 text-xs text-[#3B2A1E] focus:outline-none focus:border-[#7B2D26]"
-                />
+                <div className="relative">
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://www.instagram.com/reel/C9XYZ123abc/"
+                    value={urlInput}
+                    onChange={(e) => {
+                      setUrlInput(e.target.value);
+                      if (detectedPoster) setDetectedPoster(null);
+                    }}
+                    onBlur={() => {
+                      if (urlInput && !detectedPoster) {
+                        resolveThumbnailPreview(urlInput, categoryInput);
+                      }
+                    }}
+                    className="w-full rounded-xl border border-[#E8D8C3] bg-[#FAF5EE] px-3.5 py-2.5 pr-28 text-xs text-[#3B2A1E] focus:outline-none focus:border-[#7B2D26]"
+                  />
+                  <button
+                    type="button"
+                    disabled={resolvingThumbnail || !urlInput.trim()}
+                    onClick={() => resolveThumbnailPreview(urlInput, categoryInput)}
+                    className="absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-[#E8A33D] text-[#3B2A1E] text-[11px] font-bold hover:bg-[#F6CF86] disabled:opacity-40 transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    {resolvingThumbnail ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Detecting...</span>
+                      </>
+                    ) : (
+                      <span>Detect Cover</span>
+                    )}
+                  </button>
+                </div>
                 <p className="text-[11px] text-[#8C7A6B] mt-1">
                   Copy any public reel link from {INSTAGRAM_PROFILE_URL}
                 </p>
+
+                {/* Live Cover Detection Preview */}
+                {detectedPoster && (
+                  <div className="mt-3 flex items-center gap-3.5 rounded-2xl border border-[#6B8E5A]/40 bg-[#FAF1E4] p-3">
+                    <div className="relative aspect-[9/16] w-14 shrink-0 overflow-hidden rounded-xl bg-[#2A1D15] shadow-xs">
+                      <img
+                        src={detectedPoster}
+                        alt="Reel cover preview"
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E8A33D] text-[#3B2A1E]">
+                          <Play className="h-3 w-3 fill-[#3B2A1E] ml-0.5" />
+                        </div>
+                      </div>
+                      <div className="absolute top-1 left-1 rounded bg-black/70 px-1 py-0.2 text-[8px] font-mono text-white">
+                        1:00
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="flex items-center gap-1 font-bold text-[#2A4720]">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A]" />
+                        <span>Cover Image &amp; Play Button Ready</span>
+                      </div>
+                      <p className="text-[11px] text-[#6E5545] mt-0.5">
+                        Thumbnail preview loaded. This reel will feature with the genuine Instagram cover frame and yellow play symbol.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -489,21 +571,57 @@ export default function ReelsManagerClient({ canManage }: ReelsManagerClientProp
                     </div>
                   </div>
 
-                  <p className="text-xs font-semibold text-[#3B2A1E] line-clamp-2 mb-2">
-                    {reel.caption}
-                  </p>
-
-                  <div className="rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] p-2.5 mb-3 break-all text-[11px] font-mono text-[#6E5545] flex items-center justify-between gap-2">
-                    <span className="line-clamp-1">{reel.instagramUrl}</span>
-                    <a
-                      href={reel.instagramUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#7B2D26] hover:text-[#C1662F] shrink-0"
-                      title="Open in Instagram"
+                  {/* Video Poster Preview Frame with Authentic Cover & Play Symbol */}
+                  <div className="flex gap-4 mb-3">
+                    <div
+                      onClick={() => window.open(reel.instagramUrl, "_blank", "noopener,noreferrer")}
+                      className="relative aspect-[9/16] w-24 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-[#2A1D15] cursor-pointer shadow-sm group/poster border border-[#E8D8C3]"
+                      title="Click to preview on Instagram"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                      <img
+                        src={reel.posterUrl || "/videos/reels/posters/thumb-DeZIvudACZW.jpg"}
+                        alt={reel.caption}
+                        className="h-full w-full object-cover transition-transform group-hover/poster:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/videos/reels/posters/thumb-DeZIvudACZW.jpg";
+                        }}
+                      />
+                      {/* Top Duration Badge */}
+                      <div className="absolute top-1.5 left-1.5 rounded-md bg-black/70 backdrop-blur-xs px-1.5 py-0.5 text-[9px] font-mono font-bold text-white shadow-xs">
+                        {reel.videoDuration || "1:00"}
+                      </div>
+                      {/* Center Golden Play Overlay Button */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8A33D] text-[#3B2A1E] shadow-md transition-transform group-hover/poster:scale-110">
+                          <Play className="h-4 w-4 fill-[#3B2A1E] ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                      <div>
+                        <p className="text-xs font-semibold text-[#3B2A1E] line-clamp-3 mb-2">
+                          {reel.caption}
+                        </p>
+                        <div className="rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] p-2 break-all text-[11px] font-mono text-[#6E5545] flex items-center justify-between gap-2">
+                          <span className="line-clamp-1">{reel.instagramUrl}</span>
+                          <a
+                            href={reel.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#7B2D26] hover:text-[#C1662F] shrink-0"
+                            title="Open in Instagram"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-[10px] text-[#8C7A6B] flex items-center gap-1">
+                        <Film className="h-3 w-3 text-[#E8A33D]" />
+                        <span>Cover preview active</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
