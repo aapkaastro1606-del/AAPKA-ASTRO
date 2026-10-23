@@ -166,7 +166,7 @@ export const FIRST_CONSULTATION_OFFER = {
 // Kundli Full PDF Report Product (₹501 One-Time Download)
 export const KUNDLI_PDF_PRODUCT = {
   id: "kundli_pdf",
-  name: "Customized Janam Kundli by Acharya Ji",
+  name: "Customized Janam Kundli PDF Dossier by Acharya Ji",
   price: 501,
   currency: "₹",
   tagline: "Custom-designed and hand-analyzed Kundli PDF dossier curated personally by Acharya Niraj Kumar",
