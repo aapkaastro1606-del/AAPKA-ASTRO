@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { BlogStore, BlogPost } from "@/lib/store/blogStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
@@ -17,7 +17,44 @@ import {
   X,
   Lock,
   AlertCircle,
+  Image as ImageIcon,
+  Upload,
+  Link as LinkIcon,
+  Sparkles,
 } from "lucide-react";
+
+const VEDIC_COVER_PRESETS = [
+  {
+    label: "Planetary Transits",
+    icon: "🪐",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    label: "Kundli & Horoscopes",
+    icon: "🔮",
+    url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    label: "Vastu Shastra",
+    icon: "🏛️",
+    url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    label: "Vedic Gemstones",
+    icon: "💎",
+    url: "https://images.unsplash.com/photo-1599707367072-cd6ada2bc375?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    label: "Panchang & Muhurata",
+    icon: "🪔",
+    url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    label: "Vedic Remedies",
+    icon: "🕉️",
+    url: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80",
+  },
+];
 
 interface BlogManagerClientProps {
   canManage: boolean;
@@ -28,6 +65,51 @@ export default function BlogManagerClient({ canManage }: BlogManagerClientProps)
   const [editingPost, setEditingPost] = useState<Partial<BlogPost> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file (JPEG, PNG, or WebP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Optimize to max 1200px width/height while maintaining aspect ratio
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+          if (editingPost) {
+            setEditingPost({ ...editingPost, coverImage: compressedBase64 });
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCreateNew = () => {
     if (!canManage) {
@@ -241,12 +323,27 @@ export default function BlogManagerClient({ canManage }: BlogManagerClientProps)
                 {posts.map((post) => (
                   <tr key={post.id} className="hover:bg-[#FBF3E7]/50">
                     <td className="py-4 pr-4">
-                      <div className="font-temple font-bold text-[#7B2D26] text-sm">
-                        {post.title}
+                      <div className="flex items-center gap-3">
+                        <div className="relative aspect-[16/10] w-16 h-10 sm:w-20 sm:h-12 rounded-xl overflow-hidden bg-[#3B2A1E] shrink-0 border border-[#E8D8C3] shadow-xs">
+                          <img
+                            src={post.coverImage || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80"}
+                            alt={post.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80";
+                            }}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-temple font-bold text-[#7B2D26] text-sm line-clamp-1">
+                            {post.title}
+                          </div>
+                          <span className="text-[11px] text-[#6E5545] line-clamp-1">
+                            slug: /{post.slug} • {post.readTime}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[11px] text-[#6E5545]">
-                        slug: /{post.slug} • {post.readTime}
-                      </span>
                     </td>
                     <td className="py-4">
                       <span className="rounded bg-[#FBF3E7] px-2 py-0.5 text-[11px] font-bold text-[#C1662F] border border-[#E8D8C3]">
@@ -381,6 +478,114 @@ export default function BlogManagerClient({ canManage }: BlogManagerClientProps)
                     <option value="scheduled">Scheduled</option>
                     <option value="draft">Draft</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Article Cover Image Selection & Live Preview */}
+              <div className="rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-[#3B2A1E]">
+                    Article Cover Image
+                  </label>
+                  <span className="text-[10px] text-[#6E5545]">
+                    Recommended 16:9 ratio (1200x675)
+                  </span>
+                </div>
+
+                {/* Live Preview Canvas */}
+                <div className="relative aspect-[16/9] w-full max-h-52 overflow-hidden rounded-xl border border-[#E8D8C3] bg-[#2A1D15] flex items-center justify-center shadow-inner group">
+                  {editingPost.coverImage ? (
+                    <>
+                      <img
+                        src={editingPost.coverImage}
+                        alt="Article Cover Preview"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-3.5 py-1.5 rounded-lg bg-white/95 text-xs font-bold text-[#3B2A1E] hover:bg-white flex items-center gap-1.5 shadow-md cursor-pointer"
+                        >
+                          <Upload className="h-3.5 w-3.5" />
+                          <span>Change Image</span>
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-white/70 p-4 text-center">
+                      <ImageIcon className="h-10 w-10 mb-2 opacity-50" />
+                      <span className="text-xs font-semibold">No cover image selected</span>
+                      <span className="text-[10px] text-white/50 mt-0.5">Upload a photo from your device or pick a preset below</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* URL Input & Device File Upload */}
+                <div className="space-y-2.5">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6E5545]" />
+                      <input
+                        type="text"
+                        placeholder="Paste image link (https://... or /gallery/...)"
+                        value={editingPost.coverImage || ""}
+                        onChange={(e) =>
+                          setEditingPost({ ...editingPost, coverImage: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] py-2 pl-9 pr-3 text-xs text-[#3B2A1E] focus:outline-none focus:ring-2 focus:ring-[#7B2D26]"
+                      />
+                    </div>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageFileChange}
+                      className="hidden"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-xl border border-[#7B2D26] bg-[#FFFDF9] px-3.5 py-2 text-xs font-bold text-[#7B2D26] hover:bg-[#7B2D26] hover:text-[#FBF3E7] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
+                      title="Upload an image directly from your computer or phone"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>Upload from Device</span>
+                    </button>
+                  </div>
+
+                  {/* 1-Click Curated Vedic Presets */}
+                  <div>
+                    <span className="text-[10px] font-bold text-[#6E5545] uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-[#E8A33D]" />
+                      <span>Or Pick a 1-Click Vedic Topic Preset:</span>
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {VEDIC_COVER_PRESETS.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() =>
+                            setEditingPost({ ...editingPost, coverImage: preset.url })
+                          }
+                          className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all border flex items-center gap-1 cursor-pointer ${
+                            editingPost.coverImage === preset.url
+                              ? "bg-[#7B2D26] text-white border-[#7B2D26] shadow-xs"
+                              : "bg-[#FFFDF9] text-[#6E5545] border-[#E8D8C3] hover:border-[#7B2D26] hover:text-[#7B2D26]"
+                          }`}
+                        >
+                          <span>{preset.icon}</span>
+                          <span>{preset.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
