@@ -166,10 +166,10 @@ export const FIRST_CONSULTATION_OFFER = {
 // Kundli Full PDF Report Product (₹501 One-Time Download)
 export const KUNDLI_PDF_PRODUCT = {
   id: "kundli_pdf",
-  name: "Kundli Full PDF Report",
+  name: "Customized Janam Kundli by Acharya Ji",
   price: 501,
   currency: "₹",
-  tagline: "Downloadable, formatted printable Vedic Horoscope Dossier",
+  tagline: "Custom-designed and hand-analyzed Kundli PDF dossier curated personally by Acharya Niraj Kumar",
   deliverables: [
     "High-resolution D1 Lagna & D9 Navamsha charts formatted for clean printing",
     "Planetary longitudes, avasthas, degrees & dignity matrix (exalted/debilitated)",

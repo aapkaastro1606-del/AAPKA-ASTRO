@@ -192,7 +192,7 @@ export default function KundliGeneratorPage() {
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E]">
       {/* 1. Header Banner */}
-      <section className="border-b border-[#E8D8C3] bg-[#7B2D26] py-14 sm:py-18 text-[#FBF3E7]">
+      <section className="border-b border-[#E8D8C3] bg-[#7B2D26] py-14 sm:py-18 text-[#FBF3E7] no-print">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
@@ -209,12 +209,24 @@ export default function KundliGeneratorPage() {
                 Free Online Janam Kundli Generator
               </h1>
               <p className="mt-2 text-xs sm:text-sm text-[#FBF3E7]/80 max-w-2xl font-body leading-relaxed">
-                Calculate your authentic Vedic birth chart, planetary degrees, Vimshottari Dasha, Shodashvarga (D1 to D12), and Manglik status instantly online. Download full formatted PDF report anytime for ₹501.
+                Calculate your authentic Vedic birth chart, planetary degrees, Vimshottari Dasha, Shodashvarga (D1 to D12), and Manglik status instantly online. Download your complete formatted PDF dossier 100% Free, or order a customized hand-curated Kundli designed personally by Acharya Niraj Kumar for ₹501.
               </p>
             </div>
 
             {/* Header Actions */}
             <div className="flex flex-wrap items-center gap-3 shrink-0">
+              {/* Free Automated PDF Download */}
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="flex items-center gap-1.5 rounded-xl bg-[#6B8E5A] hover:bg-[#577548] text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                title="Download or Print your verified automated Kundli PDF for free"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Free PDF</span>
+              </button>
+
+              {/* Customized Kundli by Acharya Ji */}
               <button
                 type="button"
                 onClick={handlePdfPurchase}
@@ -222,20 +234,18 @@ export default function KundliGeneratorPage() {
                 className={`flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75 ${
                   isPdfUnlocked
                     ? "border-[#6B8E5A] bg-[#6B8E5A]/20 text-[#D4EDDA] hover:bg-[#6B8E5A]/30"
-                    : "border-[#E8A33D]/50 bg-[#64221C] text-[#FBF3E7] hover:bg-[#521C16]"
+                    : "border-[#E8A33D]/60 bg-[#64221C] text-[#FBF3E7] hover:bg-[#521C16]"
                 }`}
+                title="Get a customized handwritten Kundli dossier designed by Acharya Niraj Kumar"
               >
-                {isPdfUnlocked ? (
-                  <>
-                    <Download className="h-4 w-4 text-[#6B8E5A]" />
-                    <span>Download PDF (Unlocked)</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4 text-[#E8A33D]" />
-                    <span>{isProcessingPayment ? "Processing..." : "Full PDF Dossier — ₹501"}</span>
-                  </>
-                )}
+                <Sparkles className="h-4 w-4 text-[#E8A33D]" />
+                <span>
+                  {isPdfUnlocked
+                    ? "Customized Dossier (Unlocked)"
+                    : isProcessingPayment
+                    ? "Processing..."
+                    : "Customized Kundli by Acharya Ji — ₹501"}
+                </span>
               </button>
 
               <Link
@@ -251,7 +261,7 @@ export default function KundliGeneratorPage() {
       </section>
 
       {/* 2. Main Generator Section */}
-      <section className="py-10 sm:py-14 px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-14 px-4 sm:px-6 lg:px-8 no-print">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Form & Key Vedic Metrics */}
@@ -356,49 +366,64 @@ export default function KundliGeneratorPage() {
                 </div>
               </div>
 
-              {/* Paid PDF Report Callout Banner */}
-              <div className="my-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-r from-[#FFFDF9] via-[#FAF1E4] to-[#FFFDF9] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+              {/* Free PDF & Customized Kundli Callout Banner */}
+              <div className="my-5 rounded-2xl border border-[#E8A33D] bg-gradient-to-r from-[#FFFDF9] via-[#FAF1E4] to-[#FFFDF9] p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7B2D26] text-[#E8A33D] shrink-0 font-bold">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-temple font-bold text-sm sm:text-base text-[#7B2D26]">
-                        Download Full Janam Kundli PDF Report
+                        Instant Free PDF or Customized Kundli by Acharya Ji
                       </h4>
-                      <span className="rounded-full bg-[#6B8E5A]/20 px-2 py-0.5 text-[10px] font-bold text-[#2A4720]">
-                        ₹501 One-Time
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold">
+                        Free Automated PDF
+                      </span>
+                      <span className="rounded-full bg-[#E8A33D]/20 text-[#7B2D26] border border-[#E8A33D]/40 px-2 py-0.5 text-[10px] font-bold">
+                        ₹501 Customized by Acharya Ji
                       </span>
                     </div>
-                    <p className="text-xs text-[#6E5545] mt-0.5 font-body">
-                      Complete 12-page formatted A4 printable dossier with high-resolution charts, planetary dignity table, 4-tier dasha timeline, and remedies.
+                    <p className="text-xs text-[#6E5545] mt-1 font-body leading-relaxed">
+                      Download your automated Vedic birth chart PDF 100% Free right now. If you want a comprehensive customized Kundli dossier hand-analyzed and designed personally by Acharya Niraj Kumar with personalized remedies, order the customized edition for ₹501.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handlePdfPurchase}
-                  disabled={isProcessingPayment}
-                  className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer disabled:opacity-75 ${
-                    isPdfUnlocked
-                      ? "bg-[#6B8E5A] hover:bg-[#587749] text-white"
-                      : "bg-[#7B2D26] hover:bg-[#64231D] text-white"
-                  }`}
-                >
-                  {isPdfUnlocked ? (
-                    <>
-                      <Download className="h-4 w-4" />
-                      <span>Download PDF (Paid &amp; Unlocked)</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="h-4 w-4 text-[#E8A33D]" />
-                      <span>{isProcessingPayment ? "Processing..." : "Download Full PDF Report — ₹501"}</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0 w-full md:w-auto">
+                  {/* 1. Instant Free PDF Button */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadPdf}
+                    className="flex-1 md:flex-initial rounded-xl bg-[#6B8E5A] hover:bg-[#587749] text-white px-4 py-2.5 text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Download automated Kundli PDF for free"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download Free PDF</span>
+                  </button>
+
+                  {/* 2. Customized Kundli Order Button */}
+                  <button
+                    type="button"
+                    onClick={handlePdfPurchase}
+                    disabled={isProcessingPayment}
+                    className={`flex-1 md:flex-initial rounded-xl px-4 py-2.5 text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-75 ${
+                      isPdfUnlocked
+                        ? "bg-[#2A4720] text-[#D4EDDA] border border-[#6B8E5A]"
+                        : "bg-[#7B2D26] hover:bg-[#64231D] text-white"
+                    }`}
+                    title="Order personalized Kundli dossier designed by Acharya Niraj Kumar"
+                  >
+                    <Sparkles className="h-4 w-4 text-[#E8A33D]" />
+                    <span>
+                      {isPdfUnlocked
+                        ? "Customized Dossier (Unlocked)"
+                        : isProcessingPayment
+                        ? "Processing..."
+                        : "Customized by Acharya Ji — ₹501"}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Navigation Tabs */}
@@ -506,7 +531,7 @@ export default function KundliGeneratorPage() {
                   }`}
                 >
                   <FileText className="h-3.5 w-3.5 text-[#E8A33D]" />
-                  <span>{isPdfUnlocked ? "Full PDF Report (Unlocked)" : "Full PDF Report (₹501)"}</span>
+                  <span>PDF Dossier (Free &amp; Customized)</span>
                 </button>
               </div>
 
@@ -633,27 +658,36 @@ export default function KundliGeneratorPage() {
                     <span>Save Kundli to Account</span>
                   </button>
 
+                  {/* Free Instant Download */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadPdf}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#6B8E5A] hover:bg-[#587749] text-white px-4 py-2 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    title="Download clean automated Kundli PDF for free"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download Free PDF</span>
+                  </button>
+
+                  {/* Customized Acharya Ji Order */}
                   <button
                     type="button"
                     onClick={handlePdfPurchase}
                     disabled={isProcessingPayment}
                     className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75 ${
                       isPdfUnlocked
-                        ? "bg-[#6B8E5A] hover:bg-[#587749] text-white"
+                        ? "bg-[#2A4720] text-[#D4EDDA] border border-[#6B8E5A]"
                         : "bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E]"
                     }`}
                   >
-                    {isPdfUnlocked ? (
-                      <>
-                        <Download className="h-4 w-4" />
-                        <span>Download Full PDF (Unlocked)</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="h-4 w-4" />
-                        <span>Download Full PDF Report — ₹501</span>
-                      </>
-                    )}
+                    <Sparkles className="h-4 w-4" />
+                    <span>
+                      {isPdfUnlocked
+                        ? "Customized Dossier (Unlocked)"
+                        : isProcessingPayment
+                        ? "Processing..."
+                        : "Customized by Acharya Ji — ₹501"}
+                    </span>
                   </button>
                 </div>
 
@@ -672,7 +706,7 @@ export default function KundliGeneratorPage() {
 
       {/* Signup Lead-Gen Modal */}
       {showSignupPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm no-print">
           <div className="relative w-full max-w-md rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-8 shadow-2xl text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7B2D26]/10 text-[#7B2D26] mx-auto mb-4">
               <Lock className="h-6 w-6" />

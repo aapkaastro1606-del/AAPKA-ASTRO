@@ -39,9 +39,9 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
     <div className={isPreview ? "space-y-6" : "print-only p-8 bg-white text-black"}>
       {/* Top Action Bar when viewed on screen */}
       {isPreview && (
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-[#7B2D26] text-[#FBF3E7] shadow-md">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#7B2D26] text-[#FBF3E7] shadow-md">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-temple text-base font-bold flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#E8A33D]" />
                 <span>Full Janam Kundli Dossier (Printable PDF Version)</span>
@@ -49,41 +49,45 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
               {isUnlocked ? (
                 <span className="rounded-full bg-[#6B8E5A] px-2.5 py-0.5 text-[10px] font-bold text-white flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  Unlocked &bull; Paid
+                  Customized Edition &bull; ₹501 Paid
                 </span>
               ) : (
-                <span className="rounded-full bg-[#E8A33D] px-2.5 py-0.5 text-[10px] font-bold text-[#3B2A1E]">
-                  Paid Product: ₹501
+                <span className="rounded-full bg-emerald-700/80 px-2.5 py-0.5 text-[10px] font-bold text-white">
+                  Automated PDF: 100% Free
                 </span>
               )}
             </div>
             <p className="text-xs text-[#E8D8C3] mt-1 font-body">
               {isUnlocked
-                ? "Your full PDF report is unlocked! Click below to download or print your clean A4 document."
-                : "Full 12-page formatted Vedic horoscope report with dual charts, planetary dignity matrix, and remedies."}
+                ? "Your customized Kundli is unlocked! Download or print this comprehensive A4 dossier anytime."
+                : "Download your automated Kundli PDF for free, or order a customized hand-curated dossier by Acharya Niraj Kumar for ₹501."}
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            {isUnlocked ? (
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#6B8E5A] hover:bg-[#577548] text-white px-5 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer"
-              >
-                <Download className="h-4 w-4" />
-                <span>Download / Print Full PDF Dossier</span>
-              </button>
-            ) : (
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* 1. Free Instant Download Button */}
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#6B8E5A] hover:bg-[#577548] text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              title="Download or Print your clean automated Kundli PDF for free"
+            >
+              <Download className="h-4 w-4" />
+              <span>Download Free PDF</span>
+            </button>
+
+            {/* 2. Customized by Acharya Ji Option */}
+            {!isUnlocked && (
               <button
                 type="button"
                 onClick={onPurchase}
                 disabled={isProcessingPayment}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E] px-5 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#E8A33D] hover:bg-[#D5912C] text-[#3B2A1E] px-4 py-2.5 text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-75"
+                title="Get a customized handwritten Kundli dossier designed personally by Acharya Niraj Kumar"
               >
-                <Lock className="h-4 w-4" />
+                <Sparkles className="h-4 w-4 text-[#3B2A1E]" />
                 <span>
-                  {isProcessingPayment ? "Processing Order..." : "Download Full PDF Report — ₹501"}
+                  {isProcessingPayment ? "Processing..." : "Customized Kundli by Acharya Ji — ₹501"}
                 </span>
               </button>
             )}
@@ -114,10 +118,15 @@ export const KundliPrintDossier: React.FC<KundliPrintDossierProps> = ({
               <div className="text-[10px] uppercase font-bold text-[#7B2D26]">Lagna Ascendant</div>
               <div className="text-sm font-bold text-black">{kundli.ascendant.rashiName} ({kundli.ascendant.hindiName})</div>
             </div>
-            {isUnlocked && (
+            {isUnlocked ? (
               <div className="text-[10px] font-bold text-[#6B8E5A] mt-1 flex items-center justify-end gap-1">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Verified Client PDF &bull; ₹501 Paid</span>
+                <span>Customized Dossier &bull; Hand-Curated by Acharya Niraj Kumar</span>
+              </div>
+            ) : (
+              <div className="text-[10px] font-bold text-[#7B2D26] mt-1 flex items-center justify-end gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#6B8E5A]" />
+                <span>Official Vedic Kundli &bull; Instant Free Edition</span>
               </div>
             )}
           </div>
