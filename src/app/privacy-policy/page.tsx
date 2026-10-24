@@ -284,7 +284,7 @@ export default function PrivacyPolicyPage() {
               <div className="flex items-center gap-2">
                 <Cookie className="h-5 w-5 text-[#C1662F]" />
                 <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-                  6. Cookie Policy &amp; Traffic Analytics Disclosure
+                  6. Cookie Policy: Strictly Essential Cookies Only &amp; Traffic Analytics Disclosure
                 </h2>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
