@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Language, TRANSLATIONS, TranslationKey } from "@/lib/i18n/translations";
+import { trackLanguageSwitched } from "@/lib/analytics/trackEvent";
 
 interface LanguageContextType {
   language: Language;
@@ -34,6 +35,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const setLanguage = (lang: Language) => {
+    if (lang !== language) {
+      trackLanguageSwitched(lang);
+    }
     setLanguageState(lang);
     try {
       localStorage.setItem("aapka_astro_lang", lang);

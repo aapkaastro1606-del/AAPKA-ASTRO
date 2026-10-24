@@ -1,3 +1,4 @@
+import { trackFreeKundliGenerated } from "@/lib/analytics/trackEvent";
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -274,7 +275,7 @@ export default function KundliGeneratorPage() {
                 <h3 className="font-temple text-xl font-bold text-[#7B2D26] mb-5">
                   Birth Details Form
                 </h3>
-                <KundliForm onCalculated={setKundli} />
+                <KundliForm onCalculated={(data) => { setKundli(data); trackFreeKundliGenerated(true); }} />
               </div>
 
               {/* Auspicious Vedic Alignments Card */}

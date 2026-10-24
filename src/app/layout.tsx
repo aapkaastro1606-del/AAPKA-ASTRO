@@ -11,6 +11,9 @@ import { NavratriPromotionalModal } from "@/components/promotions/NavratriPromot
 import { BrandedPreloader } from "@/components/layout/BrandedPreloader";
 import { FloatingAssistant } from "@/components/assistant/FloatingAssistant";
 import { getClerkPublishableKey } from "@/lib/auth/clerkConfig";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { VercelAnalyticsProvider } from "@/components/analytics/VercelAnalyticsProvider";
+import { GlobalClickTracker } from "@/components/analytics/GlobalClickTracker";
 
 const cinzel = Cinzel({
   variable: "--font-cinzel",
@@ -122,6 +125,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <WelcomeConsultationModal />
             <NavratriPromotionalModal />
             <FloatingAssistant />
+            <GoogleAnalytics />
+            <VercelAnalyticsProvider />
+            <GlobalClickTracker />
           </LanguageProvider>
         </body>
       </html>

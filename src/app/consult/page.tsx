@@ -51,6 +51,7 @@ import { useUser } from "@/components/auth/ClerkAuthWrapper";
 import { ConsultationServicesJsonLd } from "@/components/seo/JsonLd";
 import { ConsultationConfirmationScreen } from "@/components/consult/ConsultationConfirmationScreen";
 import { UpiQrModal } from "@/components/consult/UpiQrModal";
+import { trackBookingStarted } from "@/lib/analytics/trackEvent";
 
 export default function ConsultPage() {
   const { isAstrologer } = useCurrentUserRole();
@@ -282,6 +283,7 @@ export default function ConsultPage() {
         amount: chargedAmount,
         serviceName: data.serviceName,
       });
+      trackBookingStarted(selectedProduct, consultFormat);
       setShowUpiModal(true);
       setIsProcessingPayment(false);
     } catch (err: any) {

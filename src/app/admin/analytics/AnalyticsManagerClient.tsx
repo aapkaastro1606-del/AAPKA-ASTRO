@@ -12,6 +12,16 @@ import {
   RefreshCw,
   FileText,
   UserCheck,
+  BarChart3,
+  Globe2,
+  ExternalLink,
+  Search,
+  AlertCircle,
+  CheckCircle2,
+  HelpCircle,
+  MapPin,
+  Eye,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function AnalyticsManagerClient() {
@@ -48,6 +58,9 @@ export default function AnalyticsManagerClient() {
   const conversionRate = analytics?.conversionRate || 0;
   const breakdown = analytics?.consultationBreakdown || [];
 
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const isGaConnected = Boolean(gaMeasurementId && gaMeasurementId.trim().length > 0);
+
   return (
     <div className="bg-[#FBF3E7] text-[#3B2A1E] min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -64,13 +77,13 @@ export default function AnalyticsManagerClient() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7B2D26] px-2 py-0.5 text-[10px] font-bold text-white uppercase mb-1">
-                Admin Intelligence
+                Admin Intelligence &amp; Traffic
               </div>
               <h1 className="font-temple text-2xl sm:text-3xl font-bold text-[#7B2D26]">
                 Platform Traffic, Conversion &amp; Revenue Analytics
               </h1>
               <p className="text-xs sm:text-sm text-[#6E5545] mt-1">
-                Live performance telemetry tracking seeker acquisition, consultation funnel velocity, and platform margins.
+                Verified platform telemetry tracking real seeker acquisition, consultation funnel velocity, and Google Analytics.
               </p>
             </div>
 
@@ -86,24 +99,185 @@ export default function AnalyticsManagerClient() {
           </div>
         </div>
 
-        {/* How-To Help Panel */}
-        <AdminHelpPanel
-          title="How to understand your website traffic and bookings"
-          steps={[
-            {
-              title: "Seekers & Leads",
-              description: "Tracks real visitors who save birth details for Kundli generation or complete intake forms.",
-            },
-            {
-              title: "Consultation Conversion",
-              description: "Tracks how many seekers complete payments and attend their scheduled readings with Acharya Ji.",
-            },
-          ]}
-          tip="All telemetry is cookieless and privacy-first. Personal identity is never shared or tracked."
-          defaultExpanded={false}
-        />
+        {/* 1. TRAFFIC ANALYTICS THE CLIENT CAN READ PANEL */}
+        <section className="rounded-3xl border-2 border-[#7B2D26]/20 bg-[#FFFDF9] p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8D8C3] pb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="h-5 w-5 text-[#7B2D26]" />
+                <h2 className="font-temple text-xl font-bold text-[#7B2D26]">
+                  External Traffic Analytics &amp; Google Search Console
+                </h2>
+              </div>
+              <p className="text-xs text-[#6E5545]">
+                Plain-language reports showing who visits your website, where they come from, and what they read.
+              </p>
+            </div>
 
-        {/* High-level KPIs */}
+            <div className="flex items-center gap-2">
+              {isGaConnected ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Connected (GA4: {gaMeasurementId})</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                  <span>Not connected yet</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Direct Links */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <a
+              href="https://analytics.google.com/analytics/web/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3.5 rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F3E7D3] transition-colors flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-xs font-bold text-[#7B2D26] block">Google Analytics 4</span>
+                <span className="text-[11px] text-[#6E5545]">Live visitor dashboard</span>
+              </div>
+              <ExternalLink className="h-4 w-4 text-[#7B2D26] group-hover:translate-x-0.5 transition-transform" />
+            </a>
+
+            <a
+              href="https://search.google.com/search-console"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3.5 rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F3E7D3] transition-colors flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-xs font-bold text-[#7B2D26] block">Google Search Console</span>
+                <span className="text-[11px] text-[#6E5545]">Google search keywords</span>
+              </div>
+              <ExternalLink className="h-4 w-4 text-[#7B2D26] group-hover:translate-x-0.5 transition-transform" />
+            </a>
+
+            <a
+              href="https://analytics.google.com/analytics/web/#/report/acquisition-channels"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3.5 rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F3E7D3] transition-colors flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-xs font-bold text-[#7B2D26] block">Acquisition Channels</span>
+                <span className="text-[11px] text-[#6E5545]">WhatsApp, Instagram, Search</span>
+              </div>
+              <ExternalLink className="h-4 w-4 text-[#7B2D26] group-hover:translate-x-0.5 transition-transform" />
+            </a>
+
+            <a
+              href="https://analytics.google.com/analytics/web/#/report/all-pages-and-screens"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3.5 rounded-xl border border-[#E8D8C3] bg-[#FBF3E7] hover:bg-[#F3E7D3] transition-colors flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-xs font-bold text-[#7B2D26] block">Top Read Pages</span>
+                <span className="text-[11px] text-[#6E5545]">Kundli, Vastu, Blogs</span>
+              </div>
+              <ExternalLink className="h-4 w-4 text-[#7B2D26] group-hover:translate-x-0.5 transition-transform" />
+            </a>
+          </div>
+
+          {!isGaConnected && (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="block font-bold">Google Analytics Environment Variable Missing:</strong>
+                <p>
+                  To display live visitor numbers, set <code>NEXT_PUBLIC_GA_MEASUREMENT_ID</code> (e.g. <code>G-XXXXXXXXXX</code>) in your Vercel project environment variables. We show no invented or mock traffic numbers.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Three Plain-Language Questions Answered */}
+          <div className="space-y-4 pt-2">
+            <h3 className="font-temple text-base font-bold text-[#7B2D26] flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-[#C1662F]" />
+              <span>Answers to the 3 Key Questions You Need:</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              {/* Question 1: How many people visited this week? */}
+              <div className="p-4 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] space-y-2 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <div className="font-bold text-[#7B2D26] flex items-center gap-1.5 text-sm">
+                    <Users className="h-4 w-4 text-[#C1662F]" />
+                    <span>1. How many people visited this week?</span>
+                  </div>
+                  <p className="text-[#6E5545] leading-relaxed">
+                    Open your <strong>Traffic Acquisition Report</strong>. In the top-right date selector, choose <strong>Last 7 Days</strong>. Look at the <strong>Users</strong> column to see unique people, and <strong>Sessions</strong> for total visits.
+                  </p>
+                </div>
+                <a
+                  href="https://analytics.google.com/analytics/web/#/report/acquisition-channels"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7B2D26] hover:underline pt-2"
+                >
+                  <span>See Weekly Visitors in GA4 &rarr;</span>
+                </a>
+              </div>
+
+              {/* Question 2: From which countries and cities? */}
+              <div className="p-4 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] space-y-2 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <div className="font-bold text-[#7B2D26] flex items-center gap-1.5 text-sm">
+                    <MapPin className="h-4 w-4 text-[#C1662F]" />
+                    <span>2. From which countries and cities?</span>
+                  </div>
+                  <p className="text-[#6E5545] leading-relaxed">
+                    Open the <strong>Demographic Details Report</strong>. Switch the primary dropdown from <em>Country</em> to <em>City</em> to see visits from Delhi NCR, Mumbai, Bengaluru, or NRI diaspora in USA, UK, Canada, and UAE.
+                  </p>
+                </div>
+                <a
+                  href="https://analytics.google.com/analytics/web/#/report/user-demographics-overview"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7B2D26] hover:underline pt-2"
+                >
+                  <span>See Geographic Cities in GA4 &rarr;</span>
+                </a>
+              </div>
+
+              {/* Question 3: Which pages did they read? */}
+              <div className="p-4 rounded-2xl border border-[#E8D8C3] bg-[#FAF5EE] space-y-2 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <div className="font-bold text-[#7B2D26] flex items-center gap-1.5 text-sm">
+                    <Eye className="h-4 w-4 text-[#C1662F]" />
+                    <span>3. Which pages did they read?</span>
+                  </div>
+                  <p className="text-[#6E5545] leading-relaxed">
+                    Open the <strong>Pages and Screens Report</strong>. The table ranks your top pages by <strong>Views</strong> (e.g. Free Kundli Generator, Devta Vastu Consultation, Gemstones, or daily blogs).
+                  </p>
+                </div>
+                <a
+                  href="https://analytics.google.com/analytics/web/#/report/all-pages-and-screens"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7B2D26] hover:underline pt-2"
+                >
+                  <span>See Popular Pages in GA4 &rarr;</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F5F7F2] border border-[#6B8E5A]/40 text-[#2A4720] text-xs flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#6B8E5A] shrink-0" />
+              <span>
+                <strong>Privacy Guarantee:</strong> All analytics exclude staff members and administrative pages (<code>/admin</code>, <code>/dashboard</code>, <code>/account</code>). No personal names, phone numbers, or UTRs are ever tracked.
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. REAL DATABASE KPIS (NO INVENTED NUMBERS) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E8D8C3] bg-[#FFFDF9] p-5 shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E5545]">
@@ -155,7 +329,7 @@ export default function AnalyticsManagerClient() {
           </div>
         </div>
 
-        {/* Funnel & Breakdown */}
+        {/* 3. Funnel & Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Service Mix */}
           <div className="lg:col-span-6 rounded-3xl border border-[#E8D8C3] bg-[#FFFDF9] p-6 sm:p-8 shadow-sm">

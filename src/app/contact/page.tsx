@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { trackContactFormSent } from "@/lib/analytics/trackEvent";
 import { PLACEHOLDER_ASTROLOGER, PLACEHOLDER_CONTACT_INFO } from "@/config/placeholderContent";
 import { MandalaDivider } from "@/components/ui/MandalaDivider";
 import { DiyaIcon } from "@/components/ui/DiyaIcon";
@@ -56,6 +57,7 @@ export default function ContactPage() {
       }
 
       setSubmitted(true);
+      trackContactFormSent(formData.topic || "general");
     } catch (err: any) {
       setSubmitError(err.message || "Network error. Please try again or reach us directly on WhatsApp.");
     } finally {

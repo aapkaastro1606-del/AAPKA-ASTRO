@@ -19,6 +19,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { trackChatbotOpened } from "@/lib/analytics/trackEvent";
 
 interface ChatMessage {
   id: string;
@@ -585,7 +586,7 @@ export function FloatingAssistant() {
         <div className="relative group">
           <button
             ref={triggerButtonRef}
-            onClick={() => setIsOpen(true)}
+            onClick={() => { setIsOpen(true); trackChatbotOpened(); }}
             className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#7B2D26] to-[#5F201B] p-1.5 text-[#FFFDF9] shadow-2xl border-2 border-[#E8A33D] hover:border-[#F59E0B] hover:shadow-red-950/50 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#7B2D26] focus-visible:ring-offset-2 focus-visible:outline-hidden transition-all duration-200 motion-reduce:transition-none motion-reduce:hover:scale-100 cursor-pointer"
             aria-label={isHi ? "AI सहायक खोलें" : "Open Aapka Astro AI Assistant"}
             title={isHi ? "आचार्य जी का AI सहायक" : "Ask Aapka Astro AI Assistant"}

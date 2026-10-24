@@ -381,6 +381,8 @@ export const Footer: React.FC = () => {
             <span className="text-[#E8A33D]">&bull;</span>
             <Link href="/privacy-policy" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Privacy Policy</Link>
             <span className="text-[#E8A33D]">&bull;</span>
+            <Link href="/cookie-policy" className="hover:text-[#E8A33D] text-[#FFFDF9] font-bold underline underline-offset-4">Cookie Notice</Link>
+            <span className="text-[#E8A33D]">&bull;</span>
             <a
               href="https://viar.in"
               target="_blank"

@@ -198,12 +198,13 @@ export default function AdminHomeClient({
     },
     {
       id: "analytics",
-      title: "Platform intelligence & traffic",
-      helpText: "Check visitor traffic counts, top consulted topics, and booking conversion health.",
+      title: "Visitor Traffic & Search Analytics",
+      helpText: "Plain-language reports: how many people visited this week, from which cities, and which pages they read.",
       href: "/admin/analytics",
       icon: BarChart3,
+      badge: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? "Connected (GA4)" : "Not connected yet",
       section: "analytics",
-      accent: "amber",
+      accent: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? "green" : "amber",
     },
     {
       id: "knowledge",

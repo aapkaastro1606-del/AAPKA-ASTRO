@@ -278,27 +278,60 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          {/* Section 6: Cookie Policy — Essential Cookies Only */}
-          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
-            <div className="flex items-center gap-2 border-b border-[#E8D8C3] pb-3">
-              <Cookie className="h-5 w-5 text-[#C1662F]" />
-              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
-                6. Cookie Policy: Strictly Essential Cookies Only
-              </h2>
+          {/* Section 6: Cookie Policy & Traffic Analytics Disclosure (Pending Lawyer Review) */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-3">
+              <div className="flex items-center gap-2">
+                <Cookie className="h-5 w-5 text-[#C1662F]" />
+                <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                  6. Cookie Policy &amp; Traffic Analytics Disclosure
+                </h2>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                Pending Lawyer Review
+              </span>
             </div>
             <p>
-              Aapka Astro respects your digital dignity and adheres to a minimal cookie architecture:
+              Aapka Astro adheres to a minimal, privacy-preserving digital architecture in compliance with the Digital Personal Data Protection Act (DPDPA), 2023:
             </p>
-            <div className="p-4 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] text-xs space-y-2">
-              <div className="font-bold text-[#3B2A1E]">We use ONLY Strictly Essential Cookies:</div>
-              <ul className="list-disc pl-5 space-y-1 text-[#6E5545]">
-                <li><strong>Authentication Tokens (Clerk):</strong> Secure session cookies (e.g. <code>__session</code>, <code>__client_uat</code>) required to verify user sign-in and protect dashboard/account areas.</li>
-                <li><strong>Security &amp; CSRF Defense:</strong> Cookies ensuring cross-site request forgery protection during form submissions and payment verification claims.</li>
-                <li><strong>Ephemeral Session State:</strong> Browser <code>sessionStorage</code> utilized for rate-limiting visitor queries and managing floating assistant dialogue state during your visit.</li>
-              </ul>
+            <div className="space-y-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3]">
+                <strong className="block font-bold text-[#3B2A1E] mb-1">A. What is Collected:</strong>
+                <p className="text-[#6E5545]">
+                  Essential session tokens (via Clerk for user sign-in and CSRF defense), cookieless web vitals (via Vercel Analytics for page speed), and aggregate traffic metrics (via Google Analytics 4, <em>only when you give explicit consent</em>).
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3]">
+                <strong className="block font-bold text-[#3B2A1E] mb-1">B. Why It Is Collected:</strong>
+                <p className="text-[#6E5545]">
+                  To verify bookings, optimize consultation checkout speeds, and understand which spiritual and astrology guides help seekers most. We never sell data to advertising brokers or run commercial behavioral retargeting.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3]">
+                <strong className="block font-bold text-[#3B2A1E] mb-1">C. Retention Periods:</strong>
+                <p className="text-[#6E5545]">
+                  Cookieless performance metrics are retained for 24 hours. Google Analytics 4 retains event data for <strong>2 months</strong> (user-level default) up to a maximum of <strong>14 months</strong>, after which it is automatically deleted by Google servers.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3]">
+                <strong className="block font-bold text-[#3B2A1E] mb-1">D. Data Processors:</strong>
+                <p className="text-[#6E5545]">
+                  Processed securely by Vercel Inc. (cookieless infrastructure), Google LLC (GA4, only upon consent), and Clerk Inc. (authentication).
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E8D8C3]">
+                <strong className="block font-bold text-[#3B2A1E] mb-1">E. How to Withdraw Consent:</strong>
+                <p className="text-[#6E5545]">
+                  You can withdraw or update your cookie preferences at any time by visiting our dedicated <Link href="/cookie-policy" className="font-bold text-[#7B2D26] underline">Cookie Notice Page</Link> and clicking &quot;Change Cookie Preferences&quot;. If rejected, no analytics cookies are stored and no analytics requests are dispatched.
+                </p>
+              </div>
             </div>
             <p className="text-xs font-semibold text-[#7B2D26]">
-              &bull; We do NOT use third-party behavioral advertising cookies, Google AdSense pixels, Facebook retargeting beacons, or commercial tracker scripts.
+              &bull; Strict Guardrail: We NEVER put personal names, phone numbers, email addresses, UTR numbers, or birth charts into analytics events or URLs.
             </p>
           </section>
 
