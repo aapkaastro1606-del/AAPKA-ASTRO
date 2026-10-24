@@ -1,5 +1,6 @@
-import { trackFreeKundliGenerated } from "@/lib/analytics/trackEvent";
 "use client";
+
+import { trackFreeKundliGenerated } from "@/lib/analytics/trackEvent";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
