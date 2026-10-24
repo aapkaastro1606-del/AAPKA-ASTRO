@@ -479,11 +479,18 @@ export default function DiagnosticsClient() {
                     <span className="text-[#6E5545]">Provider:</span>
                     <strong className="font-mono text-[11px] uppercase">{data.chatbot?.provider || "mock"}</strong>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-start">
                     <span className="text-[#6E5545]">Model:</span>
-                    <code className="font-mono text-[10px] font-bold text-[#7B2D26] truncate max-w-[120px]">
-                      {data.chatbot?.model || "Unset"}
-                    </code>
+                    <div className="text-right">
+                      <code className="font-mono text-[10px] font-bold text-[#7B2D26] truncate max-w-[120px] block">
+                        {data.chatbot?.model || "Unset"}
+                      </code>
+                      {data.chatbot?.model?.includes("1.5") && (
+                        <span className="text-[9px] text-amber-700 font-semibold block leading-tight mt-0.5">
+                          ⚠️ Retired (Auto-routed to 2.0-flash)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6E5545]">Failures:</span>

@@ -95,6 +95,14 @@ describe("AI Chatbot & SEO Production Readiness Suite", () => {
       assert.strictEqual(provider.name, "Gemini");
       assert.strictEqual(isChatbotConfigured(), true);
     });
+
+    test("automatically upgrades retired gemini-1.5-flash to gemini-2.0-flash", () => {
+      const provider = new GeminiChatProvider({
+        apiKey: "AIzaSy_fake",
+        model: "gemini-1.5-flash",
+      });
+      assert.strictEqual((provider as any).model, "gemini-2.0-flash");
+    });
   });
 
   // ============================================================================

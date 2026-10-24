@@ -117,11 +117,18 @@ export class OpenAICompatibleChatProvider implements ChatProvider {
   }) {
     this.name = config.name || "OpenAICompatible";
     this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
-    const model = (config.model || "").trim();
+    let model = (config.model || "").trim();
     if (!model) {
       throw new Error(
         `CHATBOT_MODEL is required for provider ${this.name}. Please set CHATBOT_MODEL in your environment variables after verifying the current active model in the provider's official documentation.`
       );
+    }
+    if (
+      model.toLowerCase() === "gemini-1.5-flash" ||
+      model.toLowerCase() === "gemini-1.5-pro" ||
+      model.toLowerCase() === "gemini-1.5-flash-8b"
+    ) {
+      model = "gemini-2.0-flash";
     }
     this.model = model;
     this.baseUrl = (config.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
@@ -231,11 +238,18 @@ export class GeminiChatProvider implements ChatProvider {
 
   constructor(config: { apiKey: string; model?: string }) {
     this.apiKey = (config.apiKey || "").trim().replace(/^["']|["']$/g, "");
-    const m = (config.model || "").trim().toLowerCase();
+    let m = (config.model || "").trim().toLowerCase();
     if (!m) {
       throw new Error(
         "CHATBOT_MODEL is required. Google has retired the Gemini 1.5 models. Please explicitly configure CHATBOT_MODEL (e.g. 'gemini-2.0-flash') after verifying current active models in Google AI documentation."
       );
+    }
+    if (
+      m === "gemini-1.5-flash" ||
+      m === "gemini-1.5-pro" ||
+      m === "gemini-1.5-flash-8b"
+    ) {
+      m = "gemini-2.0-flash";
     }
     this.model = m;
   }
