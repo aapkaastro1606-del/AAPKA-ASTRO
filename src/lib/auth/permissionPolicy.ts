@@ -388,9 +388,9 @@ export function canAccessRoute(
     };
   }
 
-  // 4. Clients without any staff permissions are forbidden from /admin and /dashboard
+  // 4. Non-owners without any active staff permissions are strictly forbidden from /admin and /dashboard
   const hasStaffPerms = Boolean(auth?.permissions && auth.permissions.length > 0);
-  if (!hasStaffPerms && auth?.role !== "ASTROLOGER") {
+  if (!hasStaffPerms) {
     return {
       allowed: false,
       isForbidden: true,

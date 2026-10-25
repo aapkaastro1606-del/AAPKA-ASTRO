@@ -258,39 +258,7 @@ export interface StaffMemberRecord {
 }
 
 // In-memory grant store for development preview / test resilience
-const memoryGrants: StaffGrant[] = [
-  {
-    id: "grant_mem_1",
-    email: "editor@aapkaastro.com",
-    section: "blog",
-    accessLevel: "MANAGE",
-    grantedByUserId: "usr_owner_001",
-    grantedBy: "Owner",
-    grantedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    revokedAt: null,
-  },
-  {
-    id: "grant_mem_2",
-    email: "curator@aapkaastro.com",
-    section: "reels",
-    accessLevel: "VIEW",
-    grantedByUserId: "usr_owner_001",
-    grantedBy: "Owner",
-    grantedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    revokedAt: null,
-  },
-  {
-    id: "grant_mem_3",
-    email: "intern@aapkaastro.com",
-    section: "earnings",
-    accessLevel: "VIEW",
-    grantedByUserId: "usr_owner_001",
-    grantedBy: "Owner",
-    grantedAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    revokedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    revokedByUserId: "usr_owner_001",
-  },
-];
+const memoryGrants: StaffGrant[] = [];
 
 let isDbReachable = true;
 
@@ -357,9 +325,7 @@ export class StaffPermissionService {
             select: { section: true },
           });
 
-          if (rows && rows.length > 0) {
-            return rows.map((r: any) => r.section as StaffSection);
-          }
+          return (rows || []).map((r: any) => r.section as StaffSection);
         }
       } catch {
         // DB query fallback
@@ -400,19 +366,17 @@ export class StaffPermissionService {
             orderBy: { createdAt: "desc" },
           });
 
-          if (rows && rows.length > 0) {
-            return rows.map((r: any) => ({
-              id: r.id,
-              email: r.email,
-              section: r.section as StaffSection,
-              accessLevel: (r.accessLevel || "MANAGE") as AccessLevel,
-              grantedByUserId: r.grantedByUserId,
-              grantedBy: r.grantedBy,
-              grantedAt: r.grantedAt ? r.grantedAt.toISOString() : r.createdAt.toISOString(),
-              revokedAt: r.revokedAt ? r.revokedAt.toISOString() : null,
-              revokedByUserId: r.revokedByUserId,
-            }));
-          }
+          return (rows || []).map((r: any) => ({
+            id: r.id,
+            email: r.email,
+            section: r.section as StaffSection,
+            accessLevel: (r.accessLevel || "MANAGE") as AccessLevel,
+            grantedByUserId: r.grantedByUserId,
+            grantedBy: r.grantedBy,
+            grantedAt: r.grantedAt ? r.grantedAt.toISOString() : r.createdAt.toISOString(),
+            revokedAt: r.revokedAt ? r.revokedAt.toISOString() : null,
+            revokedByUserId: r.revokedByUserId,
+          }));
         }
       } catch {
         // DB query fallback
@@ -465,21 +429,35 @@ export class StaffPermissionService {
       }
     }
 
-    // Merge in-memory active grants
-    for (const grant of memoryGrants.filter((g) => !g.revokedAt)) {
-      const email = grant.email.toLowerCase();
-      if (!staffMap.has(email)) {
-        staffMap.set(email, {
-          email,
-          grants: [grant],
-          updatedAt: grant.grantedAt,
-        });
-      } else {
-        const existing = staffMap.get(email)!;
-        if (!existing.grants.some((g) => g.section === grant.section)) {
-          existing.grants.push(grant);
+    // Merge in-memory active grants (only if DB is unreachable or empty)
+    if (!isDbReachable || staffMap.size === 0) {
+      for (const grant of memoryGrants.filter((g) => !g.revokedAt)) {
+        const email = grant.email.toLowerCase();
+        if (!staffMap.has(email)) {
+          staffMap.set(email, {
+            email,
+            grants: [grant],
+            updatedAt: grant.grantedAt,
+          });
+        } else {
+          const existing = staffMap.get(email)!;
+          if (!existing.grants.some((g) => g.section === grant.section)) {
+            existing.grants.push(grant);
+          }
         }
       }
+    }
+
+    // Filter out dummy mock/test staff emails from production display
+    const dummyEmails = [
+      "analyst_new@aapkaastro.com",
+      "editor@aapkaastro.com",
+      "curator@aapkaastro.com",
+      "intern@aapkaastro.com",
+      "staff_editor@aapkaastro.com",
+    ];
+    for (const d of dummyEmails) {
+      staffMap.delete(d);
     }
 
     // Include configured owners
@@ -931,6 +909,19 @@ export class StaffPermissionService {
             where: { email: normalized, revokedAt: null },
             data: { revokedAt: new Date(), revokedByUserId },
           });
+        }
+
+        // Demote user role back to CLIENT in database upon staff permission revocation
+        if (prisma && (prisma as any).user) {
+          const dbUser = await prisma.user.findFirst({
+            where: { email: normalized },
+          });
+          if (dbUser && dbUser.role !== "OWNER") {
+            await prisma.user.update({
+              where: { id: dbUser.id },
+              data: { role: "CLIENT" },
+            });
+          }
         }
       } catch {
         // DB query fallback
