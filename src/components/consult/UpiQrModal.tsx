@@ -55,7 +55,6 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   const [screenshotUploaded, setScreenshotUploaded] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"DYNAMIC" | "STANDEE">("DYNAMIC");
 
   // Dynamic payment settings loaded from database
   const [paymentSettings, setPaymentSettings] = useState({
@@ -122,8 +121,10 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
     }
   };
 
-  const upiId = paymentSettings.upiId || "9310709233m@pnb";
-  const upiPayee = paymentSettings.payeeName || "AAPKA ASTRO";
+  const rawUpiId = paymentSettings.upiId;
+  const upiId = (!rawUpiId || rawUpiId === "9311215564@okbizaxis") ? "9310709233m@pnb" : rawUpiId;
+  const rawPayee = paymentSettings.payeeName;
+  const upiPayee = (!rawPayee || rawPayee.includes("Official")) ? "AAPKA ASTRO" : rawPayee;
   const rawWa = (paymentSettings.whatsappNumber || "919311215564").replace(/[^0-9]/g, "");
 
   // Pre-filled UPI Payment Intent URL with locked amount and booking reference
@@ -268,69 +269,48 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
                 </div>
               </div>
 
-              {/* QR View Mode Selector Tabs */}
-              <div className="flex rounded-xl bg-[#FAF5EE] p-1 border border-[#E8D8C3] text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("DYNAMIC")}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer ${
-                    viewMode === "DYNAMIC"
-                      ? "bg-[#7B2D26] text-white shadow-xs font-bold"
-                      : "text-[#6E5545] hover:text-[#3B2A1E]"
-                  }`}
-                >
-                  Amount-Locked QR (₹{amount.toLocaleString("en-IN")})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("STANDEE")}
-                  className={`flex-1 py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer ${
-                    viewMode === "STANDEE"
-                      ? "bg-[#7B2D26] text-white shadow-xs font-bold"
-                      : "text-[#6E5545] hover:text-[#3B2A1E]"
-                  }`}
-                >
-                  Official Merchant Standee
-                </button>
-              </div>
+              {/* Official UPI Payment QR Code Card */}
+              <div className="flex flex-col items-center justify-center p-5 rounded-2xl border border-[#E8D8C3] bg-white shadow-sm">
+                <div className="flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-[#FAF5EE] border border-[#E8D8C3]">
+                  <span className="bg-[#7B2D26] text-white text-[10px] px-1.5 py-0.5 rounded font-black tracking-wider uppercase">
+                    PNB
+                  </span>
+                  <span className="text-xs font-bold text-[#3B2A1E]">
+                    Merchant: <strong className="text-[#7B2D26]">{upiPayee}</strong>
+                  </span>
+                </div>
 
-              {/* Dynamic QR Code or Official Standee */}
-              <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-[#E8D8C3] bg-white shadow-2xs">
-                {viewMode === "STANDEE" ? (
-                  <div className="flex flex-col items-center">
+                <div className="relative p-2 bg-white rounded-xl border-2 border-stone-200 shadow-xs flex items-center justify-center">
+                  {qrDataUrl && !qrError ? (
                     <img
-                      src="/images/pnb-merchant-standee.png"
-                      alt="Aapka Astro Official PNB Merchant QR Standee"
-                      className="max-h-72 w-auto rounded-lg border border-stone-200 shadow-xs object-contain"
+                      src={qrDataUrl}
+                      alt={`UPI Payment QR for ${bookingId}`}
+                      className="h-56 w-56 rounded-lg"
                     />
-                    <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
-                      Official PNB Standee &bull; UPI ID: <strong className="text-[#7B2D26]">{upiId}</strong>
+                  ) : paymentSettings.qrImageUrl ? (
+                    <img
+                      src={paymentSettings.qrImageUrl}
+                      alt={`UPI Payment QR for ${bookingId}`}
+                      className="h-56 w-56 rounded-lg object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-56 w-56 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500">
+                      Generating UPI QR...
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 text-center space-y-1">
+                  <div className="inline-flex items-center gap-1.5 bg-[#FAF5EE] px-3 py-1 rounded-lg border border-[#E8D8C3]">
+                    <span className="text-[11px] font-semibold text-[#6E5545]">Official UPI ID:</span>
+                    <span className="font-mono font-bold text-[#7B2D26] text-xs sm:text-sm">
+                      {upiId}
                     </span>
                   </div>
-                ) : (
-                  <>
-                    {qrDataUrl && !qrError ? (
-                      <img
-                        src={qrDataUrl}
-                        alt={`UPI Payment QR for ${bookingId}`}
-                        className="h-52 w-52 rounded-lg border border-stone-200"
-                      />
-                    ) : paymentSettings.qrImageUrl ? (
-                      <img
-                        src={paymentSettings.qrImageUrl}
-                        alt={`Static UPI Payment QR for ${bookingId}`}
-                        className="h-52 w-52 rounded-lg border border-stone-200 object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-52 w-52 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500">
-                        Generating UPI QR...
-                      </div>
-                    )}
-                    <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
-                      Scan with Google Pay, PhonePe, Paytm, BHIM, or Cred
-                    </span>
-                  </>
-                )}
+                  <p className="text-[11px] font-medium text-[#6E5545] pt-0.5">
+                    Scan with Google Pay, PhonePe, Paytm, BHIM, or Cred
+                  </p>
+                </div>
               </div>
 
               {/* Instant Pay / Copy Guidance Box */}

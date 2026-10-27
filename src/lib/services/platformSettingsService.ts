@@ -219,10 +219,23 @@ export class PlatformSettingsService {
         return { ...DEFAULT_PAYMENT_SETTINGS };
       }
 
-      return {
+      const rawSettings = (record.paymentSettings as unknown as Partial<PaymentSettings>) || {};
+      const merged: PaymentSettings = {
         ...DEFAULT_PAYMENT_SETTINGS,
-        ...(record.paymentSettings as unknown as Partial<PaymentSettings>),
+        ...rawSettings,
       };
+
+      if (merged.upiId === "9311215564@okbizaxis" || !merged.upiId) {
+        merged.upiId = "9310709233m@pnb";
+      }
+      if (merged.payeeName === "Aapka Astro" || merged.payeeName === "Aapka Astro Official" || !merged.payeeName) {
+        merged.payeeName = "AAPKA ASTRO";
+      }
+      if (!merged.qrImageUrl) {
+        merged.qrImageUrl = "/images/pnb-upi-qr.png";
+      }
+
+      return merged;
     } catch (error) {
       console.error("PlatformSettingsService.getPaymentSettings error:", error);
       return { ...DEFAULT_PAYMENT_SETTINGS };
