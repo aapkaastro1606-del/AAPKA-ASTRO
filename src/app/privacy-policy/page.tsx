@@ -240,7 +240,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-2 text-xs text-[#6E5545]">
               <li>
-                <strong>Direct UPI Routing:</strong> Payments are transacted directly to our verified merchant UPI ID (<code>9311215564@okbizaxis</code>, Payee: Aapka Astro). We never process, store, or view your bank account passwords, credit/debit card numbers, or UPI PINs.
+                <strong>Direct UPI Routing:</strong> Payments are transacted directly to our verified merchant UPI ID (<code>9310709233m@pnb</code>, Payee: AAPKA ASTRO). We never process, store, or view your bank account passwords, credit/debit card numbers, or UPI PINs.
               </li>
               <li>
                 <strong>Zero Base64 Image Storage:</strong> Payment screenshots are never converted to base64 or stored inside our application database, ensuring database integrity and preventing storage bloat.

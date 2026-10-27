@@ -20,8 +20,8 @@ export class UpiPaymentProvider implements PaymentProvider {
       status: "created",
       notes: {
         ...(notes || {}),
-        upiId: env.NEXT_PUBLIC_UPI_ID || "9311215564@okbizaxis",
-        upiName: env.NEXT_PUBLIC_UPI_NAME || "Aapka Astro",
+        upiId: env.NEXT_PUBLIC_UPI_ID || "9310709233m@pnb",
+        upiName: env.NEXT_PUBLIC_UPI_NAME || "AAPKA ASTRO",
       },
     };
   }

@@ -245,7 +245,7 @@ export default function PricingPolicyPage() {
             </div>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Zero Gateway Fees:</strong> All consultations and digital reports are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the scannable QR code pre-filled with the exact booking amount and reference, or paying to our verified UPI ID: <code>9311215564@okbizaxis</code> (Payee: <strong>Aapka Astro Official</strong>).
+                <strong>Zero Gateway Fees:</strong> All consultations and digital reports are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the scannable QR code pre-filled with the exact booking amount and reference, or paying to our verified UPI ID: <code>9310709233m@pnb</code> (Payee: <strong>AAPKA ASTRO</strong>).
               </li>
               <li>
                 <strong>Manual Bank Verification:</strong> To ensure zero transaction commissions for our seekers, we avoid third-party payment gateways. Bookings are manually verified by our sanctum desk against physical bank account credit. Screenshots submitted via WhatsApp (+91 93112 15564) and UTR entries are verified before consultation slots are confirmed.

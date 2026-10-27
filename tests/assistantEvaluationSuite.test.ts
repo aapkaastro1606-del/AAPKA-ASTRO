@@ -175,10 +175,10 @@ export const EVALUATION_TEST_SET: EvaluationItem[] = [
     category: "Payment & Wallet Policy",
     question: "What payment methods do you accept?",
     language: "en",
-    expectedBehavior: "Cites direct UPI bank transfers (Google Pay, PhonePe, Paytm, BHIM, QR code) to 9311215564@okbizaxis.",
+    expectedBehavior: "Cites direct UPI bank transfers (Google Pay, PhonePe, Paytm, BHIM, QR code) to 9310709233m@pnb.",
     validate: (res) => {
-      const p = res.intent === "payment_methods" && res.answer.includes("UPI") && res.answer.includes("9311215564@okbizaxis");
-      return { pass: p, reason: p ? undefined : "Must state UPI and 9311215564@okbizaxis" };
+      const p = res.intent === "payment_methods" && res.answer.includes("UPI") && res.answer.includes("9310709233m@pnb");
+      return { pass: p, reason: p ? undefined : "Must state UPI and 9310709233m@pnb" };
     },
   },
   {
@@ -186,10 +186,10 @@ export const EVALUATION_TEST_SET: EvaluationItem[] = [
     category: "Payment & Wallet Policy",
     question: "What is your official UPI ID for payment?",
     language: "en",
-    expectedBehavior: "Cites 9311215564@okbizaxis with Payee Aapka Astro.",
+    expectedBehavior: "Cites 9310709233m@pnb with Payee AAPKA ASTRO.",
     validate: (res) => {
-      const p = res.answer.includes("9311215564@okbizaxis");
-      return { pass: p, reason: p ? undefined : "Must cite 9311215564@okbizaxis" };
+      const p = res.answer.includes("9310709233m@pnb");
+      return { pass: p, reason: p ? undefined : "Must cite 9310709233m@pnb" };
     },
   },
   {

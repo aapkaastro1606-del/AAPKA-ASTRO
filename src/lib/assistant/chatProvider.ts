@@ -91,7 +91,7 @@ export const GROUNDED_SYSTEM_PROMPT = buildGroundedSystemPrompt({
 • Devta Vaastu 16-Zone Energy Consultation: Flat ₹15,000/- (Save ₹10,000 off regular ₹25,000). Standard Fee: ₹25,000/-
 • Kundli Full PDF Report: Flat ₹501/- one-time
 • Free Online Tools: Janam Kundli, Kundli Milan (36 Guna), Daily Panchang, Horoscope (all ₹0 / 100% Free)
-• Payment Method: Direct UPI to 9311215564@okbizaxis (Payee: Aapka Astro). ZERO wallet coins or top-ups.
+• Payment Method: Direct UPI to 9310709233m@pnb (Payee: AAPKA ASTRO). ZERO wallet coins or top-ups.
 • WhatsApp Contact: +91 93112 15564 (https://wa.me/919311215564)
 • Office Sanctum: Spectrum@Metro Phase 1, Sector 75, Noida, U.P. 201301`,
   retrievedSections: [],

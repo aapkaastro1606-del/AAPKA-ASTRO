@@ -45,7 +45,7 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
 
   test("1. UPI ID format validation strictly enforces NPCI VPA standards", () => {
     // Valid VPAs
-    assert.strictEqual(isValidUpiId("9311215564@okbizaxis"), true);
+    assert.strictEqual(isValidUpiId("9310709233m@pnb"), true);
     assert.strictEqual(isValidUpiId("acharya@okhdfcbank"), true);
     assert.strictEqual(isValidUpiId("user.name-123@paytm"), true);
     assert.strictEqual(isValidUpiId("test_vpa@ybl"), true);
@@ -65,7 +65,7 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
   });
 
   test("2. UPI ID masking securely redacts identifier while retaining provider handle", () => {
-    assert.strictEqual(maskUpiId("9311215564@okbizaxis"), "93***64@okbizaxis");
+    assert.strictEqual(maskUpiId("9310709233m@pnb"), "93***3m@pnb");
     assert.strictEqual(maskUpiId("anmol@okaxis"), "an***ol@okaxis");
     assert.strictEqual(maskUpiId("ab@okhdfcbank"), "a***@okhdfcbank");
     assert.strictEqual(maskUpiId("abc@okhdfcbank"), "ab***@okhdfcbank");
@@ -114,15 +114,15 @@ describe("Payment & Storage Safety Comprehensive Suite", { concurrency: 1 }, () 
     // Valid update triggers successfully
     const updated = await PlatformSettingsService.updatePaymentSettings({
       updates: {
-        upiId: "9311215564@okbizaxis",
-        payeeName: "Aapka Astro Official",
+        upiId: "9310709233m@pnb",
+        payeeName: "AAPKA ASTRO",
         unpaidExpiryDays: 3,
       },
       actorEmail: "aapkaastro1606@gmail.com",
     });
 
-    assert.strictEqual(updated.upiId, "9311215564@okbizaxis");
-    assert.strictEqual(updated.payeeName, "Aapka Astro Official");
+    assert.strictEqual(updated.upiId, "9310709233m@pnb");
+    assert.strictEqual(updated.payeeName, "AAPKA ASTRO");
   });
 
   test("5. Base64 screenshot payload is strictly prohibited in database and rejected", async () => {

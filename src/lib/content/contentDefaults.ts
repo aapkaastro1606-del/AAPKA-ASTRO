@@ -55,12 +55,12 @@ export const DEFAULT_CONTENT_COLLECTIONS: Record<string, DefaultEntryDefinition[
       sortOrder: 3,
       dataEn: {
         question: "How does consultation booking and fee payment work?",
-        answer: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first Astro consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). Vaastu Consultations are flat ₹15,000/- (Regular ₹25,000). You simply select your consultation type, provide your intake details, and complete payment directly via UPI to 9311215564@okbizaxis. Upon verification, your booking is confirmed with a direct meeting link and WhatsApp coordination. There are zero surprise per-minute debits or hidden wallet charges.",
+        answer: "Consultations are offered on a transparent flat-fee, pay-per-booking model. For your first Astro consultation, you receive a special promotional flat fee of ₹1,051/- (Regular ₹2,100 — 50% discount). Vaastu Consultations are flat ₹15,000/- (Regular ₹25,000). You simply select your consultation type, provide your intake details, and complete payment directly via UPI to 9310709233m@pnb. Upon verification, your booking is confirmed with a direct meeting link and WhatsApp coordination. There are zero surprise per-minute debits or hidden wallet charges.",
         category: "pricing",
       },
       dataHi: {
         question: "परामर्श शुल्क और बुकिंग का भुगतान कैसे होता है?",
-        answer: "परामर्श पारदर्शी फ्लैट-फी मॉडल पर आधारित है। प्रथम ज्योतिष परामर्श पर फ्लैट ₹1,051/- (सामान्य ₹2,100 — 50% छूट) है। वास्तु परामर्श फ्लैट ₹15,000/- है। आप सीधे UPI से 9311215564@okbizaxis पर भुगतान कर सकते हैं। इसमें कोई प्रति-मिनट या छिपा हुआ शुल्क नहीं है।",
+        answer: "परामर्श पारदर्शी फ्लैट-फी मॉडल पर आधारित है। प्रथम ज्योतिष परामर्श पर फ्लैट ₹1,051/- (सामान्य ₹2,100 — 50% छूट) है। वास्तु परामर्श फ्लैट ₹15,000/- है। आप सीधे UPI से 9310709233m@pnb पर भुगतान कर सकते हैं। इसमें कोई प्रति-मिनट या छिपा हुआ शुल्क नहीं है।",
         category: "pricing",
       },
     },

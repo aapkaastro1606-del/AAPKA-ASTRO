@@ -31,7 +31,7 @@ export interface PaymentSettings {
 
 /**
  * Validates standard NPCI UPI Virtual Payment Address (VPA) format.
- * Format: username@handle (e.g. 9311215564@okbizaxis, user@okhdfcbank)
+ * Format: username@handle (e.g. 9310709233m@pnb, user@okhdfcbank)
  */
 export function isValidUpiId(upiId: unknown): boolean {
   if (typeof upiId !== "string") return false;
@@ -43,7 +43,7 @@ export function isValidUpiId(upiId: unknown): boolean {
 /**
  * Safely masks a UPI ID for diagnostic and administrative display.
  * Retains the provider handle and first/last characters while redacting sensitive digits.
- * e.g. 9311215564@okbizaxis -> 93***64@okbizaxis
+ * e.g. 9310709233m@pnb -> 93***3m@pnb
  */
 export function maskUpiId(upiId: string | null | undefined): string {
   if (!upiId || typeof upiId !== "string") return "Unconfigured";
@@ -63,9 +63,9 @@ export function maskUpiId(upiId: string | null | undefined): string {
 }
 
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
-  upiId: "9311215564@okbizaxis",
-  payeeName: "Aapka Astro Official",
-  qrImageUrl: null,
+  upiId: "9310709233m@pnb",
+  payeeName: "AAPKA ASTRO",
+  qrImageUrl: "/images/pnb-upi-qr.png",
   whatsappNumber: "+91 93112 15564",
   whatsappConfirmed: true,
   unpaidExpiryDays: 3,
@@ -269,7 +269,7 @@ export class PlatformSettingsService {
     if (updates.upiId !== undefined) {
       if (!isValidUpiId(updates.upiId)) {
         throw new Error(
-          `Invalid UPI ID format: "${updates.upiId}". Expected format: username@handle (e.g. 9311215564@okbizaxis).`
+          `Invalid UPI ID format: "${updates.upiId}". Expected format: username@handle (e.g. 9310709233m@pnb).`
         );
       }
       updates.upiId = updates.upiId.trim();

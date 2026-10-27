@@ -55,12 +55,13 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
   const [screenshotUploaded, setScreenshotUploaded] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"DYNAMIC" | "STANDEE">("DYNAMIC");
 
   // Dynamic payment settings loaded from database
   const [paymentSettings, setPaymentSettings] = useState({
-    upiId: "9311215564@okbizaxis",
-    payeeName: "Aapka Astro",
-    qrImageUrl: null as string | null,
+    upiId: "9310709233m@pnb",
+    payeeName: "AAPKA ASTRO",
+    qrImageUrl: "/images/pnb-upi-qr.png" as string | null,
     whatsappNumber: "+91 93112 15564",
   });
 
@@ -121,8 +122,8 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
     }
   };
 
-  const upiId = paymentSettings.upiId || "9311215564@okbizaxis";
-  const upiPayee = paymentSettings.payeeName || "Aapka Astro";
+  const upiId = paymentSettings.upiId || "9310709233m@pnb";
+  const upiPayee = paymentSettings.payeeName || "AAPKA ASTRO";
   const rawWa = (paymentSettings.whatsappNumber || "919311215564").replace(/[^0-9]/g, "");
 
   // Pre-filled UPI Payment Intent URL with locked amount and booking reference
@@ -267,28 +268,69 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
                 </div>
               </div>
 
-              {/* Dynamic QR Code (Static image as fallback) */}
+              {/* QR View Mode Selector Tabs */}
+              <div className="flex rounded-xl bg-[#FAF5EE] p-1 border border-[#E8D8C3] text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("DYNAMIC")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer ${
+                    viewMode === "DYNAMIC"
+                      ? "bg-[#7B2D26] text-white shadow-xs font-bold"
+                      : "text-[#6E5545] hover:text-[#3B2A1E]"
+                  }`}
+                >
+                  Amount-Locked QR (₹{amount.toLocaleString("en-IN")})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("STANDEE")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-center transition-all cursor-pointer ${
+                    viewMode === "STANDEE"
+                      ? "bg-[#7B2D26] text-white shadow-xs font-bold"
+                      : "text-[#6E5545] hover:text-[#3B2A1E]"
+                  }`}
+                >
+                  Official Merchant Standee
+                </button>
+              </div>
+
+              {/* Dynamic QR Code or Official Standee */}
               <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-[#E8D8C3] bg-white shadow-2xs">
-                {qrDataUrl && !qrError ? (
-                  <img
-                    src={qrDataUrl}
-                    alt={`UPI Payment QR for ${bookingId}`}
-                    className="h-52 w-52 rounded-lg border border-stone-200"
-                  />
-                ) : paymentSettings.qrImageUrl ? (
-                  <img
-                    src={paymentSettings.qrImageUrl}
-                    alt={`Static UPI Payment QR for ${bookingId}`}
-                    className="h-52 w-52 rounded-lg border border-stone-200 object-contain"
-                  />
-                ) : (
-                  <div className="flex h-52 w-52 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500">
-                    Generating UPI QR...
+                {viewMode === "STANDEE" ? (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src="/images/pnb-merchant-standee.png"
+                      alt="Aapka Astro Official PNB Merchant QR Standee"
+                      className="max-h-72 w-auto rounded-lg border border-stone-200 shadow-xs object-contain"
+                    />
+                    <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
+                      Official PNB Standee &bull; UPI ID: <strong className="text-[#7B2D26]">{upiId}</strong>
+                    </span>
                   </div>
+                ) : (
+                  <>
+                    {qrDataUrl && !qrError ? (
+                      <img
+                        src={qrDataUrl}
+                        alt={`UPI Payment QR for ${bookingId}`}
+                        className="h-52 w-52 rounded-lg border border-stone-200"
+                      />
+                    ) : paymentSettings.qrImageUrl ? (
+                      <img
+                        src={paymentSettings.qrImageUrl}
+                        alt={`Static UPI Payment QR for ${bookingId}`}
+                        className="h-52 w-52 rounded-lg border border-stone-200 object-contain"
+                      />
+                    ) : (
+                      <div className="flex h-52 w-52 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500">
+                        Generating UPI QR...
+                      </div>
+                    )}
+                    <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
+                      Scan with Google Pay, PhonePe, Paytm, BHIM, or Cred
+                    </span>
+                  </>
                 )}
-                <span className="mt-2 text-[11px] font-medium text-[#6E5545]">
-                  Scan with Google Pay, PhonePe, Paytm, BHIM, or Cred
-                </span>
               </div>
 
               {/* Instant Pay / Copy Guidance Box */}

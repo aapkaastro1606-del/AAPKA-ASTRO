@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       success: true,
       order,
       rate: rateCalculation,
-      upiId: env.NEXT_PUBLIC_UPI_ID || "9311215564@okbizaxis",
+      upiId: env.NEXT_PUBLIC_UPI_ID || "9310709233m@pnb",
     });
   } catch (err: any) {
     return NextResponse.json(

@@ -117,7 +117,7 @@ export default function TermsOfServicePage() {
             </div>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Direct UPI Payment Model:</strong> All consultations and reports on Aapka Astro are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the official merchant standee QR code or using our verified merchant UPI ID (<code>9311215564@okbizaxis</code>, Payee: <strong>Aapka Astro Official</strong>). We do not employ third-party payment gateway aggregators; there are zero transaction markups or gateway fees.
+                <strong>Direct UPI Payment Model:</strong> All consultations and reports on Aapka Astro are payable exclusively via direct UPI transfer (Google Pay, PhonePe, Paytm, BHIM, Cred) by scanning the official merchant standee QR code or using our verified merchant UPI ID (<code>9310709233m@pnb</code>, Payee: <strong>AAPKA ASTRO</strong>). We do not employ third-party payment gateway aggregators; there are zero transaction markups or gateway fees.
               </li>
               <li>
                 <strong>Manual Bank Verification Standard:</strong> Because payments are received directly by UPI without automated gateway callbacks, <em>the bank or UPI business account credit record is the sole and ultimate proof of payment</em>. Submitting a transaction reference (UTR) or payment screenshot via WhatsApp (+91 93112 15564) initiates manual verification. Bookings transition to &quot;CONFIRMED&quot; only after our accounts desk verifies that the funds have physically cleared in our bank account.

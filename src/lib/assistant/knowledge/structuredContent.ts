@@ -128,7 +128,7 @@ Executive Leadership Experience:
 2. Select your consultation type (Vedic Astro Consultation or Devta Vaastu).
 3. Pick your preferred date and time slot.
 4. Enter your birth details (Date, Exact Time, Place of Birth) on the secure booking form.
-5. Complete payment via direct UPI to 9311215564@okbizaxis.
+5. Complete payment via direct UPI to 9310709233m@pnb.
 6. Share your payment reference/screenshot on WhatsApp (+91 93112 15564).
 7. Receive your session link (WhatsApp Call or Google Meet) and join at the scheduled time.`
   },
@@ -141,7 +141,7 @@ Executive Leadership Experience:
       "wallet", "recharge", "coin", "tokens", "coins", "balance"
     ],
     content: `Aapka Astro operates exclusively on a direct Pay-Per-Booking model:
-- Payment is made via direct UPI to 9311215564@okbizaxis (Payee: Aapka Astro).
+- Payment is made via direct UPI to 9310709233m@pnb (Payee: AAPKA ASTRO).
 - We support all UPI apps: Google Pay, PhonePe, Paytm, BHIM, and bank UPI apps.
 - Zero Wallet Coins / Recharges: Aapka Astro DOES NOT use a wallet coin system, minute balances, or forced wallet recharges. You only pay transparently for the service you book.`
   },

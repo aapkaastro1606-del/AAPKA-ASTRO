@@ -632,7 +632,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
   ) {
     if (lang === "hi") {
       return {
-        answer: "भुगतान एवं वॉलेट नीति:\n\n• **भुगतान का माध्यम:** हम सुरक्षित डायरेक्ट UPI बैंक ट्रांसफर स्वीकार करते हैं। आप Google Pay, PhonePe, Paytm, BHIM या किसी भी बैंकिंग UPI ऐप से **9311215564@okbizaxis** (Payee: Aapka Astro) पर अथवा स्क्रीन पर दिए गए QR कोड को स्कैन करके भुगतान कर सकते हैं।\n• **वॉलेट नीति:** आपका एस्ट्रो पर कोई वॉलेट रिचार्ज या कॉइन कटौती प्रणाली नहीं है। आप केवल अपनी बुकिंग के समय पारदर्शी रूप से निश्चित शुल्क का भुगतान करते हैं।",
+        answer: "भुगतान एवं वॉलेट नीति:\n\n• **भुगतान का माध्यम:** हम सुरक्षित डायरेक्ट UPI बैंक ट्रांसफर स्वीकार करते हैं। आप Google Pay, PhonePe, Paytm, BHIM या किसी भी बैंकिंग UPI ऐप से **9310709233m@pnb** (Payee: AAPKA ASTRO) पर अथवा स्क्रीन पर दिए गए QR कोड को स्कैन करके भुगतान कर सकते हैं।\n• **वॉलेट नीति:** आपका एस्ट्रो पर कोई वॉलेट रिचार्ज या कॉइन कटौती प्रणाली नहीं है। आप केवल अपनी बुकिंग के समय पारदर्शी रूप से निश्चित शुल्क का भुगतान करते हैं।",
         language: "hi",
         intent: "payment_methods",
         confidence: "high",
@@ -642,7 +642,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
 
     if (lang === "hinglish") {
       return {
-        answer: "Payment aur Wallet Policy:\n\n• **Payment Method:** Direct UPI payment accepted hai. Aap Google Pay, PhonePe, Paytm, BHIM ya kisi bhi UPI app se **9311215564@okbizaxis** (Payee: Aapka Astro) par ya dynamic QR code scan karke pay kar sakte hain.\n• **Zero Wallet Policy:** Aapka Astro par koi wallet coin, balance ya top-up recharge system NAHI hai. Aap sirf transparent flat pay-per-booking karte hain bina kisi hidden charges ke.",
+        answer: "Payment aur Wallet Policy:\n\n• **Payment Method:** Direct UPI payment accepted hai. Aap Google Pay, PhonePe, Paytm, BHIM ya kisi bhi UPI app se **9310709233m@pnb** (Payee: AAPKA ASTRO) par ya dynamic QR code scan karke pay kar sakte hain.\n• **Zero Wallet Policy:** Aapka Astro par koi wallet coin, balance ya top-up recharge system NAHI hai. Aap sirf transparent flat pay-per-booking karte hain bina kisi hidden charges ke.",
         language: "hinglish",
         intent: "payment_methods",
         confidence: "high",
@@ -651,7 +651,7 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
     }
 
     return {
-      answer: "Payment & Wallet Policy:\n\n• **Direct UPI Payment:** We accept instant UPI bank transfers via Google Pay, PhonePe, Paytm, BHIM, or any banking app directly to **9311215564@okbizaxis** (Payee: Aapka Astro) or via instant dynamic QR code.\n• **No Wallet Policy:** Aapka Astro does NOT use a wallet recharge or coin deduction system. All services are flat pay-per-booking with zero commissions or hidden fees.",
+      answer: "Payment & Wallet Policy:\n\n• **Direct UPI Payment:** We accept instant UPI bank transfers via Google Pay, PhonePe, Paytm, BHIM, or any banking app directly to **9310709233m@pnb** (Payee: AAPKA ASTRO) or via instant dynamic QR code.\n• **No Wallet Policy:** Aapka Astro does NOT use a wallet recharge or coin deduction system. All services are flat pay-per-booking with zero commissions or hidden fees.",
       language: "en",
       intent: "payment_methods",
       confidence: "high",

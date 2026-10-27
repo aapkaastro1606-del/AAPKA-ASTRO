@@ -64,7 +64,7 @@ describe("AI Assistant Grounding, Knowledge Base & System Rules Suite", () => {
         vaastuStandardFee: 25000,
         vaastuDiscountPercentage: 40,
         kundliPdfFee: 501,
-        upiId: "9311215564@okbizaxis",
+        upiId: "9310709233m@pnb",
         payeeName: "Aapka Astro",
         whatsappNumber: "+91 93112 15564",
         promoCode: "FIRST1051",
@@ -76,7 +76,7 @@ describe("AI Assistant Grounding, Knowledge Base & System Rules Suite", () => {
       assert.ok(snippet.includes("₹2100"), "Must include live standard fee");
       assert.ok(snippet.includes("₹15000"), "Must include live Vaastu fee");
       assert.ok(snippet.includes("₹501"), "Must include live Kundli PDF fee");
-      assert.ok(snippet.includes("9311215564@okbizaxis"), "Must include live UPI ID");
+      assert.ok(snippet.includes("9310709233m@pnb"), "Must include live UPI ID");
       assert.ok(snippet.includes("ZERO wallet coins"), "Must reiterate zero wallet policy");
     });
   });

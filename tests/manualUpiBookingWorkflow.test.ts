@@ -319,8 +319,8 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
     // Owner successfully updates settings
     const updated = await PlatformSettingsService.updatePaymentSettings(
       {
-        upiId: "9311215564@okbizaxis",
-        payeeName: "Aapka Astro Official",
+        upiId: "9310709233m@pnb",
+        payeeName: "AAPKA ASTRO",
         whatsappNumber: "+91 93112 15564",
         whatsappConfirmed: true,
         unpaidExpiryDays: 3,
@@ -328,7 +328,7 @@ describe("Manual UPI Booking Workflow Suite", { concurrency: 1 }, () => {
       ownerEmail
     );
 
-    assert.strictEqual(updated.payeeName, "Aapka Astro Official");
+    assert.strictEqual(updated.payeeName, "AAPKA ASTRO");
     assert.strictEqual(updated.whatsappConfirmed, true);
     assert.strictEqual(updated.unpaidExpiryDays, 3);
 

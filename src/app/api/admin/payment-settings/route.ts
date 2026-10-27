@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: `Invalid UPI ID format: "${upiId}". Expected format: username@handle (e.g. 9311215564@okbizaxis).`,
+            message: `Invalid UPI ID format: "${upiId}". Expected format: username@handle (e.g. 9310709233m@pnb).`,
           },
           { status: 400 }
         );

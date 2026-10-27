@@ -34,8 +34,8 @@ export async function fetchLiveSiteData(): Promise<LiveSiteData> {
       navratriPromo: null,
     })),
     PlatformSettingsService.getPaymentSettings().catch(() => ({
-      upiId: "9311215564@okbizaxis",
-      payeeName: "Aapka Astro Official",
+      upiId: "9310709233m@pnb",
+      payeeName: "AAPKA ASTRO",
       whatsappNumber: "+91 93112 15564",
     })),
   ]);
@@ -53,8 +53,8 @@ export async function fetchLiveSiteData(): Promise<LiveSiteData> {
     vaastuStandardFee: pricing.vaastuStandardFee ?? 25000,
     vaastuDiscountPercentage: pricing.vaastuDiscountPercentage ?? 40,
     kundliPdfFee: pricing.kundliPdfFee ?? 501,
-    upiId: payment.upiId || "9311215564@okbizaxis",
-    payeeName: payment.payeeName || "Aapka Astro",
+    upiId: payment.upiId || "9310709233m@pnb",
+    payeeName: payment.payeeName || "AAPKA ASTRO",
     whatsappNumber: payment.whatsappNumber || "+91 93112 15564",
     promoCode: "FIRST1051",
     activePromoHeadline: navratriActive ? pricing.navratriPromo?.headline : undefined,

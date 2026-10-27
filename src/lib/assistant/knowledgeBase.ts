@@ -144,8 +144,8 @@ export const ASSISTANT_KNOWLEDGE = {
   paymentAndBilling: {
     model: "Direct Pay-Per-Booking (No Wallets, No Top-Ups, Zero Commission)",
     method: "Direct UPI Bank Transfer",
-    upiId: "9311215564@okbizaxis",
-    payeeName: "Aapka Astro",
+    upiId: "9310709233m@pnb",
+    payeeName: "AAPKA ASTRO",
     acceptedApps: ["Google Pay (GPay)", "PhonePe", "Paytm", "BHIM", "Any Banking UPI App", "Instant Dynamic QR Code"],
     walletPolicy: "Aapka Astro does NOT use a wallet coin, balance, or top-up system. You only pay transparently per booking.",
     freeConsultationPolicy: "We do NOT offer free 1-on-1 consultations. Our first consultation is offered at a 50% discount for ₹1,051 (regular ₹2,100). All our online Kundli, Panchang, and calculator tools are 100% free.",

@@ -100,9 +100,9 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
   // Payment Settings Drawer
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettingsData>({
-    upiId: "9311215564@okbizaxis",
-    payeeName: "Aapka Astro",
-    qrImageUrl: "",
+    upiId: "9310709233m@pnb",
+    payeeName: "AAPKA ASTRO",
+    qrImageUrl: "/images/pnb-upi-qr.png",
     whatsappNumber: "+91 93112 15564",
     whatsappConfirmed: false,
     unpaidExpiryDays: 2,
@@ -1143,7 +1143,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
                   type="text"
                   value={paymentSettings.upiId}
                   onChange={(e) => setPaymentSettings({ ...paymentSettings, upiId: e.target.value })}
-                  placeholder="e.g. 9311215564@okbizaxis"
+                  placeholder="e.g. 9310709233m@pnb"
                   className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] p-2.5 text-xs font-mono font-bold text-[#7B2D26]"
                   required
                 />
@@ -1155,7 +1155,7 @@ export default function BookingsQueueClient({ userEmail }: { userEmail: string }
                   type="text"
                   value={paymentSettings.payeeName}
                   onChange={(e) => setPaymentSettings({ ...paymentSettings, payeeName: e.target.value })}
-                  placeholder="e.g. Aapka Astro"
+                  placeholder="e.g. AAPKA ASTRO"
                   className="w-full rounded-xl border border-[#E8D8C3] bg-[#FFFDF9] p-2.5 text-xs text-[#3B2A1E]"
                   required
                 />

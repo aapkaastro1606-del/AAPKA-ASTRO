@@ -43,8 +43,8 @@ const envSchema = z.object({
 
   // Payments (Direct UPI / Mock)
   PAYMENT_PROVIDER: z.enum(["upi", "mock"]).default("upi"),
-  NEXT_PUBLIC_UPI_ID: z.string().optional().default("9311215564@okbizaxis"),
-  NEXT_PUBLIC_UPI_NAME: z.string().optional().default("Aapka Astro"),
+  NEXT_PUBLIC_UPI_ID: z.string().optional().default("9310709233m@pnb"),
+  NEXT_PUBLIC_UPI_NAME: z.string().optional().default("AAPKA ASTRO"),
   NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional().default("919311215564"),
 
   // Swappable Call Provider (Agora / ZegoCloud)
