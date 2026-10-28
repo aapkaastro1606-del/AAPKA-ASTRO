@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { LiveTvBroadcastModal } from "@/components/home/LiveTvBroadcastModal";
 import { WelcomeConsultationModal } from "@/components/home/WelcomeConsultationModal";
 import { NavratriPromotionalModal } from "@/components/promotions/NavratriPromotionalModal";
 import { BrandedPreloader } from "@/components/layout/BrandedPreloader";
@@ -122,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Navbar />
             <main className="flex-1 w-full overflow-x-hidden">{children}</main>
             <Footer />
+            <LiveTvBroadcastModal />
             <WelcomeConsultationModal />
             <NavratriPromotionalModal />
             <FloatingAssistant />

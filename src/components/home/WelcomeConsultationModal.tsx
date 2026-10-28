@@ -186,7 +186,7 @@ export function shouldShowNavratriModal({
 }
 
 interface WelcomeConsultationModalProps {
-  /** Optional delay in milliseconds before displaying the modal on first visit. Default: 2000ms */
+  /** Optional delay in milliseconds before displaying the modal on first visit. Default: 90000ms (90 seconds / 1 min 30 sec) */
   delayMs?: number;
   /** Force open for preview/testing purposes */
   forceOpen?: boolean;
@@ -195,7 +195,7 @@ interface WelcomeConsultationModalProps {
 }
 
 export function WelcomeConsultationModal({
-  delayMs = 2000,
+  delayMs = 90000,
   forceOpen = false,
   referenceDate,
 }: WelcomeConsultationModalProps) {
@@ -249,13 +249,25 @@ export function WelcomeConsultationModal({
         return;
       }
 
-      // Schedule display for first visit in this session
-      const timer = setTimeout(() => {
+      const triggerWelcomeModal = () => {
         if (
           !isNavratriPromoActive(AdminStore.getPricing().navratriPromo, referenceDate) &&
           !isRouteExcludedFromWelcomeModal(pathname) &&
           !isUserInActiveSessionOrConsultation(isAuthenticated, pathname)
         ) {
+          // If the immediate Live TV broadcast modal is currently active, wait until user dismisses it
+          if (
+            typeof window !== "undefined" &&
+            sessionStorage.getItem("aapka_live_tv_modal_active") === "true"
+          ) {
+            const onTvDismissed = () => {
+              window.removeEventListener("astro_live_tv_dismissed", onTvDismissed);
+              triggerWelcomeModal();
+            };
+            window.addEventListener("astro_live_tv_dismissed", onTvDismissed);
+            return;
+          }
+
           setIsOpen(true);
           try {
             sessionStorage.setItem(WELCOME_MODAL_SESSION_KEY, "true");
@@ -264,7 +276,10 @@ export function WelcomeConsultationModal({
             // Ignore storage errors
           }
         }
-      }, delayMs);
+      };
+
+      // Schedule display after delayMs (default 90 seconds / 1min 30sec)
+      const timer = setTimeout(triggerWelcomeModal, delayMs);
 
       return () => clearTimeout(timer);
     } catch {
