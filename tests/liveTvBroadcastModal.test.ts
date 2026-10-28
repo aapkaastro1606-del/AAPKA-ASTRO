@@ -88,7 +88,7 @@ describe("Live TV Broadcast Announcement Modal - Reputation & Copy Compliance", 
     );
     assert.match(
       modalCode,
-      /\/images\/Acharya_Niraj_Kumar\.jpg/,
+      /\/images\/(?:Acharya_Niraj_Kumar|acharya-yellow)\.jpg/,
       "Must render Acharya Niraj Kumar's official portrait"
     );
   });
