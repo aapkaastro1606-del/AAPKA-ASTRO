@@ -19,6 +19,8 @@ import {
   QrCode,
   ArrowRight,
   Edit3,
+  Star,
+  Send,
 } from "lucide-react";
 import { AstrologerStateStore, AstrologerStatus } from "@/lib/store/astrologerStore";
 import { PLACEHOLDER_ASTROLOGER } from "@/config/placeholderContent";
@@ -91,6 +93,54 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
   const [utrError, setUtrError] = useState<string | null>(null);
   const [utrSuccess, setUtrSuccess] = useState<string | null>(null);
   const [isSavingUtr, setIsSavingUtr] = useState<boolean>(false);
+  const [feedbackRating, setFeedbackRating] = useState<number>(5);
+  const [feedbackHoverRating, setFeedbackHoverRating] = useState<number>(0);
+  const [feedbackName, setFeedbackName] = useState<string>("");
+  const [feedbackComment, setFeedbackComment] = useState<string>("");
+  const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.fullName || user?.firstName) {
+      setFeedbackName(user.fullName || user.firstName || "");
+    } else if (activeBooking?.userName) {
+      setFeedbackName(activeBooking.userName);
+    }
+  }, [user, activeBooking]);
+
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackComment.trim()) return;
+
+    setSubmittingFeedback(true);
+    setFeedbackError(null);
+
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: activeBooking?.bookingId || activeBooking?.id,
+          clientName: feedbackName.trim() || activeBooking?.userName || "Seeker",
+          service: activeBooking?.productType === "vaastu" ? "Vastu Consultation" : "Voice Call Consultation",
+          rating: feedbackRating,
+          comment: feedbackComment.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit feedback.");
+      }
+
+      setFeedbackSubmitted(true);
+    } catch (err: any) {
+      setFeedbackError(err.message || "Could not record feedback. Please try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   const handleSavePaymentReference = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -837,6 +887,112 @@ export const ClientConsultationStatusView: React.FC<ClientConsultationStatusView
                 <span>Book Another Consultation</span>
               </Link>
             </div>
+
+            {/* Interactive Session Feedback Card */}
+            {!feedbackSubmitted ? (
+              <div className="mt-6 rounded-2xl border-2 border-[#E8A33D] bg-gradient-to-b from-[#FFFDF9] via-[#FAF4EA] to-[#F5EAD9] p-5 sm:p-6 text-left shadow-md space-y-4">
+                <div className="text-center sm:text-left">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8A33D]/20 text-[#7B2D26] text-xs font-bold border border-[#E8A33D]/40 mb-2">
+                    <Star className="h-3.5 w-3.5 fill-[#E8A33D] text-[#E8A33D]" />
+                    <span>Session Feedback &amp; Review</span>
+                  </div>
+                  <h4 className="font-temple text-lg sm:text-xl font-bold text-[#7B2D26]">
+                    How Was Your Consultation with Acharya Niraj Kumar?
+                  </h4>
+                  <p className="text-xs text-[#6E5545]">
+                    Your honest feedback is saved in genuine seeker testimonials and helps guide others on their spiritual path.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmitFeedback} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-[#7B2D26] mb-1">
+                      Rate Your Consultation Experience:
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          type="button"
+                          key={star}
+                          onClick={() => setFeedbackRating(star)}
+                          onMouseEnter={() => setFeedbackHoverRating(star)}
+                          onMouseLeave={() => setFeedbackHoverRating(0)}
+                          className="p-1 focus:outline-none transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`h-6 w-6 transition-colors ${
+                              (feedbackHoverRating || feedbackRating) >= star
+                                ? "fill-[#E8A33D] text-[#E8A33D]"
+                                : "text-[#E8D8C3]"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      <span className="ml-2 text-xs font-bold text-[#7B2D26]">
+                        {feedbackRating} of 5 Stars
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#3B2A1E] mb-1">
+                      Your Name:
+                    </label>
+                    <input
+                      type="text"
+                      value={feedbackName}
+                      onChange={(e) => setFeedbackName(e.target.value)}
+                      placeholder="e.g. Parnika Grover"
+                      className="w-full rounded-xl border border-[#E8D8C3] bg-white px-3.5 py-2 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none focus:ring-1 focus:ring-[#7B2D26]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#3B2A1E] mb-1">
+                      Your Consultation Experience &amp; Review:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={feedbackComment}
+                      onChange={(e) => setFeedbackComment(e.target.value)}
+                      placeholder="Share your experience, insights received, or remedies guidance..."
+                      className="w-full rounded-xl border border-[#E8D8C3] bg-white p-3 text-xs text-[#3B2A1E] focus:border-[#7B2D26] focus:outline-none focus:ring-1 focus:ring-[#7B2D26]"
+                      required
+                    />
+                  </div>
+
+                  {feedbackError && (
+                    <p className="text-xs text-red-600 font-semibold">{feedbackError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submittingFeedback || !feedbackComment.trim()}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7B2D26] to-[#9A382F] hover:from-[#64221C] hover:to-[#7B2D26] text-white px-6 py-2.5 font-bold text-xs shadow-md transition-all disabled:opacity-50"
+                  >
+                    {submittingFeedback ? (
+                      <span>Recording Feedback...</span>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5 text-[#E8A33D]" />
+                        <span>Submit Consultation Feedback &amp; Review</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-2xl border-2 border-[#6B8E5A] bg-[#F4F9F2] p-5 text-center space-y-2">
+                <CheckCircle2 className="h-8 w-8 text-[#6B8E5A] mx-auto" />
+                <h4 className="font-temple text-base font-bold text-[#2A4720]">
+                  Thank You for Your Feedback!
+                </h4>
+                <p className="text-xs text-[#2A4720]/90">
+                  Your consultation review has been recorded into official seeker testimonials and submitted to Acharya Ji&apos;s desk.
+                </p>
+              </div>
+            )}
           </div>
         )}
 

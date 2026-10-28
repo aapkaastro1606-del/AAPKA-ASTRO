@@ -343,7 +343,15 @@ export default function ClientAccountDashboard() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-                {activeBooking.meetingLink && activeBooking.meetingLink.startsWith("http") ? (
+                {(activeBooking.bookingStatus || activeBooking.status) === "COMPLETED" ? (
+                  <Link
+                    href="/account/reviews"
+                    className="rounded-xl bg-[#7B2D26] hover:bg-[#64221C] px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Star className="h-4 w-4 fill-[#E8A33D] text-[#E8A33D]" />
+                    <span>Rate Consultation &amp; Leave Review</span>
+                  </Link>
+                ) : activeBooking.meetingLink && activeBooking.meetingLink.startsWith("http") ? (
                   <a
                     href={activeBooking.meetingLink}
                     target="_blank"

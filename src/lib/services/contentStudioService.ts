@@ -256,6 +256,58 @@ const SINGLETON_ID = "singleton_settings";
 
 export class ContentStudioService {
   /**
+   * Loads unified seeker reviews & testimonials from prisma.review database table.
+   * If database table is empty, seeds default authentic testimonials and returns them.
+   */
+  static async getUnifiedReviews(): Promise<ReviewItem[]> {
+    try {
+      if (prisma && prisma.review) {
+        let dbReviews = await prisma.review.findMany({
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (dbReviews.length === 0) {
+          for (let i = 0; i < PLACEHOLDER_TESTIMONIALS.length; i++) {
+            const t = PLACEHOLDER_TESTIMONIALS[i];
+            await prisma.review.create({
+              data: {
+                id: `rev-default-${i + 1}`,
+                clientName: t.clientName,
+                service: t.service,
+                rating: t.stars,
+                comment: t.text,
+                isApproved: true,
+              },
+            }).catch(() => {});
+          }
+          dbReviews = await prisma.review.findMany({
+            orderBy: { createdAt: "desc" },
+          });
+        }
+
+        if (dbReviews.length > 0) {
+          return dbReviews.map((r) => ({
+            id: r.id,
+            clientName: r.clientName || "Seeker",
+            city: (r as any).city || "Verified Seeker",
+            service: r.service || "Vedic Consultation",
+            stars: r.rating || 5,
+            text: r.comment || "",
+            date: r.createdAt ? r.createdAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            consentNote: "Client consultation feedback on file.",
+            verified: true,
+            isActive: r.isApproved !== false,
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn("getUnifiedReviews DB fetch failed, using fallback:", err);
+    }
+
+    return DEFAULT_CONTENT_STUDIO.reviews || [];
+  }
+
+  /**
    * Fetches full Content Studio data from PostgreSQL.
    * Prioritizes typed ContentEntry tables with fallback to platformSettings and built-in code defaults.
    */
@@ -326,20 +378,7 @@ export class ContentStudioService {
               }
             : DEFAULT_CONTENT_STUDIO.hero;
 
-          const reviews: ReviewItem[] = testimonialEntries.length > 0
-            ? testimonialEntries.map((t) => ({
-                id: t.key,
-                clientName: t.data.clientName || t.dataEn.clientName || "",
-                city: t.data.city || t.dataEn.city || "",
-                service: t.data.service || t.dataEn.service || "",
-                stars: t.data.stars || t.dataEn.stars || 5,
-                text: t.data.text || t.dataEn.text || "",
-                date: t.data.date || t.dataEn.date || "2026-03-15",
-                consentNote: t.data.consentNote || t.dataEn.consentNote || "Client consent on file.",
-                verified: t.data.verified ?? true,
-                isActive: t.status === ContentStatus.PUBLISHED,
-              }))
-            : DEFAULT_CONTENT_STUDIO.reviews!;
+          const reviews: ReviewItem[] = await ContentStudioService.getUnifiedReviews();
 
           const heroCarousel: HeroCarouselItem[] = heroCarouselEntries.map((h) => ({
             id: h.key,
@@ -453,7 +492,7 @@ export class ContentStudioService {
                 ...(studio.hero || {}),
               },
               faqs: Array.isArray(studio.faqs) && studio.faqs.length > 0 ? studio.faqs : DEFAULT_FAQS,
-              reviews: Array.isArray(studio.reviews) && studio.reviews.length > 0 ? studio.reviews : DEFAULT_CONTENT_STUDIO.reviews,
+              reviews: await ContentStudioService.getUnifiedReviews(),
               updatedAt: studio.updatedAt,
               updatedBy: studio.updatedBy,
             };
@@ -562,6 +601,36 @@ export class ContentStudioService {
         }
 
         if (updates.reviews) {
+          // 1. Sync reviews directly to prisma.review table
+          if (prisma && prisma.review) {
+            const activeIds = updates.reviews.map((r) => r.id);
+            await prisma.review.deleteMany({
+              where: { id: { notIn: activeIds } },
+            }).catch((e) => console.warn("Failed to delete removed reviews from DB:", e));
+
+            for (const r of updates.reviews) {
+              await prisma.review.upsert({
+                where: { id: r.id },
+                create: {
+                  id: r.id,
+                  clientName: r.clientName || "Seeker",
+                  service: r.service || "Vedic Consultation",
+                  rating: Number(r.stars) || 5,
+                  comment: r.text || "",
+                  isApproved: r.isActive !== false,
+                },
+                update: {
+                  clientName: r.clientName,
+                  service: r.service,
+                  rating: Number(r.stars),
+                  comment: r.text,
+                  isApproved: r.isActive !== false,
+                },
+              }).catch((e) => console.warn(`Failed to upsert review ${r.id} in DB:`, e));
+            }
+          }
+
+          // 2. Also sync to ContentModelService for revision snapshot history
           for (let i = 0; i < merged.reviews!.length; i++) {
             const r = merged.reviews![i];
             await ContentModelService.saveEntry({

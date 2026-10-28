@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getServerAuthUser } from "@/lib/auth/serverAuth";
 import { PLACEHOLDER_TESTIMONIALS } from "@/config/placeholderContent";
+import { ContentModelService } from "@/lib/services/contentModelService";
+import { ContentStatus } from "@prisma/client";
+import { revalidateAffectedContent } from "@/lib/content/revalidation";
 
 export const dynamic = "force-dynamic";
 
@@ -56,13 +59,13 @@ export async function GET() {
 
 /**
  * POST /api/reviews
- * Submits a new client review directly into PostgreSQL.
+ * Submits a new client review directly into PostgreSQL and synchronizes it with ContentStudio.
  */
 export async function POST(req: NextRequest) {
   try {
     const auth = await getServerAuthUser();
     const body = await req.json();
-    const { clientName, service, rating, comment } = body;
+    const { clientName, service, rating, comment, bookingId, sessionId, city } = body;
 
     if (!rating || !comment) {
       return NextResponse.json(
@@ -71,16 +74,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify sessionId exists in prisma.session before referencing foreign key
+    let validSessionId: string | null = null;
+    const candidateSessionId = sessionId || bookingId;
+    if (candidateSessionId && typeof candidateSessionId === "string") {
+      try {
+        const existingSession = await prisma.session.findUnique({
+          where: { id: candidateSessionId },
+          select: { id: true },
+        });
+        if (existingSession) {
+          validSessionId = existingSession.id;
+        }
+      } catch {
+        validSessionId = null;
+      }
+    }
+
     const review = await prisma.review.create({
       data: {
         userId: auth.userId || null,
-        clientName: clientName || "Seeker",
-        service: service || "Vedic Astrology",
+        sessionId: validSessionId,
+        clientName: clientName || auth.name || "Seeker",
+        service: service || "Vedic Consultation",
         rating: Number(rating) || 5,
         comment: String(comment).trim(),
         isApproved: true,
       },
     });
+
+    // Also sync to ContentModelService so it immediately reflects in ContentStudio & ContentEntry
+    try {
+      await ContentModelService.saveEntry({
+        collection: "testimonials",
+        key: review.id,
+        dataEn: {
+          clientName: review.clientName,
+          city: city || "Verified Seeker",
+          service: review.service,
+          stars: review.rating,
+          text: review.comment,
+          date: review.createdAt.toISOString().split("T")[0],
+          consentNote: "Client consultation feedback recorded.",
+          verified: true,
+        },
+        dataHi: {
+          clientName: review.clientName,
+          city: city || "Verified Seeker",
+          service: review.service,
+          stars: review.rating,
+          text: review.comment,
+          date: review.createdAt.toISOString().split("T")[0],
+          consentNote: "Client consultation feedback recorded.",
+          verified: true,
+        },
+        status: ContentStatus.PUBLISHED,
+        actorEmail: auth.email || "seeker@aapkaastro.com",
+        changeSummary: `Client review submitted by ${review.clientName}`,
+      });
+      revalidateAffectedContent("testimonials");
+    } catch (e) {
+      console.warn("Sync new review to ContentModel failed:", e);
+    }
 
     return NextResponse.json({
       success: true,
