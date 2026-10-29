@@ -12,6 +12,7 @@ import { PersonJsonLd, LocalBusinessJsonLd } from "@/components/seo/JsonLd";
 import { GallerySection } from "@/components/about/GallerySection";
 import { AboutHeroImageCarousel } from "@/components/about/AboutHeroImageCarousel";
 import { TrustCredentialsSection } from "@/components/home/TrustCredentialsSection";
+import { LiveTvAboutSection } from "@/components/about/LiveTvAboutSection";
 import {
   Award,
   BookOpen,
@@ -20,12 +21,10 @@ import {
   Compass,
   Factory,
   GraduationCap,
-  HeartHandshake,
   Home,
   Laptop,
   PhoneCall,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   Store,
   Video,
@@ -69,6 +68,9 @@ export default function AboutPage() {
       </section>
 
       {/* ========================================================================= */}
+      {/* 1.5 LIVE ON TELEVISION: KAAL KI CHAAL ON LIVE TIMES */}
+      <LiveTvAboutSection />
+
       {/* 2. THE MIND BEHIND AAPKA ASTRO: ACHARYA NIRAJ KUMAR */}
       {/* ========================================================================= */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8">

@@ -245,6 +245,8 @@ export function WelcomeConsultationModal({
     // 3. Visitor Session Check: Show once per visitor per browser session.
     try {
       const isSeenInSession = sessionStorage.getItem(WELCOME_MODAL_SESSION_KEY);
+      const isVisitClaimed = sessionStorage.getItem("aapka_popup_visit_claimed");
+      if (isVisitClaimed) return;
       if (isSeenInSession) {
         return;
       }
@@ -271,6 +273,7 @@ export function WelcomeConsultationModal({
           setIsOpen(true);
           try {
             sessionStorage.setItem(WELCOME_MODAL_SESSION_KEY, "true");
+            sessionStorage.setItem("aapka_popup_visit_claimed", "welcome");
             document.cookie = `${WELCOME_MODAL_COOKIE_NAME}=1; path=/; SameSite=Lax`;
           } catch {
             // Ignore storage errors

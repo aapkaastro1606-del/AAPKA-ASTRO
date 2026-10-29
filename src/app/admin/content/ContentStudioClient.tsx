@@ -38,7 +38,9 @@ import {
   Calendar,
   AlertTriangle,
   FileText,
+  Tv,
 } from "lucide-react";
+import { LiveTvSettingsEditor } from "@/components/admin/LiveTvSettingsEditor";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
 import { parseFetchError, DataStateError } from "@/components/admin/DataStateView";
 import { CharacterCount } from "@/components/content/CharacterCount";
@@ -72,17 +74,19 @@ interface ExtendedReviewItem extends ReviewItem {
 interface ContentStudioClientProps {
   initialContent: ContentStudioData;
   canManage: boolean;
+  isOwner?: boolean;
 }
 
 export default function ContentStudioClient({
   initialContent,
   canManage,
+  isOwner = false,
 }: ContentStudioClientProps) {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "faqs";
 
   const [activeTab, setActiveTab] = useState<
-    "faqs" | "contact" | "hero" | "reviews" | "social" | "about" | "popups" | "legal"
+    "faqs" | "contact" | "hero" | "reviews" | "social" | "about" | "popups" | "legal" | "tv"
   >((initialTab as any) || "faqs");
 
   const [content, setContent] = useState<ContentStudioData>(initialContent);
@@ -745,6 +749,20 @@ export default function ContentStudioClient({
             <Scale className="w-4 h-4" />
             <span>Legal Pages (Owner)</span>
           </button>
+
+          {isOwner && (
+            <button
+              onClick={() => setActiveTab("tv")}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeTab === "tv"
+                  ? "bg-[#7B2D26] text-white shadow-xs"
+                  : "bg-white text-stone-700 border border-stone-200 hover:bg-stone-50"
+              }`}
+            >
+              <Tv className="w-4 h-4" />
+              <span>Live on Television (Owner)</span>
+            </button>
+          )}
 
           <Link
             href="/admin/media"
@@ -2585,6 +2603,16 @@ export default function ContentStudioClient({
               </button>
             </div>
           </div>
+        )}
+
+        {/* TAB 9: LIVE ON TELEVISION (OWNER ONLY) */}
+        {activeTab === "tv" && isOwner && (
+          <LiveTvSettingsEditor
+            initialSettings={content.liveTv}
+            onSaved={(updated) => {
+              setContent({ ...content, liveTv: updated });
+            }}
+          />
         )}
       </main>
 

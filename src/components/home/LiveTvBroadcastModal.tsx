@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useId } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,13 +9,21 @@ import {
   Tv,
   MessageCircle,
   ArrowRight,
-  Sparkles,
-  Radio,
   Clock,
-  CheckCircle2,
-  Share2,
+  Sparkles,
+  ShieldCheck,
+  AlertCircle,
+  Globe,
 } from "lucide-react";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  DEFAULT_LIVE_TV_SETTINGS,
+  LiveTvBroadcastSettings,
+  evaluateLiveTvStatus,
+  LiveTvEvaluationResult,
+  buildLiveTvWhatsAppUrl,
+} from "@/config/liveTvBroadcastConfig";
 import {
   isRouteExcludedFromWelcomeModal,
   isUserInActiveSessionOrConsultation,
@@ -26,21 +34,72 @@ export const LIVE_TV_MODAL_SESSION_KEY = "aapka_live_tv_modal_session_seen";
 export const LIVE_TV_MODAL_COOKIE_NAME = "aapka_live_tv_seen";
 export const LIVE_TV_MODAL_ACTIVE_KEY = "aapka_live_tv_modal_active";
 
+/** Shared key ensuring strictly one popup per visit across the site */
+export const POPUP_VISIT_CLAIMED_KEY = "aapka_popup_visit_claimed";
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 interface LiveTvBroadcastModalProps {
-  /** Delay in milliseconds before opening immediately on website load. Default: 1000ms */
+  /** Optional delay before appearing on initial load. Default: 1000ms */
   delayMs?: number;
   /** Force open for preview/testing purposes */
   forceOpen?: boolean;
+  /** Optional initial settings override */
+  initialSettings?: LiveTvBroadcastSettings;
+  /** Optional mock date for deterministic testing */
+  mockDate?: Date | string;
 }
 
 export function LiveTvBroadcastModal({
   delayMs = 1000,
   forceOpen = false,
+  initialSettings,
+  mockDate,
 }: LiveTvBroadcastModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [settings, setSettings] = useState<LiveTvBroadcastSettings>(
+    initialSettings || DEFAULT_LIVE_TV_SETTINGS
+  );
+  const [evaluation, setEvaluation] = useState<LiveTvEvaluationResult>(() =>
+    evaluateLiveTvStatus(initialSettings || DEFAULT_LIVE_TV_SETTINGS, mockDate)
+  );
+
+  const { language } = useLanguage();
+  const [modalLang, setModalLang] = useState<"en" | "hi">(
+    language === "hi" ? "hi" : "en"
+  );
   const pathname = usePathname();
   const { isAuthenticated } = useCurrentUserRole();
+  const titleId = useId();
+
+  // Sync language if site language changes
+  useEffect(() => {
+    setModalLang(language === "hi" ? "hi" : "en");
+  }, [language]);
+
+  // Fetch verified settings from API on client mount
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/live-tv");
+        if (res.ok) {
+          const data = await res.json();
+          if (!isCancelled && data.success && data.settings) {
+            setSettings(data.settings);
+            setEvaluation(evaluateLiveTvStatus(data.settings, mockDate));
+          }
+        }
+      } catch {
+        // Fall back to defaults
+      }
+    }
+    loadSettings();
+    return () => {
+      isCancelled = true;
+    };
+  }, [mockDate]);
 
   useEffect(() => {
     setMounted(true);
@@ -49,13 +108,14 @@ export function LiveTvBroadcastModal({
       setIsOpen(true);
       try {
         sessionStorage.setItem(LIVE_TV_MODAL_ACTIVE_KEY, "true");
+        sessionStorage.setItem(POPUP_VISIT_CLAIMED_KEY, "live_tv");
       } catch {
-        // Ignore storage error
+        // Storage unavailable
       }
       return;
     }
 
-    // 1. Suppress on excluded operational routes (/admin/*, /dashboard/*, /consult*, /account*, etc.)
+    // 1. Suppress on excluded operational routes
     if (isRouteExcludedFromWelcomeModal(pathname)) {
       setIsOpen(false);
       return;
@@ -67,14 +127,31 @@ export function LiveTvBroadcastModal({
       return;
     }
 
-    // 3. Check if already seen in current session
+    // 3. Suppress if programme has ended or status is not visible
+    const currentEval = evaluateLiveTvStatus(settings, mockDate);
+    if (!currentEval.isVisible) {
+      setIsOpen(false);
+      return;
+    }
+
+    // 4. Check 7-day dismissal memory
     try {
+      const dismissedTs = localStorage.getItem(LIVE_TV_MODAL_STORAGE_KEY);
+      if (dismissedTs) {
+        const ts = parseInt(dismissedTs, 10);
+        if (!isNaN(ts) && Date.now() - ts < SEVEN_DAYS_MS) {
+          return; // Suppressed within 7-day dismissal window
+        }
+      }
+
+      // 5. Check if already seen in current session or another popup already claimed this visit
       const isSeenInSession = sessionStorage.getItem(LIVE_TV_MODAL_SESSION_KEY);
-      if (isSeenInSession) {
+      const isVisitClaimed = sessionStorage.getItem(POPUP_VISIT_CLAIMED_KEY);
+      if (isSeenInSession || isVisitClaimed) {
         return;
       }
 
-      // Trigger immediately after initial mount
+      // Priority 1: Trigger after initial delay and claim visit slot
       const timer = setTimeout(() => {
         if (
           !isRouteExcludedFromWelcomeModal(pathname) &&
@@ -84,9 +161,10 @@ export function LiveTvBroadcastModal({
           try {
             sessionStorage.setItem(LIVE_TV_MODAL_SESSION_KEY, "true");
             sessionStorage.setItem(LIVE_TV_MODAL_ACTIVE_KEY, "true");
+            sessionStorage.setItem(POPUP_VISIT_CLAIMED_KEY, "live_tv");
             document.cookie = `${LIVE_TV_MODAL_COOKIE_NAME}=1; path=/; SameSite=Lax`;
           } catch {
-            // Ignore storage errors
+            // Storage unavailable
           }
         }
       }, delayMs);
@@ -95,22 +173,22 @@ export function LiveTvBroadcastModal({
     } catch {
       // Storage unavailable
     }
-  }, [delayMs, forceOpen, pathname, isAuthenticated]);
+  }, [delayMs, forceOpen, pathname, isAuthenticated, settings, mockDate]);
 
   const handleDismiss = useCallback(() => {
     setIsOpen(false);
     try {
-      localStorage.setItem(LIVE_TV_MODAL_STORAGE_KEY, "true");
+      localStorage.setItem(LIVE_TV_MODAL_STORAGE_KEY, String(Date.now()));
       sessionStorage.setItem(LIVE_TV_MODAL_SESSION_KEY, "true");
       sessionStorage.setItem(LIVE_TV_MODAL_ACTIVE_KEY, "false");
       document.cookie = `${LIVE_TV_MODAL_COOKIE_NAME}=1; path=/; SameSite=Lax`;
       window.dispatchEvent(new CustomEvent("astro_live_tv_dismissed"));
     } catch {
-      // Ignore storage errors
+      // Storage unavailable
     }
   }, []);
 
-  // Escape key handler
+  // Keyboard Escape handler
   useEffect(() => {
     if (!isOpen) return;
 
@@ -124,242 +202,215 @@ export function LiveTvBroadcastModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleDismiss]);
 
-  if (!mounted || !isOpen) return null;
+  if (!mounted || !isOpen || !evaluation.isVisible) return null;
 
-  const whatsappQuestionUrl = `https://wa.me/919311215564?text=${encodeURIComponent(
-    "Namaste Acharya Ji, I watch your live show on Live Times News Channel (Daily 8:00 AM). I would like to ask my question live on TV:\n\nName:\nDate of Birth (DOB):\nTime of Birth (TOB):\nPlace of Birth (POB):\nMy Question/Query:"
-  )}`;
+  const isHindi = modalLang === "hi";
+  const texts = settings.texts;
+  const whatsappUrl = buildLiveTvWhatsAppUrl(settings);
+  const statusLabel = isHindi ? evaluation.labelHi : evaluation.labelEn;
+  const programmeTitle = isHindi
+    ? settings.programmeName.hi
+    : settings.programmeName.en;
+  const astrologerTitle = isHindi
+    ? settings.astrologerName.hi
+    : settings.astrologerName.en;
+  const roleText = isHindi ? settings.role.hi : settings.role.en;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/75 backdrop-blur-md animate-in fade-in duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="tv-broadcast-title"
+      aria-labelledby={titleId}
       onClick={handleDismiss}
+      data-testid="live-tv-broadcast-modal"
     >
       <div
-        className="relative w-full max-w-lg bg-gradient-to-b from-[#FFFDF9] via-[#FAF4EA] to-[#F5EAD9] rounded-2xl shadow-2xl border-2 border-[#E8A33D] ring-1 ring-[#E8A33D]/40 overflow-hidden transform animate-in zoom-in-95 duration-200 text-[#3B2A1E]"
+        className="relative w-full max-w-[520px] max-h-[92vh] flex flex-col bg-[#FFFDF9] rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-[#E8D8C3] ring-1 ring-[#7B2D26]/20 overflow-hidden transform animate-in zoom-in-95 duration-200 text-[#3B2A1E]"
         onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
       >
-        {/* Top Gold & Crimson National Broadcast Header */}
-        <div className="relative bg-gradient-to-r from-[#4A140F] via-[#7B2D26] to-[#4A140F] px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between border-b border-[#E8A33D]/50 text-[#FBF3E7]">
+        {/* Header Strip with Status & Language Switcher */}
+        <div className="shrink-0 bg-gradient-to-r from-[#7B2D26] via-[#64221C] to-[#7B2D26] px-4 py-3 sm:px-5 flex items-center justify-between text-[#FBF3E7] border-b border-[#E8A33D]/40">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider bg-red-600 text-white shadow-md ring-2 ring-red-400/50">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-              LIVE ON NATIONAL TV
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#E8A33D] font-bold tracking-wide uppercase">
-              <Tv className="w-3.5 h-3.5 text-[#E8A33D]" />
-              Television Broadcast
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border shadow-xs ${
+                evaluation.status === "LIVE_NOW"
+                  ? "bg-red-600 border-red-300 text-white animate-pulse"
+                  : "bg-[#4A140F] border-[#E8A33D]/50 text-[#E8A33D]"
+              }`}
+            >
+              {evaluation.status === "LIVE_NOW" && (
+                <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+              )}
+              <Tv className="w-3.5 h-3.5" />
+              <span>{statusLabel}</span>
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleDismiss}
-            aria-label="Close television broadcast announcement"
-            className="p-1 rounded-full text-[#FBF3E7]/80 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#E8A33D]"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Language Toggle */}
+            <div className="inline-flex rounded-lg border border-[#E8A33D]/40 bg-[#4A140F]/80 p-0.5 text-[10px] font-bold">
+              <button
+                type="button"
+                onClick={() => setModalLang("en")}
+                className={`px-2 py-0.5 rounded-md transition-colors ${
+                  !isHindi ? "bg-[#E8A33D] text-[#3B2A1E]" : "text-[#FBF3E7]/80 hover:text-white"
+                }`}
+                aria-label="Switch to English"
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalLang("hi")}
+                className={`px-2 py-0.5 rounded-md transition-colors ${
+                  isHindi ? "bg-[#E8A33D] text-[#3B2A1E]" : "text-[#FBF3E7]/80 hover:text-white"
+                }`}
+                aria-label="Switch to Hindi"
+              >
+                हिन्दी
+              </button>
+            </div>
+
+            {/* Accessible Dismiss Button */}
+            <button
+              type="button"
+              onClick={handleDismiss}
+              aria-label={isHindi ? "बंद करें" : "Close Live Times broadcast announcement"}
+              className="p-1 rounded-full text-[#FBF3E7]/80 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#E8A33D]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Modal Main Body */}
-        <div className="p-4 sm:p-5 space-y-3.5">
-          {/* Authentic Television Studio Mockup / Live Broadcast Frame */}
-          <div className="relative rounded-2xl p-2.5 sm:p-3 bg-gradient-to-b from-[#1E0B08] via-[#2D100C] to-[#1E0B08] border-2 border-[#E8A33D]/80 shadow-2xl overflow-hidden">
-            {/* Ambient TV glow */}
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#E8A33D]/20 blur-2xl pointer-events-none"></div>
-
-            {/* TV Screen Content Area */}
-            <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-[#140604] via-[#240B07] to-[#140604] border border-[#E8A33D]/40 p-3 sm:p-4">
-              {/* Studio Upper Header Strip */}
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-white">
-                <div className="flex items-center gap-1.5">
-                  <span className="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
-                  <span className="text-[10px] font-black tracking-widest text-red-400 uppercase">
-                    ON AIR • TELEVISION STUDIO
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-[#E8A33D] font-mono tracking-wider">
-                  <Clock className="w-3 h-3 text-[#E8A33D]" />
-                  <span>DAILY 8:00 AM IST</span>
-                </div>
-              </div>
-
-              {/* Main TV Anchor & Channel Showcase Row */}
-              <div className="flex items-center justify-between gap-3 sm:gap-4 py-1">
-                {/* Official Live Times Channel Badge */}
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-b from-black/80 to-[#2A0C08] rounded-xl p-1.5 border-2 border-[#E8A33D] shadow-xl flex items-center justify-center group">
-                    <Image
-                      src="/images/live-times-logo.png"
-                      alt="Live Times News Channel"
-                      width={90}
-                      height={90}
-                      className="w-full h-full object-contain rounded"
-                      priority
-                    />
-                    <div className="absolute -bottom-2 bg-gradient-to-r from-red-600 to-red-700 text-white text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full shadow-md border border-white/30">
-                      NEWS
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-[#E8A33D] mt-2.5 tracking-wider uppercase drop-shadow">
-                    LIVE TIMES
-                  </span>
-                  <span className="text-[9px] font-semibold text-stone-300">National News Channel</span>
-                </div>
-
-                {/* Broadcast Beam / Radio Wave Graphic */}
-                <div className="flex flex-col items-center justify-center px-1 text-center">
-                  <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-[#E8A33D]/10 border border-[#E8A33D]/40 text-[#E8A33D] mb-1">
-                    <Radio className="w-5 h-5 animate-pulse text-[#E8A33D]" />
-                    <span className="absolute inset-0 rounded-full border border-[#E8A33D]/30 animate-ping"></span>
-                  </div>
-                  <span className="text-[9px] font-bold text-red-300 uppercase tracking-widest bg-red-950/80 px-2 py-0.5 rounded border border-red-500/40">
-                    LIVE DAILY
-                  </span>
-                  <span className="text-[9px] font-bold text-[#E8A33D] mt-1 font-mono">
-                    8:00 AM
-                  </span>
-                </div>
-
-                {/* Acharya Niraj Kumar Celebrated Portrait */}
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl p-1 bg-gradient-to-tr from-[#E8A33D] via-[#FFF3D6] to-[#E8A33D] shadow-xl">
-                    <div className="relative w-full h-full rounded-lg overflow-hidden border border-[#7B2D26]">
-                      <Image
-                        src="/images/acharya-yellow.jpg"
-                        alt="Acharya Niraj Kumar"
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover"
-                        priority
-                      />
-                    </div>
-                    {/* Certified / Featured Icon */}
-                    <div className="absolute -bottom-1.5 -right-1.5 bg-[#E8A33D] text-[#3B2A1E] p-1 rounded-full shadow-md border border-white">
-                      <Sparkles className="w-3.5 h-3.5 fill-[#3B2A1E]" />
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-[#FBF3E7] mt-2 tracking-wide drop-shadow">
-                    Acharya Niraj
-                  </span>
-                  <span className="text-[9px] font-semibold text-[#E8A33D]">Vedic Astrologer</span>
-                </div>
-              </div>
-
-              {/* Lower-Third News Chyron */}
-              <div className="mt-3 pt-2 border-t border-white/10">
-                <div className="bg-gradient-to-r from-red-700 via-red-600 to-red-800 text-white rounded-lg px-2.5 py-1 flex items-center justify-between text-[10px] sm:text-[11px] font-bold shadow-inner">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                    <span className="uppercase tracking-wider">LIVE TELECAST:</span>
-                    <span className="text-amber-200">Kundli Analysis &amp; Daily Rashiphal</span>
-                  </div>
-                  <span className="hidden sm:inline font-mono text-[10px] text-white/90">
-                    8:00 AM IST
-                  </span>
-                </div>
-              </div>
+        {/* Scrollable Content Body */}
+        <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 space-y-4">
+          {/* Programme & Channel Identity */}
+          <div className="text-center space-y-1.5 border-b border-[#E8D8C3] pb-3.5">
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#C1662F]">
+              <Sparkles className="w-3.5 h-3.5 text-[#E8A33D]" />
+              <span>
+                {roleText}: {astrologerTitle}
+              </span>
             </div>
-          </div>
 
-          {/* Authority Headline */}
-          <div className="text-center space-y-1">
             <h2
-              id="tv-broadcast-title"
-              className="text-base sm:text-xl font-bold font-temple text-[#7B2D26] tracking-wide leading-tight uppercase"
+              id={titleId}
+              className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26] leading-snug"
             >
-              WATCH ACHARYA NIRAJ LIVE DAILY ON TELEVISION
+              {isHindi ? texts.heading.hi : texts.heading.en}
             </h2>
-            <p className="text-xs sm:text-sm font-semibold text-[#8C3A32]">
-              अपने पसंदीदा न्यूज़ चैनल <span className="font-bold underline text-[#7B2D26]">Live Times</span> पर रोज़ाना सुबह 8 बजे देखिए लाइव!
-            </p>
-          </div>
 
-          {/* Quick Schedule & Network Trust Strip */}
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-[#FFFDF9] border border-[#E8D8C3] shadow-sm">
-              <div className="p-1.5 rounded-lg bg-[#FAF3EA] text-[#7B2D26]">
-                <Tv className="w-4 h-4 text-[#7B2D26]" />
-              </div>
-              <div className="leading-tight">
-                <span className="block text-[10px] text-[#7B2D26]/80 font-bold uppercase">Channel</span>
-                <span className="font-black text-[#3B2A1E]">Live Times News</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-[#FFFDF9] border border-[#E8D8C3] shadow-sm">
-              <div className="p-1.5 rounded-lg bg-red-50 text-red-600">
-                <Clock className="w-4 h-4 text-red-600" />
-              </div>
-              <div className="leading-tight">
-                <span className="block text-[10px] text-red-700 font-bold uppercase">Live Broadcast</span>
-                <span className="font-black text-red-700">Daily at 8:00 AM</span>
-              </div>
+            {/* Channel Representation: Text-only by default unless logo approved */}
+            <div className="pt-1 flex items-center justify-center gap-2">
+              {settings.channelLogoApproved && settings.channelLogoUrl ? (
+                <Image
+                  src={settings.channelLogoUrl}
+                  alt={settings.channelName}
+                  width={110}
+                  height={32}
+                  className="h-8 object-contain"
+                />
+              ) : (
+                <span className="font-serif text-sm font-black tracking-wider text-[#3B2A1E] px-3 py-1 rounded-lg bg-[#FAF3EA] border border-[#E8D8C3]">
+                  {settings.channelName}
+                </span>
+              )}
+              <span className="text-xs text-[#6E5545] font-medium">
+                • {isHindi ? "सातों दिन, सुबह 8:00 से 8:30 बजे (IST)" : "Daily 8:00 to 8:30 AM IST (7 Days)"}
+              </span>
             </div>
           </div>
 
-          {/* Live Viewer Question Highlight Box (Eagerness Driver) */}
-          <div className="bg-gradient-to-r from-[#FFF8E7] via-[#FFF3D6] to-[#FFF8E7] border-2 border-[#E8A33D] rounded-xl p-3 sm:p-3.5 text-center shadow-md space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-[#7B2D26]">
+          {/* Editorial Body */}
+          <p className="text-xs sm:text-sm text-[#5C4532] leading-relaxed font-body">
+            {isHindi ? texts.body.hi : texts.body.en}
+          </p>
+
+          {/* How to Ask Box */}
+          <div className="rounded-2xl border border-[#E8A33D] bg-gradient-to-br from-[#FFFDF9] via-[#FAF3EA] to-[#FBF3E7] p-3.5 sm:p-4 space-y-2 shadow-xs">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#7B2D26]">
               <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-              <span>Ask Your Question &amp; Kundli Query LIVE on News Channel</span>
+              <span>{isHindi ? "प्रश्न कैसे भेजें (निःशुल्क)" : "How to Ask a Question (Free)"}</span>
             </div>
-            <p className="text-[11px] sm:text-xs text-[#5C4532] leading-relaxed">
-              Want Acharya Niraj Kumar to answer your career, marriage, or Kundli question live on TV? Send your birth details on WhatsApp now to be selected for tomorrow&apos;s morning broadcast!
+            <p className="text-xs text-[#6E5545] leading-relaxed">
+              {isHindi ? texts.howToAsk.hi : texts.howToAsk.en}
             </p>
           </div>
 
-          {/* High-Attention Vibrant WhatsApp CTA */}
+          {/* Direct WhatsApp Action Button */}
           <a
-            href={whatsappQuestionUrl}
+            href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full group relative flex flex-col items-center justify-center py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#25D366] via-[#20BA5C] to-[#17A34F] hover:from-[#20BA5C] hover:to-[#128C40] shadow-xl shadow-[#25D366]/30 hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 overflow-hidden"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#20BA5C] active:bg-[#1B9B4D] shadow-md transition-all text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2"
           >
-            {/* Subtle animated light gleam across the button */}
-            <span className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out"></span>
-
-            <div className="flex items-center gap-2 text-sm sm:text-base font-black tracking-wide">
-              <MessageCircle className="w-5 h-5 fill-current" />
-              <span>Message on WhatsApp to Ask Live on TV</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
-            </div>
-            <span className="text-[10px] sm:text-[11px] font-normal text-white/90">
-              Send your DOB, Time, Place of Birth &amp; question for the 8:00 AM show
+            <MessageCircle className="w-4 h-4 fill-current shrink-0" />
+            <span>
+              {isHindi
+                ? "WhatsApp पर #KaalKiChaal लिखकर प्रश्न भेजें"
+                : "Send Question on WhatsApp (#KaalKiChaal)"}
             </span>
+            <ArrowRight className="w-4 h-4 shrink-0" />
           </a>
 
-          {/* DTH & Cable Availability Trust Bar */}
-          <div className="text-center pt-0.5">
-            <p className="text-[10px] text-[#7B2D26]/80 font-medium">
-              📺 Available on Tata Play, Airtel DTH, Dish TV, D2H &amp; all local cable networks across India
-            </p>
+          {/* Consent Statement & Privacy Policy Link */}
+          <div className="rounded-xl bg-[#FAF5EE] border border-[#E8D8C3] p-3 text-[11px] text-[#6E5545] leading-relaxed space-y-1">
+            <div className="flex items-start gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#6B8E5A] shrink-0 mt-0.5" />
+              <span>{isHindi ? texts.consent.hi : texts.consent.en}</span>
+            </div>
+            <div className="pl-5 pt-0.5">
+              <Link
+                href="/privacy-policy"
+                onClick={handleDismiss}
+                className="font-semibold text-[#7B2D26] hover:underline"
+              >
+                {isHindi ? "गोपनीयता नीति पढ़ें →" : "Read Privacy Policy & Broadcast Terms →"}
+              </Link>
+            </div>
           </div>
 
-          {/* Footer Secondary Options */}
-          <div className="pt-1 flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-xs border-t border-[#E8D8C3]/60 pt-2">
+          {/* Where to Watch Text */}
+          <div className="text-[11px] text-[#6E5545] text-center border-t border-[#E8D8C3] pt-2.5">
+            <p>{isHindi ? texts.whereToWatch.hi : texts.whereToWatch.en}</p>
+          </div>
+
+          {/* Optional Proof Clip Link */}
+          {settings.proofClipsUrl ? (
+            <div className="text-center pt-1">
+              <a
+                href={settings.proofClipsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-[#7B2D26] hover:underline inline-flex items-center gap-1"
+              >
+                <span>{isHindi ? "कार्यक्रम के क्लिप देखें" : "Watch clips of the programme"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          ) : null}
+
+          {/* Footer General Disclaimer & Secondary Action */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[#E8D8C3] pt-3 text-[11px] text-[#6E5545]">
             <Link
               href="/consult"
               onClick={handleDismiss}
-              className="text-[#7B2D26] hover:text-[#5E1E18] font-bold hover:underline inline-flex items-center gap-1"
+              className="text-[#7B2D26] hover:underline font-bold"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#E8A33D]" />
-              Book Private 1-on-1 Consultation Instead
+              {isHindi
+                ? "निजी 1-ऑन-1 परामर्श बुक करें"
+                : "Book Private 1-on-1 Consultation Instead"}
             </Link>
 
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-[#7B2D26]/70 hover:text-[#7B2D26] text-xs underline focus:outline-none font-medium"
+              className="text-[#6E5545] hover:text-[#3B2A1E] underline text-[11px]"
             >
-              No thanks, continue browsing
+              {isHindi ? "वेबसाइट पर जारी रखें" : "Continue browsing"}
             </button>
           </div>
         </div>

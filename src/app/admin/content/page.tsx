@@ -47,7 +47,11 @@ export default async function ContentStudioPage() {
         </div>
       }
     >
-      <ContentStudioClient initialContent={content} canManage={canManage} />
+      <ContentStudioClient
+        initialContent={content}
+        canManage={canManage}
+        isOwner={auth.isOwner}
+      />
     </Suspense>
   );
 }

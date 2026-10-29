@@ -1,4 +1,10 @@
 import { ASSISTANT_KNOWLEDGE, ServiceDetail } from "./knowledgeBase";
+import {
+  DEFAULT_LIVE_TV_SETTINGS,
+  LiveTvBroadcastSettings,
+  evaluateLiveTvStatus,
+  buildLiveTvWhatsAppUrl,
+} from "@/config/liveTvBroadcastConfig";
 
 export type AssistantLanguage = "en" | "hi" | "hinglish";
 
@@ -93,7 +99,11 @@ const ACTION_PANCHANG: AssistantAction = {
  * Deterministic, grounded question-answering engine.
  * Zero-latency, zero-cost, strictly adheres to verified site content.
  */
-export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
+export function queryKnowledgeBase(
+  rawQuery: string,
+  tvSettings?: LiveTvBroadcastSettings
+): AssistantResponse {
+  const activeTvSettings = tvSettings || DEFAULT_LIVE_TV_SETTINGS;
   const query = rawQuery.trim().toLowerCase();
   const lang = detectLanguage(rawQuery);
 
@@ -613,6 +623,130 @@ export function queryKnowledgeBase(rawQuery: string): AssistantResponse {
       intent: "acharya_credentials",
       confidence: "high",
       actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // 4B. TELEVISION BROADCAST: "KAAL KI CHAAL" ON LIVE TIMES
+  // --------------------------------------------------------------------------
+  if (
+    query.includes("tv") ||
+    query.includes("television") ||
+    query.includes("live times") ||
+    query.includes("kaal ki chaal") ||
+    query.includes("kal ki chal") ||
+    query.includes("broadcast") ||
+    query.includes("on air") ||
+    (query.includes("channel") && (query.includes("news") || query.includes("watch") || query.includes("live") || query.includes("par")))
+  ) {
+    const tvEval = evaluateLiveTvStatus(activeTvSettings);
+    const whatsappTvUrl = buildLiveTvWhatsAppUrl(activeTvSettings);
+
+    const actionTvWhatsapp: AssistantAction = {
+      label: "Ask on WhatsApp (#KaalKiChaal)",
+      url: whatsappTvUrl,
+      type: "whatsapp",
+    };
+
+    // State 1: Programme has ended
+    if (tvEval.status === "ENDED") {
+      if (lang === "hi") {
+        return {
+          answer: "आचार्य नीरज कुमार जी का लाइव टाइम्स टीवी चैनल के कार्यक्रम 'काल की चाल' में अतिथि ज्योतिषी के रूप में प्रसारण अब समाप्त हो चुका है। व्यक्तिगत एवं प्रामाणिक 1-ऑन-1 मार्गदर्शन हेतु आप वेबसाइट पर सीधा परामर्श बुक कर सकते हैं।",
+          language: "hi",
+          intent: "television_broadcast_ended",
+          confidence: "high",
+          actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+        };
+      }
+      if (lang === "hinglish") {
+        return {
+          answer: "Acharya Niraj Kumar ji ka Live Times TV channel ke 'Kaal Ki Chaal' programme mein guest astrologer ka appearance ab samapt ho chuka hai. Personal guidance ke liye aap direct website par 1-on-1 consultation book kar sakte hain.",
+          language: "hinglish",
+          intent: "television_broadcast_ended",
+          confidence: "high",
+          actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+        };
+      }
+      return {
+        answer: "Acharya Niraj Kumar's television appearance as a guest astrologer on Live Times' 'Kaal Ki Chaal' has concluded. For authentic, private guidance, you can book a direct 1-on-1 consultation with Acharya Ji here on Aapka Astro.",
+        language: "en",
+        intent: "television_broadcast_ended",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    // State 2: Unconfirmed status
+    if (tvEval.status === "UNCONFIRMED") {
+      if (lang === "hi") {
+        return {
+          answer: "टेलीविज़न प्रसारण का विवरण वर्तमान में समीक्षाधीन है। आचार्य नीरज कुमार जी से व्यक्तिगत मार्गदर्शन हेतु आप वेबसाइट पर सीधा परामर्श बुक कर सकते हैं।",
+          language: "hi",
+          intent: "television_broadcast_unconfirmed",
+          confidence: "high",
+          actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+        };
+      }
+      return {
+        answer: "Television broadcast details are currently unconfirmed and undergoing periodic review. For verified personal guidance, you can book a private consultation directly with Acharya Ji.",
+        language: "en",
+        intent: "television_broadcast_unconfirmed",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, ACTION_WHATSAPP],
+      };
+    }
+
+    // State 3: Not on air today
+    if (tvEval.status === "OFF_TODAY") {
+      const returnNoteEn = activeTvSettings.returnDate ? ` Expected return: ${activeTvSettings.returnDate}.` : "";
+      const returnNoteHi = activeTvSettings.returnDate ? ` वापसी: ${activeTvSettings.returnDate}।` : "";
+
+      if (lang === "hi") {
+        return {
+          answer: `आचार्य नीरज कुमार जी आज लाइव टाइम्स टीवी चैनल पर प्रसारित कार्यक्रम 'काल की चाल' में उपस्थित नहीं हैं।${returnNoteHi} नियमित प्रसारण हर सुबह 8:00 से 8:30 बजे (IST), सातों दिन होता है। व्यक्तिगत मार्गदर्शन हेतु आप परामर्श बुक कर सकते हैं।`,
+          language: "hi",
+          intent: "television_broadcast_off_today",
+          confidence: "high",
+          actions: [ACTION_BOOK_ASTRO, actionTvWhatsapp],
+        };
+      }
+      return {
+        answer: `Acharya Niraj Kumar is not appearing on Live Times' 'Kaal Ki Chaal' today.${returnNoteEn} The regular broadcast schedule is daily from 8:00 AM to 8:30 AM IST, seven days a week. For personal guidance, you can book a consultation directly on Aapka Astro.`,
+        language: "en",
+        intent: "television_broadcast_off_today",
+        confidence: "high",
+        actions: [ACTION_BOOK_ASTRO, actionTvWhatsapp],
+      };
+    }
+
+    // State 4: Active broadcast (LIVE_NOW, UPCOMING_TODAY, TOMORROW)
+    if (lang === "hi") {
+      return {
+        answer: `**टेलीविज़न पर लाइव टाइम्स: 'काल की चाल'**\n\n• **कार्यक्रम:** काल की चाल (सेगमेंट: 'आज का राशिफल')\n• **चैनल:** लाइव टाइम्स (Live Times, एक टेलीविज़न न्यूज़ चैनल)\n• **भूमिका:** अतिथि ज्योतिषी (Guest Astrologer)\n• **समय:** प्रतिदिन सुबह 8:00 से 8:30 बजे (IST), सातों दिन\n• **कहाँ देखें:** लाइव टाइम्स एक टीवी न्यूज़ चैनल है। केबल और DTH ऑपरेटर के अनुसार चैनल नंबर अलग होते हैं, कृपया अपने ऑपरेटर की चैनल सूची देखें।\n• **प्रश्न कैसे भेजें:** कार्यक्रम के लिए प्रश्न भेजने हेतु WhatsApp पर +91 93112 15564 पर **#KaalKiChaal** लिखकर अपना प्रश्न और जन्म विवरण (तारीख़, समय और स्थान) भेजें। प्रश्न पूछना बिल्कुल निःशुल्क है और कुंडली से जुड़े प्रश्न प्रसारण में निःशुल्क लिए जाते हैं। सभी प्रश्न प्रसारण में लिए जाना संभव नहीं है।\n• **सहमति:** प्रश्न भेजकर आप सहमत होते हैं कि आपका प्रश्न और आपका पहला नाम प्रसारण में बोला जा सकता है। कृपया स्वास्थ्य, वित्त या अन्य संवेदनशील जानकारी न भेजें।`,
+        language: "hi",
+        intent: "television_broadcast_info",
+        confidence: "high",
+        actions: [actionTvWhatsapp, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    if (lang === "hinglish") {
+      return {
+        answer: `**Acharya Niraj Kumar on Live Times TV: 'Kaal Ki Chaal'**\n\n• **Programme:** Kaal Ki Chaal (Segment: 'Aaj Ka Rashifal')\n• **Channel:** Live Times (Television News Channel)\n• **Role:** Guest Astrologer (वे शो के होस्ट या ओनर नहीं हैं)\n• **Schedule:** Daily morning 8:00 AM to 8:30 AM IST, saaton din (7 days a week)\n• **Kahan dekhein:** Live Times ek TV news channel hai. Cable aur DTH operators ke anusar channel number alag-alag hote hain, kripya apne operator ki channel list check karein.\n• **Sawaal kaise poochein:** Programme ke liye sawaal bhejne ke liye WhatsApp (+91 93112 15564) par **#KaalKiChaal** likhkar apna question aur birth details (date, time, place) bhejein. Question bhejna free hai aur air par free answer kiya jata hai. Har sawaal air par liya jana possible nahi hota.\n• **Consent:** Sawaal bhejkar aap agree karte hain ki aapka question aur first name TV broadcast par mention ho sakta hai. Sensitive personal ya health details na bhejein.`,
+        language: "hinglish",
+        intent: "television_broadcast_info",
+        confidence: "high",
+        actions: [actionTvWhatsapp, ACTION_BOOK_ASTRO],
+      };
+    }
+
+    return {
+      answer: `**Live on Television: Kaal Ki Chaal on Live Times**\n\n• **Programme:** Kaal Ki Chaal (Segment: 'Today's Horoscope')\n• **Channel:** Live Times (Television News Channel)\n• **Role:** Guest Astrologer (Acharya Niraj Kumar appears as a guest astrologer; he is not the host and does not own the programme)\n• **Schedule:** Every day, seven days a week, 8:00 to 8:30 AM IST\n• **Where to Watch:** Live Times is a television news channel. Channel numbers differ between cable and DTH operators, so please check your operator's channel list.\n• **How to Ask a Question:** To send a question for the programme, message on WhatsApp at +91 93112 15564 starting with **#KaalKiChaal** with your question and your birth details (date, time, and place). Sending a question is free, and Kundli questions are answered on air free of charge. Not every question can be taken on air.\n• **Consent:** By sending your question you agree that it and your first name may be mentioned on air. Please do not send health, financial or other sensitive information.\n• **Disclaimer:** Guidance given on air is general in nature. For personal guidance, book a private consultation.`,
+      language: "en",
+      intent: "television_broadcast_info",
+      confidence: "high",
+      actions: [actionTvWhatsapp, ACTION_BOOK_ASTRO],
     };
   }
 

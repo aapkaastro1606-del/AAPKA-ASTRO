@@ -278,6 +278,35 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
+          {/* Section 5B: Television Broadcast Viewer Questions & Birth Coordinates */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                5B. Television Broadcast Viewer Questions &amp; Birth Details (&quot;Kaal Ki Chaal&quot; on Live Times)
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <p className="text-xs text-[#6E5545] leading-relaxed">
+              When viewers send questions and birth coordinates (date, time, and place of birth) via WhatsApp for the morning television programme &quot;Kaal Ki Chaal&quot; on Live Times, the following privacy safeguards and terms apply:
+            </p>
+            <ul className="list-disc pl-5 space-y-2 text-xs text-[#6E5545]">
+              <li>
+                <strong>On-Air Broadcast Mention Consent:</strong> By transmitting your query with the <code>#KaalKiChaal</code> prefix, you explicitly understand and consent that your submitted question and your first name may be mentioned, discussed, and analyzed live on air by guest astrologer Acharya Niraj Kumar during the broadcast.
+              </li>
+              <li>
+                <strong>Sensitive Information Restriction:</strong> Viewers are strictly instructed <em>not</em> to transmit sensitive personal data, including full financial numbers, bank identifiers, medical diagnoses, surgical histories, or private matrimonial conflict records.
+              </li>
+              <li>
+                <strong>Retention Policy:</strong> Questions and birth details submitted for the television programme are stored on the sanctum WhatsApp desk solely for editorial review and broadcast preparation. Records are retained for up to 30 days following the broadcast cycle and are never sold or shared with commercial marketing networks.
+              </li>
+              <li>
+                <strong>Right to Erasure &amp; Deletion Method:</strong> You have the absolute right to have your submitted question and birth details permanently deleted at any time prior to or following broadcast. To request erasure, simply message our WhatsApp desk at +91 93112 15564 or email <code>aapkaastro1606@gmail.com</code> with the message &quot;Delete My Broadcast Question&quot;. Your submission will be purged within 24 business hours.
+              </li>
+            </ul>
+          </section>
+
           {/* Section 6: Cookie Policy & Traffic Analytics Disclosure (Pending Lawyer Review) */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-3">

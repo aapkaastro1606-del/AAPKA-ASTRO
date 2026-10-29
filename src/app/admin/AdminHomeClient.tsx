@@ -29,6 +29,7 @@ import {
   Award,
 } from "lucide-react";
 import { AdminHelpPanel } from "@/components/admin/AdminHelpPanel";
+import { OwnerLiveTvControlCard } from "@/components/admin/OwnerLiveTvControlCard";
 
 export interface ActivityItem {
   id: string;
@@ -378,6 +379,7 @@ export default function AdminHomeClient({
         </header>
 
         {/* Action Required Banners */}
+        {user.isOwner && <OwnerLiveTvControlCard />}
         {user.isOwner && pendingApprovalsCount > 0 && (
           <div className="p-4 rounded-2xl bg-[#FBF3E7] border-2 border-[#E8A33D] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-pulse-subtle">
             <div className="flex items-start gap-3">

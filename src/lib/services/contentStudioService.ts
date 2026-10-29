@@ -8,6 +8,11 @@ import {
 import { AuditLogService } from "@/lib/services/auditLogService";
 import { ContentModelService } from "@/lib/services/contentModelService";
 import { ContentStatus } from "@prisma/client";
+import {
+  LiveTvBroadcastSettings,
+  DEFAULT_LIVE_TV_SETTINGS,
+} from "@/config/liveTvBroadcastConfig";
+import { LiveTvSettingsService } from "@/lib/services/liveTvSettingsService";
 
 export interface FaqItem {
   id: string;
@@ -141,6 +146,7 @@ export interface ContentStudioData {
   gallery?: PhotoGalleryItem[];
   popups?: PopupConfigItem[];
   legal?: LegalPageItem[];
+  liveTv?: LiveTvBroadcastSettings;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -250,6 +256,7 @@ export const DEFAULT_CONTENT_STUDIO: ContentStudioData = {
     verified: t.verified ?? true,
     isActive: true,
   })),
+  liveTv: DEFAULT_LIVE_TV_SETTINGS,
 };
 
 const SINGLETON_ID = "singleton_settings";
@@ -460,6 +467,7 @@ export class ContentStudioService {
             gallery: gallery.length > 0 ? gallery : undefined,
             popups: popups.length > 0 ? popups : undefined,
             legal: legal.length > 0 ? legal : undefined,
+            liveTv: await LiveTvSettingsService.getSettings(),
             updatedAt: contactEntry?.updatedAt || heroEntry?.updatedAt || new Date().toISOString(),
             updatedBy: contactEntry?.updatedBy || heroEntry?.updatedBy || "system",
           };
@@ -493,6 +501,7 @@ export class ContentStudioService {
               },
               faqs: Array.isArray(studio.faqs) && studio.faqs.length > 0 ? studio.faqs : DEFAULT_FAQS,
               reviews: await ContentStudioService.getUnifiedReviews(),
+              liveTv: await LiveTvSettingsService.getSettings(),
               updatedAt: studio.updatedAt,
               updatedBy: studio.updatedBy,
             };
@@ -795,6 +804,12 @@ export class ContentStudioService {
       }
     } catch (modelErr) {
       console.warn("ContentModelService sync warning:", modelErr);
+    }
+
+    if (updates.liveTv) {
+      await LiveTvSettingsService.updateSettings(updates.liveTv, actorEmail).catch((e) =>
+        console.error("Sync liveTv failed:", e)
+      );
     }
 
 

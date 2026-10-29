@@ -15,6 +15,7 @@ import {
   isRouteExcludedFromWelcomeModal,
   isUserInActiveSessionOrConsultation,
 } from "@/components/home/WelcomeConsultationModal";
+import { POPUP_VISIT_CLAIMED_KEY } from "@/components/home/LiveTvBroadcastModal";
 
 export const NAVRATRI_PROMO_STORAGE_KEY = "aapka_navratri_promo_dismissed";
 export const NAVRATRI_PROMO_SESSION_KEY = "aapka_navratri_promo_session_seen";
@@ -85,12 +86,14 @@ export function NavratriPromotionalModal({
     // 4. Visitor Session Check: Show once per visitor per browser session
     try {
       const isSeenInSession = sessionStorage.getItem(NAVRATRI_PROMO_SESSION_KEY);
-      if (isSeenInSession) {
+      const isVisitClaimed = sessionStorage.getItem(POPUP_VISIT_CLAIMED_KEY);
+      if (isSeenInSession || isVisitClaimed) {
         return;
       }
 
       const timer = setTimeout(() => {
         if (
+          !sessionStorage.getItem(POPUP_VISIT_CLAIMED_KEY) &&
           isNavratriPromoActive(promoConfig, referenceDate) &&
           !isRouteExcludedFromWelcomeModal(pathname) &&
           !isUserInActiveSessionOrConsultation(isAuthenticated, pathname)
@@ -98,6 +101,7 @@ export function NavratriPromotionalModal({
           setIsOpen(true);
           try {
             sessionStorage.setItem(NAVRATRI_PROMO_SESSION_KEY, "true");
+            sessionStorage.setItem(POPUP_VISIT_CLAIMED_KEY, "festival");
             document.cookie = `${NAVRATRI_PROMO_COOKIE_NAME}=1; path=/; SameSite=Lax`;
           } catch {
             // Ignore storage restrictions

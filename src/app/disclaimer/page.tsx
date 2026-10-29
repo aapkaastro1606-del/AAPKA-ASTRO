@@ -83,6 +83,24 @@ export default function DisclaimerPage() {
             </div>
           </section>
 
+          {/* Article 2B: Television Broadcast Guidance Disclaimer */}
+          <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E8D8C3] pb-2">
+              <h2 className="text-lg font-bold font-temple text-[#7B2D26]">
+                2B. Television Broadcast Guidance Disclaimer (&quot;Kaal Ki Chaal&quot; on Live Times)
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                Pending Lawyer Review
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#6E5545] leading-relaxed">
+              Guidance given on air on television programmes (including Acharya Niraj Kumar&apos;s guest appearance on Live Times&apos; &quot;Kaal Ki Chaal&quot;) is general in nature and is not a substitute for professional medical, legal, or financial advice.
+            </p>
+            <p className="text-xs text-[#6E5545] leading-relaxed">
+              Astrological answers provided during live broadcasts address broad planetary principles and can never substitute for a comprehensive birth chart reading evaluating full Dasha, Antardasha, and divisional vargas. For personal, private guidance, seekers should book an individual 1-on-1 consultation.
+            </p>
+          </section>
+
           {/* Article 3 */}
           <section className="bg-[#FFFDF9] p-6 rounded-2xl border border-[#E8D8C3] shadow-xs space-y-3">
             <h2 className="text-lg font-bold font-temple text-[#7B2D26]">

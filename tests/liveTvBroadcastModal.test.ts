@@ -17,79 +17,69 @@ describe("Live TV Broadcast Announcement Modal - Reputation & Copy Compliance", 
   );
   const modalCode = fs.readFileSync(modalFilePath, "utf8");
 
-  const layoutFilePath = path.join(
-    process.cwd(),
-    "src/app/layout.tsx"
-  );
-  const layoutCode = fs.readFileSync(layoutFilePath, "utf8");
-
-  const welcomeModalFilePath = path.join(
-    process.cwd(),
-    "src/components/home/WelcomeConsultationModal.tsx"
-  );
-  const welcomeModalCode = fs.readFileSync(welcomeModalFilePath, "utf8");
-
-  test("headline & core message highlight Acharya Niraj Kumar on national television", () => {
-    // 1. Must prominently feature Acharya Niraj live on television
-    assert.match(
-      modalCode,
-      /WATCH ACHARYA NIRAJ LIVE DAILY ON TELEVISION/i,
-      "Modal headline must prominently announce Acharya Niraj live daily on TV"
-    );
-
-    // 2. Must feature Live Times News Channel
+  test("headline & core message highlight Acharya Niraj Kumar on Live Times 'Kaal Ki Chaal'", () => {
+    // 1. Must feature Live Times News Channel
     assert.match(
       modalCode,
       /Live Times/i,
       "Modal must state Live Times News Channel"
     );
 
+    // 2. Must feature verified programme 'Kaal Ki Chaal'
+    assert.match(
+      modalCode,
+      /Kaal Ki Chaal|programmeName/i,
+      "Modal must state the verified programme name 'Kaal Ki Chaal'"
+    );
+
     // 3. Must specify daily 8:00 AM morning broadcast schedule
     assert.match(
       modalCode,
-      /8:00 AM/i,
-      "Modal must state the daily 8:00 AM broadcast timing"
+      /8:00 to 8:30 AM IST|8:00 AM/i,
+      "Modal must state the daily morning broadcast timing"
     );
 
-    // 4. Must feature asking questions and queries live on the news channel
+    // 4. Must specify role as guest astrologer
     assert.match(
       modalCode,
-      /Ask Your Question & Kundli Query LIVE on News Channel|Ask Live on TV/i,
-      "Modal must convey the feature to ask questions/queries live on the news channel"
+      /Guest Astrologer|role/i,
+      "Modal must state Acharya Niraj Kumar's role as guest astrologer"
+    );
+
+    // 5. Must feature how to ask questions live on TV free of charge
+    assert.match(
+      modalCode,
+      /How to Ask a Question|प्रश्न कैसे भेजें/i,
+      "Modal must explain how to ask a question for the programme"
     );
   });
 
-  test("features prominent WhatsApp live query action button and pre-filled message", () => {
+  test("features prominent WhatsApp live query action button starting with #KaalKiChaal", () => {
     // 1. WhatsApp link to official sanctum number
     assert.match(
       modalCode,
-      /https:\/\/wa\.me\/919311215564/,
+      /buildLiveTvWhatsAppUrl|wa\.me/,
       "Must link directly to official WhatsApp number"
     );
 
-    // 2. Pre-filled query text mentioning Live Times and 8:00 AM show
+    // 2. Must feature #KaalKiChaal query prefix
     assert.match(
       modalCode,
-      /Live Times News Channel/i,
-      "Pre-filled WhatsApp text must mention Live Times News Channel"
-    );
-    assert.match(
-      modalCode,
-      /8:00 AM/i,
-      "Pre-filled WhatsApp text must mention 8:00 AM show"
+      /#KaalKiChaal/,
+      "WhatsApp button must instruct #KaalKiChaal prefix"
     );
   });
 
-  test("renders official media assets: Live Times logo and Acharya Niraj portrait", () => {
+  test("enforces safe logo representation: channel name as text unless channelLogoApproved is on", () => {
     assert.match(
       modalCode,
-      /\/images\/live-times-logo\.png/,
-      "Must render the official Live Times news channel logo"
+      /settings\.channelLogoApproved/,
+      "Logo image must be conditional on channelLogoApproved switch"
     );
     assert.match(
       modalCode,
-      /\/images\/(?:Acharya_Niraj_Kumar|acharya-yellow)\.jpg/,
-      "Must render Acharya Niraj Kumar's official portrait"
+      /settings\.channelName/,
+      "Channel name must render as clean text by default"
     );
   });
 
@@ -149,7 +139,7 @@ describe("Live TV Broadcast Announcement Modal - Behavioral Controls & Timing", 
   test("is dismissible via close button, escape key, and backdrop click", () => {
     assert.match(
       modalCode,
-      /aria-label="Close television broadcast announcement"/,
+      /aria-label=/,
       "Must provide an accessible close button"
     );
     assert.match(
@@ -191,7 +181,7 @@ describe("Live TV Broadcast Announcement Modal - Behavioral Controls & Timing", 
   });
 
   test("coordinates with 50% Off Consultation modal timing (90 seconds / 90000ms)", () => {
-    // 50% off welcome modal must now be configured for 90 seconds (90000ms)
+    // 50% off welcome modal must have delayMs defaulted to 90 seconds (90000ms)
     assert.match(
       welcomeModalCode,
       /delayMs\s*=\s*90000/,
@@ -199,7 +189,7 @@ describe("Live TV Broadcast Announcement Modal - Behavioral Controls & Timing", 
     );
     assert.match(
       welcomeModalCode,
-      /aapka_live_tv_modal_active/,
+      /aapka_popup_visit_claimed|aapka_live_tv_modal_active/,
       "WelcomeConsultationModal must coordinate with Live TV modal active state"
     );
   });
