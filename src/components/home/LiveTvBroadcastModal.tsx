@@ -12,8 +12,7 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
-  AlertCircle,
-  Globe,
+  Radio,
 } from "lucide-react";
 import { useCurrentUserRole } from "@/lib/auth/roleContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -218,7 +217,7 @@ export function LiveTvBroadcastModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -226,31 +225,41 @@ export function LiveTvBroadcastModal({
       data-testid="live-tv-broadcast-modal"
     >
       <div
-        className="relative w-full max-w-[520px] max-h-[92vh] flex flex-col bg-[#FFFDF9] rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-[#E8D8C3] ring-1 ring-[#7B2D26]/20 overflow-hidden transform animate-in zoom-in-95 duration-200 text-[#3B2A1E]"
+        className="relative w-full max-w-[520px] sm:max-w-[560px] max-h-[92vh] flex flex-col bg-[#FFFDF9] rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-[#E8A33D] ring-2 ring-[#E8A33D]/40 overflow-hidden transform animate-in zoom-in-95 duration-200 text-[#3B2A1E]"
         onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
       >
-        {/* Header Strip with Status & Language Switcher */}
-        <div className="shrink-0 bg-gradient-to-r from-[#7B2D26] via-[#64221C] to-[#7B2D26] px-4 py-3 sm:px-5 flex items-center justify-between text-[#FBF3E7] border-b border-[#E8A33D]/40">
+        {/* Header Strip with Live Status & Language Switcher */}
+        <div className="shrink-0 bg-gradient-to-r from-[#4A140F] via-[#7B2D26] to-[#4A140F] px-4 py-2.5 sm:px-5 sm:py-3 flex items-center justify-between text-[#FBF3E7] border-b border-[#E8A33D]/50 shadow-sm">
           <div className="flex items-center gap-2 sm:gap-2.5">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border shadow-xs ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-md ${
                 evaluation.status === "LIVE_NOW"
-                  ? "bg-red-600 border-red-300 text-white animate-pulse"
-                  : "bg-[#4A140F] border-[#E8A33D]/50 text-[#E8A33D]"
+                  ? "bg-red-600 text-white ring-2 ring-red-400/50 animate-pulse"
+                  : "bg-[#2D0D09] border border-[#E8A33D]/60 text-[#E8A33D]"
               }`}
             >
-              {evaluation.status === "LIVE_NOW" && (
-                <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+              {evaluation.status === "LIVE_NOW" ? (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+              ) : (
+                <Tv className="w-3.5 h-3.5 text-[#E8A33D]" />
               )}
-              <Tv className="w-3.5 h-3.5" />
               <span>{statusLabel}</span>
+            </span>
+
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-amber-200 font-bold uppercase tracking-wide">
+              <span>{settings.channelName}</span>
+              <span>•</span>
+              <span>{programmeTitle}</span>
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Language Toggle */}
-            <div className="inline-flex rounded-lg border border-[#E8A33D]/40 bg-[#4A140F]/80 p-0.5 text-[10px] font-bold">
+            {/* Language Switcher */}
+            <div className="inline-flex rounded-lg border border-[#E8A33D]/40 bg-black/40 p-0.5 text-[10px] font-bold">
               <button
                 type="button"
                 onClick={() => setModalLang("en")}
@@ -287,40 +296,150 @@ export function LiveTvBroadcastModal({
 
         {/* Scrollable Content Body */}
         <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 space-y-4">
-          {/* Programme & Channel Identity */}
-          <div className="text-center space-y-1.5 border-b border-[#E8D8C3] pb-3.5">
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#C1662F]">
-              <Sparkles className="w-3.5 h-3.5 text-[#E8A33D]" />
-              <span>
-                {roleText}: {astrologerTitle}
-              </span>
+          {/* Authentic Television Broadcast Studio Monitor (Visual Hero) */}
+          <div className="relative rounded-2xl p-2 sm:p-2.5 bg-gradient-to-b from-[#1E0906] via-[#2A0E0A] to-[#140503] border-2 border-[#E8A33D] shadow-2xl overflow-hidden">
+            {/* Ambient TV halo glow */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-24 bg-[#E8A33D]/25 blur-3xl pointer-events-none"></div>
+
+            {/* TV Screen Container */}
+            <div className="relative rounded-xl overflow-hidden bg-black border border-[#E8A33D]/50 shadow-inner group">
+              {/* TV Screen Status Top Bar */}
+              <div className="bg-gradient-to-r from-black/95 via-[#1E0906] to-black/95 px-3 py-1 flex items-center justify-between text-white border-b border-white/10 text-[10px] sm:text-[11px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                  <span className="font-black tracking-widest text-red-400 uppercase">
+                    ON AIR • TELEVISION STUDIO
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[#E8A33D] font-mono font-bold tracking-wider text-[10px]">
+                  <Clock className="w-3 h-3 text-[#E8A33D]" />
+                  <span>8:00 to 8:30 AM IST</span>
+                </div>
+              </div>
+
+              {/* Real Broadcast Studio Screen Still */}
+              <div className="relative w-full aspect-[16/9] overflow-hidden bg-black">
+                <Image
+                  src="/images/kaal-ki-chaal-broadcast.jpg"
+                  alt={`${astrologerTitle} on ${programmeTitle}, ${settings.channelName}`}
+                  width={1024}
+                  height={589}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  priority
+                />
+
+                {/* TV Glare & Corner Badge */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/25 via-transparent to-white/10 pointer-events-none"></div>
+
+                {/* Bottom News Ticker / Chyron Overlay */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#4A140F]/95 via-[#7B2D26]/95 to-[#4A140F]/95 backdrop-blur-sm text-white px-2.5 py-1.5 flex items-center justify-between border-t border-[#E8A33D]/60 text-[10px] sm:text-xs">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="px-2 py-0.5 rounded bg-red-700 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider border border-white/20 shrink-0">
+                      {isHindi ? "काल की चाल" : "Kaal Ki Chaal"}
+                    </span>
+                    <span className="font-bold text-[#FFF3D6] truncate text-[10px] sm:text-[11px]">
+                      ⚡ हर सुबह जानिए, आज क्या है खास! • {isHindi ? "दैनिक राशिफल व ग्रह समाधान" : "Daily Horoscope & Solutions"}
+                    </span>
+                  </div>
+                  <span className="hidden sm:inline-block font-mono text-[10px] text-amber-200 shrink-0 font-bold ml-1.5">
+                    8:00 AM IST
+                  </span>
+                </div>
+              </div>
             </div>
 
+            {/* Channel Logo / Name Representation Strip */}
+            <div className="pt-2 px-1 flex items-center justify-between gap-3 text-white text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-stone-300">
+                  {roleText}: <strong className="text-amber-200 font-bold">{astrologerTitle}</strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {settings.channelLogoApproved && settings.channelLogoUrl ? (
+                  <Image
+                    src={settings.channelLogoUrl}
+                    alt={settings.channelName}
+                    width={90}
+                    height={26}
+                    className="h-6 object-contain"
+                  />
+                ) : (
+                  <span className="font-serif text-[11px] font-black tracking-wider text-[#E8A33D] px-2 py-0.5 rounded bg-black/60 border border-[#E8A33D]/50">
+                    {settings.channelName}
+                  </span>
+                )}
+                <span className="text-[10px] text-stone-400 font-mono">
+                  Daily 8:00 AM
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Authority Headline & Show Title */}
+          <div className="text-center space-y-1.5 border-b border-[#E8D8C3] pb-3">
             <h2
               id={titleId}
-              className="font-temple text-xl sm:text-2xl font-bold text-[#7B2D26] leading-snug"
+              className="font-temple text-lg sm:text-2xl font-bold text-[#7B2D26] leading-snug"
             >
               {isHindi ? texts.heading.hi : texts.heading.en}
             </h2>
 
-            {/* Channel Representation: Text-only by default unless logo approved */}
-            <div className="pt-1 flex items-center justify-center gap-2">
-              {settings.channelLogoApproved && settings.channelLogoUrl ? (
-                <Image
-                  src={settings.channelLogoUrl}
-                  alt={settings.channelName}
-                  width={110}
-                  height={32}
-                  className="h-8 object-contain"
-                />
-              ) : (
-                <span className="font-serif text-sm font-black tracking-wider text-[#3B2A1E] px-3 py-1 rounded-lg bg-[#FAF3EA] border border-[#E8D8C3]">
-                  {settings.channelName}
-                </span>
-              )}
-              <span className="text-xs text-[#6E5545] font-medium">
-                • {isHindi ? "सातों दिन, सुबह 8:00 से 8:30 बजे (IST)" : "Daily 8:00 to 8:30 AM IST (7 Days)"}
+            <div className="flex items-center justify-center gap-2 flex-wrap text-xs text-[#6E5545]">
+              <span className="inline-flex items-center gap-1 font-semibold text-[#7B2D26]">
+                <Sparkles className="w-3.5 h-3.5 text-[#E8A33D]" />
+                <span>{programmeTitle}</span>
               </span>
+              <span>•</span>
+              <span className="font-medium">
+                {isHindi ? "सातों दिन, सुबह 8:00 से 8:30 बजे (IST)" : "Daily 8:00 to 8:30 AM IST (7 Days)"}
+              </span>
+            </div>
+          </div>
+
+          {/* Show Segments 3-Pillar Card Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-[#FFFDF9] border border-[#E8D8C3] shadow-xs">
+              <div className="p-1 rounded-lg bg-[#FAF3EA] text-[#7B2D26] shrink-0 mt-0.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#E8A33D]" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-[10px] text-[#7B2D26] font-black uppercase">
+                  {isHindi ? "आज का राशिफल" : "Today's Horoscope"}
+                </span>
+                <span className="text-[11px] text-[#5C4532]">
+                  {isHindi ? "12 राशियों का सटीक भविष्यफल व उपाय" : "Daily forecast & Vedic guidance"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-[#FFFDF9] border border-[#E8D8C3] shadow-xs">
+              <div className="p-1 rounded-lg bg-red-50 text-red-600 shrink-0 mt-0.5">
+                <Clock className="w-3.5 h-3.5 text-red-600" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-[10px] text-red-700 font-black uppercase">
+                  8:00 - 8:30 AM IST
+                </span>
+                <span className="text-[11px] text-[#5C4532]">
+                  {isHindi ? "सातों दिन सुबह सीधा प्रसारण" : "Seven days a week on television"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-[#FFFDF9] border border-[#E8D8C3] shadow-xs">
+              <div className="p-1 rounded-lg bg-[#FAF3EA] text-[#7B2D26] shrink-0 mt-0.5">
+                <Radio className="w-3.5 h-3.5 text-[#7B2D26]" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-[10px] text-[#7B2D26] font-black uppercase">
+                  {isHindi ? "लाइव प्रश्नोत्तरी" : "Live Q&A"}
+                </span>
+                <span className="text-[11px] text-[#5C4532]">
+                  {isHindi ? "दर्शकों के प्रश्नों के उत्तर लाइव" : "Answers to viewers' questions live"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -345,15 +464,25 @@ export function LiveTvBroadcastModal({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#20BA5C] active:bg-[#1B9B4D] shadow-md transition-all text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2"
+            className="w-full group relative flex flex-col items-center justify-center py-3 sm:py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#25D366] via-[#20BA5C] to-[#17A34F] hover:from-[#20BA5C] hover:to-[#128C40] shadow-md hover:shadow-lg transition-all text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 overflow-hidden cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4 fill-current shrink-0" />
-            <span>
+            {/* Shimmer light sweep */}
+            <span className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out"></span>
+
+            <div className="flex items-center gap-2 font-black tracking-wide">
+              <MessageCircle className="w-4 h-4 fill-current shrink-0" />
+              <span>
+                {isHindi
+                  ? "WhatsApp पर #KaalKiChaal लिखकर प्रश्न भेजें"
+                  : "Send Question on WhatsApp (#KaalKiChaal)"}
+              </span>
+              <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1" />
+            </div>
+            <span className="text-[10px] font-normal text-white/95 mt-0.5">
               {isHindi
-                ? "WhatsApp पर #KaalKiChaal लिखकर प्रश्न भेजें"
-                : "Send Question on WhatsApp (#KaalKiChaal)"}
+                ? "अपना नाम, जन्म तिथि, जन्म समय व स्थान WhatsApp पर भेजें"
+                : "Include your name, question, and birth details (date, time, place)"}
             </span>
-            <ArrowRight className="w-4 h-4 shrink-0" />
           </a>
 
           {/* Consent Statement & Privacy Policy Link */}
@@ -393,7 +522,7 @@ export function LiveTvBroadcastModal({
             </div>
           ) : null}
 
-          {/* Footer General Disclaimer & Secondary Action */}
+          {/* Footer Secondary Action */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[#E8D8C3] pt-3 text-[11px] text-[#6E5545]">
             <Link
               href="/consult"
@@ -408,7 +537,7 @@ export function LiveTvBroadcastModal({
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-[#6E5545] hover:text-[#3B2A1E] underline text-[11px]"
+              className="text-[#6E5545] hover:text-[#3B2A1E] underline text-[11px] cursor-pointer"
             >
               {isHindi ? "वेबसाइट पर जारी रखें" : "Continue browsing"}
             </button>
